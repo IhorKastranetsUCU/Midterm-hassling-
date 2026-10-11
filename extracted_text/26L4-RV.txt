@@ -1,0 +1,1204 @@
+Probability theory and statistics
+Lecture Notes
+P&S team
+Ukrainian Catholic University
+
+3rd term
+Autumn 2026
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Lecture 4. Discrete random variables
+
+Joint distribution
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Outline
+1
+
+RV’s: Definitions, examples, and properties
+Examples
+Definition
+Probability mass function
+Cumulative distribution function
+
+2
+
+Standard discrete distributions
+Binomial distribution
+Geometric distribution
+Poisson distribution
+
+3
+
+Joint distribution and independence
+Examples
+Definitions
+Independence
+Conditional distribution
+
+Joint distribution
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Outline
+1
+
+RV’s: Definitions, examples, and properties
+Examples
+Definition
+Probability mass function
+Cumulative distribution function
+
+2
+
+Standard discrete distributions
+Binomial distribution
+Geometric distribution
+Poisson distribution
+
+3
+
+Joint distribution and independence
+Examples
+Definitions
+Independence
+Conditional distribution
+
+Joint distribution
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Random variables: Examples
+
+Often, outcomes are associated with some numerical values:
+In rolling two fair dice, only the total sum X can be important; e.g.,
+X = 5 for outcomes (1, 4), (2, 3), (3, 2), (4, 1); therefore,
+P(X = 5) = 4/36. X can assume values between 2 and 12:
+Value x of X
+2
+3
+...
+12
+
+event {X = x}
+(1,1)
+(1,2),(2,1)
+...
+(6,6)
+
+P(X = x)
+1/36
+2/36
+...
+1/36
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Random variables: Examples
+
+In tossing a biased coin three times, record the total number Y of
+Heads; thus Y can assume the values 0, 1, 2, 3:
+Value y of Y
+event {Y = y}
+P(Y = y)
+0
+‘TTT’
+q3
+1
+‘HTT’, ‘THT’, ’TTH’
+3pq 2
+2
+‘HHT’, ‘HTH’, ’THH’
+3p2 q
+3
+‘HHH’
+p3
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Random variable: Example
+
+Shuffle n cards, and let X be the position of the jth card.
+P(X = k ) = n1
+
+Your example
+
+Joint distribution
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Random variable: Example
+3 balls are drawn without replacement from an urn containing 10 balls
+numbered 1 to 10. What is the probability that the largest no. is k ?
+Sample space
+Ω = {“all draws”} = {subsets of 3 from 1, . . . , 20}
+= {ω = {ω1 , ω2 , ω3 } | ω1 < ω2 < ω3 , ωj ∈ 1, 10}
+F = 2Ω ;
+
+P is a uniform probability measure on Ω
+
+X (ω) =“largest of three numbers” = ω3
+X (ω) = k ⇐⇒ ball no. k is drawn and the other two are smaller:
+⇐⇒ ω1 < ω2 < ω3 = k
+2 /C 3
+P(X = k) = Ck−1
+10
+
+therefore,
+k
+P(X = k )
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+9
+
+10
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Outline
+1
+
+RV’s: Definitions, examples, and properties
+Examples
+Definition
+Probability mass function
+Cumulative distribution function
+
+2
+
+Standard discrete distributions
+Binomial distribution
+Geometric distribution
+Poisson distribution
+
+3
+
+Joint distribution and independence
+Examples
+Definitions
+Independence
+Conditional distribution
+
+Joint distribution
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Definition of a random variable
+Definition
+A random variable (rv) ξ on a probability space (Ω, F , P) is anya
+function ξ : Ω → R
+a
+
+ξ must be measurable, ie., sets like {ξ ≤ t} should be events (from F )
+
+Example
+The lifetime T of any equipment (eg., notebook hard disk) can be any
+positive number. Here
+the sample space Ω = {the set of all notebooks};
+probability measure P on Ω — any
+T is a random variable on this probability space.
+Definition
+A random variable X is discrete if it assumes only finite or countable
+infinite set of values x1 , x2 , . . .
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Definition of a random variable
+
+Notation
+X random variable
+
+x numerical value
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Example of a random variable
+3 balls are drawn without replacement from an urn containing 10 balls
+numbered 1 to 10. What is the probability that the largest of three
+numbers will be at least 7?
+Sample space Ω = {“all draws”} = {subsets of 3 from 1, . . . , 20}
+F = 2Ω ;
+
+P a uniform probability measure on Ω
+
+X =“largest of three numbers” is a rv on (Ω, F , P)
+X = k ⇐⇒ ball no. k is drawn and the other two are smaller:
+
+k−1
+P(X = k ) =
+
+2
+
+10
+3
+
+in particular,
+P(X ≥ 7)
+= P(X = 7) + P(X = 8) + P(X = 9) + P(X = 10)
+= 5/6
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Outline
+1
+
+RV’s: Definitions, examples, and properties
+Examples
+Definition
+Probability mass function
+Cumulative distribution function
+
+2
+
+Standard discrete distributions
+Binomial distribution
+Geometric distribution
+Poisson distribution
+
+3
+
+Joint distribution and independence
+Examples
+Definitions
+Independence
+Conditional distribution
+
+Joint distribution
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Probability mass function
+
+In the previous example, constitution of the event {X = k } was not of
+considerable interest; only the probability P(X = k ) was important
+Definition (Probability mass function)
+For a discrete r.v. X its probability mass function (pmf) pX is given by
+pX (a) = P(X = a),
+
+a ∈ R.
+
+If X assumes values x1 , x2 , . . . , then pX (a) ≥ 0 for a = xk and
+pX (a) = 0 otherwise;
+P
+k≥0 pX (xk ) = 1 since {X = xk }k>0 form a partition of Ω
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Probability mass function
+Example (Pmf for no. of ‘H’ in 5 tosses of a biased coin (p = .4))
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Random variables with the same pmf
+Warning: different rv may posses the same pmf
+total number X of Heads in 5tosses
+of biased coin with p = .4:
+
+5 k 5−k
+pX (k ) = P(X = k) =
+p q
+,
+k = 0, 1, . . . , 5
+k
+an urn contains 4 white balls and 6 black ones. A ball is drawn at
+random, its colour marked, and then returned in the urn. The
+number Y of white balls in 5 draws is a rv with
+ 
+
+
+5
+4 k 6 5−k
+pY (k) = P(Y = k) =
+,
+k = 0, 1, . . . , 5
+10
+k 10
+generate 5 random numbers from [0, 1] and count the no. Z of
+those ≤ .4; then
+P(Z = k) = P(Y = k) = P(X = k)
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Random variables with the same pmf
+
+Remark (on pmf)
+For many purposes, it does not matter how a rv X was defined;
+it suffices to know its pmf pX :
+then we know the values of X and the probabilities
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Outline
+1
+
+RV’s: Definitions, examples, and properties
+Examples
+Definition
+Probability mass function
+Cumulative distribution function
+
+2
+
+Standard discrete distributions
+Binomial distribution
+Geometric distribution
+Poisson distribution
+
+3
+
+Joint distribution and independence
+Examples
+Definitions
+Independence
+Conditional distribution
+
+Joint distribution
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Cumulative distribution function
+Alternatively, a r.v. can be characterised by its cdf:
+Definition (cdf)
+The cumulative distribution function FX of a rv X is a function on R
+given by
+FX (t) := P(X ≤ t)
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Cumulative distribution function (cont)
+Properties of cdf:
+0 ≤ FX (t) ≤ 1;
+FX is non-decreasing, with limt→−∞ FX (t) = 0,
+limt→+∞ FX (t) = 1
+FX is right-continuous: FX (t) = FX (t + 0) := limε→0 FX (t + ε);
+however, FX (t − 0) := limε→0 FX (t − ε) need not be equal to FX (t)
+pmf vs cdf:
+Clearly, FX (t) =
+
+P
+
+xj ≤t pX (xj )
+
+on the other hand, pX (xj ) = FX (xj ) − FX (xj − 0)
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Question
+Why is distribution called distribution?
+Given some putative cdf F , do we know there is (Ω, F , P) and X
+s.t. FX = F ?
+
+Definition
+We say a rv X has distribution F (written X ∼ F ) if FX = F
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Outline
+1
+
+RV’s: Definitions, examples, and properties
+Examples
+Definition
+Probability mass function
+Cumulative distribution function
+
+2
+
+Standard discrete distributions
+Binomial distribution
+Geometric distribution
+Poisson distribution
+
+3
+
+Joint distribution and independence
+Examples
+Definitions
+Independence
+Conditional distribution
+
+Joint distribution
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Bernoulli distribution B(1, p)
+Assume a given experiment can result in either
+success
+with probability p ∈ (0, 1), or
+:::::::
+failure
+with
+probability 1 − p
+:::::
+
+Let event A denote the “success”
+its indicator χA is
+(
+1
+χA (ω) =
+0
+
+ω ∈ A;
+ω 6∈ A
+
+the indicator of success χA is a Bernoulli rv (written χA ∼ B(1, p))
+Example (Bernoulli rv’s:)
+indicator of getting at least two Heads in tossing a coin 3 times
+indicator of getting six in rolling a die
+indicator of getting nine in rolling a die twice
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Bernoulli distribution B(1, p)
+If X ∼ B(1, p) is a Bernoulli rv, then its pmf is as follows:
+(
+p,
+if x = 1;
+pX (x) =
+1 − p,
+if x = 0
+Vice versa, any rv Y assuming values 0 and 1 only is Bernoulli:
+with A := {ω | Y (ω) = 1} = {Y = 1}, Y = χA
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Binomial distribution B(n, p)
+If a Bernoulli experiment is repeated n times, and the outcomes of the
+different experiments are independent, then the total number of
+successes is a binomial rv X ∼ B(n, p):
+ 
+n k
+pX (k ) =
+p (1 − p)n−k ,
+k = 0, 1, . . . , n.
+k
+By binomial thm,
+n
+X
+k=0
+
+pX (k) =
+
+n
+X
+k=0
+
+
+n k
+p (1 − p)n−k = (p + 1 − p)n = 1
+k
+
+Example (Number of sixes in rolling a die 5 times:)
+If Y is the number of sixes, then
+ 
+5 1 k 5 5−k
+pY (k) =
+6
+k 6
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Outline
+1
+
+RV’s: Definitions, examples, and properties
+Examples
+Definition
+Probability mass function
+Cumulative distribution function
+
+2
+
+Standard discrete distributions
+Binomial distribution
+Geometric distribution
+Poisson distribution
+
+3
+
+Joint distribution and independence
+Examples
+Definitions
+Independence
+Conditional distribution
+
+Joint distribution
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Geometric rv G (p)
+The number of Bernoulli experiments until the first success is a rv with
+geometric distribution:
+pX (k ) = p(1 − p)k−1 ,
+
+k = 1, 2, . . .
+
+Observe that (and that is Murphy’s law)
+X
+k≥1
+
+pX (k) = p
+
+∞
+X
+
+(1 − p)j =
+
+j=0
+
+p
+=1
+1 − (1 − p)
+
+Example (Number of die throws until the first six)
+If Y is the number of rolling until the first six shows up, then
+pY (k ) =
+
+1
+6
+
+ 5 k−1
+6
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Memorylessness
+
+Memoryless rv
+We say that a nonnegative random variable X is memoryless if
+P{X > s + t|X > t} = P{X > s} for all s, t ≥ 0
+A geometrically distributed random variable X is memoryless.
+
+Joint distribution
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Outline
+1
+
+RV’s: Definitions, examples, and properties
+Examples
+Definition
+Probability mass function
+Cumulative distribution function
+
+2
+
+Standard discrete distributions
+Binomial distribution
+Geometric distribution
+Poisson distribution
+
+3
+
+Joint distribution and independence
+Examples
+Definitions
+Independence
+Conditional distribution
+
+Joint distribution
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Poisson distribution P(λ)
+The Poisson rv X ∼ P(λ) is the limit of binomial rv’s Xn ∼ B(n, pn )
+when n · pn → λ as n → ∞; then
+pX (k) =
+
+λk −λ
+e ,
+k!
+
+k = 0, 1, . . .
+
+Again,
+X
+k≥0
+
+pX (k) = e−λ
+
+X λk
+k≥0
+
+k!
+
+= e−λ eλ = 1
+
+Example (Radioactive decay: alpha-particle emission)
+Assume the number of alpha-particles emitted by some radioactive
+substance in one hour is distributed according to the Poisson law with
+parameter 6. Find the probability that at least 3 alpha-particles will be
+emitted within the next hour.
+Since {X ≥ 3} = Ω \ {X ≤ 2}, we find that 
+
+2
+
+P(X ≥ 3) = 1 − P(X ≤ 2) = 1 − 1 + λ + λ2 e−λ
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Poisson distribution as a limit of binomial ones
+
+Alpha-particle emission in shorter times
+Denote by Y1 , Y2 , . . . , Y60 the number alpha-particle emissions
+during the 1st , 2nd etc minute
+We expect that Yk ∼ B(1, 0.1); thus
+Y := Y1 + · · · + Y60 ∼ B(60, 0.1)
+Let us compare the distributions of X ∼ P(6) and Y ∼ B(n, 6/n)
+for various n
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Outline
+1
+
+RV’s: Definitions, examples, and properties
+Examples
+Definition
+Probability mass function
+Cumulative distribution function
+
+2
+
+Standard discrete distributions
+Binomial distribution
+Geometric distribution
+Poisson distribution
+
+3
+
+Joint distribution and independence
+Examples
+Definitions
+Independence
+Conditional distribution
+
+Joint distribution
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+An example of joint distribution
+Example
+An urn contains 3 white balls and 2 black ones. Three balls are drawn
+from the urn in turn without replacement. Set
+X is the total number of white balls drawn
+Y is the number of white balls in the first two draws
+P
+X
+Y
+
+WWW
+.1
+3
+2
+
+WWB
+.2
+2
+2
+
+WBW
+.2
+2
+1
+
+BWW
+.2
+2
+1
+
+WBB
+.1
+1
+1
+
+BWB
+.1
+1
+1
+
+The joint distribution of (X , Y ) can be given by the table
+Y=0
+Y=1
+Y=2
+
+X=1
+.1
+.2
+0
+
+X=2
+0
+.4
+.2
+
+X=3
+0
+0
+.1
+
+BBW
+.1
+1
+0
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Marginal distributions of X and Y
+The joint distribution completely describes the pmf’s of X and Y , eg:
+pX (1) = P(X = 1) = P(X = 1, Y = 0) + P(X = 1, Y = 1)
++ P(X = 1, Y = 2) = .3;
+pY (1) = P(Y = 1) = P(X = 1, Y = 1) + P(X = 2, Y = 1)
++ P(X = 3, Y = 1) = .6
+
+Y=0
+Y=1
+Y=2
+
+X=1
+.1
+.2
+0
+
+X=2
+0
+.4
+.2
+
+X=3
+0
+0
+.1
+
+Y=0
+Y=1
+Y=2
+
+X=1
+.1
+.2
+0
+
+X=2
+0
+.4
+.2
+
+X=3
+0
+0
+.1
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Conditional distributions of X and Y
+If the value of Y is known, this changes the possibilities for X , e.g.
+P(X = 1 | Y = 0) = P(BBW | BBW) = 1,
+P(X = 2 | Y = 0) =
+
+= 0,
+
+P(X = 3 | Y = 0) =
+
+= 0,
+
+and this gives a conditional distribution of X given the event {Y = 0}.
+Definition
+The function pX |Y (x | y) := P(X = x | Y = y) for a fixed y is the pmf of
+a random variable X | Y = y that is said to have a conditional
+distribution given that {Y = y }
+Observe that X | Y = y assumes the same values as X but their pmf
+are in general different
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Outline
+1
+
+RV’s: Definitions, examples, and properties
+Examples
+Definition
+Probability mass function
+Cumulative distribution function
+
+2
+
+Standard discrete distributions
+Binomial distribution
+Geometric distribution
+Poisson distribution
+
+3
+
+Joint distribution and independence
+Examples
+Definitions
+Independence
+Conditional distribution
+
+Joint distribution
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Joint probability mass function
+Assume X and Y are two rv on a probability space (Ω, F , P)
+Then we have a random mapping
+
+Ω 3 ω 7→ X (ω), Y (ω) ∈ R2
+Definition (Joint probability mass function)
+Assume X and Y are discrete rv on (Ω, F , P); then the function
+pX ,Y (x, y) := P(X = x, Y = y)
+is called the joint probability mass function
+Remark (Properties of joint pmf)
+pX ,Y satisfies all properties of the usual pmf,
+Pnamely
+pX ,Y ≥ 0
+and
+x,y pX ,Y (x, y) = 1
+Marginal pmf’s of X and Y in a joint distribution of (X , Y ) are given by
+P
+pX (x) = y pX ,Y (x, y );
+P
+pY (y) = x pX ,Y (x, y)
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Outline
+1
+
+RV’s: Definitions, examples, and properties
+Examples
+Definition
+Probability mass function
+Cumulative distribution function
+
+2
+
+Standard discrete distributions
+Binomial distribution
+Geometric distribution
+Poisson distribution
+
+3
+
+Joint distribution and independence
+Examples
+Definitions
+Independence
+Conditional distribution
+
+Joint distribution
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Independence
+
+Recall that events A and B are independent iff P(AB) = P(A)P(B)
+Definition (Independent rv)
+Discrete rv X and Y are independent if for every x and y , the events
+A := {X = x} and B := {Y = y} are independent
+In terms of pmf independence can be expressed as follows:
+∀x, y :
+
+pX ,Y (x, y) = pX (x)pY (y )
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Independence
+
+Example (An urn with 3 white and 2 black balls)
+Y =0
+Y =1
+Y =2
+pX
+
+X =1
+.1
+.2
+0
+.3
+
+X =2
+0
+.4
+.2
+.6
+
+X =3
+0
+0
+.1
+.1
+
+pY
+.1
+.6
+.3
+
+X and Y are dependent as pX ,Y (2, 1) 6= pX (2)pY (1); in fact, X ≥ Y
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Outline
+1
+
+RV’s: Definitions, examples, and properties
+Examples
+Definition
+Probability mass function
+Cumulative distribution function
+
+2
+
+Standard discrete distributions
+Binomial distribution
+Geometric distribution
+Poisson distribution
+
+3
+
+Joint distribution and independence
+Examples
+Definitions
+Independence
+Conditional distribution
+
+Joint distribution
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Conditional distribution
+
+Given the joint distribution of X and Y and given that Y = y
+occurred, we can introduce the conditional distribution of the rv
+X | Y = y:
+pX |Y (x | y) := P(X = x | Y = y) =
+
+P(X = x, Y = y )
+P(Y = y )
+
+For a fixed y , pX |Y (· | y ) is a pmf of the rv X | Y = y:
+X
+x
+
+pX |Y (x, y) =
+
+X pX ,Y (x, y )
+x
+
+pY (y)
+
+=
+
+pY (y )
+=1
+pY (y )
+
+If X and Y are independent, then (X | Y = y ) ∼ X
+
+RV’s: Definitions, examples, and properties
+
+Standard discrete distributions
+
+Joint distribution
+
+Problem
+If X and Y are independent Poisson random variables with respective
+parameters λ1 and λ2 , calculate the conditional distribution of X given
+that X + Y = n.
+Solution
+Start with calculating the pmf of the rv Z := X + Y :
+Xn
+Xn
+pZ (n) =
+pX ,Y (k, n − k ) =
+pX (k)pY (n − k)
+k=0
+
+k=0
+
+λk1 λn−k
+2
+
+(λ1 + λ2 )n −(λ1 +λ2 )
+e
+k=0 k!(n − k )!
+n!
+Thus Z has a Poisson distribution with parameter λ1 + λ2 , and
+= e−(λ1 +λ2 )
+
+Xn
+
+=
+
+pX ,Z (k , n)
+pX ,Y (k, n − k )
+=
+pZ (n)
+pZ (n)
+ 
+n−k
+k
+λ1 λ2
+n!
+n k
+=
+=
+p (1 − p)n−k
+n
+k!(n − k )! (λ1 + λ2 )
+k
+
+pX |Z (k | n) =
+
+this is a binomial distr. with parameters n and p = λ1 /(λ1 + λ2 )
+
+

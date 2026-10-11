@@ -1,0 +1,894 @@
+274
+
+Chapter 6
+
+Jointly Distributed Random Variables
+
+P{R … a} = P{X(n) − X(1) … a}
+**
+=
+fX(1) ,X(n) (x1 , xn ) dx1 dxn
+xn −x1 …a
+
+=
+
+* q * x1 +a
+−q x1
+
+n!
+[F(xn ) − F(x1 )]n−2 f (x1 )f (xn ) dxn dx1
+(n − 2)!
+
+Making the change of variable y = F(xn ) − F(x1 ), dy = f (xn ) dxn yields
+* F(x1 +a)−F(x1 )
+* x1 +a
+n−2
+[F(xn ) − F(x1 )] f (xn ) dxn =
+yn−2 dy
+x1
+
+0
+
+=
+Thus,
+P{R … a} = n
+
+* q
+−q
+
+1
+[F(x1 + a) − F(x1 )]n−1
+n − 1
+
+[F(x1 + a) − F(x1 )]n−1 f (x1 ) dx1
+
+(6.7)
+
+Equation (6.7) can be evaluated explicitly only in a few special cases. One such case
+is when the Xi ’s are all uniformly distributed on (0, 1). In this case, we obtain, from
+Equation (6.7), that for 0 < a < 1,
+* 1
+P{R < a} = n
+[F(x1 + a) − F(x1 )]n−1 f (x1 ) dx1
+0
+* 1−a
+* 1
+n−1
+=n
+a
+dx1 + n
+(1 − x1 )n−1 dx1
+0
+
+1−a
+
+= n(1 − a)an−1 + an
+Differentiation yields the density function of the range: given in this case by
+0
+0 … a … 1
+n(n − 1)an−2 (1 − a)
+fR (a) =
+0
+otherwise
+That is, the range of n independent uniform (0, 1) random variables is a beta random
+variable with parameters n − 1, 2.
+.
+
+6.7
+
+JOINT PROBABILITY DISTRIBUTION OF FUNCTIONS OF RANDOM VARIABLES
+Let X1 and X2 be jointly continuous random variables with joint probability density
+function fX1 ,X2 . It is sometimes necessary to obtain the joint distribution of the random variables Y1 and Y2 , which arise as functions of X1 and X2 . Speciﬁcally, suppose
+that Y1 = g1 (X1 , X2 ) and Y2 = g2 (X1 , X2 ) for some functions g1 and g2 .
+Assume that the functions g1 and g2 satisfy the following conditions:
+1. The equations y1 = g1 (x1 , x2 ) and y2 = g2 (x1 , x2 ) can be uniquely solved for x1
+and x2 in terms of y1 and y2 , with solutions given by, say, x1 = h1 (y1 , y2 ), x2 =
+h2 (y1 , y2 ).
+2. The functions g1 and g2 have continuous partial derivatives at all points (x1 , x2 )
+and are such that the 2 * 2 determinant
+
+Section 6.7
+
+Joint Distribution of Functions of Random Variables
+
+6
+6 ∂g1
+6
+6 ∂x
+6 1
+J(x1 , x2 ) = 6
+6 ∂g2
+6
+6 ∂x1
+
+275
+
+6
+
+∂g1 66
+∂x2 66
+
+∂g1 ∂g2
+∂g1 ∂g2
+−
+Z 0
+6 K
+6
+∂x1 ∂x2
+∂x2 ∂x1
+∂g2
+6
+∂x2 6
+
+at all points (x1 , x2 ).
+Under these two conditions, it can be shown that the random variables Y1 and Y2
+are jointly continuous with joint density function given by
+fY1 Y2 (y1 , y2 ) = fX1 ,X2 (x1 , x2 )|J(x1 , x2 )|−1
+
+(7.1)
+
+where x1 = h1 (y1 , y2 ), x2 = h2 (y1 , y2 ).
+A proof of Equation (7.1) would proceed along the following lines:
+* *
+P{Y1 … y1 , Y2 … y2 } =
+
+fX1 ,X2 (x1 , x2 ) dx1 dx2
+
+(7.2)
+
+(x1 , x2 ) :
+g1 (x1 , x2 ) … y1
+g2 (x1 , x2 ) … y2
+
+The joint density function can now be obtained by differentiating Equation (7.2) with
+respect to y1 and y2 . That the result of this differentiation will be equal to the righthand side of Equation (7.1) is an exercise in advanced calculus whose proof will not
+be presented in this book.
+EXAMPLE 7a
+Let X1 and X2 be jointly continuous random variables with probability density function fX1 ,X2 . Let Y1 = X1 + X2 , Y2 = X1 − X2 . Find the joint density function of Y1
+and Y2 in terms of fX1 ,X2 .
+Solution. Let g1 (x1 , x2 ) = x1 + x2 and g2 (x1 , x2 ) = x1 − x2 . Then
+6
+6
+61 1 6
+6 = −2
+J(x1 , x2 ) = 66
+1 −1 6
+Also, since the equations y1 = x1 + x2 and y2 = x1 − x2 have x1 = (y1 + y2 )/2, x2 =
+(y1 − y2 )/2 as their solution, it follows from Equation (7.1) that the desired density is
+1
+fY1 ,Y2 (y1 , y2 ) = fX1 ,X2
+2
+
+
+
+y1 + y2 y1 − y2
+,
+2
+2
+
+
+
+For instance, if X1 and X2 are independent uniform (0, 1) random variables, then
+0
+fY1 ,Y2 (y1 , y2 ) =
+
+1
+2
+
+0
+
+0 … y1 + y2 … 2, 0 … y1 − y2 … 2
+otherwise
+
+276
+
+Chapter 6
+
+Jointly Distributed Random Variables
+
+or if X1 and X2 are independent exponential random variables with respective parameters λ1 and λ2 , then
+fY1 ,Y2 (y1 , y2 )
+⎧
+0
+
+7
+
+
+⎪
+y
+y
+λ
++
+y
+−
+y
+λ
+⎪
+2
+2
+2
+1
+1
+1
+⎨
+exp −λ1
+− λ2
+y1 + y2 Ú 0, y1 − y2 Ú 0
+2
+2
+2
+=
+⎪
+⎪
+⎩
+0
+otherwise
+
+R
+
+Y
+
+⍜
+X
+
+FIGURE 6.4: • = Random point. (X, Y) = (R, Θ).
+
+Finally, if X1 and X2 are independent standard normal random variables, then
+1 −[(y1 +y2 )2 /8+(y1 −y2 )2 /8]
+e
+4π
+1 −(y2 +y2 )/4
+e 1 2
+=
+4π
+1
+1
+2
+2
+= √ e−y1 /4 √ e−y2 /4
+4π
+4π
+
+fY1 ,Y2 (y1 , y2 ) =
+
+Thus, not only do we obtain (in agreement with Proposition 3.2) that both X1 + X2
+and X1 − X2 are normal with mean 0 and variance 2, but we also conclude that these
+two random variables are independent. (In fact, it can be shown that if X1 and X2
+are independent random variables having a common distribution function F, then
+X1 + X2 will be independent of X1 − X2 if and only if F is a normal distribution
+function.)
+.
+EXAMPLE 7b
+Let (X, Y) denote a random point in the plane, and assume that the rectangular
+coordinates X and Y are independent standard normal random variables. We are
+interested in the joint distribution of R, Θ, the polar coordinate representation of
+(x, y). (See Figure 6.4.)
+Suppose.ﬁrst that X and Y are both positive. For x and y positive, letting r =
+g1 (x, y) = x2 + y2 and θ = g2 (x, y) = tan−1 y/x, we see that
+x
+∂g1
+=.
+∂x
+x2 + y2
+y
+∂g1
+=.
+2
+∂y
+x + y2
+
+Section 6.7
+
+Joint Distribution of Functions of Random Variables
+
+
+
+277
+
+
+
+−y
+−y
+1
+∂g2
+= 2
+=
+2
+2
+∂x
+1 + (y/x)
+x
+x + y2
+x
+1
+∂g2
+= 2
+=
+2
+∂y
+x[1 + (y/x) ]
+x + y2
+Hence,
+J(x, y) =
+
+x2
+y2
+1
+1
++
+=.
+=
+2
+2
+3/2
+2
+2
+3/2
+r
+(x + y )
+(x + y )
+x2 + y2
+
+Because the conditional joint density function of X, Y given that they are both
+positive is
+f (x, y)
+2
+2
+2
+= e−(x +y )/2 , x > 0, y > 0
+P(X > 0, Y > 0)
+π
+.
+we see that the conditional joint density function of R = X 2 + Y 2 and  =
+tan−1 (Y/X), given that X and Y are both positive, is
+f (x, y|X > 0, Y > 0) =
+
+2 −r2/2
+re
+,
+π
+
+0 < θ < π/2,
+
+0 < r < q
+
+2 −r2/2
+re
+,
+π
+2
+2/2
+f (r, θ|X < 0, Y < 0) = re−r ,
+π
+2
+2/2
+f (r, θ|X > 0, Y < 0) = re−r ,
+π
+
+π/2 < θ < π,
+
+0 < r < q
+
+π < θ < 3π/2,
+
+0 < r < q
+
+3π/2 < θ < 2π,
+
+0 < r < q
+
+f (r, θ|X > 0, Y > 0) =
+Similarly, we can show that
+f (r, θ|X < 0, Y > 0) =
+
+As the joint density is an equally weighted average of these 4 conditional joint densities, we obtain that the joint density of R, Θ is given by
+f (r, θ) =
+
+1 −r2 /2
+re
+2π
+
+0 < θ < 2π,
+
+0 < r < q
+
+Now, this joint density factors into the marginal densities for R and Θ, so R and Θ
+are independent random variables, with Θ being uniformly distributed over (0, 2π)
+and R having the Rayleigh distribution with density
+f (r) = re−r /2
+2
+
+0 < r < q
+
+(For instance, when one is aiming at a target in the plane, if the horizontal and vertical
+miss distances are independent standard normals, then the absolute value of the error
+has the preceding Rayleigh distribution.)
+This result is quite interesting, for it certainly is not evident a priori that a random vector whose coordinates are independent standard normal random variables
+will have an angle of orientation that not only is uniformly distributed, but also is
+independent of the vector’s distance from the origin.
+
+278
+
+Chapter 6
+
+Jointly Distributed Random Variables
+
+If we wanted the joint distribution of R2 and Θ, then, since the transformation
+d = g1 (x, y) = x2 + y2 and θ = g2 (x, y) = tan−1 y/x has the Jacobian
+6
+6
+6
+6
+2x
+2y
+6
+6
+6
+6
+−y
+x
+J=6
+6=2
+6 2
+6
+6 x + y2 x2 + y2 6
+it follows that
+f (d, θ) =
+
+1 −d/2 1
+e
+2
+2π
+
+0 < d < q,
+
+0 < θ < 2π
+
+Therefore, R2 and Θ are independent, with R2 having an exponential distribution
+with parameter 12 . But because R2 = X 2 + Y 2 , it follows by deﬁnition that R2 has
+a chi-squared distribution with 2 degrees of freedom. Hence, we have a veriﬁcation
+of the result that the exponential distribution with parameter 12 is the same as the
+chi-squared distribution with 2 degrees of freedom.
+The preceding result can be used to simulate (or generate) normal random variables by making a suitable transformation on uniform random variables. Let U1 and
+U2 be independent random variables, each uniformly distributed over (0, 1). We will
+transform U1 , U2 into two independent unit normal random variables X1 and X2
+by ﬁrst considering the polar coordinate representation (R, Θ) of the random vector (X1 , X2 ). From the preceding, R2 and Θ will be independent, and, in addition,
+R2 = X12 + X22 will have an exponential distribution with parameter λ = 12 . But
+−2 log U1 has such a distribution, since, for x > 0,
+/
+%
+x
+P{−2 log U1 < x} = P log U1 > −
+2
+= P{U1 > e−x/2 }
+= 1 − e−x/2
+Also, because 2πU2 is a uniform (0, 2π) random variable, we can use it to generate Θ.
+That is, if we let
+R2 = −2 log U1
+Θ = 2πU2
+then R2 can be taken to be the square of the distance from the origin and θ can be
+taken to be the angle of orientation of (X1 , X2 ). Now, since X1 = R cos Θ, X2 =
+R sin Θ, it follows that
+.
+X1 = −2 log U1 cos(2πU2 )
+.
+X2 = −2 log U1 sin(2πU2 )
+are independent standard normal random variables.
+
+.
+
+EXAMPLE 7c
+If X and Y are independent gamma random variables with parameters (α, λ) and
+(β, λ), respectively, compute the joint density of U = X + Y and V = X/(X + Y).
+
+Section 6.7
+
+Joint Distribution of Functions of Random Variables
+
+279
+
+Solution. The joint density of X and Y is given by
+λe−λx (λx)α−1 λe−λy (λy)β−1
+(α)
+(β)
+λα+β
+e−λ(x+y) xα−1 yβ−1
+=
+(α)(β)
+
+fX,Y (x, y) =
+
+Now, if g1 (x, y) = x + y, g2 (x, y) = x/(x + y), then
+∂g1
+∂g1
+=
+=1
+∂x
+∂y
+
+so
+
+y
+∂g2
+=
+∂x
+(x + y)2
+
+x
+∂g2
+=−
+∂y
+(x + y)2
+
+6
+6
+6
+6
+1
+1
+6
+6
+1
+6
+6
+−x
+y
+J(x, y) = 6
+6=−
+6
+6
+x
++
+y
+6 (x + y)2 (x + y)2 6
+
+Finally, as the equations u = x + y, v = x/(x + y) have as their solutions x = uv, y =
+u(1 − v), we see that
+fU,V (u, v) = fX,Y [uv, u(1 − v)]u
+=
+
+λe−λu (λu)α+β−1 vα−1 (1 − v)β−1 (α + β)
+(α + β)
+(α)(β)
+
+Hence, X + Y and X/(X + Y) are independent, with X + Y having a gamma distribution with parameters (α + β, λ) and X/(X + Y) having a beta distribution with
+parameters (α, β). The preceding reasoning also shows that B(α, β), the normalizing
+factor in the beta density, is such that
+B(α, β) K
+
+* 1
+
+vα−1 (1 − v)β−1 dv
+
+0
+
+(α)(β)
+=
+(α + β)
+This entire result is quite interesting. For suppose there are n + m jobs to be performed, each (independently) taking an exponential amount of time with rate λ to be
+completed and suppose that we have two workers to perform these jobs. Worker I
+will do jobs 1, 2, . . . , n, and worker II will do the remaining m jobs. If we let X and Y
+denote the total working times of workers I and II, respectively, then (either from the
+foregoing result or from Example 3b) X and Y will be independent gamma random
+variables having parameters (n, λ) and (m, λ), respectively. It then follows that, independently of the working time needed to complete all n + m jobs (that is, of X + Y),
+the proportion of this work that will be performed by worker I has a beta distribution
+with parameters (n, m).
+.
+When the joint density function of the n random variables X1 , X2 , . . . , Xn is given
+and we want to compute the joint density function of Y1 , Y2 , . . . , Yn , where
+Y1 = g1 (X1 , . . . , Xn )
+
+Y2 = g2 (X1 , . . . , Xn ), . . .
+
+Yn = gn (X1 , . . . , Xn )
+
+280
+
+Chapter 6
+
+Jointly Distributed Random Variables
+
+the approach is the same—namely, we assume that the functions gi have continuous
+partial derivatives and that the Jacobian determinant.
+6
+6
+6 ∂g ∂g
+6
+∂
+g
+1
+1
+1
+6
+6
+···
+6
+6
+∂xn 6
+6 ∂x1 ∂x2
+6
+6
+6 ∂g2 ∂g2
+∂g2 66
+6
+J(x1 , . . . , xn ) = 6
+Z 0
+···
+∂xn 66
+6 ∂x1 ∂x2
+6
+6
+∂gn 6
+6 ∂gn ∂gn
+6
+6
+···
+6 ∂x1 ∂x2
+∂xn 6
+at all points (x1 , . . . , xn ). Furthermore, we suppose that the equations y1 =
+g1 (x1 , . . . , xn ), y2 = g2 (x1 , . . . , xn ), . . . , yn = gn (x1 , . . . , xn ) have a unique solution, say,
+x1 = h1 (y1 , . . . , yn ), . . . , xn = hn (y1 , . . . , yn ). Under these assumptions, the joint density function of the random variables Yi is given by
+fY1 ,...,Yn (y1 , . . . , yn ) = fX1 ,...,Xn (x1 , . . . , xn )|J(x1 , . . . , xn )|−1
+
+(7.3)
+
+where xi = hi (y1 , . . . , yn ), i = 1, 2, . . . , n.
+EXAMPLE 7d
+Let X1 , X2 , and X3 be independent standard normal random variables. If Y1 = X1 +
+X2 + X3 , Y2 = X1 − X2 , and Y3 = X1 − X3 , compute the joint density function of
+Y1 , Y2 , Y3 .
+Solution. Letting Y1 = X1 + X2 + X3 , Y2 = X1 − X2 , Y3 = X1 − X3 , the Jacobian
+of these transformations is given by
+6
+6
+61 1 16
+6
+6
+J = 66 1 −1 0 66 = 3
+6 1 0 −1 6
+As the preceding transformations yield that
+X1 =
+
+Y1 + Y2 + Y3
+3
+
+X2 =
+
+Y1 − 2Y2 + Y3
+3
+
+X3 =
+
+Y1 + Y2 − 2Y3
+3
+
+we see from Equation (7.3) that
+fY1 , Y2 , Y3 (y1 , y2 , y3 )
+
+
+1
+y1 + y2 + y3 y1 − 2y2 + y3 y1 + y2 − 2y3
+= fX1 , X2 , X3
+,
+,
+3
+3
+3
+3
+Hence, as
+fX1 , X2 , X3 (x1 , x2 , x3 ) =
+
+1
+e−
+(2π)3/2
+
+3
+2
+i=1 xi /2
+
+we see that
+fY1 , Y2 , Y3 (y1 , y2 , y3 ) =
+
+1
+e−Q(y1 , y2 , y3 )/2
+3(2π)3/2
+
+Section 6.7
+
+Joint Distribution of Functions of Random Variables
+
+281
+
+where
+Q(y1 , y2 , y3 )
+
+
+
+2
+
+
+
+=
+
+y1 + y2 + y3
+3
+
+=
+
+y21
+2
+2
+2
++ y22 + y23 − y2 y3
+3
+3
+3
+3
+
++
+
+y1 − 2y2 + y3
+3
+
+2
+
+
++
+
+y1 + y2 − 2y3
+3
+
+2
+
+.
+
+EXAMPLE 7e
+Let X1 , X2 , . . . , Xn be independent and identically distributed exponential random
+variables with rate λ. Let
+Yi = X1 + · · · + Xi
+
+i = 1, . . . , n
+
+(a) Find the joint density function of Y1 , . . . , Yn .
+(b) Use the result of part (a) to ﬁnd the density of Yn .
+Solution. (a) The Jacobian of the transformations Y1 = X1 , Y2 = X1 + X2 , . . .,
+Yn = X1 + · · · + Xn is
+6
+6
+6 1 0 0 0 ··· 0 6
+6
+6
+6 1 1 0 0 ··· 0 6
+6
+6
+6 1 1 1 0 ··· 0 6
+6
+6
+J=6
+6
+···
+6 ···
+6
+6 ···
+6
+·
+·
+·
+6
+6
+6 1 1 1 1 ··· 1 6
+Since only the ﬁrst term of the determinant will be nonzero, we have J = 1.
+Now, the joint density function of X1 , . . . , Xn is given by
+fX1 ,...,Xn (x1 , . . . , xn ) =
+
+n
+
+
+λe−λxi
+
+0 < xi < q, i = 1, . . . , n
+
+i=1
+
+Hence, because the preceding transformations yield
+X1 = Y1 , X2 = Y2 − Y1 , . . . , Xi = Yi − Yi−1 , . . . , Xn = Yn − Yn−1
+it follows from Equation (7.3) that the joint density function of Y1 , . . . , Yn is
+fY1 ,...,Yn (y1 , y2 , . . . , yn )
+= fX1 ,...,Xn (y1 , y2 − y1 , . . . , yi − yi−1 , . . . , yn − yn−1 )
+⎧ ⎡
+⎤⎫
+⎪
+⎪
+n
+⎨
+⎬
+
+n
+= λ exp −λ ⎣y1 +
+(yi − yi−1 )⎦
+⎪
+⎪
+⎩
+⎭
+i=2
+= λn e−λyn
+n −λyn
+
+=λ e
+
+0 < y1 , 0 < yi − yi−1 , i = 2, . . . , n
+0 < y1 < y2 < · · · < yn
+
+282
+
+Chapter 6
+
+Jointly Distributed Random Variables
+
+(b) To obtain the marginal density of Yn , let us integrate out the other variables one
+at a time. Doing this gives
+* y2
+λn e−λyn dy1
+fY2 ,...,Yn (y2 , . . . , yn ) =
+0
+n
+
+= λ y2 e−λyn
+Continuing, we obtain
+fY3 ,...,Yn (y3 , . . . , yn ) =
+
+* y3
+
+0 < y2 < y3 < · · · < yn
+
+λn y2 e−λyn dy2
+
+0
+
+y2
+= λn 3 e−λyn
+2
+
+0 < y3 < y4 < · · · < yn
+
+The next integration yields
+y3
+fY4 ,...,Yn (y4 , . . . , yn ) = λn 4 e−λyn
+3!
+
+0 < y4 < · · · < yn
+
+Continuing in this fashion gives
+fYn (yn ) = λn
+
+yn−1
+n
+e−λyn
+(n − 1)!
+
+0 < yn
+
+which, in agreement with the result obtained in Example 3b, shows that X1 +
+.
+· · · + Xn is a gamma random variable with parameters n and λ.
+∗ 6.8
+
+EXCHANGEABLE RANDOM VARIABLES
+The random variables X1 , X2 , . . . , Xn are said to be exchangeable if, for every permutation i1 , . . . , in of the integers 1, . . . , n,
+P{Xi1 … x1 , Xi2 … x2 , . . . , Xin … xn } = P{X1 … x1 , X2 … x2 , . . . , Xn … xn }
+for all x1 , . . . , xn . That is, the n random variables are exchangeable if their joint distribution is the same no matter in which order the variables are observed.
+Discrete random variables will be exchangeable if
+P{Xi1 = x1 , Xi2 = x2 , . . . , Xin = xn } = P{X1 = x1 , X2 = x2 , . . . , Xn = xn }
+for all permutations i1 , . . . , in , and all values x1 , . . . , xn . This is equivalent to stating
+that p(x1 , x2 , . . . , xn ) = P{X1 = x1 , . . . , Xn = xn } is a symmetric function of the vector
+(x1 , . . . , xn ), which means that its value does not change when the values of the vector
+are permuted.
+EXAMPLE 8a
+Suppose that balls are withdrawn one at a time and without replacement from an
+urn that initially contains n balls, of which k are considered special, in such a manner
+that each withdrawal is equally likely to be any of the balls that remain in the urn
+at the time. Let Xi = 1 if the ith ball withdrawn is special and let Xi = 0 otherwise.
+We will show that the random variables X1 , . . . , Xn are exchangeable. To do so, let
+(x1 , . . . , xn ) be a vector consisting of k ones and n − k zeros. However, before considering the joint mass function evaluated at (x1 , . . . , xn ), let us try to gain some insight by
+
+

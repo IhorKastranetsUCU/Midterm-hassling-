@@ -1,0 +1,118 @@
+import json
+import os
+
+base_dir = "/Users/ihor/Studing/UCU/3 semestr/бабілка/мідтерм хаслінг/midterm2"
+js_dir = os.path.join(base_dir, "js")
+os.makedirs(js_dir, exist_ok=True)
+
+# 1. SCHEDULE_DAYS
+SCHEDULE_DAYS = [
+    {
+        "day": 1,
+        "date": "Sunday, Oct 11",
+        "title": "Discrete RVs & Colloquium Core Definitions",
+        "focus": "Colloquium Definitions 1-6 & Seminar 4 Problems",
+        "description": "Establish the rock-solid foundation of discrete probability. Master exact definitions of random variables, PMF, CDF, Binomial, Geometric, Poisson, and joint distributions.",
+        "tasks": [
+            {"id": "d1-t1", "text": "Master Definitions 1-6 (RV, Discrete RV, PMF, CDF, Binomial, Geometric, Poisson)", "topic": "definitions", "target": "1-6"},
+            {"id": "d1-t2", "text": "Memorize the 4 fundamental properties of CDF (non-decreasing, right-continuous, limits at ±∞, interval probabilities)", "topic": "cdf-properties"},
+            {"id": "d1-t3", "text": "Solve Seminar 4 Problems 1, 2, 7 (Rankings, Dice rolls, Joint coin flips)", "topic": "problems", "target": "1,2,7"},
+            {"id": "d1-t4", "text": "Complete Quiz: Discrete Distributions & Colloquium Definitions Blitz (Score ≥ 85%)", "topic": "quiz", "target": "discrete-blitz"},
+            {"id": "d1-t5", "text": "Do 3 Pomodoro Focus Sessions (75 min total focused hustle)", "topic": "pomodoro"}
+        ],
+        "colloquiumGoal": "Be ready to write down PMF/CDF definitions and derive the Poisson limit from Binomial without hesitation.",
+        "readinessWeight": 15
+    },
+    {
+        "day": 2,
+        "date": "Monday, Oct 12",
+        "title": "Expectation, Variance, Covariance & PGF",
+        "focus": "Colloquium Definitions 12-16, 20 & Seminar 5 Problems",
+        "description": "Master expected value, linearity, LOTUS, variance properties, covariance, correlation Cauchy-Schwarz bounds, and Probability Generating Functions (PGF).",
+        "tasks": [
+            {"id": "d2-t1", "text": "Master Definitions 12-16 & 20 (Expectation, Moments, Variance, Covariance, Correlation, PGF)", "topic": "definitions", "target": "12-16,20"},
+            {"id": "d2-t2", "text": "Learn PGF moment formulas: G'(1) = E[X], G''(1) = E[X(X-1)], and proof of independent sum product G_{X+Y} = G_X * G_Y", "topic": "pgf"},
+            {"id": "d2-t3", "text": "Solve Seminar 5 Problems 9, 10, 12, 14, 18 (Algebra of moments, HH coin toss, Geometric tail sum, Contingency table covariance)", "topic": "problems", "target": "9,10,12,14,18"},
+            {"id": "d2-t4", "text": "Review the counterexample: Uncorrelated (Cov = 0) does NOT imply independent! (e.g. X ~ U(-1,1), Y = X²)", "topic": "theory-trap"},
+            {"id": "d2-t5", "text": "Complete Quiz: Expectation, Variance & PGF Mastery (Score ≥ 85%)", "topic": "quiz", "target": "expectation-pgf"},
+            {"id": "d2-t6", "text": "Complete 4 Pomodoro Sessions (100 min focus)", "topic": "pomodoro"}
+        ],
+        "colloquiumGoal": "Derive Var(aX+b), Var(X+Y) with Cov term, and calculate E[X] using tail sum sum P(X >= k).",
+        "readinessWeight": 20
+    },
+    {
+        "day": 3,
+        "date": "Tuesday, Oct 13",
+        "title": "Continuous RVs, Transformations & Oral Colloquium Simulation",
+        "focus": "Colloquium Definitions 7-11, 17-19, 21 & Oral Questions 1-12 Drill",
+        "description": "Continuous random variables, PDF properties, Uniform, Exponential with memorylessness, Normal, 1D transformation formula, and full simulation of all 12 Colloquium oral exam questions.",
+        "tasks": [
+            {"id": "d3-t1", "text": "Master Definitions 7-11, 17-19, 21 (Continuous RV, PDF, Uniform, Exponential, Normal, Transformed RV, Sum RV, MGF)", "topic": "definitions", "target": "7-11,17-19,21"},
+            {"id": "d3-t2", "text": "Memorize the 1D Transformation Formula: f_Y(y) = f_X(g⁻¹(y)) * |d/dy g⁻¹(y)| and affine normal transform", "topic": "transformations"},
+            {"id": "d3-t3", "text": "Solve Seminar 6 Problems 19, 20, 23, 24 (Normal transform, min/max of Uniforms, Exponential shopping, Triangle joint PDF)", "topic": "problems", "target": "19,20,23,24"},
+            {"id": "d3-t4", "text": "Oral Defense Simulation: Test yourself on all 12 Colloquium Questions with AI Gemini Tutor", "topic": "oral-defense"},
+            {"id": "d3-t5", "text": "Complete Colloquium Mock Exam (Definitions + Oral Questions + 2 problems)", "topic": "quiz", "target": "colloquium-mock"},
+            {"id": "d3-t6", "text": "Complete 4 Pomodoro Sessions (100 min focus)", "topic": "pomodoro"}
+        ],
+        "colloquiumGoal": "Achieve 100% on the 21 definitions and pass 12 oral questions defense with top marks.",
+        "readinessWeight": 25
+    },
+    {
+        "day": 4,
+        "date": "Wednesday, Oct 14",
+        "title": "COLLOQUIUM DAY & Midterm Transition",
+        "focus": "Ace Colloquium 2 in morning -> Shift to Midterm Practice in afternoon",
+        "description": "Morning: Rapid 30-min flashcard review before the exam. Crush Colloquium 2! Afternoon: Transition to Midterm problem solving (Midterm 2017 exam paper walkthrough).",
+        "tasks": [
+            {"id": "d4-t1", "text": "Morning Rapid Drill: Review all 21 definitions on flashcards + golden formulas sheet (30 min)", "topic": "rapid-review"},
+            {"id": "d4-t2", "text": "TAKE COLLOQUIUM II (Maximum grade target!)", "topic": "exam-colloquium"},
+            {"id": "d4-t3", "text": "Afternoon: Solve Midterm 2017 Practice Exam (Problems 1 to 6 complete write-up)", "topic": "midterm-2017"},
+            {"id": "d4-t4", "text": "Solve Colloquium Advanced Problem 2 (Poisson thinning: Y ~ P(λp), X-Y ~ P(λ(1-p)) independent)", "topic": "advanced-problems"},
+            {"id": "d4-t5", "text": "Complete 3 Pomodoro Sessions", "topic": "pomodoro"}
+        ],
+        "colloquiumGoal": "Solidify transition to written problem solving for Friday's Midterm.",
+        "readinessWeight": 15
+    },
+    {
+        "day": 5,
+        "date": "Thursday, Oct 15",
+        "title": "Midterm 2 Hardcore Hustle & Timed Mock Exam",
+        "focus": "Full Midterm 2 Drills, Hard Edge Cases & Gemini Weakness Diagnostic",
+        "description": "Master advanced exam problems: Gambler's ruin, Helicopter distance in circle, Traffic light mixed distribution, Laplace difference of exponentials, and full timed mock exam.",
+        "tasks": [
+            {"id": "d5-t1", "text": "Solve Advanced Problem 4 (Gambler's ruin difference equations pk = p*p_{k+1} + q*p_{k-1})", "topic": "advanced-problems"},
+            {"id": "d5-t2", "text": "Solve Advanced Problem 8 & 9 (Helicopter in 100km circle & Traffic light mixed continuous-discrete distribution)", "topic": "advanced-problems"},
+            {"id": "d5-t3", "text": "Solve Advanced Problem 11 (Difference of two exponentials -> Laplace distribution via convolution/Jacobian)", "topic": "advanced-problems"},
+            {"id": "d5-t4", "text": "Complete Full Timed Midterm 2 Simulation (MC + Definitions + 4 Problems in 80 min)", "topic": "quiz", "target": "full-midterm-sim"},
+            {"id": "d5-t5", "text": "Use Gemini Diagnostic: Review every missed question and explain mistakes", "topic": "gemini-review"},
+            {"id": "d5-t6", "text": "Complete 4 Pomodoro Sessions", "topic": "pomodoro"}
+        ],
+        "colloquiumGoal": "Zero gaps remaining. All 6 Midterm question types solved under time pressure.",
+        "readinessWeight": 20
+    },
+    {
+        "day": 6,
+        "date": "Friday, Oct 16",
+        "title": "MIDTERM 2 EXAM DAY - MAXIMUM SCORE",
+        "focus": "Final Formula Refresh & Execution",
+        "description": "Wake up fresh. Quick 20-min review of the Formula Matrix and common exam traps. Go crush the Midterm and get 100%!",
+        "tasks": [
+            {"id": "d6-t1", "text": "Review Master Distributions Cheatsheet (Supports, means, variances, PGFs, MGFs)", "topic": "cheat-sheet"},
+            {"id": "d6-t2", "text": "Check Midterm Golden Traps: Normal affine constants (μ = b, σ² = a²), Var(2X - Y) = 4Var(X) + Var(Y), support bounds in integrals", "topic": "traps"},
+            {"id": "d6-t3", "text": "TAKE MIDTERM 2 & GET MAXIMUM!", "topic": "exam-midterm"}
+        ],
+        "colloquiumGoal": "Collect your 100% / max grade on Midterm 2!",
+        "readinessWeight": 5
+    }
+]
+
+# Write to file directly as python module to be extended with all full structures
+with open(os.path.join(base_dir, "build_full_data.py"), "w", encoding="utf-8") as f:
+    f.write(f"""# Generator for full data
+import json, os
+
+SCHEDULE_DAYS = {repr(SCHEDULE_DAYS)}
+print("Schedule days defined: ", len(SCHEDULE_DAYS))
+""")
+
+print("Schedule written")

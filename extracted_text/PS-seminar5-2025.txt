@@ -1,0 +1,130 @@
+APPS @ UCU
+
+Probability and Statistics: Seminar 5
+
+Autumn 2024
+
+Probability and Statistics
+Topic 5. Expectation
+• Expected value
+• Properties of expectation
+• Variance and moments
+• Properties of variance
+• Covariance and correlation
+• Probability generating function
+• Properties of p.g.f.
+
+Seminar 5
+Problem 1. If E(X) = 1, E(Y ) = −1, Var(X) = 4, and Var(Y ) = 3, find
+
+(a) E (X − 1) ln 2 ;
+(b) E(3X 2 − 5X);
+(c) E((−4 − Y )Y );
+(d) Var(( 21 − X)X).
+If E(X) = 2, E(Y ) = −1, E(X 2 ) = 5, and E(Y 2 ) = 4, find
+√
+
+(f) Var(π + 3Y );
+(g) E((5 − X)Y );
+(e) E X − eY + e2 ;
+
+(h) Var( 12 X + 13 Y ).
+
+Problem 2. An urn contains 10 balls numbered 1 to 10. Two balls are sampled in turn without
+replacement and their numbers are denoted as X1 and X2 respectively. Let Y be the minimum of
+X1 and X2 .
+(a) Show that the distributions of X1 and X2 coincide.
+(b) Find expectation and variance of X1 .
+(c) Find covariance of X1 and X2 . Can you guess the sign before calculations? Are X1 and X2
+independent?
+(d) Find expectation and variance of Y .
+(e) Find the conditional distribution of X1 given that Y = y.
+Hint: the case X1 = y is special
+
+(f) Find expectation and variance of X1 given that Y = y.
+Problem 3. A fair coin is tossed repeatedly and independently until two consecutive heads or two
+consecutive tails appear. Denote by N the r.v. equal to the number of tosses made.
+(a) Find the p.m.f. of the r.v. N .
+(b) Find the expected value of the r.v. N .
+(c) Find the variance of the r.v. N .
+
+APPS @ UCU
+
+Probability and Statistics: Seminar 5
+
+Autumn 2024
+
+Assume now that the coin is tossed until we obtain a tail that is immediately preceded by a head;
+let a r.v. N1 denote the corresponding number of tosses.
+(d) Find the p.m.f. and the expected value of the r.v. N1 .
+Problem 4. A die with 6 faces, numbered 1, . . . , 6, is rolled a fixed number of times n. The
+probability that the ith face comes up on each roll is denoted pi and the results of different rolls are
+assumed independent. Let Xi be the number of times that the ith face comes up.
+(a) Find the joint p.m.f. pX1 ,...Xr (k1 , . . . , kr ) = P(X1 = k1 , . . . , Xr = kr ) for r = 1, 2, and 6.
+(b) Find the expected value of Xi .
+(c) Find the variance of Xi .
+(d) Find E[Xi Xj ] for i 6= j.
+Problem 5. Assume that X is a r.v. with geometric distribution G (p).
+(a) Calculate the probability generating function (p.g.f.) GX of X.
+(b) Use GX to find E(X), the second factorial moment µ(2) (X) and Var(X)
+Assume further that X1 , X2 , . . . are r. v.’s with geometric distribution G (p) and N is a r. v. with
+Poisson distribution P(λ). Assume that the r. v.’s N, X1 , X2 , . . . , are independent and set S :=
+X1 + · · · + XN .
+(c) Calculate the p.g.f. GS of the r. v. S.(Hint: condition on the event {N = n}, n ∈ Z+ )
+Problem 6. In the morning, the centipede put shoes on all 2m of its legs. During the day, each shoe
+could be lost with probability p independently of the others. What is the expected number of pairs
+of legs in shoes in the evening if there are n shoes left? Hint: calculate the expectation of the indicator Ik
+that both shoes in the pair no. k are not lost,conditioned on the number of soes left N = n.
+
+Problem 7. The children’s library has 4 shelves with books. There are 35 books on the first shelf,
+20 on the second, 45 on the third, and 60 on the fourth. Alice randomly chooses one book. Let X
+denote the number of books on the shelf from which Alice chose the book. Bob first randomly selects
+the shelf from which he will later choose a book. Let Y denote the number of books on the shelf
+chosen by Bob.
+(a) Which of E(X) anf E(Y ) do you think is larger? Give your reasoning in words.
+(b) Compute E(X) and E(Y ).
+Problem 8. A fair die is rolled. How many rolls do you expect to do before you observe every of
+faces of a die at least once?
+
+Extra problems
+(to be discussed if time permits)
+Problem 9. Two balls are chosen randomly from an urn containing 8 white, 4 black, and 2 orange
+balls. Suppose that we win $2 for each black ball selected and we lose $1 for each white ball selected.
+Let X denote our winnings. Find the expected value and variance of the random variable X.
+
+APPS @ UCU
+
+Probability and Statistics: Seminar 5
+
+Autumn 2024
+
+Problem 10. Suppose that a fair die is rolled twice. Find expectation and variance for the following
+random variables:
+(a) the maximum value to appear in the two rolls;
+(b) the minimum value to appear in the two rolls;
+(c) the value of the first roll minus the value of the second roll.
+Problem 11. Assume X and Y have joint probability mass function
+p(x, y)
+x=0
+x=1
+x=3
+
+y = −1 y = 1 y = 2 y = 3
+1/12
+1/4
+0
+0
+1/12
+1/12 1/12 1/12
+0
+0
+1/4
+1/12
+
+(a) Find E(X), E(Y ), E(S), E(D), and E(M ), where S = X + Y , D = X − Y , and M = max{X, Y }.
+(b) Find whether X is independent of Y .
+(c) Find variance of the random variables S and M .
+(d) Find covariance of X and D.
+(e) Find E(Y | X = x) for x = 0, 1, 3.
+
+

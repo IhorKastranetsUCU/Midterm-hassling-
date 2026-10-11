@@ -1,0 +1,4564 @@
+C H A P T E R
+
+5
+
+Continuous Random Variables
+5.1
+5.2
+5.3
+5.4
+5.5
+5.6
+5.7
+
+INTRODUCTION
+EXPECTATION AND VARIANCE OF CONTINUOUS RANDOM VARIABLES
+THE UNIFORM RANDOM VARIABLE
+NORMAL RANDOM VARIABLES
+EXPONENTIAL RANDOM VARIABLES
+OTHER CONTINUOUS DISTRIBUTIONS
+THE DISTRIBUTION OF A FUNCTION OF A RANDOM VARIABLE
+
+5.1
+
+INTRODUCTION
+In Chapter 4, we considered discrete random variables—that is, random variables
+whose set of possible values is either ﬁnite or countably inﬁnite. However, there also
+exist random variables whose set of possible values is uncountable. Two examples are
+the time that a train arrives at a speciﬁed stop and the lifetime of a transistor. Let X
+be such a random variable. We say that X is a continuous† random variable if there
+exists a nonnegative function f , deﬁned for all real x ∈ (−q, q), having the property
+that, for any set B of real numbers,‡
+*
+P{X ∈ B} =
+f (x) dx
+(1.1)
+B
+
+The function f is called the probability density function of the random variable X.
+(See Figure 5.1.)
+In words, Equation (1.1) states that the probability that X will be in B may be
+obtained by integrating the probability density function over the set B. Since X must
+assume some value, f must satisfy
+* q
+f (x) dx
+1 = P{X ∈ (−q, q)} =
+−q
+
+All probability statements about X can be answered in terms of f . For instance, from
+Equation (1.1), letting B = [a, b], we obtain
+P{a … X … b} =
+
+* b
+
+f (x) dx
+
+(1.2)
+
+a
+
+† Sometimes called absolutely continuous.
+‡ Actually, for technical reasons Equation (1.1) is true only for the measurable sets B, which,
+
+fortunately, include all sets of practical interest.
+
+186
+
+Section 5.1
+
+Introduction
+
+187
+
+f
+
+a
+
+x
+
+b
+
+P(a ⱕ X ⱕ b) = area of shaded region
+FIGURE 5.1: Probability density function f.
+
+If we let a = b in Equation (1.2), we get
+P{X = a} =
+
+* a
+
+f (x) dx = 0
+
+a
+
+In words, this equation states that the probability that a continuous random variable
+will assume any ﬁxed value is zero. Hence, for a continuous random variable,
+* a
+f (x) dx
+P{X < a} = P{X … a} = F(a) =
+−q
+
+EXAMPLE 1a
+Suppose that X is a continuous random variable whose probability density function
+is given by
+0
+C(4x − 2x2 ) 0 < x < 2
+f (x) =
+0
+otherwise
+(a) What is the value of C?
+(b) Find P{X > 1}.
+Solution. (a) Since f is a probability density function, we must have
+implying that
+* 2
+(4x − 2x2 ) dx = 1
+C
+
+-q
+
+−q f (x) dx = 1,
+
+0
+
+or
+
+
+
+2x3
+C 2x2 −
+3
+
+ 6x=2
+6
+6
+=1
+6
+6
+x=0
+
+or
+C=
+Hence,
+(b) P{X > 1} =
+
+-q
+1
+
+f (x) dx = 38
+
+3
+8
+
+-2
+
+1
+2
+1 (4x − 2x ) dx = 2
+
+.
+
+188
+
+Chapter 5
+
+Continuous Random Variables
+
+EXAMPLE 1b
+The amount of time in hours that a computer functions before breaking down is a
+continuous random variable with probability density function given by
+0
+f (x) =
+
+λe−x/100 x Ú 0
+0
+x < 0
+
+What is the probability that
+(a) a computer will function between 50 and 150 hours before breaking down?
+(b) it will function for fewer than 100 hours?
+Solution. (a) Since
+1=
+
+* q
+−q
+
+f (x) dx = λ
+
+* q
+
+e−x/100 dx
+
+0
+
+we obtain
+6q
+1 = −λ(100)e−x/100 60 = 100λ or
+
+λ=
+
+1
+100
+
+Hence, the probability that a computer will function between 50 and 150 hours before
+breaking down is given by
+* 150
+
+6150
+1 −x/100
+e
+dx = −e−x/100 650
+100
+50
+−1/2
+=e
+− e−3/2 L .384
+
+P{50 < X < 150} =
+
+(b) Similarly,
+P{X < 100} =
+
+* 100
+0
+
+6100
+1 −x/100
+e
+dx = −e−x/100 60 = 1 − e−1 L .633
+100
+
+In other words, approximately 63.3 percent of the time, a computer will fail before
+registering 100 hours of use.
+.
+EXAMPLE 1c
+The lifetime in hours of a certain kind of radio tube is a random variable having a
+probability density function given by
+⎧
+⎪
+x … 100
+⎨0
+f (x) = 100
+⎪
+⎩ 2 x > 100
+x
+What is the probability that exactly 2 of 5 such tubes in a radio set will have to be
+replaced within the ﬁrst 150 hours of operation? Assume that the events Ei , i =
+1, 2, 3, 4, 5, that the ith such tube will have to be replaced within this time are
+independent.
+
+Section 5.1
+
+Introduction
+
+189
+
+Solution. From the statement of the problem, we have
+* 150
+f (x) dx
+P(Ei ) =
+0
+* 150
+= 100
+x−2 dx
+100
+
+1
+=
+3
+Hence, from the independence of the events Ei , it follows that the desired probability is
+   2  3
+1
+80
+2
+5
+=
+.
+2
+3
+3
+243
+The relationship between the cumulative distribution F and the probability density
+f is expressed by
+* a
+f (x) dx
+F(a) = P{X ∈ (−q, a]} =
+−q
+
+Differentiating both sides of the preceding equation yields
+d
+F(a) = f (a)
+da
+That is, the density is the derivative of the cumulative distribution function. A somewhat more intuitive interpretation of the density function may be obtained from
+Equation (1.2) as follows:
+/ * a+ε/2
+%
+ε
+ε
+… X … a +
+=
+f (x) dx L εf (a)
+P a −
+2
+2
+a−ε/2
+when ε is small and when f (·) is continuous at x = a. In other words, the probability
+that X will be contained in an interval of length ε around the point a is approximately
+εf (a). From this result we see that f (a) is a measure of how likely it is that the random
+variable will be near a.
+EXAMPLE 1d
+If X is continuous with distribution function FX and density function fX , ﬁnd the
+density function of Y = 2X.
+Solution. We will determine fY in two ways. The ﬁrst way is to derive, and then
+differentiate, the distribution function of Y:
+FY (a) = P{Y … a}
+= P{2X … a}
+= P{X … a/2}
+= FX (a/2)
+Differentiation gives
+fY (a) =
+
+1
+fX (a/2)
+2
+
+190
+
+Chapter 5
+
+Continuous Random Variables
+
+Another way to determine fY is to note that
+fY (a) L P{a −
+
+2
+
+= P{a −
+
+… Y … a +
+… 2X … a +
+
+2
+
+2
+
+}
+
+2
+
+}
+
+a
+a
+−
+… X …
++ }
+2
+4
+2
+4
+fX (a/2)
+
+= P{
+L
+
+2
+
+Dividing through by gives the same result as before.
+5.2
+
+.
+
+EXPECTATION AND VARIANCE OF CONTINUOUS RANDOM VARIABLES
+In Chapter 4, we deﬁned the expected value of a discrete random variable X by
+
+xP{X = x}
+E[X] =
+x
+
+If X is a continuous random variable having probability density function f (x), then,
+because
+f (x) dx L P{x … X … x + dx} for dx small
+it is easy to see that the analogous deﬁnition is to deﬁne the expected value of X by
+* q
+xf (x) dx
+E[X] =
+−q
+
+EXAMPLE 2a
+Find E[X] when the density function of X is
+%
+2x if 0 … x … 1
+f (x) =
+0 otherwise
+Solution.
+
+*
+E[X] =
+
+xf (x) dx
+* 1
+=
+2x2 dx
+0
+
+2
+=
+3
+EXAMPLE 2b
+The density function of X is given by
+%
+1 if 0 … x … 1
+f (x) =
+0 otherwise
+Find E[eX ].
+
+.
+
+Section 5.2
+
+Expectation and Variance of Continuous Random Variables
+
+191
+
+Solution. Let Y = eX . We start by determining FY , the probability distribution function of Y. Now, for 1 … x … e,
+FY (x) = P{Y … x}
+= P{eX … x}
+= P{X … log(x)}
+* log(x)
+f (y) dy
+=
+0
+
+= log(x)
+By differentiating FY (x), we can conclude that the probability density function of Y
+is given by
+1
+1 … x … e
+fY (x) =
+x
+Hence,
+X
+
+E[e ] = E[Y] =
+
+* q
+
+xfY (x) dx
+*−q
+e
+dx
+=
+1
+
+=e − 1
+
+.
+
+Although the method employed in Example 2b to compute the expected value of
+a function of X is always applicable, there is, as in the discrete case, an alternative
+way of proceeding. The following is a direct analog of Proposition 4.1. of Chapter 4.
+Proposition 2.1. If X is a continuous random variable with probability density function f (x), then, for any real-valued function g,
+* q
+E[g(X)] =
+g(x)f (x) dx
+−q
+
+An application of Proposition 2.1 to Example 2b yields
+* 1
+X
+ex dx
+sincef (x) = 1, 0 < x < 1
+E[e ] =
+0
+
+=e − 1
+which is in accord with the result obtained in that example.
+The proof of Proposition 2.1 is more involved than that of its discrete random
+variable analog. We will present such a proof under the provision that the random
+variable g(X) is nonnegative. (The general proof, which follows the argument in the
+case we present, is indicated in Theoretical Exercises 2 and 3.) We will need the following lemma, which is of independent interest.
+Lemma 2.1
+For a nonnegative random variable Y,
+* q
+E[Y] =
+P{Y > y} dy
+0
+
+192
+
+Chapter 5
+
+Continuous Random Variables
+
+Proof. We present a proof when Y is a continuous random variable with probability density function fY . We have
+* q
+* q* q
+P{Y > y} dy =
+fY (x) dx dy
+0
+
+0
+
+y
+
+-q
+where we have used the fact that P{Y > y} = y fY (x) dx. Interchanging the order
+of integration in the preceding equation yields
+* q
+* q * x 
+P{Y > y} dy =
+dy fY (x) dx
+0
+0
+0
+* q
+=
+xfY (x) dx
+0
+
+= E[Y]
+
+.
+
+From Lemma 2.1, for any function g for which g(x) Ú 0,
+* q
+E[g(X)] =
+P{g(X) > y} dy
+0
+* q*
+f (x) dx dy
+=
+
+Proof of Proposition 2.1.
+
+x:g(x)>y
+* g(x)
+
+*
+
+0
+
+*
+
+x:g(x)>0 0
+
+=
+=
+
+dy f (x) dx
+
+g(x)f (x) dx
+x:g(x)>0
+
+which completes the proof.
+EXAMPLE 2c
+A stick of length 1 is split at a point U that is uniformly distributed over (0, 1). Determine the expected length of the piece that contains the point p, 0 … p … 1.
+Solution. Let Lp (U) denote the length of the substick that contains the point p, and
+note that
+%
+1 − U U < p
+Lp (U) =
+U
+U > p
+(See Figure 5.2.) Hence, from Proposition 2.1,
+* 1
+E[Lp (U)] =
+Lp (u) du
+0
+* p
+* 1
+=
+(1 − u)du +
+u du
+0
+
+p
+
+(1 − p)2
+1
+p2
+1
++
+−
+= −
+2
+2
+2
+2
+1
+= + p(1 − p)
+2
+
+Section 5.2
+
+Expectation and Variance of Continuous Random Variables
+
+193
+
+1–U
+0
+
+U
+
+1
+
+p
+
+(a)
+
+U
+0
+
+p
+
+1
+
+U
+
+(b)
+
+FIGURE 5.2: Substick containing point p: (a) U < p; (b) U > p.
+
+Since p(1 − p) is maximized when p = 12 , it is interesting to note that the expected
+length of the substick containing the point p is maximized when p is the midpoint of
+the original stick.
+.
+EXAMPLE 2d
+Suppose that if you are s minutes early for an appointment, then you incur the cost cs,
+and if you are s minutes late, then you incur the cost ks. Suppose also that the travel
+time from where you presently are to the location of your appointment is a continuous
+random variable having probability density function f . Determine the time at which
+you should depart if you want to minimize your expected cost.
+Solution. Let X denote the travel time. If you leave t minutes before your appointment, then your cost—call it Ct (X)—is given by
+%
+c(t − X) ifX … t
+Ct (X) =
+k(X − t) ifX Ú t
+Therefore,
+E[Ct (X)] =
+
+* q
+
+Ct (x)f (x) dx
+
+0
+
+* t
+
+* q
+c(t − x)f (x) dx +
+k(x − t)f (x) dx
+0
+t
+* t
+* q
+* q
+* t
+f (x) dx − c
+xf (x) dx + k
+xf (x) dx − kt
+f (x) dx
+= ct
+
+=
+
+0
+
+0
+
+t
+
+t
+
+The value of t that minimizes E[Ct (X)] can now be obtained by calculus. Differentiation yields
+d
+E[Ct (X)] = ct f (t) + cF(t) − ct f (t) − kt f (t) + kt f (t) − k[1 − F(t)]
+dt
+= (k + c)F(t) − k
+Equating the rightmost side to zero shows that the minimal expected cost is obtained
+when you leave t∗ minutes before your appointment, where t∗ satisﬁes
+k
+k + c
+As in Chapter 4, we can use Proposition 2.1 to show the following.
+F(t∗ ) =
+
+Corollary 2.1. If a and b are constants, then
+E[aX + b] = aE[X] + b
+
+.
+
+194
+
+Chapter 5
+
+Continuous Random Variables
+
+The proof of Corollary 2.1 for a continuous random variable X is the same as the
+one given for a discrete random variable. The only modiﬁcation is that the sum is
+replaced by an integral and the probability mass function by a probability density
+function.
+The variance of a continuous random variable is deﬁned exactly as it is for a discrete random variable, namely, if X is a random variable with expected value μ, then
+the variance of X is deﬁned (for any type of random variable) by
+Var(X) = E[(X − μ)2 ]
+The alternative formula,
+Var(X) = E[X 2 ] − (E[X])2
+is established in a manner similar to its counterpart in the discrete case.
+EXAMPLE 2e
+Find Var(X) for X as given in Example 2a.
+Solution. We ﬁrst compute E[X 2 ].
+2
+
+E[X ] =
+=
+
+* q
+−q
+
+* 1
+
+x2 f (x) dx
+
+2x3 dx
+
+0
+
+=
+
+1
+2
+
+Hence, since E[X] = 23 , we obtain
+1
+Var(X) = −
+2
+
+ 2
+2
+1
+=
+3
+18
+
+.
+
+It can be shown that, for constants a and b,
+Var(aX + b) = a2 Var(X)
+The proof mimics the one given for discrete random variables.
+There are several important classes of continuous random variables that appear
+frequently in applications of probability; the next few sections are devoted to a study
+of some of them.
+5.3
+
+THE UNIFORM RANDOM VARIABLE
+A random variable is said to be uniformly distributed over the interval (0, 1) if its
+probability density function is given by
+%
+1 0 < x < 1
+(3.1)
+f (x) =
+0 otherwise
+-q
+Note that Equation (3.1) is a density function, since f (x) Ú 0 and −q f (x) dx =
+-1
+0 dx = 1. Because f (x) > 0 only when x ∈ (0, 1), it follows that X must assume
+a value in interval (0, 1). Also, since f (x) is constant for x ∈ (0, 1), X is just as likely to
+
+Section 5.3
+f(a)
+
+The Uniform Random Variable
+
+195
+
+F(a)
+1
+
+1
+——–
+␤–␣
+
+␣
+
+␤
+
+a
+
+␣
+
+(a)
+
+␤
+
+a
+
+(b)
+
+FIGURE 5.3: Graph of (a) f(a) and (b) F(a) for a uniform (α, β) random variable.
+
+be near any value in (0, 1) as it is to be near any other value. To verify this statement,
+note that, for any 0 < a < b < 1,
+* b
+f (x) dx = b − a
+P{a … X … b} =
+a
+
+In other words, the probability that X is in any particular subinterval of (0, 1) equals
+the length of that subinterval.
+In general, we say that X is a uniform random variable on the interval (α, β) if the
+probability density function of X is given by
+⎧
+⎪
+1
+⎨
+if α < x < β
+(3.2)
+f (x) = β − α
+⎪
+⎩0
+otherwise
+-a
+Since F(a) = −q f (x) dx, it follows from Equation (3.2) that the distribution function
+of a uniform random variable on the interval (α, β) is given by
+⎧
+⎪
+0
+a … α
+⎪
+⎪
+⎨ a − α
+α < a < β
+F(a) =
+β − α
+⎪
+⎪
+⎪
+⎩1
+a Ú β
+Figure 5.3 presents a graph of f (a) and F(a).
+EXAMPLE 3a
+Let X be uniformly distributed over (α, β). Find (a) E[X] and (b) Var(X).
+Solution. (a)
+E[X] =
+
+* q
+−q
+* β
+
+xf (x) dx
+
+x
+dx
+β
+−
+α
+α
+β 2 − α2
+=
+2(β − α)
+β + α
+=
+2
+=
+
+196
+
+Chapter 5
+
+Continuous Random Variables
+
+In words, the expected value of a random variable that is uniformly distributed
+over some interval is equal to the midpoint of that interval.
+(b) To ﬁnd Var(X), we ﬁrst calculate E[X 2 ].
+* β
+1
+E[X 2 ] =
+x2 dx
+β
+−
+α
+α
+β 3 − α3
+=
+3(β − α)
+β 2 + αβ + α 2
+=
+3
+Hence,
+(α + β)2
+β 2 + αβ + α 2
+−
+3
+4
+(β − α)2
+=
+12
+
+Var(X) =
+
+Therefore, the variance of a random variable that is uniformly distributed over
+some interval is the square of the length of that interval divided by 12.
+.
+EXAMPLE 3b
+If X is uniformly distributed over (0, 10), calculate the probability that (a) X < 3, (b)
+X > 6, and (c) 3 < X < 8.
+* 3
+3
+1
+dx =
+Solution. (a) P{X < 3} =
+10
+0 10
+* 10
+4
+1
+dx =
+(b) P{X > 6} =
+10
+10
+6
+* 8
+1
+1
+dx =
+(c) P{3 < X < 8} =
+.
+2
+3 10
+EXAMPLE 3c
+Buses arrive at a speciﬁed stop at 15-minute intervals starting at 7 A . M . That is, they
+arrive at 7, 7:15, 7:30, 7:45, and so on. If a passenger arrives at the stop at a time that
+is uniformly distributed between 7 and 7:30, ﬁnd the probability that he waits
+(a) less than 5 minutes for a bus;
+(b) more than 10 minutes for a bus.
+Solution. Let X denote the number of minutes past 7 that the passenger arrives at
+the stop. Since X is a uniform random variable over the interval (0, 30), it follows that
+the passenger will have to wait less than 5 minutes if (and only if) he arrives between
+7:10 and 7:15 or between 7:25 and 7:30. Hence, the desired probability for part (a) is
+* 15
+* 30
+1
+1
+1
+P{10 < X < 15} + P{25 < X < 30} =
+dx +
+dx =
+3
+10 30
+25 30
+Similarly, he would have to wait more than 10 minutes if he arrives between 7 and
+7:05 or between 7:15 and 7:20, so the probability for part (b) is
+P{0 < X < 5} + P{15 < X < 20} =
+
+1
+3
+
+.
+
+Section 5.3
+
+The Uniform Random Variable
+
+197
+
+The next example was ﬁrst considered by the French mathematician Joseph
+L. F. Bertrand in 1889 and is often referred to as Bertrand’s paradox. It represents
+our initial introduction to a subject commonly referred to as geometrical probability.
+EXAMPLE 3d
+Consider a random chord of a circle. What is the probability that the length of the
+chord will be greater than the side of the equilateral triangle inscribed in that circle?
+Solution. As stated, the problem is incapable of solution because it is not clear what
+is meant by a random chord. To give meaning to this phrase, we shall reformulate the
+problem in two distinct ways.
+The ﬁrst formulation is as follows: The position of the chord can be determined
+by its distance from the center of the circle. This distance can vary between 0 and
+r, the radius of the circle. Now, the length of the chord will be greater than the side
+of the equilateral triangle inscribed in the circle if the distance from the chord to the
+center of the circle is less than r/2. Hence, by assuming that a random chord is a chord
+whose distance D from the center of the circle is uniformly distributed between 0 and
+r, we see that the probability that the length of the chord is greater than the side of
+an inscribed equilateral triangle is
+%
+/
+r
+r/2
+1
+P D <
+=
+=
+2
+r
+2
+For our second formulation of the problem, consider an arbitrary chord of the circle; through one end of the chord, draw a tangent. The angle θ between the chord and
+the tangent, which can vary from 0◦ to 180◦ , determines the position of the chord. (See
+Figure 5.4.) Furthermore, the length of the chord will be greater than the side of the
+inscribed equilateral triangle if the angle θ is between 60◦ and 120◦ . Hence, assuming
+that a random chord is a chord whose angle θ is uniformly distributed between 0◦ and
+180◦ , we see that the desired answer in this formulation is
+P{60 < θ < 120} =
+
+1
+120 − 60
+=
+180
+3
+
+Note that random experiments could be performed in such a way that 12 or 13 would
+be the correct probability. For instance, if a circular disk of radius r is thrown on a
+table ruled with parallel lines a distance 2r apart, then one and only one of these lines
+would cross the disk and form a chord. All distances from this chord to the center of
+the disk would be equally likely, so that the desired probability that the chord’s length
+will be greater than the side of an inscribed equilateral triangle is 12 . In contrast, if the
+
+␪
+
+A
+
+FIGURE 5.4
+
+198
+
+Chapter 5
+
+Continuous Random Variables
+
+experiment consisted of rotating a needle freely about a point A on the edge (see
+.
+Figure 5.4) of the circle, the desired answer would be 13 .
+5.4
+
+NORMAL RANDOM VARIABLES
+We say that X is a normal random variable, or simply that X is normally distributed,
+with parameters μ and σ 2 if the density of X is given by
+1
+2
+2
+f (x) = √
+e−(x−μ) /2σ
+2π σ
+
+− q < x < q
+
+This density function is a bell-shaped curve that is symmetric about μ. (See Figure 5.5.)
+.399
+
+–3
+
+–2
+
+–1
+
+0
+(a)
+
+1
+
+2
+
+3
+
+.399
+——–
+␴
+
+␮–␴
+␮ – 2␴
+
+␮+␴
+␮
+
+␮ + 2␴
+
+(b)
+FIGURE 5.5: Normal density function: (a) μ = 0, σ = 1; (b) arbitrary μ, σ 2 .
+
+The normal distribution was introduced by the French mathematician Abraham
+DeMoivre in 1733, who used it to approximate probabilities associated with binomial random variables when the binomial parameter n is large. This result was later
+extended by Laplace and others and is now encompassed in a probability theorem
+known as the central limit theorem, which is discussed in Chapter 8. The central limit
+theorem, one of the two most important results in probability theory,† gives a theoretical base to the often noted empirical observation that, in practice, many random
+phenomena obey, at least approximately, a normal probability distribution. Some
+examples of random phenomena obeying this behavior are the height of a man, the
+velocity in any direction of a molecule in gas, and the error made in measuring a
+physical quantity.
+To prove that f (x) is indeed a probability density function, we need to show that
+* q
+1
+2
+2
+e−(x−μ) /2σ dx = 1
+√
+2πσ −q
+† The other is the strong law of large numbers.
+
+Section 5.4
+
+Normal Random Variables
+
+199
+
+Making the substitution y = (x − μ)/σ , we see that
+* q
+* q
+1
+1
+2
+−(x−μ)2 /2σ 2
+e
+dx = √
+e−y /2 dy
+√
+2π σ −q
+2π −q
+Hence, we must show that
+
+* q
+−q
+
+Toward this end, let I =
+
+e−y /2 dy =
+2
+
+√
+2π
+
+-q
+
+−y2 /2 dy. Then
+−q e
+2
+
+I =
+=
+
+* q
+
+−y2 /2
+
+e
+*−q
+q * q
+
+−q −q
+
+dy
+
+* q
+−q
+
+e−x /2 dx
+
+−(y2 +x2 )/2
+
+e
+
+2
+
+dy dx
+
+We now evaluate the double integral by means of a change of variables to polar
+coordinates. (That is, let x = r cos θ, y = r sin θ, and dy dx = r dθ dr.) Thus,
+* q * 2π
+2
+2
+e−r /2 r dθ dr
+I =
+0
+0
+* q
+2
+re−r /2 dr
+= 2π
+0
+
+2 6q
+= −2πe−r /2 60
+
+= 2π
+√
+Hence, I = 2π, and the result is proved.
+An important fact about normal random variables is that if X is normally distributed with parameters μ and σ 2 , then Y = aX + b is normally distributed with
+parameters aμ + b and a2 σ 2 . To prove this statement, suppose that a > 0. (The proof
+when a < 0 is similar.) Let FY denote the cumulative distribution function of Y. Then
+FY (x) = P{Y … x}
+= P{aX + b … x}
+x − b
+}
+= P{X …
+a
+x − b
+= FX (
+)
+a
+where FX is the cumulative distribution function of X. By differentiation, the density
+function of Y is then
+1
+x − b
+fX (
+)
+a
+a
+1
+x − b
+− μ)2 /2σ 2 }
+=√
+exp{−(
+a
+2π aσ
+1
+=√
+exp{−(x − b − aμ)2 /2(aσ )2 }
+2π aσ
+
+fY (x) =
+
+which shows that Y is normal with parameters aμ + b and a2 σ 2 .
+
+200
+
+Chapter 5
+
+Continuous Random Variables
+
+An important implication of the preceding result is that if X is normally distributed
+with parameters μ and σ 2 , then Z = (X − μ)/σ is normally distributed with parameters 0 and 1. Such a random variable is said to be a standard, or a unit, normal random
+variable.
+We now show that the parameters μ and σ 2 of a normal random variable represent,
+respectively, its expected value and variance.
+EXAMPLE 4a
+Find E[X] and Var(X) when X is a normal random variable with parameters μ and σ 2 .
+Solution. Let us start by ﬁnding the mean and variance of the standard normal random variable Z = (X − μ)/σ . We have
+* q
+E[Z] =
+xfZ (x) dx
+−q
+* q
+1
+2
+=√
+xe−x /2 dx
+2π −q
+1
+2
+= − √ e−x /2 |q
+−q
+2π
+=0
+Thus,
+Var(Z) = E[Z2 ]
+* q
+1
+2
+x2 e−x /2 dx
+=√
+2π −q
+Integration by parts (with u = x and dv = xe−x /2 ) now gives
+* q
+1
+2
+−x2 /2 q
+|−q +
+e−x /2 dx)
+Var(Z) = √ (−xe
+2π *
+−q
+q
+1
+2
+=√
+e−x /2 dx
+2π −q
+=1
+2
+
+Because X = μ + σ Z, the preceding yields the results
+E[X] = μ + σ E[Z] = μ
+and
+
+Var(X) = σ 2 Var(Z) = σ 2
+
+.
+
+It is customary to denote the cumulative distribution function of a standard normal
+random variable by (x). That is,
+* x
+1
+2
+(x) = √
+e−y /2 dy
+2π −q
+The values of (x) for nonnegative x are given in Table 5.1. For negative values of x,
+(x) can be obtained from the relationship
+(−x) = 1 −
+
+(x)
+
+− q < x < q
+
+(4.1)
+
+Section 5.4
+TABLE 5.1: AREA
+
+Normal Random Variables
+
+201
+
+(x) UNDER THE STANDARD NORMAL CURVE TO THE LEFT OF X
+
+X
+
+.00
+
+.01
+
+.02
+
+.03
+
+.04
+
+.05
+
+.06
+
+.07
+
+.08
+
+.09
+
+.0
+.1
+.2
+.3
+.4
+.5
+.6
+.7
+.8
+.9
+1.0
+1.1
+1.2
+1.3
+1.4
+1.5
+1.6
+1.7
+1.8
+1.9
+2.0
+2.1
+2.2
+2.3
+2.4
+2.5
+2.6
+2.7
+2.8
+2.9
+3.0
+3.1
+3.2
+3.3
+3.4
+
+.5000
+.5398
+.5793
+.6179
+.6554
+.6915
+.7257
+.7580
+.7881
+.8159
+.8413
+.8643
+.8849
+.9032
+.9192
+.9332
+.9452
+.9554
+.9641
+.9713
+.9772
+.9821
+.9861
+.9893
+.9918
+.9938
+.9953
+.9965
+.9974
+.9981
+.9987
+.9990
+.9993
+.9995
+.9997
+
+.5040
+.5438
+.5832
+.6217
+.6591
+.6950
+.7291
+.7611
+.7910
+.8186
+.8438
+.8665
+.8869
+.9049
+.9207
+.9345
+.9463
+.9564
+.9649
+.9719
+.9778
+.9826
+.9864
+.9896
+.9920
+.9940
+.9955
+.9966
+.9975
+.9982
+.9987
+.9991
+.9993
+.9995
+.9997
+
+.5080
+.5478
+.5871
+.6255
+.6628
+.6985
+.7324
+.7642
+.7939
+.8212
+.8461
+.8686
+.8888
+.9066
+.9222
+.9357
+.9474
+.9573
+.9656
+.9726
+.9783
+.9830
+.9868
+.9898
+.9922
+.9941
+.9956
+.9967
+.9976
+.9982
+.9987
+.9991
+.9994
+.9995
+.9997
+
+.5120
+.5517
+.5910
+.6293
+.6664
+.7019
+.7357
+.7673
+.7967
+.8238
+.8485
+.8708
+.8907
+.9082
+.9236
+.9370
+.9484
+.9582
+.9664
+.9732
+.9788
+.9834
+.9871
+.9901
+.9925
+.9943
+.9957
+.9968
+.9977
+.9983
+.9988
+.9991
+.9994
+.9996
+.9997
+
+.5160
+.5557
+.5948
+.6331
+.6700
+.7054
+.7389
+.7704
+.7995
+.8264
+.8508
+.8729
+.8925
+.9099
+.9251
+.9382
+.9495
+.9591
+.9671
+.9738
+.9793
+.9838
+.9875
+.9904
+.9927
+.9945
+.9959
+.9969
+.9977
+.9984
+.9988
+.9992
+.9994
+.9996
+.9997
+
+.5199
+.5596
+.5987
+.6368
+.6736
+.7088
+.7422
+.7734
+.8023
+.8289
+.8531
+.8749
+.8944
+.9115
+.9265
+.9394
+.9505
+.9599
+.9678
+.9744
+.9798
+.9842
+.9878
+.9906
+.9929
+.9946
+.9960
+.9970
+.9978
+.9984
+.9989
+.9992
+.9994
+.9996
+.9997
+
+.5239
+.5636
+.6026
+.6406
+.6772
+.7123
+.7454
+.7764
+.8051
+.8315
+.8554
+.8770
+.8962
+.9131
+.9279
+.9406
+.9515
+.9608
+.9686
+.9750
+.9803
+.9846
+.9881
+.9909
+.9931
+.9948
+.9961
+.9971
+.9979
+.9985
+.9989
+.9992
+.9994
+.9996
+.9997
+
+.5279
+.5675
+.6064
+.6443
+.6808
+.7157
+.7486
+.7794
+.8078
+.8340
+.8577
+.8790
+.8980
+.9147
+.9292
+.9418
+.9525
+.9616
+.9693
+.9756
+.9808
+.9850
+.9884
+.9911
+.9932
+.9949
+.9962
+.9972
+.9979
+.9985
+.9989
+.9992
+.9995
+.9996
+.9997
+
+.5319
+.5714
+.6103
+.6480
+.6844
+.7190
+.7517
+.7823
+.8106
+.8365
+.8599
+.8810
+.8997
+.9162
+.9306
+.9429
+.9535
+.9625
+.9699
+.9761
+.9812
+.9854
+.9887
+.9913
+.9934
+.9951
+.9963
+.9973
+.9980
+.9986
+.9990
+.9993
+.9995
+.9996
+.9997
+
+.5359
+.5753
+.6141
+.6517
+.6879
+.7224
+.7549
+.7852
+.8133
+.8389
+.8621
+.8830
+.9015
+.9177
+.9319
+.9441
+.9545
+.9633
+.9706
+.9767
+.9817
+.9857
+.9890
+.9916
+.9936
+.9952
+.9964
+.9974
+.9981
+.9986
+.9990
+.9993
+.9995
+.9997
+.9998
+
+The proof of Equation (4.1), which follows from the symmetry of the standard normal density, is left as an exercise. This equation states that if Z is a standard normal
+random variable, then
+P{Z … −x} = P{Z > x}
+
+− q < x < q
+
+Since Z = (X − μ)/σ is a standard normal random variable whenever X is normally
+distributed with parameters μ and σ 2 , it follows that the distribution function of X
+can be expressed as
+
+
+
+
+a − μ
+a − μ
+X − μ
+…
+=
+FX (a) = P{X … a} = P
+σ
+σ
+σ
+
+202
+
+Chapter 5
+
+Continuous Random Variables
+
+EXAMPLE 4b
+If X is a normal random variable with parameters μ = 3 and σ 2 = 9, ﬁnd (a) P{2 <
+X < 5}; (b) P{X > 0}; (c) P{|X − 3| > 6}.
+Solution. (a)
+%
+
+/
+2 − 3
+X − 3
+5 − 3
+P{2 < X < 5} = P
+<
+<
+3
+3
+3
+%
+/
+1
+2
+=P − < Z <
+3
+3
+ 
+
+
+2
+1
+=
+−
+−
+3
+3
+
+ 
+ 
+1
+2
+L .3779
+− 1 −
+=
+3
+3
+(b)
+%
+P{X > 0} = P
+
+X − 3
+0 − 3
+>
+3
+3
+
+/
+= P{Z > −1}
+= 1 − (−1)
+= (1)
+L .8413
+
+(c)
+P{|X − 3| > 6} = P{X > 9} + P{X < −3}
+/
+%
+/
+%
+9 − 3
+X − 3
+−3 − 3
+X − 3
+>
+<
++ P
+=P
+3
+3
+3
+3
+= P{Z > 2} + P{Z < −2}
+= 1 − (2) + (−2)
+= 2[1 − (2)]
+L .0456
+
+.
+
+EXAMPLE 4c
+An examination is frequently regarded as being good (in the sense of determining
+a valid grade spread for those taking it) if the test scores of those taking the examination can be approximated by a normal density function. (In other words, a graph
+of the frequency of grade scores should have approximately the bell-shaped form of
+the normal density.) The instructor often uses the test scores to estimate the normal
+parameters μ and σ 2 and then assigns the letter grade A to those whose test score
+is greater than μ + σ , B to those whose score is between μ and μ + σ , C to those
+whose score is between μ − σ and μ, D to those whose score is between μ − 2σ
+and μ − σ , and F to those getting a score below μ − 2σ . (This strategy is sometimes
+referred to as grading “on the curve.”) Since
+
+Section 5.4
+
+Normal Random Variables
+
+203
+
+/
+X − μ
+> 1 = 1 − (1) L .1587
+P{X > μ + σ } = P
+σ
+%
+/
+X − μ
+P{μ < X < μ + σ } = P 0 <
+< 1 = (1) − (0) L .3413
+σ
+%
+/
+X − μ
+P{μ − σ < X < μ} = P −1 <
+< 0
+σ
+= (0) − (−1) L .3413
+%
+/
+X − μ
+P{μ − 2σ < X < μ − σ } = P −2 <
+< −1
+σ
+= (2) − (1) L .1359
+%
+/
+X − μ
+P{X < μ − 2σ } = P
+< −2 = (−2) L .0228
+σ
+%
+
+it follows that approximately 16 percent of the class will receive an A grade on the
+examination, 34 percent a B grade, 34 percent a C grade, and 14 percent a D grade; 2
+percent will fail.
+.
+EXAMPLE 4d
+An expert witness in a paternity suit testiﬁes that the length (in days) of human gestation is approximately normally distributed with parameters μ = 270 and σ 2 = 100.
+The defendant in the suit is able to prove that he was out of the country during a
+period that began 290 days before the birth of the child and ended 240 days before
+the birth. If the defendant was, in fact, the father of the child, what is the probability
+that the mother could have had the very long or very short gestation indicated by the
+testimony?
+Solution. Let X denote the length of the gestation, and assume that the defendant
+is the father. Then the probability that the birth could occur within the indicated
+period is
+P{X > 290orX < 240} = P{X > 290} + P{X < 240}
+/
+%
+/
+%
+X − 270
+X − 270
+> 2 + P
+< −3
+=P
+10
+10
+= 1 − (2) + 1 − (3)
+L .0241
+
+.
+
+EXAMPLE 4e
+Suppose that a binary message—either 0 or 1—must be transmitted by wire from
+location A to location B. However, the data sent over the wire are subject to a channel
+noise disturbance, so, to reduce the possibility of error, the value 2 is sent over the
+wire when the message is 1 and the value −2 is sent when the message is 0. If x, x = ;2,
+is the value sent at location A, then R, the value received at location B, is given by
+R = x + N, where N is the channel noise disturbance. When the message is received
+at location B, the receiver decodes it according to the following rule:
+If R Ú .5, then 1 is concluded.
+If R < .5, then 0 is concluded.
+
+204
+
+Chapter 5
+
+Continuous Random Variables
+
+Because the channel noise is often normally distributed, we will determine the error
+probabilities when N is a standard normal random variable.
+Two types of errors can occur: One is that the message 1 can be incorrectly determined to be 0, and the other is that 0 can be incorrectly determined to be 1. The ﬁrst
+type of error will occur if the message is 1 and 2 + N < .5, whereas the second will
+occur if the message is 0 and −2 + N Ú .5. Hence,
+P{error|message is 1} = P{N < −1.5}
+= 1 − (1.5) L .0668
+and
+P{error|message is 0} = P{N Ú 2.5}
+= 1 − (2.5) L .0062
+5.4.1
+
+.
+
+The Normal Approximation to the Binomial Distribution
+
+An important result in probability theory known as the DeMoivre–Laplace limit theorem states that when n is large, a binomial random variable with parameters n and p
+will have approximately the same distribution as a normal random variable with the
+same mean and variance as the binomial. This result was proved originally for the special case of p = 12 by DeMoivre in 1733 and was then extended to general p by Laplace
+in 1812. It formally states that if we “standardize” the binomial.
+by ﬁrst subtracting its
+mean np and then dividing the result by its standard deviation np(1 − p), then the
+distribution function of this standardized random variable (which has mean 0 and
+variance 1) will converge to the standard normal distribution function as n→q.
+The DeMoivre–Laplace limit theorem
+If Sn denotes the number of successes that occur when n independent trials, each
+resulting in a success with probability p, are performed, then, for any a < b,
+7
+0
+Sn − np
+… b → (b) − (a)
+P a … .
+np(1 − p)
+as n→q.
+Because the preceding theorem is only a special case of the central limit theorem,
+which is presented in Chapter 8, we shall not present a proof.
+Note that we now have two possible approximations to binomial probabilities: the
+Poisson approximation, which is good when n is large and p is small, and the normal
+approximation, which can be shown to be quite good when np(1 − p) is large. (See
+Figure 5.6.) [The normal approximation will, in general, be quite good for values of n
+satisfying np(1 − p) Ú 10.]
+EXAMPLE 4f
+Let X be the number of times that a fair coin that is ﬂipped 40 times lands on heads.
+Find the probability that X = 20. Use the normal approximation and then compare
+it with the exact solution.
+
+Section 5.4
+(10, 0.7)
+
+0.30
+
+0.15
+
+0.20
+
+0.10
+
+0.15
+0.10
+
+0.05
+
+0.05
+0
+
+2
+
+4
+
+6
+
+8
+
+10
+
+0.0
+
+0
+
+5
+
+10
+x
+
+x
+0.16
+0.14
+0.12
+0.10
+0.08
+0.06
+0.04
+0.02
+0.0
+
+205
+
+(20, 0.7)
+
+0.20
+
+0.25
+
+0.0
+
+Normal Random Variables
+
+(30, 0.7)
+
+0
+
+5
+
+10
+
+15
+x
+
+20
+
+25
+
+30
+
+0.14
+0.12
+0.10
+0.08
+0.06
+0.04
+0.02
+0.0
+
+15
+
+20
+
+(50, 0.7)
+
+0
+
+10
+
+20
+
+30
+
+40
+
+50
+
+x
+
+FIGURE 5.6: The probability mass function of a binomial (n, p) random variable becomes more and more
+“normal” as n becomes larger and larger.
+
+Solution. To employ the normal approximation, note that because the binomial is
+a discrete integer-valued random variable, whereas the normal is a continuous random variable, it is best to write P{X = i} as P{i − 1/2 < X < i + 1/2} before
+applying the normal approximation (this is called the continuity correction). Doing
+so gives
+P{X = 20} = P{19.5 … X < 20.5}
+0
+7
+19.5 − 20
+X − 20
+20.5 − 20
+=P
+< √
+<
+√
+√
+10
+10
+10
+0
+7
+X − 20
+L P −.16 < √
+< .16
+10
+L
+
+(.16) −
+
+The exact result is
+
+(−.16) L .1272
+
+
+P{X = 20} =
+
+40
+20
+
+  40
+1
+L .1254
+2
+
+.
+
+EXAMPLE 4g
+The ideal size of a ﬁrst-year class at a particular college is 150 students. The college,
+knowing from past experience that, on the average, only 30 percent of those accepted
+for admission will actually attend, uses a policy of approving the applications of 450
+students. Compute the probability that more than 150 ﬁrst-year students attend this
+college.
+Solution. If X denotes the number of students that attend, then X is a binomial random variable with parameters n = 450 and p = .3. Using the continuity correction,
+
+206
+
+Chapter 5
+
+Continuous Random Variables
+
+we see that the normal approximation yields
+0
+7
+X − (450)(.3)
+150.5 − (450)(.3)
+P{X Ú 150.5} = P √
+Ú
+√
+450(.3)(.7)
+450(.3)(.7)
+L 1 − (1.59)
+L .0559
+Hence, less than 6 percent of the time do more than 150 of the ﬁrst 450 accepted
+actually attend. (What independence assumptions have we made?)
+.
+EXAMPLE 4h
+To determine the effectiveness of a certain diet in reducing the amount of cholesterol
+in the bloodstream, 100 people are put on the diet. After they have been on the diet
+for a sufﬁcient length of time, their cholesterol count will be taken. The nutritionist
+running this experiment has decided to endorse the diet if at least 65 percent of the
+people have a lower cholesterol count after going on the diet. What is the probability
+that the nutritionist endorses the new diet if, in fact, it has no effect on the cholesterol
+level?
+Solution. Let us assume that if the diet has no effect on the cholesterol count, then,
+strictly by chance, each person’s count will be lower than it was before the diet with
+probability 12 . Hence, if X is the number of people whose count is lowered, then the
+probability that the nutritionist will endorse the diet when it actually has no effect on
+the cholesterol count is
+  100
+100 
+
+1
+100
+= P{X Ú 64.5}
+i
+2
+i=65
+⎫
+⎧
+⎪
+⎪
+1
+⎬
+⎨ X − (100)( )
+2
+8
+Ú 2.9
+=P
+⎪
+⎪
+⎭
+⎩ 100( 1 )( 1 )
+2 2
+L 1 − (2.9)
+L .0019
+
+.
+
+EXAMPLE 4i
+Fifty-two percent of the residents of New York City are in favor of outlawing cigarette
+smoking in publicly owned areas. Approximate the probability that more than 50
+percent of a random sample of n people from New York are in favor of this prohibition when
+(a) n = 11
+(b) n = 101
+(c) n = 1001
+How large would n have to be to make this probability exceed .95?
+Solution. Let N denote the number of residents of New York City. To answer the
+preceding question, we must ﬁrst understand that a random sample of size n is 
+a
+N
+sample such that the n people were chosen in such a manner that each of the
+n
+subsets of n people had the same chance of being the chosen subset. Consequently,
+
+Section 5.4
+
+Normal Random Variables
+
+207
+
+Sn , the number of people in the sample who are in favor of the smoking prohibition,
+is a hypergeometric random variable. That is, Sn has the same distribution as the
+number of white balls obtained when n balls are chosen from an urn of N balls, of
+which .52N are white. But because N and .52N are both large in comparison with the
+sample size n, it follows from the binomial approximation to the hypergeometric (see
+Section 4.8.3) that the distribution of Sn is closely approximated by a binomial distribution with parameters n and p = .52. The normal approximation to the binomial
+distribution then shows that
+7
+0
+.5n − .52n
+Sn − .52n
+P{Sn > .5n} = P √
+> √
+n(.52)(.48)
+n(.52)(.48)
+7
+0
+√
+Sn − .52n
+=P √
+> −.04 n
+n(.52)(.48)
+√
+L (.04 n)
+Thus,
+
+⎧
+⎨
+
+(.1328) = .5528, if n = 11
+(.4020) = .6562, if n = 101
+⎩ (1.2665) = .8973, if n = 1001
+√
+In order for this probability to be at least .95, we would need (.04 n) > .95. Because
+(x) is an increasing function and (1.645) = .95, this means that
+√
+.04 n > 1.645
+P{Sn > .5n} L
+
+or
+
+n Ú 1691.266
+
+That is, the sample size would have to be at least 1692.
+
+.
+
+Historical Notes Concerning the Normal Distribution
+The normal distribution was introduced by the French mathematician Abraham
+DeMoivre in 1733. DeMoivre, who used this distribution to approximate probabilities connected with coin tossing, called it the exponential bell-shaped curve. Its
+usefulness, however, became truly apparent only in 1809, when the famous German
+mathematician Karl Friedrich Gauss used it as an integral part of his approach to
+predicting the location of astronomical entities. As a result, it became common after
+this time to call it the Gaussian distribution.
+During the mid- to late 19th century, however, most statisticians started to
+believe that the majority of data sets would have histograms conforming to the
+Gaussian bell-shaped form. Indeed, it came to be accepted that it was “normal”
+for any well-behaved data set to follow this curve. As a result, following the lead of
+the British statistician Karl Pearson, people began referring to the Gaussian curve
+by calling it simply the normal curve. (A partial explanation as to why so many data
+sets conform to the normal curve is provided by the central limit theorem, which is
+presented in Chapter 8.)
+Abraham DeMoivre (1667–1754)
+Today there is no shortage of statistical consultants, many of whom ply their trade
+in the most elegant of settings. However, the ﬁrst of their breed worked, in the early
+
+208
+
+Chapter 5
+
+Continuous Random Variables
+
+years of the 18th century, out of a dark, grubby betting shop in Long Acres, London,
+known as Slaughter’s Coffee House. He was Abraham DeMoivre, a Protestant
+refugee from Catholic France, and, for a price, he would compute the probability of
+gambling bets in all types of games of chance.
+Although DeMoivre, the discoverer of the normal curve, made his living at the
+coffee shop, he was a mathematician of recognized abilities. Indeed, he was a member of the Royal Society and was reported to be an intimate of Isaac Newton.
+Listen to Karl Pearson imagining DeMoivre at work at Slaughter’s Coffee
+House: “I picture DeMoivre working at a dirty table in the coffee house with a brokendown gambler beside him and Isaac Newton walking through the crowd to his corner
+to fetch out his friend. It would make a great picture for an inspired artist.”
+Karl Friedrich Gauss
+Karl Friedrich Gauss (1777–1855), one of the earliest users of the normal curve,
+was one of the greatest mathematicians of all time. Listen to the words of the
+well-known mathematical historian E. T. Bell, as expressed in his 1954 book Men
+of Mathematics: In a chapter entitled “The Prince of Mathematicians,” he writes,
+“Archimedes, Newton, and Gauss; these three are in a class by themselves among
+the great mathematicians, and it is not for ordinary mortals to attempt to rank them
+in order of merit. All three started tidal waves in both pure and applied mathematics. Archimedes esteemed his pure mathematics more highly than its applications;
+Newton appears to have found the chief justiﬁcation for his mathematical inventions
+in the scientiﬁc uses to which he put them; while Gauss declared it was all one to him
+whether he worked on the pure or on the applied side.”‡
+5.5
+
+EXPONENTIAL RANDOM VARIABLES
+A continuous random variable whose probability density function is given, for some
+λ > 0, by
+% −λx
+λe
+if x Ú 0
+f (x) =
+0
+if x < 0
+is said to be an exponential random variable (or, more simply, is said to be exponentially distributed) with parameter λ. The cumulative distribution function F(a) of an
+exponential random variable is given by
+F(a) = P{X … a}
+* a
+=
+λe−λx dx
+0
+6a
+= −e−λx 60
+= 1 − e−λa
+
+a Ú 0
+
+-q
+Note that F(q) = 0 λe−λx dx = 1, as, of course, it must. The parameter λ will now
+be shown to equal the reciprocal of the expected value.
+EXAMPLE 5a
+Let X be an exponential random variable with parameter λ. Calculate (a) E[X] and
+(b) Var(X).
+
+Section 5.5
+
+Exponential Random Variables
+
+209
+
+Solution. (a) Since the density function is given by
+% −λx
+λe
+x Ú 0
+f (x) =
+0
+x < 0
+we obtain, for n > 0,
+n
+
+E[X ] =
+
+* q
+
+xn λe−λx dx
+
+0
+
+Integrating by parts (with λe−λx = dv and u = xn ) yields
+* q
+n
+n −λx q
+E[X ] = −x e |0 +
+e−λx nxn−1 dx
+0
+*
+n q −λx n−1
+=0 +
+λe x
+dx
+λ 0
+n
+= E[X n−1 ]
+λ
+Letting n = 1 and then n = 2 gives
+E[X] =
+E[X 2 ] =
+
+2
+2
+E[X] = 2
+λ
+λ
+
+(b) Hence,
+Var(X) =
+
+1
+λ
+
+2
+−
+λ2
+
+ 2
+1
+1
+= 2
+λ
+λ
+
+Thus, the mean of the exponential is the reciprocal of its parameter λ, and the variance is the mean squared.
+.
+In practice, the exponential distribution often arises as the distribution of the
+amount of time until some speciﬁc event occurs. For instance, the amount of time
+(starting from now) until an earthquake occurs, or until a new war breaks out, or
+until a telephone call you receive turns out to be a wrong number are all random
+variables that tend in practice to have exponential distributions. (For a theoretical
+explanation of this phenomenon, see Section 4.7.)
+EXAMPLE 5b
+Suppose that the length of a phone call in minutes is an exponential random variable
+1
+. If someone arrives immediately ahead of you at a public
+with parameter λ = 10
+telephone booth, ﬁnd the probability that you will have to wait
+(a) more than 10 minutes;
+(b) between 10 and 20 minutes.
+Solution. Let X denote the length of the call made by the person in the booth. Then
+the desired probabilities are
+(a)
+P{X > 10} = 1 − F(10)
+= e−1 L .368
+
+210
+
+Chapter 5
+
+Continuous Random Variables
+
+(b)
+P{10 < X < 20} = F(20) − F(10)
+= e−1 − e−2 L .233
+
+.
+
+We say that a nonnegative random variable X is memoryless if
+P{X > s + t | X > t} = P{X > s} for all s, t Ú 0
+
+(5.1)
+
+If we think of X as being the lifetime of some instrument, Equation (5.1) states that
+the probability that the instrument survives for at least s + t hours, given that it has
+survived t hours, is the same as the initial probability that it survives for at least s
+hours. In other words, if the instrument is alive at age t, the distribution of the remaining amount of time that it survives is the same as the original lifetime distribution.
+(That is, it is as if the instrument does not “remember” that it has already been in use
+for a time t.)
+Equation (5.1) is equivalent to
+P{X > s + t, X > t}
+= P{X > s}
+P{X > t}
+or
+
+P{X > s + t} = P{X > s}P{X > t}
+
+(5.2)
+
+Since Equation (5.2) is satisﬁed when X is exponentially distributed (for e−λ(s+t) =
+e−λs e−λt ), it follows that exponentially distributed random variables are memoryless.
+EXAMPLE 5c
+Consider a post ofﬁce that is staffed by two clerks. Suppose that when Mr. Smith
+enters the system, he discovers that Ms. Jones is being served by one of the clerks
+and Mr. Brown by the other. Suppose also that Mr. Smith is told that his service will
+begin as soon as either Ms. Jones or Mr. Brown leaves. If the amount of time that
+a clerk spends with a customer is exponentially distributed with parameter λ, what
+is the probability that, of the three customers, Mr. Smith is the last to leave the post
+ofﬁce?
+Solution. The answer is obtained by reasoning as follows: Consider the time at which
+Mr. Smith ﬁrst ﬁnds a free clerk. At this point, either Ms. Jones or Mr. Brown would
+have just left, and the other one would still be in service. However, because the exponential is memoryless, it follows that the additional amount of time that this other
+person (either Ms. Jones or Mr. Brown) would still have to spend in the post ofﬁce is
+exponentially distributed with parameter λ. That is, it is the same as if service for that
+person were just starting at this point. Hence, by symmetry, the probability that the
+remaining person ﬁnishes before Smith leaves must equal 12 .
+.
+It turns out that not only is the exponential distribution memoryless, but it is also
+the unique distribution possessing this property. To see this, suppose that X is memoryless and let F(x) = P{X > x}. Then, by Equation (5.2),
+F(s + t) = F(s)F(t)
+That is, F(·) satisﬁes the functional equation
+g(s + t) = g(s)g(t)
+
+Section 5.5
+
+Exponential Random Variables
+
+211
+
+However, it turns out that the only right continuous solution of this functional
+equation is†
+g(x) = e−λx
+(5.3)
+and, since a distribution function is always right continuous, we must have
+F(x) = e−λx
+
+or F(x) = P{X … x} = 1 − e−λx
+
+which shows that X is exponentially distributed.
+EXAMPLE 5d
+Suppose that the number of miles that a car can run before its battery wears out is
+exponentially distributed with an average value of 10,000 miles. If a person desires to
+take a 5000-mile trip, what is the probability that he or she will be able to complete the
+trip without having to replace the car battery? What can be said when the distribution
+is not exponential?
+Solution. It follows by the memoryless property of the exponential distribution that
+the remaining lifetime (in thousands of miles) of the battery is exponential with
+1
+. Hence, the desired probability is
+parameter λ = 10
+P{remaining lifetime > 5} = 1 − F(5) = e−5λ = e−1/2 L .604
+However, if the lifetime distribution F is not exponential, then the relevant probability is
+1 − F(t + 5)
+P{lifetime > t + 5|lifetime > t} =
+1 − F(t)
+where t is the number of miles that the battery had been in use prior to the start of
+the trip. Therefore, if the distribution is not exponential, additional information is
+needed (namely, the value of t) before the desired probability can be calculated. .
+A variation of the exponential distribution is the distribution of a random variable
+that is equally likely to be either positive or negative and whose absolute value is
+exponentially distributed with parameter λ, λ# Ú 0. Such a random variable is said to
+have a Laplace distribution,‡ and its density is given by
+f (x) =
+
+1 −λ|x|
+λe
+2
+
+− q < x < q
+
+† One can prove Equation (5.3) as follows: If g(s + t) = g(s)g(t), then
+
+g
+
+
+
+ 
+ 
+1
+1
+1
+2
+=g
++
+= g2
+n
+n
+n
+n
+
+and repeating this yields g(m/n) = gm (1/n). Also,
+
+g(1) = g
+
+1
+1
+1
++
++ ··· +
+n
+n
+n
+
+
+= gn
+
+ 
+1
+n
+
+or
+
+g
+
+ 
+1
+= (g(1))1/n
+n
+
+Hence, g(m/n) = (g(1))m/n , which, since g is right continuous, implies that g(x) = (g(1))x .
+  2
+Because g(1) = g 12
+Ú 0, we obtain g(x) = e−λx , where λ = − log(g(1)).
+‡ It also is sometimes called the double exponential random variable.
+
+212
+
+Chapter 5
+
+Continuous Random Variables
+
+Its distribution function is given by
+⎧ *
+x
+⎪
+⎪
+λx
+1
+⎪
+⎪
+⎨ 2 −q λe dx
+F(x) =
+*
+* 0
+⎪
+1 x −λx
+⎪
+λx
+1
+⎪
+λe dx +
+λe
+dx
+⎪
+⎩2
+2 0
+−q
+⎧
+⎨ 1 eλx
+x < 0
+= 2
+1
+⎩ 1 − e−λx x > 0
+
+x < 0
+x > 0
+
+2
+
+EXAMPLE 5e
+Consider again Example 4e, which supposes that a binary message is to be transmitted from A to B, with the value 2 being sent when the message is 1 and −2 when it is
+0. However, suppose now that, rather than being a standard normal random variable,
+the channel noise N is a Laplacian random variable with parameter λ = 1. Suppose
+again that if R is the value received at location B, then the message is decoded as
+follows:
+If R Ú .5, then 1 is concluded.
+If R < .5, then 0 is concluded.
+In this case, where the noise is Laplacian with parameter λ = 1, the two types of
+errors will have probabilities given by
+P{error|message 1 is sent} = P{N < −1.5}
+1
+= e−1.5
+2
+L .1116
+P{error|message 0 is sent} = P{N Ú 2.5}
+1
+= e−2.5
+2
+L .041
+On comparing this with the results of Example 4e, we see that the error probabilities
+are higher when the noise is Laplacian with λ = 1 than when it is a standard normal
+variable.
+5.5.1
+
+Hazard Rate Functions
+
+Consider a positive continuous random variable X that we interpret as being the
+lifetime of some item. Let X have distribution function F and density f . The hazard
+rate (sometimes called the failure rate) function λ(t) of F is deﬁned by
+λ(t) =
+
+f (t)
+F(t)
+
+,
+
+where F = 1 − F
+
+To interpret λ(t), suppose that the item has survived for a time t and we desire the
+probability that it will not survive for an additional time dt. That is, consider P{X ∈
+(t, t + dt)|X > t}. Now,
+
+Section 5.5
+
+Exponential Random Variables
+
+213
+
+P{X ∈ (t, t + dt), X > t}
+P{X > t}
+P{X ∈ (t, t + dt)}
+=
+P{X > t}
+f (t)
+dt
+L
+F(t)
+
+P{X ∈ (t, t + dt)|X > t} =
+
+Thus, λ(t) represents the conditional probability intensity that a t-unit-old item will fail.
+Suppose now that the lifetime distribution is exponential. Then, by the memoryless
+property, it follows that the distribution of remaining life for a t-year-old item is the
+same as that for a new item. Hence, λ(t) should be constant. In fact, this checks out,
+since
+λ(t) =
+
+f (t)
+
+F(t)
+λe−λt
+= −λt
+e
+=λ
+
+Thus, the failure rate function for the exponential distribution is constant. The parameter λ is often referred to as the rate of the distribution.
+It turns out that the failure rate function λ(t) uniquely determines the distribution F. To prove this, note that, by deﬁnition,
+λ(t) =
+
+d
+dt F(t)
+
+1 − F(t)
+
+Integrating both sides yields
+log(1 − F(t)) = −
+
+* t
+
+λ(t) dt + k
+
+0
+
+or
+
+0 *
+7
+t
+1 − F(t) = ek exp −
+λ(t) dt
+0
+
+Letting t = 0 shows that k = 0; thus,
+
+0 *
+7
+t
+F(t) = 1 − exp −
+λ(t) dt
+
+(5.4)
+
+0
+
+Hence, a distribution function of a positive continuous random variable can be
+speciﬁed by giving its hazard rate function. For instance, if a random variable has a
+linear hazard rate function—that is, if
+λ(t) = a + bt
+then its distribution function is given by
+F(t) = 1 − e−at−bt /2
+2
+
+and differentiation yields its density, namely,
+
+214
+
+Chapter 5
+
+Continuous Random Variables
+
+f (t) = (a + bt)e−(at+bt /2)
+2
+
+t Ú 0
+
+When a = 0, the preceding equation is known as the Rayleigh density function.
+EXAMPLE 5f
+One often hears that the death rate of a person who smokes is, at each age, twice that
+of a nonsmoker. What does this mean? Does it mean that a nonsmoker has twice the
+probability of surviving a given number of years as does a smoker of the same age?
+Solution. If λs (t) denotes the hazard rate of a smoker of age t and λn (t) that of a
+nonsmoker of age t, then the statement at issue is equivalent to the statement that
+λs (t) = 2λn (t)
+The probability that an A-year-old nonsmoker will survive until age B, A < B, is
+P{A-year-old nonsmoker reaches age B}
+= P{nonsmoker’s lifetime > B|nonsmoker’s lifetime > A}
+1 − Fnon (B)
+=
+1 − Fnon (A)
+7
+0 *
+B
+λn (t) dt
+exp −
+=
+
+0
+
+0 *
+7
+A
+exp −
+λn (t) dt
+
+from (5.4)
+
+0
+
+0 *
+7
+B
+= exp −
+λn (t) dt
+A
+
+whereas the corresponding probability for a smoker is, by the same reasoning,
+7
+0 *
+B
+λs (t) dt
+P{A-year-old smoker reaches age B} = exp −
+0
+= exp −2
+⎡
+
+A
+
+* B
+
+7
+λn (t) dt
+
+A
+
+0 *
+7⎤2
+B
+= ⎣exp −
+λn (t) dt ⎦
+A
+
+In other words, for two people of the same age, one of whom is a smoker and
+the other a nonsmoker, the probability that the smoker survives to any given age
+is the square (not one-half) of the corresponding probability for a nonsmoker. For
+1
+, 50 … t … 60, then the probability that a 50-year-old nonsmoker
+instance, if λn (t) = 30
+−1/3
+reaches age 60 is e
+L .7165, whereas the corresponding probability for a smoker
+is e−2/3 L .5134.
+.
+
+Section 5.6
+
+5.6
+
+Other Continuous Distributions
+
+215
+
+OTHER CONTINUOUS DISTRIBUTIONS
+5.6.1
+
+The Gamma Distribution
+
+A random variable is said to have a gamma distribution with parameters (α, λ), λ > 0,
+α > 0, if its density function is given by
+⎧
+⎪
+⎨ λe−λx (λx)α−1
+x Ú 0
+f (x) =
+(α)
+⎪
+⎩0
+x < 0
+where (α), called the gamma function, is deﬁned as
+* q
+e−y yα−1 dy
+(α) =
+0
+
+Integration of (α) by parts yields
+* q
+6q
+−y α−1 6
+(α) = −e y 6 +
+e−y (α − 1)yα−2 dy
+0
+0
+* q
+e−y yα−2 dy
+= (α − 1)
+
+(6.1)
+
+0
+
+= (α − 1)(α − 1)
+For integral values of α, say, α = n, we obtain, by applying Equation (6.1) repeatedly,
+(n) = (n − 1)(n − 1)
+= (n − 1)(n − 2)(n − 2)
+= ···
+= (n − 1)(n − 2) · · · 3 · 2(1)
+Since (1) =
+
+- q −x
+dx = 1, it follows that, for integral values of n,
+0 e
+(n) = (n − 1)!
+
+When α is a positive integer, say, α = n, the gamma distribution with parameters
+(α, λ) often arises, in practice as the distribution of the amount of time one has to
+wait until a total of n events has occurred. More speciﬁcally, if events are occurring
+randomly and in accordance with the three axioms of Section 4.7, then it turns out
+that the amount of time one has to wait until a total of n events has occurred will be a
+gamma random variable with parameters (n, λ). To prove this, let Tn denote the time
+at which the nth event occurs, and note that Tn is less than or equal to t if and only
+if the number of events that have occurred by time t is at least n. That is, with N(t)
+equal to the number of events in [0, t],
+P{Tn … t} = P{N(t) Ú n}
+q
+
+=
+P{N(t) = j}
+j=n
+
+=
+
+q −λt
+
+e (λt)j
+j=n
+
+j!
+
+216
+
+Chapter 5
+
+Continuous Random Variables
+
+where the ﬁnal identity follows because the number of events in [0, t] has a
+Poisson distribution with parameter λt. Differentiation of the preceding now yields
+the density function of Tn :
+f (t) =
+=
+
+q −λt
+
+e j(λt)j−1 λ
+j=n
+q
+
+j=n
+
+=
+
+j!
+
+−
+
+λe−λt (λt)j−1
+−
+(j − 1)!
+
+q
+
+λe−λt (λt)j
+j=n
+q
+
+j=n
+
+j!
+λe−λt (λt)j
+j!
+
+λe−λt (λt)n−1
+(n − 1)!
+
+Hence, Tn has the gamma distribution with parameters (n, λ). (This distribution is
+often referred to in the literature as the n-Erlang distribution.) Note that when n = 1,
+this distribution reduces to the exponential distribution.
+The gamma distribution with λ = 12 and α = n/2, n a positive integer, is called the
+2
+χn (read “chi-squared”) distribution with n degrees of freedom. The chi-squared distribution often arises in practice as the distribution of the error involved in attempting to hit a target in n-dimensional space when each coordinate error is normally
+distributed. This distribution will be studied in Chapter 6, where its relation to the
+normal distribution is detailed.
+EXAMPLE 6a
+Let X be a gamma random variable with parameters α and λ. Calculate (a) E[X] and
+(b) Var(X).
+Solution. (a)
+
+* q
+1
+λxe−λx (λx)α−1 dx
+E[X] =
+(α) 0
+* q
+1
+=
+λe−λx (λx)α dx
+λ(α) 0
+(α + 1)
+=
+λ(α)
+α
+=
+by Equation (6.1)
+λ
+
+(b) By ﬁrst calculating E[X 2 ], we can show that
+Var(X) =
+The details are left as an exercise.
+5.6.2
+
+α
+λ2
+.
+
+The Weibull Distribution
+
+The Weibull distribution is widely used in engineering practice due to its versatility. It
+was originally proposed for the interpretation of fatigue data, but now its use has been
+extended to many other engineering problems. In particular, it is widely used in the
+ﬁeld of life phenomena as the distribution of the lifetime of some object, especially
+when the “weakest link” model is appropriate for the object. That is, consider an
+
+Section 5.6
+
+Other Continuous Distributions
+
+217
+
+object consisting of many parts, and suppose that the object experiences death (failure) when any of its parts fail. It has been shown (both theoretically and empirically)
+that under these conditions a Weibull distribution provides a close approximation to
+the distribution of the lifetime of the item.
+The Weibull distribution function has the form
+⎧
+0
+x … ν
+⎪
+⎪
+⎨
+0 
+β 7
+(6.2)
+F(x) =
+x − ν
+⎪
+x
+>
+ν
+1
+−
+exp
+−
+⎪
+⎩
+α
+A random variable whose cumulative distribution function is given by Equation (6.2)
+is said to be a Weibull random variable with parameters ν, α, and β. Differentiation
+yields the density:
+⎧
+0
+x … ν
+⎪
+⎪
+⎨
+0 
+
+β−1
+β 7
+f (x) = β x − ν
+x − ν
+⎪
+x > ν
+exp −
+⎪
+⎩ α
+α
+α
+5.6.3
+
+The Cauchy Distribution
+
+A random variable is said to have a Cauchy distribution with parameter θ, −q < θ <
+q, if its density is given by
+f (x) =
+
+1
+1
+π 1 + (x − θ)2
+
+− q < x < q
+
+EXAMPLE 6b
+Suppose that a narrow-beam ﬂashlight is spun around its center, which is located a
+unit distance from the x-axis. (See Figure 5.7.) Consider the point X at which the
+beam intersects the x-axis when the ﬂashlight has stopped spinning. (If the beam is
+not pointing toward the x-axis, repeat the experiment.)
+␪
+1
+
+0
+
+X
+
+x-axis
+
+FIGURE 5.7
+
+As indicated in Figure 5.7, the point X is determined by the angle θ between the
+ﬂashlight and the y-axis, which, from the physical situation, appears to be uniformly
+distributed between −π/2 and π/2. The distribution function of X is thus given by
+F(x) = P{X … x}
+= P{tan θ … x}
+= P{θ … tan−1 x}
+1
+1
+= +
+tan−1 x
+2
+π
+
+218
+
+Chapter 5
+
+Continuous Random Variables
+
+where the last equality follows since θ, being uniform over (−π/2, π/2), has
+distribution
+P{θ … a} =
+
+1
+a
+a − (−π/2)
+= +
+π
+2
+π
+
+−
+
+π
+π
+< a <
+2
+2
+
+Hence, the density function of X is given by
+f (x) =
+
+d
+1
+F(x) =
+dx
+π(1 + x2 )
+
+− q < x < q
+.
+
+and we see that X has the Cauchy distribution.†
+
+5.6.4 The Beta Distribution
+A random variable is said to have a beta distribution if its density is given by
+⎧
+1
+⎪
+⎨
+xa−1 (1 − x)b−1 0 < x < 1
+f (x) = B(a, b)
+⎪
+⎩0
+otherwise
+where
+1
+
+B(a, b) =
+
+xa−1 (1 − x)b−1 dx
+
+0
+
+The beta distribution can be used to model a random phenomenon whose set of
+possible values is some ﬁnite interval [c, d]—which, by letting c denote the origin and
+taking d − c as a unit measurement, can be transformed into the interval [0, 1].
+When a = b, the beta density is symmetric about 12 , giving more and more weight
+to regions about 12 as the common value a increases. (See Figure 5.8.) When b > a,
+the density is skewed to the left (in the sense that smaller values become more likely);
+and it is skewed to the right when a > b. (See Figure 5.9.)
+The relationship
+(a)(b)
+(6.3)
+B(a, b) =
+(a + b)
+can be shown to exist between
+1
+
+B(a, b) =
+
+xa−1 (1 − x)b−1 dx
+
+0
+
+and the gamma function.
+† That d (tan−1 x) = 1/(1 + x2 ) can be seen as follows: If y = tan−1 x, then tan y = x, so
+dx
+
+d
+d
+dy
+d
+1=
+(tan y) =
+(tan y)
+=
+dx
+dy
+dx
+dy
+or
+
+sin y
+cos y
+
+dy
+=
+dx
+
+
+
+cos2 y + sin2 y
+cos2 y
+
+cos2 y
+1
+dy
+1
+=
+=
+=
+2
+2
+2
+2
+dx
+tan y + 1
+x + 1
+sin y + cos y
+
+
+
+dy
+dx
+
+Section 5.7
+
+The Distribution of a Function of a Random Variable
+
+219
+
+f(x)
+a = 10
+
+a=3
+
+a = 1–4
+
+a=1
+
+0
+
+1
+
+1–
+2
+
+x
+
+FIGURE 5.8: Beta densities with parameters (a, b) when a = b.
+
+f(x)
+
+a=6
+
+a = 3–2
+x
+FIGURE 5.9: Beta densities with parameters (a, b) when a/(a + b) = 1/20.
+
+Upon using Equation (6.1) along with the identity (6.3), it is an easy matter to show
+that if X is a beta random variable with parameters a and b, then
+E[X] =
+Var(X) =
+Remark.
+5.7
+
+a
+a + b
+ab
+(a + b)2 (a + b + 1)
+
+A veriﬁcation of Equation (6.3) appears in Example 7c of Chapter 6. .
+
+THE DISTRIBUTION OF A FUNCTION OF A RANDOM VARIABLE
+Often, we know the probability distribution of a random variable and are interested
+in determining the distribution of some function of it. For instance, suppose that we
+know the distribution of X and want to ﬁnd the distribution of g(X). To do so, it is
+
+220
+
+Chapter 5
+
+Continuous Random Variables
+
+necessary to express the event that g(X) … y in terms of X being in some set. We
+illustrate with the following examples.
+EXAMPLE 7a
+Let X be uniformly distributed over (0, 1). We obtain the distribution of the random
+variable Y, deﬁned by Y = X n , as follows: For 0 … y … 1,
+FY (y) = P{Y … y}
+= P{X n … y}
+= P{X … y1/n }
+= FX (y1/n )
+= y1/n
+For instance, the density function of Y is given by
+⎧
+⎪
+⎨ 1 y1/n−1 0 … y … 1
+fY (y) = n
+⎪
+⎩0
+otherwise
+
+.
+
+EXAMPLE 7b
+If X is a continuous random variable with probability density fX , then the distribution
+of Y = X 2 is obtained as follows: For y Ú 0,
+FY (y) = P{Y … y}
+= P{X 2 … y}
+√
+√
+= P{− y … X … y}
+√
+√
+= FX ( y) − FX (− y)
+Differentiation yields
+1
+√
+√
+fY (y) = √ [fX ( y) + fX (− y)]
+2 y
+
+.
+
+EXAMPLE 7c
+If X has a probability density fX , then Y = |X| has a density function that is obtained
+as follows: For y Ú 0,
+FY (y) = P{Y … y}
+= P{|X| … y}
+= P{−y … X … y}
+= FX (y) − FX (−y)
+Hence, on differentiation, we obtain
+fY (y) = fX (y) + fX (−y)
+
+y Ú 0
+.
+
+Section 5.7
+
+The Distribution of a Function of a Random Variable
+
+221
+
+The method employed in Examples 7a through 7c can be used to prove
+Theorem 7.1.
+Theorem 7.1. Let X be a continuous random variable having probability density function fX . Suppose that g(x) is a strictly monotonic (increasing or decreasing), differentiable (and thus continuous) function of x. Then the random variable Y deﬁned by
+Y = g(X) has a probability density function given by
+⎧
+6
+6
+⎪
+⎨ f [g−1 (y)] 66 d g−1 (y)66 if y = g(x) for some x
+X
+6 dy
+6
+fY (y) =
+⎪
+⎩0
+if y Z g(x) for all x
+where g−1 (y) is deﬁned to equal that value of x such that g(x) = y.
+We shall prove Theorem 7.1 when g(x) is an increasing function.
+Proof. Suppose that y = g(x) for some x. Then, with Y = g(X),
+FY (y) = P{g(X) … y}
+= P{X … g−1 (y)}
+= FX (g−1 (y))
+Differentiation gives
+fY (y) = fX (g−1 (y))
+
+d −1
+g (y)
+dy
+
+.
+
+which agrees with Theorem 7.1, since g−1 (y) is nondecreasing, so its derivative is nonnegative.
+When y Z g(x) for any x, then FY (y) is either 0 or 1, and in either case fY (y) = 0.
+EXAMPLE 7d
+Let X be a continuous nonnegative random variable with density function f , and let
+Y = X n . Find fY , the probability density function of Y.
+Solution. If g(x) = xn , then
+
+g−1 (y) = y1/n
+
+and
+d −1
+1
+{g (y)} = y1/n−1
+dy
+n
+Hence, from Theorem 7.1, we obtain
+fY (y) =
+For n = 2, this gives
+
+1 1/n−1 1/n
+y
+f (y )
+n
+
+1
+√
+fY (y) = √ f ( y)
+2 y
+
+which (since X Ú 0) is in agreement with the result of Example 7b.
+
+.
+
+222
+
+Chapter 5
+
+Continuous Random Variables
+
+SUMMARY
+A random variable X is continuous if there is a nonnegative function f , called the
+probability density function of X, such that, for any set B,
+*
+P{X ∈ B} =
+f (x) dx
+B
+
+If X is continuous, then its distribution function F will be differentiable and
+d
+F(x) = f (x)
+dx
+The expected value of a continuous random variable X is deﬁned by
+* q
+xf (x) dx
+E[X] =
+−q
+
+A useful identity is that, for any function g,
+* q
+E[g(X)] =
+g(x)f (x) dx
+−q
+
+As in the case of a discrete random variable, the variance of X is deﬁned by
+Var(X) = E[(X − E[X])2 ]
+A random variable X is said to be uniform over the interval (a, b) if its probability
+density function is given by
+⎧
+⎪
+⎨ 1
+a … x … b
+f (x) = b − a
+⎪
+⎩0
+otherwise
+Its expected value and variance are
+E[X] =
+
+a + b
+2
+
+Var(X) =
+
+(b − a)2
+12
+
+A random variable X is said to be normal with parameters μ and σ 2 if its probability
+density function is given by
+1
+2
+2
+f (x) = √
+e−(x−μ) /2σ
+2π σ
+It can be shown that
+
+μ = E[X]
+
+− q < x < q
+
+σ 2 = Var(X)
+
+If X is normal with mean μ and variance σ 2 , then Z, deﬁned by
+Z=
+
+X − μ
+σ
+
+is normal with mean 0 and variance 1. Such a random variable is said to be a standard
+normal random variable. Probabilities about X can be expressed in terms of probabilities about the standard normal variable Z, whose probability distribution function
+can be obtained either from Table 5.1 or from a website.
+
+Summary
+
+223
+
+When n is large, the probability distribution function of a binomial random variable with parameters n and p can be approximated by that of a normal random
+variable having mean np and variance np(1 − p).
+A random variable whose probability density function is of the form
+% −λx
+x Ú 0
+λe
+f (x) =
+0
+otherwise
+is said to be an exponential random variable with parameter λ. Its expected value and
+variance are, respectively,
+E[X] =
+
+1
+λ
+
+Var(X) =
+
+1
+λ2
+
+A key property possessed only by exponential random variables is that they are memoryless, in the sense that, for positive s and t,
+P{X > s + t|X > t} = P{X > s}
+If X represents the life of an item, then the memoryless property states that, for any
+t, the remaining life of a t-year-old item has the same probability distribution as the
+life of a new item. Thus, one need not remember the age of an item to know its
+distribution of remaining life.
+Let X be a nonnegative continuous random variable with distribution function F
+and density function f . The function
+λ(t) =
+
+f (t)
+1 − F(t)
+
+t Ú 0
+
+is called the hazard rate, or failure rate, function of F. If we interpret X as being the
+life of an item, then, for small values of dt, λ(t) dt is approximately the probability
+that a t-unit-old item will fail within an additional time dt. If F is the exponential
+distribution with parameter λ, then
+λ(t) = λ t Ú 0
+In addition, the exponential is the unique distribution having a constant failure rate.
+A random variable is said to have a gamma distribution with parameters α and λ
+if its probability density function is equal to
+f (x) =
+
+λe−λx (λx)α−1
+(α)
+
+x Ú 0
+
+and is 0 otherwise. The quantity (α) is called the gamma function and is deﬁned by
+* q
+(α) =
+e−x xα−1 dx
+0
+
+The expected value and variance of a gamma random variable are, respectively,
+E[X] =
+
+α
+λ
+
+Var(X) =
+
+α
+λ2
+
+224
+
+Chapter 5
+
+Continuous Random Variables
+
+A random variable is said to have a beta distribution with parameters (a, b) if its
+probability density function is equal to
+f (x) =
+
+1
+xa−1 (1 − x)b−1
+B(a, b)
+
+0 … x … 1
+
+and is equal to 0 otherwise. The constant B(a, b) is given by
+* 1
+B(a, b) =
+xa−1 (1 − x)b−1 dx
+0
+
+The mean and variance of such a random variable are, respectively,
+E[X] =
+
+a
+a + b
+
+Var(X) =
+
+ab
+(a + b)2 (a + b + 1)
+
+PROBLEMS
+5.1. Let X be a random variable with probability density function
+0
+c(1 − x2 ) −1 < x < 1
+f (x) =
+0
+otherwise
+(a) What is the value of c?
+(b) What is the cumulative distribution function
+of X?
+5.2. A system consisting of one original unit plus a
+spare can function for a random amount of time X.
+If the density of X is given (in units of months) by
+0
+Cxe−x/2 x > 0
+f (x) =
+0
+x … 0
+what is the probability that the system functions
+for at least 5 months?
+5.3. Consider the function
+0
+C(2x − x3 )
+f (x) =
+0
+
+0 < x < 52
+otherwise
+
+Could f be a probability density function? If so,
+determine C. Repeat if f (x) were given by
+0
+C(2x − x2 ) 0 < x < 52
+f (x) =
+0
+otherwise
+5.4. The probability density function of X, the lifetime
+of a certain type of electronic device (measured in
+hours), is given by
+
+⎧
+⎪
+⎨ 10
+f (x) = x2
+⎪
+⎩0
+
+x > 10
+x … 10
+
+(a) Find P{X > 20}.
+(b) What is the cumulative distribution function
+of X?
+(c) What is the probability that, of 6 such types of
+devices, at least 3 will function for at least 15
+hours? What assumptions are you making?
+5.5. A ﬁlling station is supplied with gasoline once a
+week. If its weekly volume of sales in thousands of
+gallons is a random variable with probability density function
+0
+5(1 − x)4 0 < x < 1
+f (x) =
+0
+otherwise
+what must the capacity of the tank be so that the
+probability of the supply’s being exhausted in a
+given week is .01?
+5.6. Compute E[X]
+⎧ if X has a density function given by
+⎪
+⎨ 1 xe−x/2 x > 0
+;
+(a) f (x) = 4
+⎪
+⎩0
+otherwise
+0
+c(1 − x2 ) −1 < x < 1
+(b) f (x) =
+;
+0
+otherwise
+⎧
+⎪
+⎨5 x > 5
+(c) f (x) = x2
+.
+⎪
+⎩0
+x … 5
+
+Problems
+5.7. The density function of X is given by
+0
+a + bx2 0 … x … 1
+f (x) =
+0
+otherwise
+If E[X] = 35 , ﬁnd a and b.
+5.8. The lifetime in hours of an electronic tube is a random variable having a probability density function
+given by
+x Ú 0
+f (x) = xe−x
+Compute the expected lifetime of such a tube.
+5.9. Consider Example 4b of Chapter 4, but now suppose that the seasonal demand is a continuous random variable having probability density function f .
+Show that the optimal amount to stock is the value
+s∗ that satisﬁes
+F(s∗ ) =
+
+b
+b + 
+
+where b is net proﬁt per unit sale,  is the net loss
+per unit unsold, and F is the cumulative distribution function of the seasonal demand.
+5.10. Trains headed for destination A arrive at the train
+station at 15-minute intervals starting at 7 A . M .,
+whereas trains headed for destination B arrive at
+15-minute intervals starting at 7:05 A . M .
+(a) If a certain passenger arrives at the station at
+a time uniformly distributed between 7 and
+8 A . M . and then gets on the ﬁrst train that
+arrives, what proportion of time does he or
+she go to destination A?
+(b) What if the passenger arrives at a time uniformly distributed between 7:10 and 8:10
+A . M .?
+5.11. A point is chosen at random on a line segment
+of length L. Interpret this statement, and ﬁnd the
+probability that the ratio of the shorter to the
+longer segment is less than 14 .
+5.12. A bus travels between the two cities A and B,
+which are 100 miles apart. If the bus has a breakdown, the distance from the breakdown to city A
+has a uniform distribution over (0, 100). There is a
+bus service station in city A, in B, and in the center of the route between A and B. It is suggested
+that it would be more efﬁcient to have the three
+stations located 25, 50, and 75 miles, respectively,
+from A. Do you agree? Why?
+5.13. You arrive at a bus stop at 10 o’clock, knowing
+that the bus will arrive at some time uniformly distributed between 10 and 10:30.
+(a) What is the probability that you will have to
+wait longer than 10 minutes?
+
+225
+
+(b) If, at 10:15, the bus has not yet arrived, what
+is the probability that you will have to wait at
+least an additional 10 minutes?
+5.14. Let X be a uniform (0, 1) random variable. Compute E[X n ] by using Proposition 2.1, and then
+check the result by using the deﬁnition of expectation.
+5.15. If X is a normal random variable with parameters
+μ = 10 and σ 2 = 36, compute
+(a) P{X > 5};
+(b) P{4 < X < 16};
+(c) P{X < 8};
+(d) P{X < 20};
+(e) P{X > 16}.
+5.16. The annual rainfall (in inches) in a certain region is
+normally distributed with μ = 40 and σ = 4. What
+is the probability that, starting with this year, it will
+take over 10 years before a year occurs having a
+rainfall of over 50 inches? What assumptions are
+you making?
+5.17. A man aiming at a target receives 10 points if his
+shot is within 1 inch of the target, 5 points if it is
+between 1 and 3 inches of the target, and 3 points if
+it is between 3 and 5 inches of the target. Find the
+expected number of points scored if the distance
+from the shot to the target is uniformly distributed
+between 0 and 10.
+5.18. Suppose that X is a normal random variable with
+mean 5. If P{X > 9} = .2, approximately what is
+Var(X)?
+5.19. Let X be a normal random variable with mean
+12 and variance 4. Find the value of c such that
+P{X > c} = .10.
+5.20. If 65 percent of the population of a large community is in favor of a proposed rise in school taxes,
+approximate the probability that a random sample
+of 100 people will contain
+(a) at least 50 who are in favor of the proposition;
+(b) between 60 and 70 inclusive who are in favor;
+(c) fewer than 75 in favor.
+5.21. Suppose that the height, in inches, of a 25-year-old
+man is a normal random variable with parameters
+μ = 71 and σ 2 = 6.25. What percentage of 25year-old men are over 6 feet, 2 inches tall? What
+percentage of men in the 6-footer club are over 6
+feet, 5 inches?
+5.22. The width of a slot of a duralumin forging is (in
+inches) normally distributed with μ = .9000 and
+σ = .0030. The speciﬁcation limits were given as
+.9000 ; .0050.
+(a) What percentage of forgings will be defective?
+
+226
+
+Chapter 5
+
+Continuous Random Variables
+
+(b) What is the maximum allowable value of σ
+that will permit no more than 1 in 100 defectives when the widths are normally distributed
+with μ = .9000 and σ ?
+5.23. One thousand independent rolls of a fair die will
+be made. Compute an approximation to the probability that the number 6 will appear between 150
+and 200 times inclusively. If the number 6 appears
+exactly 200 times, ﬁnd the probability that the
+number 5 will appear less than 150 times.
+5.24. The lifetimes of interactive computer chips produced by a certain semiconductor manufacturer
+are normally distributed with parameters μ =
+1.4 * 106 hours and σ = 3 * 105 hours. What is the
+approximate probability that a batch of 100 chips
+will contain at least 20 whose lifetimes are less than
+1.8 * 106 ?
+5.25. Each item produced by a certain manufacturer is,
+independently, of acceptable quality with probability .95. Approximate the probability that at most
+10 of the next 150 items produced are unacceptable.
+5.26. Two types of coins are produced at a factory: a fair
+coin and a biased one that comes up heads 55 percent of the time. We have one of these coins, but
+do not know whether it is a fair coin or a biased
+one. In order to ascertain which type of coin we
+have, we shall perform the following statistical test:
+We shall toss the coin 1000 times. If the coin lands
+on heads 525 or more times, then we shall conclude
+that it is a biased coin, whereas if it lands on heads
+less than 525 times, then we shall conclude that it
+is a fair coin. If the coin is actually fair, what is the
+probability that we shall reach a false conclusion?
+What would it be if the coin were biased?
+5.27. In 10,000 independent tosses of a coin, the coin
+landed on heads 5800 times. Is it reasonable to
+assume that the coin is not fair? Explain.
+5.28. Twelve percent of the population is left handed.
+Approximate the probability that there are at least
+20 left-handers in a school of 200 students. State
+your assumptions.
+5.29. A model for the movement of a stock supposes
+that if the present price of the stock is s, then, after
+one period, it will be either us with probability p
+or ds with probability 1 − p. Assuming that successive movements are independent, approximate
+the probability that the stock’s price will be up
+at least 30 percent after the next 1000 periods if
+u = 1.012, d = 0.990, and p = .52.
+5.30. An image is partitioned into two regions, one
+white and the other black. A reading taken from
+a randomly chosen point in the white section will
+give a reading that is normally distributed with μ =
+4 and σ 2 = 4, whereas one taken from a randomly
+
+chosen point in the black region will have a normally distributed reading with parameters (6, 9).
+A point is randomly chosen on the image and has
+a reading of 5. If the fraction of the image that is
+black is α, for what value of α would the probability of making an error be the same, regardless of
+whether one concluded that the point was in the
+black region or in the white region?
+5.31. (a) A ﬁre station is to be located along a road of
+length A, A < q. If ﬁres occur at points uniformly chosen on (0, A), where should the station be located so as to minimize the expected
+distance from the ﬁre? That is, choose a so
+as to
+minimize E[|X − a|]
+when X is uniformly distributed over (0, A).
+(b) Now suppose that the road is of inﬁnite
+length—stretching from point 0 outward to q.
+If the distance of a ﬁre from point 0 is exponentially distributed with rate λ, where should
+the ﬁre station now be located? That is, we
+want to minimize E[|X − a|], where X is now
+exponential with rate λ.
+5.32. The time (in hours) required to repair a machine is
+an exponentially distributed random variable with
+parameter λ = 12 . What is
+(a) the probability that a repair time exceeds 2
+hours?
+(b) the conditional probability that a repair takes
+at least 10 hours, given that its duration
+exceeds 9 hours?
+5.33. The number of years a radio functions is exponentially distributed with parameter λ = 18 . If Jones
+buys a used radio, what is the probability that it
+will be working after an additional 8 years?
+5.34. Jones ﬁgures that the total number of thousands
+of miles that an auto can be driven before it would
+need to be junked is an exponential random vari1
+able with parameter 20
+. Smith has a used car that
+he claims has been driven only 10,000 miles. If
+Jones purchases the car, what is the probability
+that she would get at least 20,000 additional miles
+out of it? Repeat under the assumption that the
+lifetime mileage of the car is not exponentially distributed, but rather is (in thousands of miles) uniformly distributed over (0, 40).
+5.35. The lung cancer hazard rate λ(t) of a t-year-old
+male smoker is such that
+λ(t) = .027 + .00025(t − 40)2
+
+t Ú 40
+
+Assuming that a 40-year-old male smoker survives
+all other hazards, what is the probability that he
+survives to (a) age 50 and (b) age 60 without contracting lung cancer?
+
+Theoretical Exercises
+5.36. Suppose that the life distribution of an item has the
+hazard rate function λ(t) = t3 , t > 0. What is the
+probability that
+(a) the item survives to age 2?
+(b) the item’s lifetime is between .4 and 1.4?
+(c) a 1-year-old item will survive to age 2?
+5.37. If X is uniformly distributed over (−1, 1), ﬁnd
+(a) P{|X| > 12 };
+(b) the density function of the random variable
+|X|.
+5.38. If Y is uniformly distributed over (0, 5), what
+is the probability that the roots of the equation
+4x2 + 4xY + Y + 2 = 0 are both real?
+
+227
+
+5.39. If X is an exponential random variable with
+parameter λ = 1, compute the probability density function of the random variable Y deﬁned by
+Y = log X.
+5.40. If X is uniformly distributed over (0, 1), ﬁnd the
+density function of Y = eX .
+5.41. Find the distribution of R = A sin θ , where A is
+a ﬁxed constant and θ is uniformly distributed on
+(−π/2, π/2). Such a random variable R arises in
+the theory of ballistics. If a projectile is ﬁred from
+the origin at an angle α from the earth with a speed
+ν, then the point R at which it returns to the earth
+can be expressed as R = (v2 /g) sin 2α, where g is
+the gravitational constant, equal to 980 centimeters per second squared.
+
+THEORETICAL EXERCISES
+5.1. The speed of a molecule in a uniform gas at equilibrium is a random variable whose probability
+density function is given by
+0
+2 −bx2 x Ú 0
+f (x) = ax e
+0
+x < 0
+where b = m/2kT and k, T, and m denote, respectively, Boltzmann’s constant, the absolute temperature of the gas, and the mass of the molecule.
+Evaluate a in terms of b.
+5.2. Show that
+* q
+* q
+P{Y > y} dy −
+P{Y < −y} dy
+E[Y] =
+0
+
+0
+
+Hint: Show that
+* 0
+* q
+P{Y < −y} dy = −
+xfY (x) dx
+0
+* q−q
+* q
+P{Y > y} dy =
+xfY (x) dx
+0
+
+0
+
+5.3. Show that if X has density function f , then
+* q
+g(x)f (x) dx
+E[g(X)] =
+
+5.5. Use the result that, for a nonnegative random variable Y,
+*
+q
+
+E[Y] =
+
+P{Y > t} dt
+
+0
+
+to show that, for a nonnegative random variable X,
+* q
+n
+nxn−1 P{X > x} dx
+E[X ] =
+0
+
+Hint: Start with
+E[X n ] =
+
+* q
+
+P{X n > t} dt
+
+0
+
+and make the change of variables t = xn .
+5.6. Deﬁne a collection of events Ea , 0 < a < 1, having the property
+that P(Ea ) = 1 for all a but
+
+P
+a
+
+Ea
+
+= 0.
+
+Hint: Let X be uniform over (0, 1) and deﬁne each
+Ea in terms of X.
+5.7. The standard deviation of X, denoted SD(X), is
+given by
+.
+SD(X) = Var(X)
+
+−q
+
+Find SD(aX + b) if X has variance σ 2 .
+5.8. Let X be a random variable that takes on values
+Hint: Using Theoretical Exercise 2, start with
+between 0 and c. That is, P{0 … X … c} = 1.
+* q
+* q
+Show that
+E[g(X)] =
+P{g(X) > y} dy −
+P{g(X) < −y} dy
+c2
+0
+0
+Var(X) …
+4
+and then proceed as in the proof given in the text
+Hint: One approach is to ﬁrst argue that
+when g(X) Ú 0.
+
+5.4. Prove Corollary 2.1.
+
+E[X 2 ] … cE[X]
+
+228
+
+Chapter 5
+
+Continuous Random Variables
+
+and then use this inequality to show that
+Var(X) … c2 [α(1 − α)]
+
+where α =
+
+E[X]
+c
+
+5.9. Show that Z is a standard normal random variable,
+then, for x > 0,
+(a) P{Z > x} = P{Z < −x};
+(b) P{|Z| > x} = 2P{Z > x};
+(c) P{|Z| < x} = 2P{Z < x} − 1.
+5.10. Let f (x) denote the probability density function of
+a normal random variable with mean μ and variance σ 2 . Show that μ − σ and μ + σ are points
+of inﬂection of this function. That is, show that
+f  (x) = 0 when x = μ − σ or x = μ + σ .
+5.11. Let Z be a standard normal random variable Z,
+and let g be a differentiable function with derivative g .
+(a) Show that E[g (Z)] = E[Zg(Z)]
+(b) Show that E[Zn+1 ] = nE[Zn−1 ]
+(c) Find E[Z4 ].
+5.12. Use the identity of Theoretical Exercise 5 to derive
+E[X 2 ] when X is an exponential random variable
+with parameter λ.
+5.13. The median of a continuous random variable having distribution function F is that value m such that
+F(m) = 12 . That is, a random variable is just as
+likely to be larger than its median as it is to be
+smaller. Find the median of X if X is
+(a) uniformly distributed over (a, b);
+(b) normal with parameters μ, σ 2 ;
+(c) exponential with rate λ.
+5.14. The mode of a continuous random variable having
+density f is the value of x for which f (x) attains its
+maximum. Compute the mode of X in cases (a),
+(b), and (c) of Theoretical Exercise 5.13.
+5.15. If X is an exponential random variable with
+parameter λ, and c > 0, show that cX is exponential with parameter λ/c.
+5.16. Compute the hazard rate function of X when X is
+uniformly distributed over (0, a).
+5.17. If X has hazard rate function λX (t), compute the
+hazard rate function of aX where a is a positive
+constant.
+5.18. Verify that the gamma density function integrates
+to 1.
+5.19. If X is an exponential random variable with mean
+1/λ, show that
+E[X k ] =
+
+k!
+λk
+
+k = 1, 2, . . .
+
+Hint: Make use of the gamma density function to
+evaluate the preceding.
+5.20. Verify that
+α
+Var(X) = 2
+λ
+
+when X is a gamma random variable with parameters α and λ. 
+√
+5.21. Show that  12 = π.
+ 
+-q
+Hint:  12 = 0 e−x x−1/2 dx. Make the change
+√
+of variables y = 2x and then relate the resulting
+expression to the normal distribution.
+5.22. Compute the hazard rate function of a gamma random variable with parameters (α, λ) and show it is
+increasing when α Ú 1 and decreasing when α … 1.
+5.23. Compute the hazard rate function of a Weibull
+random variable and show it is increasing when
+β Ú 1 and decreasing when β … 1.
+5.24. Show that a plot of log(log(1 − F(x))−1 ) against
+log x will be a straight line with slope β when
+F(·) is a Weibull distribution function. Show also
+that approximately 63.2 percent of all observations from such a distribution will be less than α.
+Assume that v = 0.
+5.25. Let
+
+
+X − ν β
+Y=
+α
+Show that if X is a Weibull random variable with
+parameters ν, α, and β, then Y is an exponential
+random variable with parameter λ = 1 and vice
+versa.
+5.26. If X is a beta random variable with parameters a
+and b, show that
+E[X] =
+Var(X) =
+
+a
+a + b
+ab
+(a + b)2 (a + b + 1)
+
+5.27. If X is uniformly distributed over (a, b), what random variable, having a linear relation with X, is
+uniformly distributed over (0, 1)?
+5.28. Consider the beta distribution with parameters
+(a, b). Show that
+(a) when a > 1 and b > 1, the density is unimodal (that is, it has a unique mode) with
+mode equal to (a − 1)/(a + b − 2);
+(b) when a … 1, b … 1, and a + b < 2, the density is either unimodal with mode at 0 or 1 or
+U-shaped with modes at both 0 and 1;
+(c) when a = 1 = b, all points in [0, 1] are modes.
+5.29. Let X be a continuous random variable having
+cumulative distribution function F. Deﬁne the random variable Y by Y = F(X). Show that Y is
+uniformly distributed over (0, 1).
+5.30. Let X have probability density fX . Find the probability density function of the random variable Y
+deﬁned by Y = aX + b.
+
+Self-Test Problems and Exercises
+5.31. Find the probability density function of Y = eX
+when X is normally distributed with parameters μ
+and σ 2 . The random variable Y is said to have a
+lognormal distribution (since log Y has a normal
+distribution) with parameters μ and σ 2 .
+5.32. Let X and Y be independent random variables that are both equally likely to be either
+1, 2, . . . , (10)N , where N is very large. Let D denote
+the greatest common divisor of X and Y, and let
+Qk = P{D = k}.
+(a) Give a heuristic argument that Qk = k12 Q1 .
+Hint: Note that in order for D to equal k, k
+must divide both X and Y and also X/k, and
+Y/k must be relatively prime. (That is, X/k,
+and Y/k must have a greatest common divisor
+equal to 1.)
+(b) Use part (a) to show that
+
+1/k2 =
+
+1
+
+π 2 /6, so Q1 = 6/π 2 . (In number theory, this
+is known as the Legendre theorem.)
+(c) Now argue that
+
+
+q
+
+Pi2 − 1
+Q1 =
+Pi2
+i=1
+where Pi is the ith-smallest prime greater
+than 1.
+Hint: X and Y will be relatively prime if they
+have no common prime factors. Hence, from
+part (b), we see that
+
+
+q
+
+Pi2 − 1
+6
+= 2
+π
+Pi2
+which was noted without explanation in
+Problem 11 of Chapter 4. (The relationship
+between this problem and Problem 11 of
+Chapter 4 is that X and Y are relatively prime
+if XY has no multiple prime factors.)
+5.33. Prove Theorem 7.1 when g(x) is a decreasing function.
+
+1
+q
+
+
+q
+
+i=1
+
+Q1 = P{X and Y are relatively prime}
+=
+
+It is a well-known identity that
+
+229
+
+1/k2
+
+k=1
+
+SELF-TEST PROBLEMS AND EXERCISES
+5.1. The number of minutes of playing time of a certain
+high school basketball player in a randomly chosen game is a random variable whose probability
+density function is given in the following ﬁgure:
+.050
+.025
+10
+
+20
+
+30
+
+40
+
+Find the probability that the player plays
+(a) over 15 minutes;
+(b) between 20 and 35 minutes;
+(c) less than 30 minutes;
+(d) more than 36 minutes.
+5.2. For some constant c, the random variable X has
+the probability density function
+% n
+cx 0 < x < 1
+f (x) =
+0
+otherwise
+Find (a) c and (b) P{X > x}, 0 < x < 1.
+
+5.3. For some constant c, the random variable X has
+the probability density function
+0
+cx4 0 < x < 2
+f (x) =
+0
+otherwise
+Find (a) E[X] and (b) Var(X).
+5.4. The random variable X has the probability density
+function
+0
+ax + bx2 0 < x < 1
+f (x) =
+0
+otherwise
+If E[X] = .6, ﬁnd (a) P{X < 12 } and (b) Var(X).
+5.5. The random variable X is said to be a discrete uniform random variable on the integers 1, 2, . . . , n if
+P{X = i} =
+
+1
+n
+
+i = 1, 2, . . . , n
+
+For any nonnegative real number x, let Int(x)
+(sometimes written as [x]) be the largest integer that is less than or equal to x. Show that
+U is a uniform random variable on (0, 1), fain
+
+230
+
+Chapter 5
+
+Continuous Random Variables
+
+X = Int(nU) + 1 is a discrete uniform random
+variable on 1, . . . , n.
+5.6. Your company must make a sealed bid for a construction project. If you succeed in winning the
+contract (by having the lowest bid), then you plan
+to pay another ﬁrm 100 thousand dollars to do
+the work. If you believe that the minimum bid
+(in thousands of dollars) of the other participating
+companies can be modeled as the value of a random variable that is uniformly distributed on (70,
+140), how much should you bid to maximize your
+expected proﬁt?
+5.7. To be a winner in a certain game, you must be
+successful in three successive rounds. The game
+depends on the value of U, a uniform random variable on (0, 1). If U > .1, then you are successful
+in round 1; if U > .2, then you are successful in
+round 2; and if U > .3, then you are successful in
+round 3.
+(a) Find the probability that you are successful in
+round 1.
+(b) Find the conditional probability that you are
+successful in round 2 given that you were successful in round 1.
+(c) Find the conditional probability that you are
+successful in round 3 given that you were successful in rounds 1 and 2.
+(d) Find the probability that you are a winner.
+5.8. A randomly chosen IQ test taker obtains a score
+that is approximately a normal random variable
+with mean 100 and standard deviation 15. What is
+the probability that the score of such a person is
+(a) above 125; (b) between 90 and 110?
+5.9. Suppose that the travel time from your home to
+your ofﬁce is normally distributed with mean 40
+minutes and standard deviation 7 minutes. If you
+want to be 95 percent certain that you will not be
+late for an ofﬁce appointment at 1 P . M ., what is the
+latest time that you should leave home?
+5.10. The life of a certain type of automobile tire is normally distributed with mean 34,000 miles and standard deviation 4000 miles.
+(a) What is the probability that such a tire lasts
+over 40,000 miles?
+(b) What is the probability that it lasts between
+30,000 and 35,000 miles?
+(c) Given that it has survived 30,000 miles, what
+is the conditional probability that the tire survives another 10,000 miles?
+5.11. The annual rainfall in Cleveland, Ohio is approximately a normal random variable with mean 40.2
+inches and standard deviation 8.4 inches. What is
+the probability that
+(a) next year’s rainfall will exceed 44 inches?
+(b) the yearly rainfalls in exactly 3 of the next 7
+years will exceed 44 inches?
+
+Assume that if Ai is the event that the rainfall
+exceeds 44 inches in year i (from now), then the
+events Ai , i Ú 1, are independent.
+5.12. The following table uses 1992 data concerning the
+percentages of male and female full-time workers
+whose annual salaries fall into different ranges:
+Earnings range
+
+Percentage
+of females
+
+Percentage
+of males
+
+8.6
+38.0
+19.4
+29.2
+4.8
+
+4.4
+21.1
+15.8
+41.5
+17.2
+
+…9999
+10,000–19,999
+20,000–24,999
+25,000–49,999
+Ú50,000
+
+Suppose that random samples of 200 male and 200
+female full-time workers are chosen. Approximate
+the probability that
+(a) at least 70 of the women earn $25,000 or more;
+(b) at most 60 percent of the men earn $25,000
+or more;
+(c) at least three-fourths of the men and at least
+half the women earn $20,000 or more.
+5.13. At a certain bank, the amount of time that a customer spends being served by a teller is an exponential random variable with mean 5 minutes. If
+there is a customer in service when you enter the
+bank, what is the probability that he or she will still
+be with the teller after an additional 4 minutes?
+5.14. Suppose that the cumulative distribution function
+of the random variable X is given by
+F(x) = 1 − e−x
+
+2
+
+x > 0
+
+Evaluate (a) P{X > 2}; (b) P{1 < X < 3}; (c) the
+hazard rate function of F; (d) E[X]; (e) Var(X).
+Hint: For parts (d) and (e), you might want to
+make use of the results of Theoretical Exercise 5.
+5.15. The number of years that a washing machine functions is a random variable whose hazard rate function is given by
+⎧
+0 < t < 2
+⎨ .2
+λ(t) = .2 + .3(t − 2) 2 … t < 5
+⎩ 1.1
+t > 5
+(a) What is the probability that the machine will
+still be working 6 years after being purchased?
+(b) If it is still working 6 years after being purchased, what is the conditional probability
+that it will fail within the next 2 years?
+5.16. A standard Cauchy random variable has density
+function
+f (x) =
+
+1
+π(1 + x2 )
+
+− q < x < q
+
+Self-Test Problems and Exercises
+Show that X is a standard Cauchy random
+variable, then 1/X is also a standard Cauchy random variable.
+5.17. A roulette wheel has 38 slots, numbered 0, 00, and
+1 through 36. If you bet 1 on a speciﬁed number then you either win 35 if the roulette ball
+lands on that number or lose 1 if it does not.
+If you continually make such bets, approximate
+the probability that
+(a) you are winning after 34 bets;
+(b) you are winning after 1000 bets;
+(c) you are winning after 100,000 bets.
+Assume that each roll of the roulette ball is equally
+likely to land on any of the 38 numbers.
+5.18. There are two types of batteries in a bin. When in
+use, type i batteries last (in hours) an exponentially
+distributed time with rate λi , i = 1, 2. A battery
+that is randomly chosen from the bin will be a type
+2
+
+i battery with probability pi ,
+i=1
+
+pi = 1. If a ran-
+
+domly chosen battery is still operating after t hours
+of use, what is the probability that it will still be
+operating after an additional s hours?
+5.19. Evidence concerning the guilt or innocence of a
+defendant in a criminal investigation can be summarized by the value of an exponential random
+
+231
+
+variable X whose mean μ depends on whether the
+defendant is guilty. If innocent, μ = 1; if guilty,
+μ = 2. The deciding judge will rule the defendant guilty if X > c for some suitably chosen
+value of c.
+(a) If the judge wants to be 95 percent certain
+that an innocent man will not be convicted,
+what should be the value of c?
+(b) Using the value of c found in part (a), what is
+the probability that a guilty defendant will be
+convicted?
+5.20. For any real number y, deﬁne y+ by
+y+ =
+
+y, if y Ú 0
+0, if y < 0
+
+Let c be a constant.
+(a) Show that
+1
+2
+E[(Z − c)+ ] = √ e−c /2 − c(1 −
+2π
+
+(c))
+
+when Z is a standard normal random variable.
+(b) Find E[(X − c)+ ] when X is normal with
+mean μ and variance σ 2 .
+
+C H A P T E R
+
+6
+
+Jointly Distributed Random Variables
+6.1
+6.2
+6.3
+6.4
+6.5
+6.6
+6.7
+6.8
+
+JOINT DISTRIBUTION FUNCTIONS
+INDEPENDENT RANDOM VARIABLES
+SUMS OF INDEPENDENT RANDOM VARIABLES
+CONDITIONAL DISTRIBUTIONS: DISCRETE CASE
+CONDITIONAL DISTRIBUTIONS: CONTINUOUS CASE
+ORDER STATISTICS
+JOINT PROBABILITY DISTRIBUTION OF FUNCTIONS OF RANDOM VARIABLES
+EXCHANGEABLE RANDOM VARIABLES
+
+6.1
+
+JOINT DISTRIBUTION FUNCTIONS
+Thus far, we have concerned ourselves only with probability distributions for single
+random variables. However, we are often interested in probability statements concerning two or more random variables. In order to deal with such probabilities, we
+deﬁne, for any two random variables X and Y, the joint cumulative probability distribution function of X and Y by
+F(a, b) = P{X … a, Y … b}
+
+− q < a, b < q
+
+The distribution of X can be obtained from the joint distribution of X and Y as
+follows:
+FX (a) = P{X … a}
+= P{X … a, Y < q}
+
+
+= P lim {X … a, Y … b}
+b→q
+= lim P{X … a, Y … b}
+b→q
+= lim F(a, b)
+b→q
+K F(a, q)
+Note that, in the preceding set of equalities, we have once again made use of the fact
+that probability is a continuous set (that is, event) function. Similarly, the cumulative
+distribution function of Y is given by
+FY (b) = P{Y … b}
+= lim F(a, b)
+a→q
+K F(q, b)
+232
+
+

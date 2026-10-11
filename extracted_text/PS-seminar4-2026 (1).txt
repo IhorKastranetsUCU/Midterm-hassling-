@@ -1,0 +1,212 @@
+APPS @ UCU
+
+Probability and Statistics: Seminar 4
+
+Autumn 2026
+
+Probability and Statistics
+Topic 4. Discrete Random Variables
+• Random variable
+• Discreate random variable
+• Probability mass function
+• Cumulative distribution function
+• Bernoulli distribution
+• Binomial distribution
+• Geometric distribution
+• Poisson distribution
+• Joint probability mass function
+• Marginal probability mass function
+• Conditional distribution
+• Independent random variables
+
+Seminar 4
+Problem 1 (Discrete r.v. and their p.m.f.). Suppose that a fair die is rolled twice. What is
+the probability mass function of the following random variables:
+(a) X = ‘‘the maximum value to appear in the two rolls’’;
+(b) Y = ‘‘the minimum value to appear in the two rolls’’. Give a short explanation
+why pX (j) = pY (7 − j) for j = 1, 2, . . . , 6.
+(c) Find the joint p.m.f. of the random vector (X, Y ); calculate the marginal distribution of
+X and compare to part (a).
+(d) Are random variables X and Y independent?
+Problem 2 (Joint probability distribution). A fair coin is tossed three times. Denote by X
+the number of Heads in the first two tosses and by Y the number of Tails in the last two tosses
+of the coin.
+(a) Find the joint probability mass function pX,Y of X and Y :
+Events X = 0 X = 1 X = 2
+prob. X = 0 X = 1 X = 2
+Y =0
+...
+...
+...
+Y =0
+...
+...
+...
+Y =1
+
+...
+
+...
+
+...
+
+Y =1
+
+...
+
+...
+
+...
+
+Y =2
+
+...
+
+...
+
+...
+
+Y =2
+
+...
+
+...
+
+...
+
+1
+
+APPS @ UCU
+
+Probability and Statistics: Seminar 4
+
+Autumn 2026
+
+(b) Calculate the marginal p.m.f.’s of X and Y
+(c) What distributions do X and Y have?
+(d) Are X and Y independent?
+(e) Find the probability that X is equal to Y ); that X is greater than Y
+(f) Calculate the conditional p.m.f. of X given that Y = 1
+Problem 3 (Poisson distribution). Suppose that the number of new COVID-19 positive tested
+patients in the city A on day i is a Poisson random variable Xi of parameter λ = 10; assume
+also that the random variables X1 , X2 , . . . are independent.
+(a) Find the probability that the number of newly COVID-19 infected patients tomorrow will
+be larger than today’s count.
+Assume that the number of new COVID-19 positive tested patients in the city B on day i is
+a Poisson random variable Yi of parameter µ = 20; assume also that all random variables Xi
+and Yj , i, j = 1, 2, . . . are independent.
+(b) Show that the random variable Xi + Yi has Poisson distribution of parameter 30. In the
+general case, if X and Y are independent Poisson random variables with parameters λ and
+µ respectively, what is the distribution of the random variable X + Y ?
+(c) Assume that by this noon, 5 new cases were reported. Find the probability that k newly
+COVID-19 infected patients will be reported today in total.
+Hint: Can you see that there are two ways to solve this problem, depending on whether we make some
+assumptions about the distribution of cases throughout the day? What assumptions can be made?
+
+(d) Assume that 30 new COVID-19 infected patients were reported yesterday in the cities A
+and B in total. What is the probability that k of them come from A, k = 0, 1, . . . , 30?
+Problem 4 (Binomial distribution). A communications channel transmits the digits 0 and
+1. However, due to noise, the digit transmitted is incorrectly received with probability 0.2.
+Suppose that we want to transmit an important message consisting of n binary digits. To
+reduce the chance of error, we transmit 00000 instead of 0 and 11111 instead of 1. If the
+receiver of the message uses the “majority” rule for decoding, what is the probability that
+(a) the message will be wrong when decoded?
+(b) at most two binary digits of the original message will be wrongly decoded?
+(c) what is the most probable number of correctly decoded binary digits?
+What independence assumptions are you making?
+Problem 5 (Discrete r.v. and their p.m.f.). Five men and five women are ranked according
+to their scores on an examination. Assume that no two scores are alike and all 10! possible
+rankings are equally likely. Let X denote the highest ranking achieved by a woman and let Y
+denote their lowest ranking. (For instance, X = 1 if the top-ranked person is a female.)
+(a) Find the probability mass function (p.m.f.) of a random variable X;
+2
+
+APPS @ UCU
+
+Probability and Statistics: Seminar 4
+
+Autumn 2026
+
+(b) explain how to find the joint p.m.f. of a random vector (X, Y ), i.e., how to calculate the
+values p(X,Y ) (x, y) := P(X = x, Y = y) for all pairs of x and y;
+(c) what is the marginal distribution of X? Calculate the value of the marginal distribution
+of X for x = 3 and compare to the value found in part (a);
+(d) are the random variables X and Y independent?
+Problem 6 (Binomial distribution). When coin A is flipped, it lands on Heads with probability
+0.4; when coin B is flipped, it lands on Heads with probability 0.6. One of these coins is
+randomly chosen and flipped 10 times; let X denote the total number of Heads.
+(a) Is it true that a r.v. X has a binomial distribution?
+(b) Find the p.m.f. of the random variable X.
+(c) Given that the first of these ten flips lands Heads, what is the conditional distribution of
+the total number of Heads? (Hint: condition on the coin chosen)
+(d) Assuming that X = k, what is the (conditional) probability that coin A is tossed? For
+what k is it larger than 0.5?
+Problem 7 (Binomial distribution). Suppose that a biased coin that lands on Heads with
+probability p is flipped 10 times. Given that a total of 6 Heads results, find the conditional
+probability that the first 3 outcomes
+(a) are HTT (meaning that the first flip results in Heads, the second in Tails, and the third in
+Tails);
+(b) include precisely k Heads; k = 0, 1, 2, 3.
+Assume now that there are 2 Heads in the first three tosses of the coin.
+(c) What is the conditional probability that there are k Heads in all 10 tosses?
+(d) What is the most probable number of Heads in all 10 tosses?
+Problem 8 (Joint probability distribution ). You roll two fair dice, and they show X and Y ,
+respectively. Let U = min{X, Y }, V = max{X, Y }.
+(a) Write down the joint distributions of:
+(i) {U, X};
+
+(ii) {U, V };
+
+(iii) {X, Y, V }
+
+(b) Which of the above r.v. are independent?
+(c) Find the conditional p.m.f. of the r.v. X | U = u and Y | V = v.
+
+Problems to be discussed during consultation
+Problem 9. Two balls are chosen randomly from an urn containing 8 white, 4 black, and 2
+orange balls. Suppose that we win 2 for each black ball selected and we lose 1 for each white
+ball selected. Let X denote our winnings. What are the possible values of X, and what are the
+probabilities associated with each value?
+3
+
+APPS @ UCU
+
+Probability and Statistics: Seminar 4
+
+Autumn 2026
+
+Problem 10. Let the random variables X and Y have joint probability mass function f (x, y)
+such that:
+f (1, 2) = 81 ,
+1
+f (2, 2) = 16
+,
+
+1
+f (1, 3) = 16
+,
+1
+f (2, 3) = 8 ,
+
+f (1, 4) = 14 ,
+f (2, 4) = 83 .
+
+(a) Find the marginal p.m.f. of the r.v. X and Y ;
+(b) Find the probability of the following events:
+(1) X > Y ;
+(2) X + Y is odd;
+(3) X ≥ Y ;
+(4) X − Y ≤ 1.
+Problem 11. Suppose that the number of accidents occurring on a highway each day is a
+Poisson random variable with parameter λ = 3.
+(a) Find the probability that 3 or more accidents occur today.
+(b) Repeat part (a) given the information that 1 accident has already occurred today.
+Problem 12. Five distinct numbers are randomly distributed to players numbered 1 through
+5. Whenever two players compare their numbers, the one with the higher one is declared the
+winner. Initially, players 1 and 2 compare their numbers; the winner then compares her number
+with that of player 3, and so on. Let X denote the number of times player 1 is a winner. Find
+P{X = i}, i = 0, 1, 2, 3, 4.
+
+4
+
+

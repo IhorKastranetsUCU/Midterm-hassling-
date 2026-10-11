@@ -1,0 +1,7765 @@
+7
+Continuous Random Variables
+
+He talks at random: sure the man is mad.
+W. Shakespeare, Henry VI
+7.1 Density and Distribution
+
+Hitherto, we have assumed that a random variable can take any one of only a countable
+set of values. However, suppose your height is 5 feet or 6 feet (or somewhere in between).
+Then,
+previously (however brieﬂy), your height in feet has taken every value in [1, 5],
+√
+including 2, e, π, and so on. (Each value can be taken more than once because you
+are taller in the morning than in the evening.) Thus, if X is the height of a randomly
+selected member of the population, the state space of X is not countable. There are many
+other simple examples of variables that may take any one of an uncountable number of
+values; for example, the brightness of a randomly chosen star, the time until some cell
+divides, the velocity of a comet, the direction of the wind, and so on. Think of some
+yourself.
+In view of these remarks, we are about to introduce a new class of random variables
+such that the state space  is uncountable, and X (ω) may take any one of an uncountable
+number of real values. However, before we embark on this task, it is as well to reassure
+you that, despite their separate presentation, these new random variables share most of the
+useful properties of discrete random variables. Also, many of these properties are proved
+in exactly the same way as in the discrete case and (even better) we are able to use much
+of the same notation.
+Thus, as in the discrete case, we start with a probability function P(·) deﬁned on a
+collection F (the event space) of subsets of  (the sample space). Then we think of a
+random variable X as a real valued function X (ω) deﬁned for each ω.
+Our ﬁrst requirement (as in the discrete case) is a function that tells us about the relative
+likelihoods of possible values of X . Happily, we already have such a function; recall the
+following:
+
+287
+
+288
+
+(1)
+(2)
+
+Deﬁnition
+
+7 Continuous Random Variables
+
+The distribution function F of the random variable X is the function
+F(x) = P(A x ),
+
+where A x is the event A x = {ω : X (ω) ≤ x}, xR.
+We usually write (2) as
+(3)
+
+
+
+F(x) = P(X ≤ x),
+and denote F by FX (x) when we want to stress the role of X .
+Notice that for Deﬁnition 1 to be meaningful, the event A x must be in F, so that we
+know P(A x ). Thus, X (·) only qualiﬁes to appear in Deﬁnition 1 if A x F for all x. This is
+true throughout this book; the implications of this so-called measurability condition are
+explored in more advanced books.
+
+(4)
+
+Example: Uniform Distribution
+You devise an experiment in which the outcome is
+equally likely to be any point Q in the interval [0, 1]. Thus, the sample space is the set
+of points (Q : Q[0, 1]). The event space F will include all intervals in [0, 1]; we omit
+the proof that such an F exists, but you should rest assured that it does exist. Deﬁne the
+random variable X (Q) to be the distance from the origin O to Q. From the nature of the
+experiment, if
+Aab = {Q : Q(a, b)},
+
+0 ≤ a ≤ b ≤ 1,
+
+then P(Aab ) = b − a. Hence, X has distribution function sketched in Figure 7.1
+
+x <0
+ 0 if
+FX (x) = P(A0x ) = x if 0 ≤ x ≤ 1
+
+1 if
+x > 1.
+
+s
+
+In the future, the underlying sample space will make few appearances. We tend to think
+of the possible values of X as the sample space, as we did for discrete random variables.
+(It can be proved that this is a permissible view.)
+
+Figure 7.1 The distribution function FX (x) of a random variable X distributed uniformly on
+(0, 1).
+
+7.1 Density and Distribution
+
+289
+
+Figure 7.2 The altitude AP is of length h.
+
+(5)
+
+Example
+A point Q is picked at random in a triangle of area a, with base of length b.
+Let X be the perpendicular distance from Q to the base. What is the distribution function
+FX (x)? [See ﬁgure 7.2 for a sketch of the triangle].
+Solution
+Let the height of the triangle AP be h. The event X > x occurs when Q lies
+inside the triangle ABC. For reasons of symmetry,
+
+P(Q  ABC) = (area of ABC)/a =
+
+h−x
+h
+
+2
+.
+
+Hence,
+
+0
+
+
+
+
+
+h−x 2
+FX (x) = P(X ≤ x) = 1 − P(Q  ABC) = 1 −
+
+h
+
+
+1
+
+x <0
+0≤x ≤h
+
+s
+
+x > h.
+
+We summarize the basic properties of F(x) in the following:
+(6)
+
+Theorem
+
+Let X have distribution function F(x). Then 0 ≤ F(x) ≤ 1 for all x, and
+P (x < X ≤ y) = F(y) − F(x) ≥ 0, for all x ≤ y.
+
+(7)
+(8)
+
+If h > 0, then
+lim F(x + h) = F(x).
+
+h→0
+
+(9)
+
+If P(|X | < ∞) = 1, then
+lim F(x) = 1 and
+
+x→∞
+
+lim F(x) = 0.
+
+x→−∞
+
+290
+
+7 Continuous Random Variables
+
+In plain words, this theorem says that as x increases, F(x) is nondecreasing, continuous
+on the right, and lies between 0 and 1. It can be shown conversely that any function with
+these properties is the distribution function of some random variable.
+Proof The ﬁrst result follows from (2) because 0 ≤ P(A x ) ≤ 1. To show (7), note that
+{ω: x < X ≤ y} = A y ∩ Acx = A y \A x .
+Because A x ⊆ A y for x ≤ y, we have
+P (x < X ≤ y) = P (A y ) − P(A x ) = F(y) − F(x) ≥ 0
+by the nonnegativity of P(·). To prove (8), we use the continuity of P(·), see (1.5.4.). Let
+(h k ; k ≥ 1) be any sequence decreasing to zero, and let A(k) be the event that X ≤ x + h k .
+Then
+lim F(x + h) = lim F(x + h k ) = lim P(A(k) )
+
+h→0
+
+k→∞
+
+k→∞
+
+= P( lim A(k) ) = P(A x ) = F(x),
+k→∞
+
+as required. Finally, for (9),
+lim F(x) = lim P(An ) = P()
+
+x→∞
+
+n→∞
+
+by (1.5.4).
+
+
+The last part is proved similarly.
+
+Although the distribution function has not played a very active role so far in this book, it
+now assumes a greater importance. One reason for this is Theorem 6 above, which shows
+that F(x) really is a function that can tell us how likely X is to be in some simple subset
+of the real line. Another reason is the following simple corollary of Example 5.
+(10) Corollary
+Proof
+
+(11) Example
+
+If F(x) is continuous, then for all x P(X = x) = 0.
+
+
+1
+P (X = x) = lim P x − < X ≤ x
+n→∞
+n
+
+
+
+1
+= lim F(x) − F x −
+n→∞
+n
+= 0 because F is continuous.
+
+by (1.5.4)
+by Theorem 6
+
+
+Let X be uniformly distributed on (0, 1). Then
+
+x ≤0
+0
+F(x) = x 0 < x < 1
+
+1
+x ≥1
+
+is clearly continuous, so that P(X = x) = 0 for all x.
+
+
+
+7.1 Density and Distribution
+
+291
+
+If FX is continuous, then X is known as a continuous random variable. We now deﬁne a
+particularly important class of continuous random variables.
+(12)
+(13)
+
+(14)
+
+Deﬁnition
+
+Let X have distribution function F. If the derivative
+
+dF
+= F  (x)
+dx
+exists at all but a ﬁnite number of points, and the function f deﬁned by
+ 
+F (x)
+where F  (x) exists
+f (x) =
+,
+0
+elsewhere,
+satisﬁes
+F(x) =
+
+(15)
+
+x
+
+f (ν) dν,
+−∞
+
+then X is said to be a continuous random variable with density f (x).
+
+
+
+It follows from (15) that if X has density f (x), then for C ⊆ R the
+Key Rule is:
+P (X  C) =
+
+f (x)d x,
+C
+
+when both sides exist. [In line with the remark following (3), they exist if
+{ω: X (ω)  C}F.]
+Example 4 Revisited: Uniform Density
+In Example 4, we found that if X was chosen
+uniformly at random in [0, 1], then
+
+x <0
+0
+FX (x) = x 0 ≤ x ≤ 1
+
+1
+x > 1.
+It follows that X has a density
+
+
+f X (x) =
+
+1
+0
+
+0<x <1
+otherwise.
+
+s
+
+Figures 7.3 to 7.6 illustrate the density and distribution of random variables Y and Z ,
+which are uniformly distributed on (a, b) and (a, b) ∪ (c, d), respectively.
+Example (5) Revisited
+For the point Q picked at random in a triangle, where X is
+the perpendicular distance from Q to the base, we found
+
+0
+x <0
+
+
+
+
+
+h−x 2
+FX (x) = 1 −
+0≤x ≤h
+
+h
+
+
+1
+x > h.
+
+292
+
+7 Continuous Random Variables
+
+Figure 7.3 The density function f (y) of a random variable distributed uniformly on (a, b).
+
+It follows that X has density
+
+f X (x) =
+
+2(h − x)/ h 2
+0
+
+0<x <h
+otherwise.
+
+s
+
+There are continuous random variables that do not have a density, but none appear in this
+text. Therefore, whenever X is said to be continuous here, it always follows that X has a
+density f .
+Let us consider a basic example. In the discrete case, the geometric distribution is of the
+form F(x) = 1 − q x , if x = 1, 2, . . . It is natural to consider the analogous distribution in
+the continuous case, which turns out to be equally (if not more) important.
+(16) Example: Exponential Density
+
+Let X have distribution
+
+F(x) = max{0, 1 − e−λx },
+where λ > 0. Then F is continuous for all x, and also differentiable except at x = 0, so
+
+0
+if x < 0,
+
+F (x) =
+λe−λx if x > 0.
+
+Figure 7.4 The distribution function F(y) of a random variable distributed uniformly on (a, b).
+
+7.1 Density and Distribution
+
+293
+
+fZ (z)
+
+(d − c + b − a)−1
+
+0
+
+a
+
+b
+
+c
+
+d
+
+z
+
+Figure 7.5 The density function of a random variable distributed uniformly on (a, b) ∪ (c, d),
+where a < b < c < d.
+
+Now let
+
+
+f (x) =
+
+λe−λx
+0
+
+if x > 0,
+x ≤ 0.
+
+Then of course, for x > 0,
+x
+
+F(x) = 1 − e−λx =
+
+λe−λv dv =
+
+0
+
+x
+
+f (v)dv,
+∞
+
+and, for x < 0,
+F(x) = 0 =
+
+x
+
+f (v)dv.
+−∞
+
+s
+
+Hence, f (x) is a density of X . See Figures 7.7 and 7.8.
+Notice that F  (0) does not exist, and also that the function
+ −λx
+λe
+x ≥0
+f (x) =
+0
+x <0
+FZ (z)
+1
+
+0
+
+a
+
+b
+
+c
+
+d
+
+z
+
+Figure 7.6 The distribution function of a random variable distributed uniformly on
+(a, b) ∪ (c, d), where a < b < c < d.
+
+294
+
+7 Continuous Random Variables
+
+Figure 7.7 The density of an exponential random variable with parameter λ; f (x) = λe−λx for
+x ≥ 0.
+
++x
+would also satisfy F(x) = −∞ f (v)dv. This illustrates the fact that (15) does not uniquely
+determine f (x) given F(x). However, this problem can only arise at a ﬁnite number of
+points and (to some extent) it does not matter what value we give f (x) at any of these
+exceptional points. Usually we make it zero, but consider the following:
+(17) Example: Two-Sided Exponential Distribution
+ λx
+pe
+F(x) =
+1 − (1 − p)e−λx
+
+Let X have distribution
+if x < 0
+if x ≥ 0,
+
+where 0 < p < 1 and λ > 0. Then F(x) is continuous and
+
+if x < 0
+λpeλx
+
+F (x) =
+−λx
+if x > 0.
+λ(1 − p)e
+
+Figure 7.8 The distribution of an exponential random variable with parameter
+λ; F(x) = 1 − e−λx for x ≥ 0.
+
+7.1 Density and Distribution
+
+A suitable density is
+
+
+ λpeλx
+f (x) = 0
+
+λ(1 − p)e−λx
+
+295
+
+if x < 0
+if x = 0
+if x > 0.
+
+However, if p = 12 , it is tempting to set f (0) = λ2 and write f (x) = 12 λe−λ|x| for all x. The
+point is that it really does not matter very much.
+
+s
+
+Finally, we note the obvious facts that for any density f ,
+f (x) ≥ 0,
+
+(18)
+and if P(|X | < ∞) = 1, then
+∞
+
+(19)
+−∞
+
+f (v)dv = 1.
+
+It is straightforward to see that any function with these properties is the density of some
+random variable, and so any integrable nonnegative function can be used to form a density.
+The function g(x) = x 2 − x + 1 is easily seen to be nonnegative for all x,
+
+Example
+and
+
++b
++a
+
+g(v)dv =
+
+1 3
+1
+(b − a 3 ) − (b2 − a 2 ) + b − a = c(a, b),
+3
+2
+
+Hence, the function
+
+
+f (x) =
+
+c(a, b)−1 g(x)
+0
+
+say.
+
+if a < x < b
+elsewhere
+
+is a density function.
+
+s
+
+(20) Example: Cauchy Distribution
+Show that for an appropriate choice of the constant
+c(a, b), the function
+
+c(a, b)(1 + x 2 )−1 if a < x < b
+f (x) =
+0
+elsewhere
+is a density function. Show that c(−∞, ∞) = 1/π and that c(−1, 1) = c(0, ∞) = 2/π .
+Solution
+
+Thus,
+
++b
+a
+
+Trivially, f ≥ 0 if c ≥ 0. New recall that
+d
+tan−1 x = (1 + x 2 )−1 .
+dx
+f (x)d x = 1 if and only if c(a, b)−1 = tan−1 b − tan−1 a. In particular,
+c(−∞, ∞)−1 =
+
+π
+π
++ = π,
+2
+2
+
+296
+
+7 Continuous Random Variables
+
+as required, and
+c(−1, 1)−1 =
+
+π
+π
++ = c(0, ∞)−1 .
+4
+4
+
+s
+
+In general then, given a nonnegative function g(x), the function
+ ∞
+−1
+f (x) = g(x)
+g(v)dv
+−∞
+
+is a density, if the integral exists. To discover whether it does,
++ n the following technique is
+useful. If we can ﬁnd a constant b such that for all n > 0, 0 g(v)dv < b < ∞, then
+∞
+
+g(v)dv = lim
+
+n
+
+n→∞ 0
+
+0
+
+g(v)dv
+
+exists by monotone convergence.
+(21) Example: Normal Density
+
+Show that
+
+
+1 2
+f = c exp − x
+2
+
+for all x  R
+
+can be a density.
+For any n > 1,
+
+
+
+ 1
+n
+n
+1 2
+−v
+exp − v dv < 2
+dv +
+e dv < 2(1 + e−1 ).
+2
+−n
+0
+1
++∞
+Hence, c−1 = −∞ exp(− 12 v 2 )dv exists, and f is a density for this c.
+Solution
+
+Remark
+
+s
+
+In fact, it can be shown that
+c−1 = (2π )1/2 .
+
+(22)
+
+The proof of this is not quite trivial; we give it in Example 8.3.8. Also, note that there
+are other normal densities; the one in Example 21 is called the standard normal density
+denoted by N (0, 1), and by
+(23)
+
+1
+φ(x) = (2π )−1/2 exp(− x 2 ).
+2
+Its distribution is (x), given by
+
+(24)
+
+(x) =
+
+x
+−∞
+
+φ(v)dv.
+
+(25) Example: Gamma Distribution
+Show that for α, λ, x > 0, the function f (x) =
+cλα x α−1 e−λx can be a density. When α is a positive integer, show that c−1 = (α − 1)!
+
+7.2 Functions of Random Variables
+
+297
+
++∞
+Solution
+First, we show that the integral 0 x α−1 e−λx d x exists. Because
+1
+x α−1 e− 2 λx → 0 as x → ∞, there is some m < ∞ such that for x > m,
+1
+x α−1 e− 2 λx < 1. Hence, for n > m,
+n
+
+m
+
+v α−1 e−λv dv <
+
+0
+
+0
+
+<
+
+m
+
+n
+
+v α−1 e−λv dv +
+
+e− 2 λv dv
+1
+
+m
+
+v α−1 e−λv dv + 2λ−1 e− 2 λm = b (say).
+1
+
+0
+
++∞
+
+Hence, c−1 = 0 λα x α−1 e−λx d x exists,
++ ∞and if α is a positive integer then repeated integration by parts gives c−1 = (α − 1)! 0 λe−λv dv = (α − 1)!
+
+s
+
+This density is known as the gamma density with parameters α and λ. When α is not
+an integer, the integral above deﬁnes a function of α known as the gamma function, and
+denoted by
+(26)
+
+∞
+
+(α) =
+
+∞
+
+λα v α−1 e−λv dv =
+
+0
+
+u α−1 e−u du.
+
+0
+
+The density function in this case is
+(27)
+
+f (x) =
+
+1 α α−1 −λx
+λ x e
+for x > 0.
+(α)
+
+In particular, when λ = 12 and α = n2 , the density
+(28)
+
+f (x) =
+
+1
+n
+n
+−1
+2
+2 −1 e 2 x
+n λ x
+(2)
+
+is known as the χ 2 (n) density, and it is referred to as chi-squared with n degrees of freedom.
+We conclude with another way of producing densities.
+(29) Example: Mixtures
+Let f 1 (x) and f 2 (x) be density functions, and let f 3 (x) =
+γ f 1 (x) + (1 − γ ) f 2 (x), where 0 ≤ γ ≤ 1 . Then f 3 (x) ≥ 0, and
+f3 = γ
+
+f 1 + (1 − γ )
+
+f 2 = 1.
+
+Hence, f 3 is a density, and is said to be a mixture of f 1 and f 2 .
+
+s
+
+For example, the two-sided exponential density of Example 17 may now be seen as a
+mixture of f 1 = λeλx (x < 0) and f 2 = λe−λx (x > 0) with γ = p.
+7.2 Functions of Random Variables
+
+Suppose that X and Y are random variables such that Y = g(X ), where g(.) is some
+given function. If we know the density of X , can we ﬁnd the distribution of Y ? In
+general terms, the answer is straightforward because, by the properties of densities and
+
+298
+
+7 Continuous Random Variables
+
+distributions,
+F(y) = P(Y ≤ y) = P(g(X ) ≤ y) =
+
+(1)
+
+f X (v)dv,
+C
+
+where C = {v : g(v) ≤ y}. Then, if F(y) is continuous and differentiable, we can go on
+to ﬁnd the density of Y , if it exists. Here are some simple examples of this idea in practice.
+(2)
+
+Example
+
+Let X be uniformly distributed on (0, 1) with density
+
+1 if 0 < x < 1
+f (x) =
+0
+otherwise.
+
+If Y = −λ−1 log X , where λ > 0, what is the density of Y ?
+Solution
+
+First, we seek the distribution of Y :
+FY (y) = P(−λ−1 log X ≤ y) = P(log X ≥ −λy)
+
+1 − e−λy for y ≤ 0
+= P(X ≥ exp(−λy)) =
+0
+otherwise.
+
+Hence, the derivative exists except at y = 0, and
+ −λy
+if y > 0
+λe
+f Y (y) =
+0
+if y ≤ 0.
+
+s
+
+This is the exponential density with parameter λ.
+Some care is required if g(.) is not one–one.
+(3)
+
+Example
+Let X be uniformly distributed on [−1, 1]. Find the density of Y = X r for
+nonnegative integers r .
+Solution
+First, note that X has distribution function F(x) = 12 (1 + x) for −1 ≤ x ≤ 1.
+Now, if r is odd, then the function g(x) = x r maps the interval [−1, 1] onto itself in one–
+one correspondence. Hence, routinely:
+1
+P(Y ≤ y) = P(X r ≤ y) = P(X ≤ y 1/r ) = (1 + y 1/r ) for − 1 ≤ y ≤ 1,
+2
+and Y has density
+1 1 −1
+f (y) =
+y r , − 1 ≤ y ≤ 1.
+2r
+If r is even, then g(x) = x r takes values in [0, 1] for x ∈ [−1, 1]. Therefore,
+P(Y ≤ y) = P(0 ≤ X r ≤ y) = P(−y 1/r ≤ X ≤ y 1/r ) = y 1/r
+Hence, Y has density
+f (y) =
+
+1 1 −1
+yr ,
+r
+
+0 ≤ y ≤ 1.
+
+for 0 ≤ y ≤ 1.
+
+7.2 Functions of Random Variables
+
+299
+
+Finally, if r = 0, then X r = 1, FY (y) is not continuous (having a jump from 0 to 1 at
+y = 1) and so Y does not have a density in this case. Obviously, Y is discrete, with
+P(Y = 1) = 1.
+
+s
+
+(4)
+
+Example
+
+Let X have the standard normal distribution with density
+
+
+1 2
+− 12
+f (x) = (2π ) exp − x .
+2
+
+Find the density of Y = σ X + µ for given constants µ and σ = 0. Also, ﬁnd the density
+of Z = X 2 .
+Solution
+
+(5)
+
+(6)
+
+Adopting the by now familiar technique:
+
+ 
+y−µ
+
+
+P
+X
+≤
+
+σ 
+
+P(σ X + µ ≤ y) = P(σ X ≤ y − µ) =
+y
+−
+µ
+
+
+P X ≥
+σ
+ 
+
+y
+−
+µ
+
+
+if σ > 0
+ FX
+σ
+
+
+=
+y−µ
+
+
+if σ < 0
+1 − F X
+σ
+
+if σ > 0
+if σ < 0
+
+Hence, differentiating (5) with respect to y,
+
+
+
+
+1
+y−µ
+1 y−µ 2
+1
+f Y (y) =
+−
+fX
+=
+.
+1 exp
+|σ |
+σ
+2
+σ
+(2π σ 2 ) 2
+Second,
+P(X 2 ≤ z) = P(X ≤
+
+√
+
+√
+√
+√
+z) − P(X ≤ − z) = FX ( z) − FX (− z).
+
+Differentiating now gives
+(7)
+
+
+
+√
+√
+1
+1
+1
+1
+exp − z .
+f Z (z) = √ f X ( z) + √ f X (− z) = √
+2
+2 z
+2 z
+2π z
+
+s
+
+Remark
+The density given by (6) is known as the normal density with parameters µ and σ 2 , sometimes denoted by N (µ, σ 2 ). The standard normal density of Example 7.1.21 was N (0, 1) because φ(x) has µ = 0 and σ = 1.
+The density given by (7) is the gamma density of (7.1.23) with parameters 12 and 12 .
+This is known as the chi-squared density with parameter 1, sometimes denoted by χ 2 (1).
+This is a special case of (7.1.28).
+
+(8)
+
+Example: Inverse Functions
+Let X have distribution function F(x), where F(x) is
+continuous and strictly increasing. Let g(x) be a function satisfying F(g) = x. Because
+
+300
+
+7 Continuous Random Variables
+
+F(x) is continuous and strictly increasing, this deﬁnes g(x) uniquely for every x in (0, 1).
+The function g(.) is called the inverse function of F(.) and is often denoted by
+g(x) = F −1 (x).
+Clearly, F is the inverse function of g, that is
+g(F(x)) = F(g(x)) = x,
+
+(9)
+
+and g(x) is an increasing function.
+(a) Use this function to show that Y = F(X ) is uniformly distributed on (0, 1).
+(b) Show that if U is uniform on (0, 1), then Z = F −1 (U ) has distribution F(z).
+Solution
+
+(a) As usual, we seek the distribution function
+
+P(Y ≤ y) = P(F(X ) ≤ y) = P(g(F(X )) ≤ g(y)) = P(X ≤ g(y))
+= F(g(y)) = y by(9).
+
+by (9)
+
+(b) Again,
+P(F −1 (U ) ≤ z) = P(F(g(U )) ≤ F(z)) = P(U ≤ F(z))
+= F(z).
+
+by (9)
+
+s
+
+Although we have introduced them separately, discrete and continuous variables do have
+close links. Here are some examples to show this.
+(10) Example: Step Functions
+Let X have distribution function F(x) and density f .
+Deﬁne the function S : R → Z by
+(11)
+
+S(X ) = k, if k ≤ X < k + 1,
+where k is any integer. Then S(X ) is an integer valued discrete random variable with mass
+function
+
+(12)
+
+k+1
+
+f S (k) = P(k ≤ X < k + 1) =
+
+f (v)dv.
+k
+
+Obviously, P(S(X ) ≤ X ) = 1 and FS (x) ≥ FX (x), and
+(13)
+
+|S(X ) − X | ≤ 1.
+
+s
+
+Now equation (13) shows that the integer valued S(X ) is, in some sense, a rough approximation to the continuous random variable X . It is easy to get much better approximations
+as follows.
+(14) Example: Discrete Approximation
+As usual, X has density f (x); suppose also that
+X > 0. For ﬁxed n, with 0 ≤ r ≤ 2n − 1 and k ≥ 0, deﬁne
+Sn (X ) = k + r 2−n if k + r 2−n ≤ X < k + (r + 1)2−n .
+
+7.3 Simulation of Random Variables
+
+301
+
+Then Sn (X ) is a discrete random variable taking values in (k + r 2−n ; k ≥ 0, 0 ≤ r ≤
+2n − 1), with
+−n
+
+P(Sn (X ) = k + r 2 ) =
+
+k+(r +1)2−n
+
+f (v)dv.
+k+r 2−n
+
+Again, we have Sn (X ) ≤ X , but this time, by the construction,
+(15)
+
+|Sn (X ) − X | ≤ 2−n .
+Thus, by choosing n large enough, we can ﬁnd a discrete random variable Sn (X ) such that
+|X − Sn (X )| is as small as we please.
+
+s
+
+In fact, it can be shown that we can ﬁnd a simple random variable (taking only a ﬁnite
+number of values) that is arbitrarily close to X , but in a weaker sense than (15). (See
+Problem 12.)
+7.3 Simulation of Random Variables
+
+A random variable is a mathematical concept (having no other existence) that is suggested
+by the outcomes of real experiments. Thus, tossing a coin leads us to deﬁne an X (.) such
+that X (H ) = 1, X (T ) = 0, and X is the number of heads. The coin exists, X is a concept.
+A natural next step, having developed theorems about mathematical coins (e.g., the arcsine laws) is to test them against reality. However, the prospect of actually tossing a large
+enough number of coins to check the arc-sine laws is rather forbidding.
+Luckily, we have machines to do large numbers of boring and trivial tasks quickly,
+namely, computers. These can be persuaded to produce many numbers (u i ; i ≥ 1) that
+are sprinkled evenly and “randomly” over the interval (0, 1). The word randomly appears in quotations because each u i is not really random. Because the machine was programmed to produce it, the outcome is known in advance, but such numbers behave for
+many practical purposes as though they were random. They are called pseudorandom
+numbers.
+Now if we have a pseudorandom number u from a collection sprinkled uniformly
+in (0, 1), we can look to see if u < 12 , in which case we call it “heads”, or u > 12 in
+which case we call it “tails.” This process is called simulation; we have simulated tossing
+a coin.
+Different problems produce different random variables, but computers ﬁnd it easiest
+to produce uniform pseudorandom numbers. We are thus forced to consider appropriate
+transformations of uniform random variables, and therefore many of the results of Section
+7.2 ﬁnd concrete applications when we seek to simulate random variables. A natural ﬁrst
+question (before “how”) is why might we want to simulate such random variables? Some
+examples should sufﬁce to answer this question.
+(1)
+
+Example: Epidemic
+An infection is introduced into a population. For each individual
+the incubation period is a random variable X , the infectious period is a random variable Y ,
+and the number of further individuals infected is a random variable N , depending on Y and
+the behaviour of the infected individual. What happens? Unfortunately, exact solutions
+
+302
+
+7 Continuous Random Variables
+
+to such problems are rare and, for many diseases (e.g., the so-called “slow viruses” or
+prions), X and Y are measured in decades so experiments are impractical. However, if we
+could simulate X and Y and the infection process N , then we could produce one simulated
+realization (not a real realization) of the epidemic. With a fast computer, we could do this
+many times and gain a pretty accurate idea of how the epidemic would progress (if our
+assumptions were correct).
+
+s
+
+(2)
+
+Example: Toll Booths
+Motorists are required to pay a fee before entering a toll road.
+How many toll booths should be provided to avoid substantial queues? Once again an
+experiment is impractical. However, simple apparatus can provide us with the rates and
+properties of trafﬁc on equivalent roads. If we then simulate the workings of the booth and
+test it with the actual trafﬁc ﬂows, we should obtain reasonable estimates of the chances
+of congestion.
+
+s
+
+Because of the ready availability of large numbers of uniform pseudorandom numbers,
+interest is concentrated on ﬁnding transformations that then yield random variables of
+arbitrary type. We have seen several in Section 7.2. Here is another idea.
+Example: Composition
+The pseudorandom variable U is uniformly distributed on
+(0, 1). Show how to simulate a random variable with density
+fX =
+
+1 −1
+1
+(x 2 + (1 − x)− 2 ),
+4
+
+0 < x < 1.
+
+Solution
+Recall that if U is uniform on (0, 1) then U 2 has density f 1 (x) = 12 x − 2 .
+Next consider
+1
+
+1
+
+1
+
+P(1 − U 2 ≤ x) = P(U ≥ (1 − x) 2 ) = 1 − (1 − x) 2 .
+Hence, 1 − U 2 has density f 2 (x) = 12 (1 − x)− 2 . Now toss a coin (real or simulated), and
+write
+ 2
+if it’s heads
+U
+X=
+1 − U 2 if it’s tails.
+1
+
+Then
+f X (x) =
+
+1
+1
+1
+1
+1
+f 1 (x) + f 2 (x) = (x − 2 + (1 − x)− 2 ),
+2
+2
+4
+
+as required.
+
+s
+
+We describe other methods of simulation as the necessary ideas are developed.
+7.4 Expectation
+
+Random variables with a density may have an expected value, similar to random variables
+with a mass function.
+
+7.4 Expectation
+
+(1)
+
+Deﬁnition
+Let X have density f (x). If
+pected value, which is given by
+E(X ) =
+
+(2)
+
+(3)
+
+Example: Uniform Density
+
++∞
+
+∞
+−∞
+
+−∞ |v| f (v)dv < ∞, then X has an ex-
+
+v f (v)dv.
+
+b
+a
+
+1
+v
+dv = (b − a).
+b−a
+2
+∞
+
+vλe−λv dv = λ−1 .
+
+0
+
+∞
+
+1
+1
+
+σ (2π) 2
+
+s
+
+Let X have the N (µ, σ 2 ) density. Then
+
+Example: Normal Density
+E(X ) =
+
+s
+
+Let X have density f (x) = λe−λx for x ≥ 0. Then
+
+Example: Exponential Density
+E(X ) =
+
+(5)
+
+
+
+Let X be uniformly distributed on (a, b). Then
+
+E(X ) =
+(4)
+
+303
+
+−∞
+
+v exp(−(v − µ)2 /(2σ 2 ))dv
+
+
+
+1 v−µ 2
+(v − µ) exp −
+dv
+=
+1
+2
+σ
+σ (2π) 2 −∞
+
+
+∞
+µ
+1 v−µ 2
++
+dv
+exp −
+1
+2
+σ
+σ (2π ) 2 −∞
+
+
+
+
+∞
+∞
+1
+1 2
+1 2
+µ
+=
+u exp − u du +
+exp − u du
+1
+1
+2
+2
+(2π ) 2 −∞
+(2π ) 2 −∞
+∞
+
+1
+
+on making the substitution u = (v − µ)/σ in both integrands. The ﬁrst integrand is an
+odd function, so the integral over R is zero. The second term is µ by Example 7.1.21 and
+7.1.22. Hence, E(X ) = µ.
+
+s
+
+Expectation may be inﬁnite, as the next example shows.
+(6)
+
+Example: Pareto Density
+Let X have density f (x) = (α − 1)x −α for x ≥ 1 and
+α > 1. Then if α ≤ 2, the expected value of X is inﬁnite because
+E(X ) = lim
+
+n→∞ 1
+
+n
+
+n
+(α − 1)v
+1
+dv
+=
+(α
+−
+1)
+lim
+dv,
+α
+α−1
+n→∞ 1 v
+v
+
+which diverges to ∞ for α − 1 ≤ 1. However, for α > 2,
+∞
+
+E(X ) =
+1
+
+(α − 1)
+(α − 1)
+dv =
+.
+α−1
+v
+(α − 2)
+
+Then again, the expectation of X may not exist, as the next example shows.
+
+s
+
+304
+
+(7)
+
+7 Continuous Random Variables
+
+Example: Cauchy Density
+
+Let X have density
+
+f (x) =
+
+1
+,
+π(1 + x 2 )
+
+− ∞ < x < ∞.
+
++a
+Because 0 v(π(1 + v 2 ))−1 dv diverges as a a → −∞ and as a a → +∞, X does not
+have an expected value.
+
+s
+
+It is appropriate to give a moment to considering why we deﬁne E(X ) by Deﬁnition 1.
+This deﬁnition is at least plausible, by analogy with the deﬁnition
+E(X ) =
+
+∞
+
+
+v f (v),
+
+v=−∞
+
+in the discrete case. Of course, Deﬁnition 1 is much more than just a plausible
+analogy, but a complete account of expectation is well beyond our scope. However,
+we can use Example 7.2.14 to give a little more justiﬁcation for Deﬁnition 1. Let
+k + r 2−n = a(k, r, n). Recall from (7.2.15) that |Sn − X | < 2−n . Now by deﬁnition, because Sn (X ) is discrete,
+E(Sn (X )) =
+
+
+
+a(k,r +1,n)
+
+a(k, r, n)
+
+=
+
+f (v)dv
+a(k,r,n)
+
+k,r
+
+
+
+a(k,r +1,n)
+
+k,r
+
+a(k,r,n)
+
+(v f (v) + (a(k, r, n) − v) f (v))dv.
+
+Because |a(k, r, n) − v| < 2−n , it can be shown (with more work, which we omit) that
+E(Sn (X )) =
+
+∞
+−∞
+
+v f (v)dv + n = E(X ) + n ,
+
+where n → 0 as n → ∞. An explicit demonstration may be helpful here.
+(8)
+
+Example
+Let X be uniform
+(0, 1) with mean value3 E(X ) = 12 . Then Sn (X ) is
+2 −n on −n
+uniformly distributed on 0, 2 , 2.2 , 3.2−n , . . . , 1 − 2−n . Therefore,
+E(Sn (X )) =
+
+n
+2
+−1
+
+r =0
+
+r 2−n .2−n =
+
+1 n
+(2 − 1)2−n
+2
+
+= E(X ) − 2−(n+1) → E(X ),
+
+as n → ∞.
+
+s
+
+Thus, our deﬁnitions of expectation for discrete and continuous variables are at least
+consistent in some way. In more advanced books, a single deﬁnition of E(.) is given,
+which is shown to yield our deﬁnitions as special cases.
+Next we return to considering functions of random variables. Suppose we are given
+random variables Y and X related by Y = g(X ). What is E(Y )?
+If we know the density of X , then we may be able to ﬁnd E(Y ) by ﬁrst discovering
+f Y (y), if it exists. This is often an unattractive procedure. We may do much better to use
+the following theorem, which we state without proof.
+
+7.4 Expectation
+
+(9)
+
+305
+
+Theorem
+Let random variables X +and Y satisfy Y = g(X ), where X has density
+∞
+f (x). Then Y has an expected value if −∞ |g(v)| f (v)dv < ∞, and in this case,
+∞
+
+E(Y ) =
+
+(10)
+
+g(v) f (v)dv.
+−∞
+
+The proof of this is straightforward but long. An heuristic discussion of the type above
+shows that if we represent the distribution of X as a limit of discrete distributions, and
+then formally proceed to this limit in Theorem 4.3.4, equation (10) is the result. Again,
+this only makes (10) plausible, it does not provide the proof, which is beyond our scope.
+This important result implies that the useful consequences of Theorem 4.3.4 remain
+true for random variables with a density. In particular, Theorem 4.3.6 remains true; the
+proofs ofmost+parts are just typographical variants of the proofs in the discrete case; just
+replace
+by .
+We describe one important and less trivial case in detail, namely, the analogy of Theorem 4.3.11.
+(11)
+
+Theorem: Tail integral
+Let the nonnegative random variable X have density f ,
+distribution F, and ﬁnite expected value E(X ). Then
+∞
+
+E(X ) =
+
+(12)
+
+(1 − F(x))d x.
+
+0
+
+Proof For any ﬁnite y, we may integrate by parts to obtain
+y
+
+(13)
+0
+
+y
+
+y
+
+x f (x)d x = −x(1 − F(x))|0 +
+
+(1 − F(x))d x.
+
+0
+
+But we have
+∞
+
+y(1 − F(y)) = y
+
+∞
+
+f (x)d x ≤
+
+y
+
+x f (x)d x → 0
+
+y
+
+as y → ∞, because E(X ) < ∞. Hence, we can let y → ∞ in (13) to prove the
+theorem.
+
+We can use this to prove a useful special case of Theorem 9.
+(14) Example
+Let the nonnegative
+random variable X have density f , and let g(X ) ≥ 0.
++∞
+Show that E(g(X )) = 0 g(v) f (v)dv.
+Solution
+∞
+
+E(g(X )) =
+0
+
+=
+0
+
+P(g(X )) ≥ v) dv
+
+∞
+
+by (12)
+∞
+
+f (x)d xdv =
+x:g(x)≥v
+
+g(x)
+
+f (x)
+0
+
+0
+
+∞
+
+dvd x =
+
+f (x)g(x)d x,
+0
+
+306
+
+7 Continuous Random Variables
+
+as required. The interchange in the order of integration is justiﬁed by a theorem on double
+integrals, which we omit.
+
+s
+
+The various moments of a random variable with a density are deﬁned just as they were
+for discrete random variables, that is to say: µk = E(X k ), and
+σk = E((X − E(X ))k ).
+Let X have the density N (0, σ 2 ). Find µk for all k.
+
+(15) Example: Normal Density
+
+Solution
+If k is odd, then x k exp(−x 2 /(2σ 2 )) is an odd function. Hence, µk = 0 if k
+is odd. If k = 2n, then integrating by parts gives
+∞
+
+1
+
+µ2n =
+
+v 2n exp (−v 2 /(2σ 2 ))dv
+1
+σ (2π ) 2 −∞
+
+1
+−v 2n−1 σ 2 exp (−v 2 /(2σ 2 ))|∞
+=
+1
+−∞
+2
+σ (2π )
++
+
+∞
+
+−∞
+
+(2n − 1)σ v
+
+2 2n−2
+
+= (2n − 1)σ 2 µ2n−2 = σ 2n
+
+
+
+exp (−v /(2σ ))dv
+2
+
+2
+
+(2n)!
+2n n!
+
+on iterating and observing that µ0 = 1. Hence, in particular, µ2 = σ 2 .
+
+s
+
+Finally, and thankfully, we are pleased to record that the expectation E(X ) of a continuous
+random variable X has the same useful basic properties that we established for the discrete
+case in Section 4.6. For convenience, we recall them here.
+(16) Theorem
+
+Let a and b be constants, and let g and h be functions. Then:
+
+(i) If g(X ) and h(X ) have ﬁnite mean, then
+E(g(X ) + h(X )) = E(g(X )) + E(h(X )).
+(ii) If P(a ≤ X ≤ b) = 1, then a ≤ E(X ) ≤ b.
+(iii) If h is nonnegative, then for a > 0, P(h(X ) ≥ a) ≤ E(h(X )/a).
+(iv) Jensen’s inequality If g is convex then E(g(X )) ≥ g(E(X )).
+Proof The proof is an exercise for you. When h(x) = x 2 in (iii), we have:
+(17)
+
+Chebyshov’s inequality: P(|X | ≥ a) ≤ EX 2 /a 2 .
+
+
+
+7.5 Moment Generating Functions
+
+In dealing with integer valued discrete random variables, we found the probability generating function exceptionally useful (see Chapter 6). It would be welcome to have such
+
+7.5 Moment Generating Functions
+
+307
+
+a useful workhorse available for random variables with densities. Of course, if X has a
+density then P(X = x) = 0, so we cannot expect the probability generating function to be
+of much use. Fortunately, another function will do the job.
+(1)
+
+Deﬁnition
+by
+
+If X has density f, then X has moment generating function M X (t) given
+M X (t) = E(etX ) =
+
+(2)
+
+∞
+
+etv f (v)dv.
+
+−∞
+
+
+
+We are only interested in M X (t) for those values of t for which it is ﬁnite; this includes
+t = 0, of course. It is particularly pleasant when M X (t) exists in a neighbourhood of zero,
+but it is beyond our scope to explain all the reasons for this.
+(3)
+
+Let X be uniform on [0, a]. Find E(etX ). Where does it
+
+Example: Uniform Density
+exist?
+Solution
+
+a
+
+E(et X ) =
+0
+
+#
+"
+1 tv
+1 tv a
+eat − 1
+e dv =
+e
+=
+.
+a
+at
+at
+0
+
+This exists for all t, including t = 0, where it takes the value 1.
+(4)
+
+Example: Gamma Density
+Recall from (7.1.24) that the gamma function
+deﬁned for any α > 0 and λ > 0 by
+∞
+
+(α) =
+
+(5)
+
+s
+(α) is
+
+x α−1 λα e−λx d x.
+
+0
+
+Hence,
+f (x) =
+
+λα α−1 −λx
+x e ,
+(α)
+
+x ≥ 0,
+
+is the density of a random variable x. Find E(etX ). Where does it exist?
+Solution
+∞
+
+E(etX ) =
+0
+
+(6)
+
+etv
+
+λα
+λα α−1 −λv
+v e dv =
+(α)
+(α)
+
+∞
+
+v α−1 e−(λ−t)v dv.
+
+0
+
+The integral exists if λ > t, and then making the substitution (λ − t)v = u gives
+
+
+α ∞ α−1
+α
+λ
+λ
+u
+−u
+by (5),
+e du =
+M X (t) =
+λ−t
+(α)
+λ−t
+0
+for −∞ < t < λ.
+
+s
+
+308
+
+(7)
+
+7 Continuous Random Variables
+
+Example: Normal Density
+
+Let X be a standard normal random variable. Then
+
+
+
+∞
+∞
+√
+1 2
+1
+1 2
+2
+2π M X (t) =
+exp − x + t x d x =
+exp − (x − t) + t d x
+2
+2
+2
+−∞
+−∞
+
+
+∞
+1
+1 2
+= e2t
+exp − v 2 dv, setting x − t = v,
+2
+−∞
+1 2√
+t
+2
+2π .
+=e
+
+
+So M X (t) = e 2 t . Now by (7.2.4) if Y is N (µ, σ 2 ), MY (t) = eµt+ 2 σ t .
+1 2
+
+(8)
+
+1
+
+2 2
+
+s
+
+You may ask, why is M X (t) called the moment generating function? The answer lies in
+the following formal expansion.
+
+∞
+∞
+∞
+
+
+
+Xktk
+µk t k
+(X k )t k
+tX
+=
+=
+.
+E
+E(e ) = E
+k!
+k!
+k!
+k=0
+k=0
+k=0
+Thus, provided the interchange of expectation and summation at (8) is justiﬁed, we see
+that M X (t) is the (exponential) generating function of the moments µk .
+Note that the word “exponential” is always omitted in this context, and that the required
+interchange at (8) is permissible if M X (t) exists in an interval that includes the origin.
+You may also ask, do we always know the density f X (x), if we know M X (t)? After all,
+the probability generating function uniquely determines the corresponding mass function.
+Unfortunately, the answer is no in general because densities not uniquely determined by
+their moments do exist. However, none appear here; every density in this book is uniquely
+determined by its moment generating function (if it has one). We state the following
+inversion theorem without proof.
+
+(9)
+
+Theorem
+If X has moment generating function M(t), where for some a > 0, M(t) <
+∞ for |t| < a, then the distribution of X is determined uniquely.
+∞
+
+1 k
+t E(X k ).
+Furthermore, M(t) =
+k!
+k=0
+
+The moment generating function is especially useful in dealing with sequences of
+random variables; the following theorem is the basis of this assertion. We state it without
+proof.
+(10) Theorem: Continuity Theorem
+Let (Fn (x); n ≥ 1) be a sequence of distribution
+functions with corresponding moment generating functions (Mn (t); n ≥ 1) that exist for
+|t| < b. Suppose that as n → ∞ Mn (t) → M(t) for |t| ≤ a < b, where M(t) is the m.g.f.
+of the distribution F(x). Then, as n → ∞, Fn (x) → F(x) at each point x where F(x) is
+continuous.
+1 2
+
+The main application of this theorem arises when M(t) = e 2 t and F(x) = (x), as
+we see in Chapter 8 when we come to the celebrated central limit theorem. Here is a
+preliminary note.
+
+7.5 Moment Generating Functions
+
+309
+
+Note: The O–o Notation
+In considering limits of sequences of functions, we quite
+often produce large and unwieldy expressions of which only one or two terms remain in the
+limit. Rather than keep a precise record of the essentially irrelevant terms, it is convenient
+to have a special compact notation for them.
+Deﬁnition
+
+If g(n) and h(n) are two functions of n, then we write
+h(n) = O(g(n))
+
+as n → ∞
+
+if |h(n)/g(n)| < c for all large enough n and some ﬁnite constant c.
+
+
+
+For example, as n → ∞,
+n 2 + log n = O(n 2 )
+
+with c = 2
+
+3
+
+with c = 2.
+
+and
+n 2 + n 2 = O(n 2 )
+
+Observe that this is an abuse of notation (= being the abused symbol) because it does
+3
+not follow from these two examples that log n = n 2 . Also, if h(n) = O(g(n)) and k(n) =
+O(g(n)), then h(n) + k(n) = O(g(n)).
+A similar deﬁnition holds for small values of the argument.
+Deﬁnition
+If g(x) and h(x) are two functions of x, then we write h(x) = O(g(x)) as
+
+x → 0, if |h(x)/g(x)| < c for all small enough x and some constant c.
+Often, an even cruder representation will sufﬁce.
+Deﬁnition
+If g(x) and h(x) are two functions of x, then we write h(x) =
+o(g(x)) as x → ∞, if limx→∞ (h(x)/g(x)) = 0. Likewise, h(x) = o(g(x)) as x → 0 if
+
+limx→0 (h(x)/g(x)) = 0.
+For example, x 2 = o(x) as x → 0 and x = o(x 2 ) as x → ∞. For another example,
+x + x log x + x 2 = o(1) as x → 0.
+We use this new notation in the following famous result.
+(11) Example: de Moivre–Laplace Theorem
+For each n ≥ 1, let X n be a binomial random
+variable with parameters n and p. Let q = 1 − p, and deﬁne
+Yn =
+
+X n − np
+1
+
+(npq) 2
+
+.
+
+Show that as n → ∞
+P(Yn ≤ x) → (x) =
+
+x
+−∞
+
+(2π)− 2 e−y /2 dy.
+1
+
+2
+
+310
+
+Solution
+(12)
+
+7 Continuous Random Variables
+
+We use Theorem 10. First calculate the moment generating function
+ )
+*n
+t(X 1 − p)
+t(X n − np)
+tYn
+E(e ) = E exp
+= E exp
+1
+1
+(npq) 2
+(npq) 2
+
+*n
+)
+− pt
+qt
++ q exp
+.
+= p exp
+1
+1
+(npq) 2
+(npq) 2
+
+Next we expand the two exponential terms in (12) to give
+
+ 3 n
+t2
++ O n− 2
+(13)
+.
+E(etYn ) = 1 +
+2n
+Now we recall the useful result that says that, for constant a,
+
+n
+a
+lim 1 + + o(n −1 ) = ea .
+(14)
+n→∞
+n
+Applying this to (13) shows that
+1 2
+
+lim E(etYn ) = e 2 t ,
+
+n→∞
+
+which is the m.g.f. of the standard normal distribution, as required. [More demanding
+readers should note that they can prove (14) by ﬁrst taking logarithms.]
+
+s
+
+The appearance of the normal distribution in these circumstances is one of the most
+remarkable results in the theory of probability. The ﬁrst proof, due to de Moivre, was
+greatly improved by Laplace. Their methods were different from those used here, relying
+on fairly precise direct estimates of the binomial probabilities. We outline a modern version
+of their proof in Example 7.20.
+7.6 Conditional Distributions
+
+Just as in the discrete case, it is often necessary to consider the distribution of a random
+variable X conditional upon the occurrence of some event A. By deﬁnition of conditional
+probability, we have
+FX |A (x) = P(X ≤ x|A) = P({ω: X ≤ x} ∩ A)/P(A)
+= P(X ≤ x; A)/P(A), say.
+
+(1)
+
+(Obviously, A has to be in F, the event space.) The case that arises most commonly is
+when A is an event of the form
+A = {ω: a < X ≤ b};
+
+(2)
+
+that is, we seek the distribution of X conditional on its lying in some subset of its range.
+(3)
+
+Example
+X (ω) ≤ c}.
+
+Let a < b < c < d. Let X be uniform on (a, d), and let A = {ω: b <
+
+7.6 Conditional Distributions
+
+311
+
+Then, by (1),
+
+
+
+c−b
+x −b
+P(X ≤ x; b < X ≤ c) 
+/
+if b < x ≤ c
+= d −a
+P(X ≤ x|A) =
+d −a
+
+P(b < X ≤ c)
+0
+otherwise
+x −b
+=
+for b < x ≤ c.
+c−b
+Thus, the distribution of X given A is just uniform on (b, c). More generally, it is easy
+to see that a uniform random variable, constrained to lie in any subset A of its range, is
+uniformly distributed over the subset A.
+
+s
+
+Because P(X ≤ x|A) is a distribution, it may have an expectation. For example, suppose
+that X has density f , and A is given by (2). Then, by (1),
+P(X ≤ x|A) =
+
+(4)
+
+(5)
+
+F(x) − F(a)
+F(b) − F(a)
+
+and differentiating yields the conditional density
+
+f (x)
+
+f X |A (x) = F(b) − F(a)
+0
+
+for a < x ≤ b,
+
+if a < x ≤ b
+otherwise.
+
++b
+Notice that a f X |A (v)dv = 1, as it must. Then we may deﬁne the conditional expectation
+b
+
+E(X |A) =
+
+(6)
+
+a
+
+v f (v)
+dv
+F(b) − F(a)
+b
+
+=a+
+a
+∞
+
+=
+
+F(b) − F(v)
+dv,
+F(b) − F(a)
+
+on integrating by parts,
+
+(1 − FX |A (v))dv
+
+0
+
+on using (4). Notice that this is in agreement with Theorem 7.4.11, as of course it must
+be.
+(7)
+
+Example: Exponential Density and Lack-of-Memory
+tributed with parameter λ. Show that
+
+Let X be exponentially dis-
+
+P(X > s + t|X > s) = e−λt = P(X > t).
+
+(8)
+
+Find E(X |X > s) and E(X |X ≤ s).
+Solution
+
+Trivially,
+
+P(X > s + t|X > s) = P(X > s + t)/P(X > s) = e−λ(s+t) /e−λs = e−λt .
+
+312
+
+7 Continuous Random Variables
+
+Hence,
+∞
+
+E(X |X > s) = s +
+
+(9)
+
+e−λt dt = s + E(X ).
+
+0
+
+We remark that the remarkable identity (8) is known as the lack-of-memory property of
+the exponential distribution. Finally,
+s
+
+E(X |X ≤ s) =
+0
+
+1
+P(s ≥ X > v)
+s
+dv = − λs
+.
+P(s ≥ X )
+λ e −1
+
+s
+
+7.7 Ageing and Survival
+
+Many classic examples of continuous random variables arise as waiting times or survival
+times. For instance, the time until the cathode-ray tube in your television fails, the time
+until you are bitten by a mosquito after disembarking in the tropics, the time until a
+stressed metal component fails due to fatigue. For deﬁniteness, we consider the lifetime
+T of some device or component. The device is said to fail at time T .
+It is often useful to quantify the ageing process of a device; in particular, we may want
+to compare a device of given age with a new one. (We are all familiar with the fact that it is
+not necessarily always a good thing to replace a working component with a new one. This
+fact is embodied in the popular saying: “If it works, don’t ﬁx it”) Let T have distribution
+F and density f . The following quantities turn out to be of paramount importance in
+comparing devices of different ages.
+The survival function
+F(t) = 1 − F(t) = P(T > t).
+
+(1)
+The hazard function
+
+H (t) = − log(1 − F(t)).
+
+(2)
+The hazard rate function
+
+r (t) =
+
+(3)
+
+(4)
+
+f (t)
+F(t)
+
+=
+
+f (t)
+dH (t)
+=
+.
+1 − F(t)
+dt
+
+The last equality explains why r (t) is called the hazard rate. Integrating (3) yields
+
+
+t
+exp −
+r (s)ds = F(t).
+0
+
+Before we explain the signiﬁcance of these quantities, you are warned that terminology
+in the literature of ageing is quite chaotic. Note that:
+(i) The survival function is also known as the survivor function, reliability function, or
+hazard function.
+(ii) The hazard function is also known as the log-survivor function.
+(iii) The hazard rate function is also known as the failure rate function, mortality function,
+or hazard function.
+Beware!
+
+7.7 Ageing and Survival
+
+313
+
+Now let At denote the event that T > t. Then
+FT |At (s + t) = P(T ≤ s + t|T > t) =
+
+F(s + t) − F(t)
+.
+1 − F(t)
+
+This is the probability that the device fails during (t, t + s), given that it has not failed by
+time t. Now
+(5)
+
+lim
+
+1
+
+s→0 s
+
+FT |At (s + t) = (1 − F(t))−1 lim
+
+s→0
+
+f (t)
+F(t + s) − F(t)
+=
+= r (t).
+s
+1 − F(t)
+
+Thus, r (t) may be thought of as the “intensity” of the probability that a device aged t will
+fail.
+(6)
+
+Example: Exponential Life
+If T has an exponential density, then F(t) = e−λt ,
+H (t) = λt, and r (t) = λ. This constant hazard rate is consonant with the lack-of-memory
+property mentioned in Example 7.6.7. Roughly speaking, the device cannot remember
+how old it is, and so the failure intensity remains constant.
+
+s
+
+We see that intuitively there is a distinction between devices for which r (t) increases,
+essentially they are “wearing out,” and those for which r (t) decreases, they are “bedding in.”
+A simple and popular density in this context is the Weibull density, which can exhibit
+both types of behaviour.
+(7)
+
+Example: Weibull Life
+
+If T has density
+f (t) = αt α−1 exp (−t α ),
+
+t > 0, α > 0,
+
+then it has distribution F(t) = 1 − exp (−t α ). Hence, F(t) = exp (−t α ), and so
+P(T > t + s|T > s)
+= exp (−(t + s)α + s α + t α ),
+P(T > t)
+which is > 1 or < 1 according as α < 1 or α > 1. [To see this, just consider the stationary
+value of x α + (1 − x)α − 1 at x = 12 .] Hence, if α < 1, the chance of lasting a further
+time t (conditional on T > s) increases with s. However, if α > 1, this chance decreases
+with s.
+
+s
+
+The behaviour of r (t) is not the only measure of comparison between new and old devices.
+There is a large hierarchy of measures of comparison, which we display formally as follows
+[in the notation of (1)–(3)].
+(8)
+
+Deﬁnition
+(i) If r (t) increases, then T is (or has) increasing failure rate, denoted by IFR.
+(ii) If Ht(t) increases, then T is (or has) increasing failure rate average, denoted by IFRA.
+(iii) If for all s ≥ 0, t ≥ 0,
+H (s + t) ≥ H (s) + H (t),
+then T is new better than used, denoted by NBU.
+
+314
+
+7 Continuous Random Variables
+
+(iv) If for all t ≥ 0
+E(T ) ≥ E(T − t|At ),
+then T is new better than used in expectation, denoted by NBUE.
+(v) If for all 0 ≤ s < t < ∞
+E(T − s|As ) ≥ E(T − t|At ),
+then T has (or is) decreasing mean residual life, denoted by DMRL.
+
+
+
+The random variable T may also be decreasing failure rate (DFR), decreasing failure rate
+on average (DFRA), new worse than used (NWU), new worse than used in expectation
+(NWUE), or increasing mean residual life (IMRL). All these are deﬁned in the obvious
+way, analogous to (i)–(v).
+It can be shown that the following relationships hold between these concepts:
+
+IFRA
+IFR
+
+⇒
+
+NBU
+
+⇒
+
+⇒
+
+⇒
+
+⇒
+
+DMRL
+
+NBUE
+
+Some of these implications are trivial, and some are established in Example 7.17 below.
+These ideas are linked to another concept, that of stochastic ordering.
+7.8 Stochastic Ordering
+
+As in Section 7.7, let T be a nonnegative random variable. In general, let R(s) be a random
+variable whose distribution is that of T − s given that T > s, namely,
+FR (x) = P(T − s ≤ x|T > s).
+
+(1)
+
+We refer to R(s) as the residual life (of T at s).
+The above example shows that if T has the exponential density, then its residual life is
+also exponentially distributed with constant mean.
+More generally, FR(s) may depend on s, and more signiﬁcantly it may do so in a
+systematic way; the following deﬁnition is relevant here.
+(2)
+(3)
+
+Deﬁnition
+
+Let X and Y be random variables. If
+F X (x) ≥ FY (x)
+
+for all x,
+
+then X is said to be stochastically larger than Y .
+
+
+
+Now we can supply a connection with the ideas of the preceding section (7.7).
+(4)
+
+Example
+If T is a random variable with residual life R(s), s > 0, show that T has
+increasing failure rate if and only if R(s) is stochastically larger than R(t) for all s < t.
+
+7.9 Random Points
+
+Solution
+(5)
+
+315
+
+First, we ﬁnd
+P(R(t) > x) = P(T − t > x|T > t) = F(t + x)/F(t)
+
+
+ t
+
+t+x
+= exp −
+r (s)ds exp
+r (s)ds
+0
+ 0 t+x
+
+= exp −
+r (s)ds .
+
+by (7.7.4)
+
+0
+
+Differentiating (5) with respect to t, we have
+(6)
+
+
+
+t+x
+∂
+P(R(t) > x) = (r (t) − r (t + x)) exp −
+r (s)ds .
+∂t
+t
++
+Because exp (− r ds) is positive, and r (t) − r (t + x) is positive or negative according as
+T is DFR or IFR, the result follows.
+
+s
+
+Finally, we have the useful:
+(7)
+
+Theorem
+
+If X is stochastically larger than Y, then E(X ) ≥ E(Y ).
+
+Proof We prove this when X ≥ 0 and Y ≥ 0. (The general result is left as an exercise.)
+From Theorem 7.4.11,
+∞
+
+E(X ) =
+0
+
+∞
+
+F X (x)d x ≥
+
+FY (x)d x
+0
+
+= E(Y ).
+
+by hypothesis,
+
+
+7.9 Random Points
+
+Picking a point Q at random in the interval (0, 1) yielded the uniform density (of the
+length OQ). It is intuitively attractive to consider problems that involve picking one or
+more points at random in other nice geometric ﬁgures, such as discs, squares, triangles,
+spheres, and so on. Indeed this idea is so natural that mathematicians had already started
+doing this kind of thing in the eighteenth century, and one of the most celebrated articles
+on the subject is that of M.W. Crofton in the 1885 edition of the Encyclopaedia Britannica.
+Such questions also have applications in statistics.
+Conﬁning ourselves to two dimensions for deﬁniteness, suppose a point Q is picked at
+random in a region R of area |R|. Then it is natural to let the probability P(S), that Q lies
+in a set S ⊆ R, be given by
+(1)
+
+P(S) =
+
+|S|
+,
+|R|
+
+where, now, |S| denotes the area of S. It follows from the properties of area that P(.) has the
+required properties of a probability function, and we can proceed to solve various simple
+problems using elementary geometry. The following is typical.
+(2)
+
+Example
+A point Q is picked at random in the unit square. What is the probability ν
+that it is nearer to the centre O of the square than to its perimeter?
+
+316
+
+7 Continuous Random Variables
+
+Solution
+By symmetry, we need to consider only the sector 0 ≤ y ≤ x ≤ 12 . Then the
+%
+point (x, y) is nearer to O than the perimeter if x 2 + y 2 < 12 − x; that is, if in this sector,
+x<
+
+1 √
+1
+− y 2 , for 0 ≤ y ≤ ( 2 − 1).
+4
+2
+
+Hence, the area is given by an integral and
+√
+
+1
+2(
+
+ν=8
+0
+
+2−1) 
+
+
+4√
+5
+1
+2
+2− .
+− y − y dy =
+4
+3
+3
+
+s
+
+An equally trivial but much more important example is the following.
+(3)
+
+(4)
+
+Example
+Let f = f (x) be an integrable function with 0 ≤ f (x) ≤ 1 for 0 ≤ x ≤ 1.
+Let Q be picked at random in the unit square, and let Av be the set of points such that
+0 ≤ x ≤ v and 0 ≤ y ≤ f (x). Then, from (1),
+v
+
+P(Q ∈ Av ) =
+
+f (x)d x.
+0
+
+s
+
+This trivial result has at least two important applications. The ﬁrst we have met already in
+Example 5.8.9.
+(5)
+
+Example: Hit-or-Miss Monte Carlo Integration
+Let f (x) and Q be as deﬁned in
+Example 3, and declare Q a hit if Q lies below f (x), 0 ≤ x ≤ 1. Then the probability of a
++1
+hit is P(A1 ) = 0 f (x)d x. Now we pick a sequence of such points Q 1 , Q 2 , . . . and let X n
+be the number of hits. If points are picked independently, then X n is a binomial random
+variable with parameters n and P(A1 ), and we have shown that as n → ∞, for  > 0,
+
+
+1
+P |n −1 X n −
+f (x)d x| >  → 0.
+0
+
++1
+This therefore offers a method for evaluating the integral 0 f (x)d x. In practice, one would
+be unlikely to use this
++ method in one dimension, but you might well use the analogous
+method to evaluate f (x)d x, where x is a vector in (say) 11 dimensions.
+
+s
+
+(6)
+
+Example: Simulation
+With Q and f (x) deﬁned as above, consider the probability
+that Q lies in Av given that it is a hit. By deﬁnition, this has probability
+v
+
+f (x)d x
+P(Av |A1 ) =
+
+.
+
+0
+1
+
+f (x)d x
+0
+
+By inspection, the function F(v) = P(Av |A1 ) is the distribution function of the xcoordinate of Q given that it is a hit. This procedure therefore offers a method of simulating
+
+7.9 Random Points
+
+317
+
+a random variable X with density function
+f (x)
+
+f X (x) =
+
+(7)
+
+.
+
+1
+
+f (x)d x
+0
+
+You can just pick a point Q and, if it is a hit, let its x-coordinate be X .
+
+s
+
+A natural next step is to consider events deﬁned jointly by a number of points picked
+independently in a region R. One famous example is Sylvester’s problem: for four points
+picked at random in R, what is the probability that one of them lies in the triangle formed
+by the other three? This is too difﬁcult for us, but we can consider an amusing simpler
+problem to illustrate a few of the basic ideas.
+(8)
+
+(9)
+
+Example: Two Points in a Disc
+Let λ(r ) be the expected value of the distance L(r )
+between two points Q 1 and Q 2 , each distributed uniformly (and independently) over a
+disc of radius r . Show that
+128r
+.
+λ(r ) =
+45π
+
+Solution
+This can be done by a brutal integration; here is a better way, discovered by
+M.V. Crofton in 1885.
+Consider a disc of radius x + h, which we may think of as a disc D of radius x,
+surrounded by an annulus A of width h. Then, if Q 1 and Q 2 are dropped at random on to
+the disc of radius x + h, we have (using independence and the properties of the uniform
+density) that
+
+2
+π x2
+4h
+=1−
+(10)
++ o(h).
+P(Q 1 ∈ D ∩ Q 2 ∈ D) =
+2
+π (x + h)
+x
+Also,
+P(Q 1 ∈ D ∩ Q 2 ∈ A) =
+
+π x2
+π(x + h)2
+
+
+1−
+
+π x2
+π (x + h)2
+
+
+=
+
+2h
++ o(h)
+x
+
+and P(Q 1 ∈ A ∩ Q 2 ∈ A) = o(h). Hence, by conditional expectation,
+
+
+4h
+(11)
++ o(h)
+λ(x + h) = E(L(x + h)|Q 1 ∈ D; Q 2 ∈ D) 1 −
+x
+
+
+2h
++ 2E(L(x + h)|Q 1 ∈ D; Q 2 ∈ A)
++ o(h) + o(h).
+x
+Now E(L(x + h)|Q 1 ∈ D; Q 2 ∈ A) is just the mean distance of a random point Q 1 in a
+disc of radius x, from a point Q 2 on its circumference (plus a quantity that is o(h)). Hence,
+taking plane polar coordinates with Q 2 as origin:
+π/2
+2x cos θ
+1
+v 2 dvdθ + o(h)
+π x 2 −π/2 0
+32x
++ o(h).
+=
+9π
+
+E(L(x + h)|Q 1 ∈ D; Q 2 ∈ A) =
+
+318
+
+7 Continuous Random Variables
+
+Returning to (11), note that E(L(x + h)|Q 1 ∈ D; Q 2 ∈ D) = λ(x); hence, rearranging
+(11) and letting h → 0 gives
+
+
+1
+−4
+128
+dλ(x)
+= lim
+λ(x + h) − λ(x) =
+λ(x) +
+.
+h→0 h
+dx
+x
+9π
+Integrating this, and observing that λ(0) = 0, we have
+λ(x) =
+
+s
+
+128x
+.
+45π
+
+Using the same idea, and with a lot more toil, we can ﬁnd the density of L.
+The next natural step is to pick lines (or other objects) at random and ask how they divide
+up the region R in random tessellations or coverings. This is well beyond our scope, but
+the trivial Example 7.18 illustrates some of the problems.
+
+7.10 Review and Checklist for Chapter 7
+
+We introduced the class of random variables having a density f X (x) and a distribution
+FX (x). These take one of an uncountable number of values in R and are called
+“absolutely continuous.” The familiar ideas of expectation, conditioning, functions,
+and generating functions are explored in this new context, together with some applications.
+SYNOPSIS OF FORMULAE:
+
+Key Rule:
+
+P(X ∈ B) =
+
+f X (x)d x.
+x∈B
+
+Distribution and density:
+FX (x) =
+
+x
+−∞
+
+f X (y)dy = P(X ≤ x).
+
+For small h, P(x < X ≤ x + h) ≃ f X (x)h, and if F(x) is differentiable ddFx = f (x).
+F(x) is nondecreasing; lim F(x) = 0;
+x→−∞
+
+lim F(x) =
+
+x→+∞
+
+∞
+−∞
+
+f (u)du = 1,
+
+if X is proper.
+
+Mixture: If f and g are densities, then so is
+h = λ f + (1 − λ)g, 0 ≤ λ ≤ 1.
+Functions: If continuous random variables X and Y are such that Y = g(X ) for some
+function g(.) that is differentiable and strictly increasing, then
+f Y (y) = f X (g −1 (y))
+
+d −1
+[g (y)],
+dy
+
+7.10 Review and Checklist for Chapter 7
+
+319
+
+where g −1 (.) is the inverse function of g. In general, we can write
+d
+dy
+
+f Y (y) =
+
+f X (x)d x,
+x:g(x)≤y
+
+and proceed by ad hoc arguments.
+A random variable X has an expected value EX provided that
++Expectation:
+∞
+|x|
+f
+(x)d
+x
+< ∞, and then
+X
+−∞
+∞
+
+EX =
+
+x f X (x)d x.
+
+−∞
+
+When X > 0,
+∞
+
+EX =
+
+P(X > x)d x.
+
+0
+
+If random variables
++ ∞X and Y are such that Y = g(X ) and X is continuous, then Y has an
+expected value if −∞ |g(x)| f X (x)d x < ∞ and
+∞
+
+EY = Eg(X ) =
+
+−∞
+
+g(x) f X (x)d x.
+
+Moments: In particular, if g(X ) = X r , this yields the r th moment µr of X . When X > 0,
+∞
+
+EX r =
+
+r x r −1 P(X > x)d x.
+
+0
+
+When g(X ) = exp (t X ), this yields the m.g.f.,
+M X (t) =
+
+∞
+−∞
+
+et x f X (x)d x.
+
+Conditioning: Any event B in  may condition a random variable X on , leading to a
+conditional distribution and density,
+FX |B (x|B) = P(X ≤ x|B)
+and
+f X |B (x|B) =
+
+d
+FX |B (x|B),
+dx
+
+when the derivative exists, with the
+Key Rule:
+P(X ∈ A|B) =
+
+f (x|B)d x.
+x∈A
+
+Such conditioned random variables may have an expectation if
+∞
+−∞
+
+|x| f X |B (x|B)d x < ∞,
+
+320
+
+7 Continuous Random Variables
+Table 7.1. Continuous random variables and their associated characteristics
+X
+
+f (x)
+
+EX
+
+var X
+
+m.g.f.
+
+Uniform
+Exponential
+
+(b − a)−1 , a ≤ x ≤ b
+λe−λx , x ≥ 0
+
+2
+,
+(2π )−1/2 σ −1 exp − 12 x−µ
+σ
+
+1
+(b + a)
+2
+−1
+
+1
+(b − a)2
+12
+−2
+
+ebt −eat
+t(b−a)
+
+µ
+
+σ
+
+r λ−1
+
+r λ−2
+
+0
+
+2λ−2
+
+Normal
+N (µ, σ )
+Gamma
+2
+
+Laplace
+Cauchy
+
+−∞ < x < ∞
+λr
+,x ≥ 0
+x r −1 e−λx (r −1)!
+1
+λ exp (−λ|x|)
+2
+2 −1
+
+λ
+
+{π (1 + x )}
+
+λ
+
+2
+
+λ/(λ − t)
+exp (µt + 12 σ 2 t 2 )
+ λ r
+λ−t
+λ2
+λ2 −t 2
+
+and then
+E(X |B) =
+
+∞
+−∞
+
+x f X |B (x|B)d x.
+
+Table 7.1 gives some useful continuous random variables with their elementary properties.
+Checklist of Terms for Chapter 7
+
+7.1 distribution function
+density
+standard normal density φ(x)
+mixture
+7.2 functions
+inverse function
+7.3 simulation
+composition
+7.4 expected value
+expectation of functions
+tail integral for expectation
+7.5 moment generating function
+continuity theorem
+O–o notation
+de Moivre–Laplace theorem
+7.6 conditional distribution
+conditional density
+conditional expectation
+lack-of-memory property
+7.7 hazard function
+hazard rate
+7.8 stochastically larger
+7.9 geometrical probability
+
+334
+
+7 Continuous Random Variables
+
+Conclude that for ﬁxed ﬁnite a and b, as n → ∞,
+P(a < Yn < b) →
+(9)
+
+b
+
+1
+(2π )
+
+1
+2
+
+e− 2 y dy = (b) − (a).
+1
+
+2
+
+a
+
+Exercise
+Let (Sn ; n ≥ 0) be a simple random walk with S0 = 0. Given that S2n = 2 j, show that
+the probability that the last visit to the origin was at the 2r th step is
+
+
+  
+j
+n+ j
+n− j
+2n
+fr =
+, 0 ≤ x < n.
+n −r
+r
+r
+2r
+√
+Show that if r, j, and n all increase in such a way that nr → x, j/ n → y, then
+
+
+y
+−x y 2
+1
+lim fr = √
+, 0 < x < 1.
+3 exp
+r →∞
+1−x
+π x (1 − x) 2
+
+Remark
+The result of Exercise 6, which is known as Stirling’s formula, was established by de Moivre in 1730. The formula actually proved by Stirling in 1730 was
+1
+
+
+1 −(n+ 2 ) n+ 1
+1
+(10)
+e 2 → (2π) 2 , as n → ∞.
+n! n +
+2
+(11) Exercise
+
+Prove (10).
+
+P RO B L E M S
+
+1
+2
+3
+
+Let f (x) = c(α, β)(x − α)(β − x).
+For what values of x and c(α, β) can f be a density function?
+Let X have distribution F(x). Show that P(X = x) > 0 if and only if F(x) is discontinuous at x.
++1
+The beta function B(a, b) is given by B(a, b) = 0 v a−1 (1 − v)b−1 dv; a > 0, b > 0. The beta distribution has density
+f (x) =
+
+4
+5
+6
+7
+8
+
+1
+x a−1 (1 − x)b−1
+B(a, b)
+
+If X has the beta distribution, show that E(X ) = B(a + 1, b)/B(a, b). What is var (X )?
+For what value of c is f = c(sin x)α (cos x)β ; 0 < x < π/2, a density function?
+What is the distribution function of the random variable having the beta density with a = b = 12 ?
+Let X have the density f = exp(−x − exp(−x)) for x ∈ R. What is the distribution function of X ?
+Let X be exponentially distributed with parameter λ. What is the density of Y = ea X ? For what
+values of λ does E(Y ) exist?
+Let X have the gamma density with parameters α and λ. Show that
+µk = α(α + 1) . . . (α + k − 1)λ−k ,
+
+9
+
+for 0 < x < 1.
+
+and var(X ) =
+
+Let X have the standard normal density, and a > 0. Show that
+P(X > x + ax −1 |X > x) → e−a
+
+10
+
+α
+.
+λ2
+
+as x → ∞.
+
+(a) Let X have the standard normal density. Show that |X | has distribution function F = 2(x) − 1,
+for x > 0.
+
+Problems
+
+11
+
+12
+13
+14
+15
+16
+17
+
+335
+
+(b) Let X have distribution F(x). What is the distribution of |X |? What is the density of |X | if it
+exists?
+An elastic string has modulus of elasticity λ and natural length l0 . A mass m is attached to√
+one end,
+the other being ﬁxed. The period of oscillation of the mass when slightly displaced is 2π ml0 /λ.
+Suppose that the modulus of elasticity is uniformly distributed on [a, b]. What is the density and
+expectation of the period?
+Let X have density f (x). Construct a simple random variable Sn (X ) such that given  >
+0, P(|Sn (X ) − X | > ) < 2−n . (Assume X is proper.)
+If X is exponentially distributed ﬁnd the m.g.f. of X , E(et X ).
+A point Q is chosen at random inside an equilateral triangle of unit side. Find the density of the
+perpendicular distance X to the nearest side of the triangle.
+For what value of c is E((X − c)2 ) least?
+√
+Suppose a machine’s lifetime T has hazard rate λ t, where λ > 0. Find P(T > t).
+Suppose that X has distribution function
+
+
+x
+F(x) = 1 − exp −
+g(u)du
+0
+
+18
+19
+20
+
+21
+22
+
+23
+24
+25
+26
+
+27
+
+28
+29
+30
+
++∞
+for some function g(.). Show that this is possible if and only if g(u) ≥ 0 and 0 g(u)du = ∞.
+What are the cumulants of the normal density?
+What are the cumulants of the exponential density?
+You have two independent random variables, each uniform on (0, 1). Explain how you would use
+them to obtain a random variable X with density
+
+
+3
+1 2
+f (x) =
+for 0 ≤ x ≤ 1.
+1+x + x
+5
+2
++∞
+Deﬁne I (a, b) = 0 exp(−a 2 u 2 − b2 u −2 )du for a, b > 0. Show that:
+√
+(a) I (a, b) = a −1 I (1, ab); (b) ∂∂bI = −2I (1, ab); (c) I (a, b) = 2aπ e−2ab .
+Use the result of Problem 21 to ﬁnd the m.g.f. of the following densities:
+1
+(a) f (x) = αx − 2 exp(−β/x − γ x) for x > 0; β, γ > 0. What is α?
+1
+(b) f (x) = (2π x 3 )− 2 exp(−(2x)−1 ) for x > 0.
+Let X be a standard normal random variable. What is the density of X −2 ?
+Let X be a standard normal random variable. Find the m.g.f. and density of X 2 .
+What is the moment generating function of the two-sided exponential density? Where is it deﬁned?
+Let U be uniform on (0, 1). Show that, if [a] denotes the integer part of a, and 0 < p < 1,
+"
+#
+log U
+X =1+
+log(1 − p)
+has a geometric distribution.
+Let U be uniform on (0, 1). Show how to use U to simulate a random variable with density
+
+ 
+24
+1
+1 2
+f (x) =
+; 0 ≤ x ≤ 1.
+1+
+x−
+25
+2
+2
+Let P and Q be two points chosen independently and uniformly in (0, a). Show that the distance
+between P and Q has density 2(a − x)a −2 for 0 < x < a.
+Continuous mixture
+Let f (θ, x) be the
++ ∞exponential density with parameter θ for 0 ≤ x. Let
+g(θ ) = νe−νθ for θ ≥ 0, ν > 0. Show that 0 f (θ, x)g(θ )dθ is a density.
+√
+Let X n be a Poisson random variable with parameter n. Show that as n → ∞, P(X n ≤ n + nx) →
+(x).
+
+336
+31
+32
+
+7 Continuous Random Variables
+
+Let U be uniform on (0, 1). Show how to simulate a random variable X with the Pareto distribution
+given by F(x) = 1 − x −d ; x > 1, d > 1.
+α−1 −x
+e
+Let X α have gamma density with parameters α and 1, so f α (x) = x(α−1)!
+. Let φα (x) be the density
+of Yα = (X α − α)α − 2 . Show that as α → ∞, φα (x) → φ(x), where φ(x) is the standard normal
+density.
+Let X have mean µ and variance σ 2 . Show that P(|X − µ| ≤ aσ ) ≥ 1 − a −2 , for any a > 0. Let Z
+be a standard normal random variable, and deﬁne Y = α + β Z + γ Z 2 . Find the mean and variance
+of Y , and show that
+
+
+1
+P |Y − α − γ | ≤ α ≥ 1 − 4α −2 (β 2 + 2γ 2 ).
+2
+1
+
+33
+
+34
+35
+
+Verify the assertions of Theorem 7.4.16.
+Use the indicator function I (X > x) to show that, for a random variable X that is nonnegative,
+∞
+
+(a) EX =
+0
+
+P(X > x) d x.
+
+∞
+
+(b) EX r =
+
+r x r −1 P(X > x) d x.
+
+0
+
+∞
+
+(c) Eeθ X = 1 + θ
+
+eθ x P(X > x) d x.
+
+0
+
+(d) When X ≥ 0 is integer valued,
+∞
+
+k=0
+
+36
+
+s k P(X > k) =
+
+1 − G X (s)
+.
+1−s
+
+Let X be a standard normal random variable with density φ(x) and distribution (x). Show that
+for x > 0,
+x
+x2 + 1
+
+φ(x) ≤ 1 − (x) ≤
+
+[Hint: Consider f (x) = xe−x /2 − (x 2 + 1)[1 − (x)].]
+2
+
+1
+φ(x).
+x
+
+8
+Jointly Continuous Random Variables
+
+Some instances of correlation are quite whimsical: thus cats which are
+entirely white and have blue eyes are generally deaf.
+Charles Darwin, Origin of Species
+8.1 Joint Density and Distribution
+
+It is often necessary to consider the joint behaviour of several random variables, which may
+each take an uncountable number of possible values. Just as for discrete random vectors,
+we need to deﬁne a variety of useful functions and develop the appropriate machinery to
+set them to work. For simplicity in deﬁnitions and theorems, we start by considering a
+pair of random variables (X, Y ) taking values in R2 . This theoretical outline can be easily
+extended to larger collections of random variables (X 1 , X 2 , . . . , X n ) taking values in Rn ,
+with a correspondingly greater expenditure of notation and space.
+As usual, we should start with a sample space , an event space F, and a probability
+function P, such that for all x and y
+A x y = {ω: X ≤ x, Y ≤ y} ∈ F.
+Then
+(1)
+
+F(x, y) = P(A x y ) = P(X ≤ x, Y ≤ y)
+is the joint distribution function of X and Y . In fact, we suppress this underlying structure,
+and begin with random variables X and Y having joint distribution F(x, y) given by (1).
+A special class of such jointly distributed random variables is of great importance.
+
+(2)
+
+Deﬁnition
+Let F(x, y) be a joint distribution. Suppose that ∂∂x∂Fy exists and is
+nonnegative, except possibly on a ﬁnite collection of lines in R2 . Suppose further that
+the function f (x, y) deﬁned by
+ 2
+∂ F
+where this exists
+f (x, y) = ∂ x∂ y
+
+0
+elsewhere,
+2
+
+337
+
+338
+
+8 Jointly Continuous Random Variables
+
+satisﬁes
+F(x, y) =
+
+(3)
+
+x
+
+y
+
+−∞
+
+−∞
+
+f (u, v) du dv.
+
+Then X and Y , being random variables having the (joint) distribution F, are said to
+
+be (jointly) continuous with (joint) density function f (x, y).
+The words “joint” and “jointly” are often omitted to save time and trees. Sometimes we
+write f X,Y (x, y) and FX,Y (x, y) to stress the role of X and Y , or to avoid ambiguity.
+(4)
+
+(5)
+
+Example: Uniform Distribution
+Suppose you pick a point Q at random in the rectangle R = (x, y : 0 < x < a, 0 < y < b). Then from the properties of the uniform distribution [see (7.8.1)], we have
+
+1
+if x ≥ a, y ≥ b
+
+
+
+
+x
+y
+
+
+
+if 0 ≤ x ≤ a, 0 ≤ y ≤ b
+
+
+
+ ab
+y
+if x ≥ a, 0 ≤ y ≤ b
+F(x, y) =
+
+b
+
+
+x
+
+
+
+if 0 ≤ x ≤ a, y ≥ b
+
+
+a
+
+
+
+0
+elsewhere.
+Differentiating wherever possible gives
+
+1
+
+
+
+∂2 F
+ab
+=
+0
+
+∂ x∂ y
+
+
+
+(6)
+
+if 0 < x < a, 0 < y < b
+if x < 0 or x > a
+or y < 0 or y > b.
+
+Hence, the function
+
+(7)
+
+
+1
+f (x, y) = ab
+0
+
+if 0 < x < a, 0 < y < b
+otherwise
+
+satisﬁes (3), and is the density of X and Y . It is uniformly distributed over the rectangle R.
+Furthermore, if A is a subset of R with area |A|, then using (7.8.1) (and a theorem about
+double integrals), we have
+(8)
+
+P((X, Y ) ∈ A) =
+
+|A|
+=
+ab
+
+f (x, y) d xd y.
+(x,y)∈A
+
+s
+
+In fact, a version of the useful relationship (8) holds true for all densities f (x, y). This is
+important enough to state formally as a theorem, which we do not prove.
+
+8.1 Joint Density and Distribution
+
+(9)
+
+339
+
+Theorem
+If X and Y have density f (x, y) and P((X, Y ) ∈ A) exists, then it is
+given by the Key Rule:
+P((X, Y ) ∈ A) =
+
+f (x, y) d xd y.
+(x,y)∈A
+
+Note that the condition that the probability exists is equivalent to saying that {ω:
+(X (ω), Y (ω)) ∈ A} ∈ F. This is another demonstration of the fact that, although we can
+just about suppress (, F, P) at this elementary level, further rigorous progress is not
+possible without bringing the underlying probability space into play. The attractive result
+(9) may then be proved.
+Here is a simple example of Theorem 9 in use.
+(10) Example
+
+Let X and Y have density
+
+8x y
+f (x, y) =
+0
+
+if 0 < y < x < 1
+elsewhere.
+
+What are P(2X > 1, 2Y < 1) and P(X + Y > 1)? Find F(x, y).
+Solution
+Notice that the constraints 2X > 1, 2Y < 1 require that (X, Y ) ∈ S, where
+S is the square with vertices ( 12 , 0), (1, 0), ( 12 , 12 ), (1, 12 ). Hence,
+P(2X > 1, 2Y < 1) = 8
+
+1
+2
+
+1
+1
+2
+
+f (x, y) d yd x = 8
+
+0
+
+1
+2
+
+1
+
+x dx
+1
+2
+
+0
+
+y dy =
+
+3
+.
+8
+
+Likewise, X + Y > 1 if (X, Y ) ∈ T , where T is the triangle with vertices ( 12 , 12 ), (1, 0),
+(1, 1). Hence,
+P(X + Y > 1) = 8
+
+1
+1
+2
+
+x
+1−x
+
+x y dy d x =
+
+5
+.
+6
+
+Finally,
+y
+
+F(x, y) =
+0
+
+x
+v
+
+8uv du dv = 2x 2 y 2 − y 4 .
+
+s
+
+The geometric problems of Section 7.9 can now be reformulated and generalized in this
+new framework. Obviously, “picking a point Q at random in some region R” is what we
+would now describe as picking (X, Y ) such that X and Y are jointly uniform in R. More
+generally, we can allow (X, Y ) to have joint density f (x, y) in R.
+Example: More Triangles
+The random variables X and Y have joint density
+ a
+if x < 1, y < 1, x + y > 1, a > −1,
+cx
+f (x, y) =
+0
+otherwise.
+(a) What is c?
+(b) What is F(x, y)?
+
+340
+
+8 Jointly Continuous Random Variables
+
+(c) Show that it is possible to construct a triangle with sides X, Y, 2 − X − Y , with probability one.
+(d) Show that the angle opposite to the side of length Y is obtuse with probability
+x a+1 − x a+2
+d x.
+2−x
+
+1
+
+p0 = c
+0
+
+(e) When a = 0, show that p0 = 3 − 4 log 2.
+Solution
+
+(a) Because
+
+++
+
+f (x, y) d x d y = 1, this entails
+1
+
+c−1 =
+
+1
+
+xa
+0
+
+d y d x = (a + 2)−1 .
+
+1−x
+
+(b) Using (3) gives
+x
+
+y
+
+1−y
+
+1−u
+
+F(x, y) =
++
+
+cu a dv du =
+
+a + 2 a+1
+a + 2 a+1
+yx
+x
++ x a+2 −
+a+1
+a+1
+
+1
+(1 − y)a+2 .
+a+1
+
+(c) Three such lengths form a triangle if X + Y > 2 − X − Y, X + 2 −
+X − Y > Y , and Y + 2 − X − Y > X . But these
++ + constraints are just those that
+deﬁne the region in which f (x, y) is nonzero and
+f d x dy = 1.
+(d) if θ is the angle opposite Y , then
+cos θ =
+
+X 2 + (2 − X − Y )2 − Y 2
+< 0,
+2X (2 − X − Y )
+
+if θ is an obtuse angle. Hence, in this case,
+Y >
+
+X 2 − 2X + 2
+= g(X ),
+2− X
+
+say.
+
+Now g(x) ≥ 1 − x (with equality only at x = 0). Hence, p0 is given by
+1
+
+P(θ is obtuse) = P(Y > g(X )) =
+
+f (x, y) d yd x
+0
+
+1
+
+=c
+0
+
+1
+g(x)
+1
+
+(1 − g(x))x a d x = c
+0
+
+x − x2 a
+x d x.
+2−x
+
+(e) When a = 0,
+1
+
+p0 = 2
+0
+
+1
+2−x
+2
+x − x2
+2x − x 2
+dx = 2
++
+−
+d x = 3 − 4 log 2.
+2−x
+2−x
+2−x
+2−x
+0
+
+s
+
+Next we record that, as a result of (1) and Theorem 9, f (x, y) and F(x, y) have the
+following elementary properties, analogous to those of f and F in the discrete case.
+
+8.1 Joint Density and Distribution
+
+341
+
+First, F(x, y) is obviously nondecreasing in x and y. More strongly, we have
+0 ≤ P(a < X ≤ b, c ≤ Y ≤ d)
+= P(a < X ≤ b, Y ≤ d) − P(a < X ≤ b, Y ≤ c)
+= F(b, d) − F(a, d) − F(b, c) + F(a, c).
+
+(11)
+
+Second, if X and Y are ﬁnite with probability 1, then
+1=
+
+(12)
+
+∞
+
+∞
+
+−∞
+
+−∞
+
+f (u, v) du dv = lim F(x, y).
+x,y→∞
+
+Third, knowledge of F(x, y) and f (x, y) will also provide us with the separate distributions
+and densities of X and Y . Thus, the marginals are:
+
+FX (x) = P(X ≤ x) = lim P(X ≤ x, Y ≤ y) =
+
+(13)
+
+y→∞
+
+∞
+
+x
+
+−∞
+
+−∞
+
+f (u, v) dudv,
+
+and
+f X (x) =
+
+(14)
+
+d
+FX (x) =
+dx
+
+∞
+−∞
+
+f (x, v) dv.
+
+Likewise,
+f Y (y) =
+
+(15)
+
+∞
+
+f (u, y) du
+−∞
+
+and
+FY (y) = lim F(x, y).
+
+(16)
+
+x→∞
+
+Here are some examples to illustrate these properties. Note that in future we will specify
+f (x, y) only where it is nonzero.
+(17) Example
+Verify that the function f (x, y) = 8x y for 0 < y < x < 1 is a density. For
+what value of c is f (x, y) = cx y for 0 < x < y < 1, a density? Find the density of X in
+the second case.
+Solution
+
+Because f > 0 and
+1
+0
+
+x
+
+1
+
+8x y dyd x =
+
+0
+
+4x 3 d x = 1,
+
+0
+
+f is indeed a density. By symmetry, c = 8 in the second case also, and we have
+1
+
+f X (x) =
+
+8x y dy = 4x(1 − x 2 ).
+
+s
+
+0
+
+(18) Example
+The function H (x, y) = 1 − e−(x+y) for x > 0, y > 0, is nondecreasing in
+x and y, and 0 ≤ H ≤ 1. Is it a distribution?
+
+342
+
+8 Jointly Continuous Random Variables
+
+No, because ∂∂x∂Hy exists and is negative in x > 0, y > 0. Alternatively, note
+2
+
+Solution
+that
+
+H (1, 1) − H (1, 0) − H (0, 1) + H (0, 0) = 2e−1 − 1 − e−2 < 0,
+
+s
+
+which cannot (as it should) be the value of P(0 < X ≤ 1, 0 < Y ≤ 1).
+Verify that when σ, τ > 0,
+#
+ 2
+1
+x
+y2
+1
+2ρx y
+f (x, y) =
++ 2
+−
+1 exp −
+2(1 − ρ 2 ) σ 2
+στ
+τ
+2π σ τ (1 − ρ 2 ) 2
+
+(19) Example: Bivariate Normal Density
+
+"
+
+is a density for |ρ| < 1, and ﬁnd the marginal densities f X (x) and f Y (y).
+Solution
+
+From (14), if f (x, y) is a density, we have
+
+f X (x) =
+=
+Now setting
+
+∞
+
+f (x, y) dy
+−∞
+∞
+
+1
+1
+
+2πσ τ (1 − ρ 2 ) 2
+
+)
+
+1
+exp −
+2(1 − ρ 2 )
+−∞
+
+
+
+y ρx
+−
+τ
+σ
+
+2
+
+x 2 ρ2x 2
++ 2− 2
+σ
+σ
+
+*
+dy
+
+ρx
+y
+−
+= u, and recalling that
+τ
+σ
+
+
+∞
+u2
+1
+τ du = (2π (1 − ρ 2 )) 2 τ
+exp −
+2
+2(1 − ρ )
+−∞
+
+yields
+f X (x) =
+
+
+
+x2
+.
+exp
+−
+1
+2σ 2
+(2π ) 2 σ
+1
+
+This is the N (0, σ 2 ) density, and so f satisﬁes (12) and is nonnegative. It is therefore a
+density. Interchanging the roles of x and y in the above integrals shows that f Y (y) is the
+N (0, τ 2 ) density. See Example 8.20 for another approach.
+
+s
+
+8.2 Change of Variables
+
+We have interpreted the random vector (X, Y ) as a random point Q picked in R2 according
+to some density f (x, y), where (x, y) are the Cartesian coordinates of Q. Of course, the
+choice of coordinate system is arbitrary; we may for some very good reasons choose to
+represent Q in another system of coordinates (u, v), where (x, y) and (u, v) are related
+by u = u(x, y) and v = v(x, y). What now is the joint density of U = u(X, Y ) and V =
+v(X, Y )?
+Equally, given a pair of random variables X and Y , our real interest may well lie in
+some function or functions of X and Y . What is their (joint) distribution?
+
+8.2 Change of Variables
+
+343
+
+As we have remarked above, at a symbolic or formal level, the answer is straightforward.
+For U and V above, and A = {x, y: u(x, y) ≤ w, v(x, y) ≤ z} then, by Theorem 8.1.9,
+FU,V (w, z) =
+
+f X,Y (x, y) d x d y.
+A
+
+The problem is to turn this into a more tractable form.
+Fortunately, there are well-known results about changing variables within a multiple
+integral that provide the answer. We state without proof a theorem for a transformation T
+satisfying the following conditions. Let C and D be subsets of R2 . Suppose that T given
+by
+T (x, y) = (u(x, y), v(x, y))
+maps C one–one onto D, with inverse T −1 given by
+T −1 (u, v) = (x(u, v), y(u, v)),
+which maps D one–one onto C. We deﬁne the so-called Jacobian J as
+∂x ∂y
+∂x ∂y
+−
+,
+J (u, v) =
+∂u ∂v
+∂v ∂u
+where the derivatives are required to exist and be continuous in D. Then we have the
+following result.
+(1)
+
+Theorem
+Let X and Y have density f (x, y), which is zero outside C. Then U =
+u(X, Y ) and V = v(X, Y ) have joint density
+fU.V (u, v) = f X,Y (x(u, v), y(u, v))|J (u, v)| for (u, v) ∈ D.
+Here are some examples of this theorem in use.
+
+(2)
+
+Example
+Suppose Q = (X, Y ) is uniformly distributed over the circular disc of radius
+1. Then X and Y have joint density
+f (x, y) =
+
+(3)
+
+1
+π
+
+for x 2 + y 2 ≤ 1.
+
+However, it seems more natural to use polar rather than Cartesian coordinates
+1
+in this case. These are given by r = (x 2 + y 2 ) 2 and θ = tan−1 (y/x), with inverse x = r cos θ and y = r sin θ . They map C = {x, y: x 2 + y 2 ≤ 1} one–one onto
+D = {r, θ : 0 ≤ r ≤ 1, 0 < θ ≤ 2π }.
+In this case,
+J (r, θ ) =
+
+(4)
+
+∂x ∂y
+∂x ∂y
+−
+= r cos2 θ + r sin2 θ = r.
+∂r ∂θ
+∂θ ∂r
+
+Hence, the random variables R = r (X, Y ) and ! = θ(X, Y ) have joint density given by
+r
+f R,! (r, θ) =
+for 0 ≤ r ≤ 1, 0 < θ ≤ 2π.
+π
+Notice that f (r, θ ) is not uniform, as was f (x, y).
+
+s
+
+344
+
+(5)
+
+Example
+satisfying
+
+8 Jointly Continuous Random Variables
+
+Let Q = (X, Y ) be uniformly distributed over the ellipse C with boundary
+
+y2
+x2
++
+= 1,
+a2
+b2
+of area |C|. What is P(X > Y, X > −Y )?
+Solution
+Here the transformation x = ar cos θ and y = br sin θ maps the ellipse one–
+one onto the circular disc with radius 1. Furthermore, J = abr , Now X and Y have density
+1
+f (x, y) =
+, for (x, y) ∈ C,
+|C|
+so R and ! have joint density
+abr
+, for 0 ≤ r < 1, 0 < θ ≤ 2π.
+f (r, θ ) =
+|C|
+Hence, |C| = πab, and
+
+
+
+
+a
+Y
+b
+1
+P(X > Y, X > − Y ) = P −1 < < 1 = P −1 < tan ! < 1 = tan−1 ,
+X
+a
+π
+b
+because ! is uniform on (0, 2π).
+
+s
+
+8.3 Independence
+
+As usual, independence is an extremely important property; its deﬁnition is by now familiar.
+(1)
+
+Deﬁnition
+
+Jointly distributed random variables are independent if, for all x and y,
+P(X ≤ x, Y ≤ y) = P(X ≤ x)P(Y ≤ y).
+
+In terms of distributions, this is equivalent to the statement that
+
+
+
+F(x, y) = FX (x)FY (y).
+
+(2)
+
+For random variables with a density, it follows immediately by differentiating that
+f (x, y) = f X (x) f Y (y)
+
+(3)
+
+if X and Y are independent. Using the basic property of densities (Theorem 8.1.9) now
+further shows that, if C = (x, y: x ∈ A, y ∈ B) and X and Y are independent, then
+f (x, y) d xd y =
+
+(4)
+C
+
+f X (x) d x
+A
+
+f Y (y) dy.
+B
+
+(Assuming of course that the integrals exist.)
+Finally, if the random variables U and V satisfy U = g(X ), V = h(Y ), and X and Y
+are independent, then U and V are independent. To see this, just let
+(5)
+
+A = (x: g(x) ≤ u)
+
+and
+
+B = (g: h(y) ≤ v),
+
+and the independence follows from (4) and (2). An important and useful converse is the
+following.
+
+8.3 Independence
+
+(6)
+
+Theorem
+
+345
+
+If X and Y have density f (x, y), and for all x and y it is true that
+f (x, y) = f X (x) f Y (y),
+
+then X and Y are independent.
+The proof
+immediately from a standard theorem on multiple integrals (just
++y
++ x follows
+consider −∞ −∞ f (u, v) du dv) and we omit it.
+(7)
+
+Example: Uniform Distribution
+circular disc C, namely,
+
+Let X and Y have the uniform density over the unit
+
+f (x, y) = π −1
+
+for (x, y) ∈ C.
+
+(a) Are X and Y independent?
+(b) Find f X (x) and f Y (y).
+(c) If X = R cos !, and Y = R sin !, are R and ! independent?
+√
+√
+(a) The set {x, y: x ≤ −1/ 2, y ≤ −1/ 2} lies outside C, so
+
+
+1
+1
+= 0.
+F −√ , −√
+2
+2
+√
+However, the intersection of the set {x: x ≤ −1/ 2} with C has nonzero area, so
+
+
+
+
+1
+1
+FY − √
+> 0.
+FX − √
+2
+2
+Solution
+
+Therefore, X and Y are not independent.
+(b) By (8.1.14),
+1
+
+(1−x 2 ) 2
+
+1
+
+1
+f (x, y) dy =
+f X (x) =
+π
+−1
+
+1
+−(1−x 2 ) 2
+
+dy =
+
+2
+1
+(1 − x 2 ) 2 .
+π
+
+Likewise,
+f Y (y) =
+
+2
+1
+(1 − y 2 ) 2 .
+π
+
+(c) By Example 8.2.4, R and ! have joint density
+f R,! (r, θ) =
+
+r
+,
+π
+
+for 0 ≤ r < 1, 0 < θ ≤ 2π.
+
+Hence,
+1
+
+f ! (θ) =
+0
+
+f (r, θ) dr =
+
+1
+;
+2π
+
+0 < θ ≤ 2π,
+
+346
+
+8 Jointly Continuous Random Variables
+
+and
+2π
+
+f R (r ) =
+
+f (r, θ ) dθ = 2r ;
+
+0 ≤ r ≤ 1.
+
+0
+
+Hence, f (r, θ) = f ! (θ) f R (r ), and so R and ! are independent.
+
+s
+
+Example: Bertrand’s Paradox Again
+Suppose we choose a random chord of a circle
+C radius a, as follows. A point P is picked at random (uniformly) inside C. Then a line
+through P is picked independently of P at random [i.e., its direction ! is uniform on
+(0, 2π )]. Let X be the length of the chord formed by the intersection of this line with the
+circle. Show that
+√
+√
+1
+3
+.
+P(X > a 3) = +
+3
+2π
+Solution
+Let R be the distance from the centre of the circle to P;
+√ by the above, R
+has distribution given by P(R/a ≤ r ) = r 2 ; 0 ≤ r ≤ 1. Now X > a 3, if and only if
+2R sin ! < a, as you can see by inspecting Figure 8.1. Hence,
+√
+2 π/2 
+a
+dθ
+P R<
+P(X > a 3) =
+π 0
+2 sin θ
+√
+2 π/2 1
+1
+2 π/6
+3
+2
+cosec θ dθ = +
+.
+dθ +
+=
+π 0
+π π/6 4
+3
+2π
+Compare this with the results of Example 7.13.
+(8)
+
+Example: Normal Densities
+f (x) = k exp (− 12 x 2 ) for all x.
+
+s
+
+Let X and Y be independent with common density
+
+(a) Show that k = (2π)− 2 .
+(b) Show that X 2 + Y 2 and tan−1 (Y/ X ) are independent random variables.
+1
+(c) If a > 0 < b < c and 0 < α < 12 π , ﬁnd the probability that b < (X 2 + Y 2 ) 2 < c and
+1
+1
+π < tan−1 (Y/ X ) < 12 π , given that (X 2 + Y 2 ) 2 < a, Y > 0, and tan−1 (Y / X ) < 13 π .
+4
+1
+
+Figure 8.1 Bertrand’s paradox.
+
+8.3 Independence
+
+Solution
+
+347
+
+Because X and Y are independent, they have joint density
+
+
+1 2
+2
+2
+f (x, y) = k exp − (x + y ) .
+2
+
+Make the change of variables to polar coordinates, so that by Theorem 8.2.1 the random
+1
+variables R = (X 2 + Y 2 ) 2 and ! = tan−1 (Y / X ) have joint density
+
+
+1 2
+2
+for 0 ≤ r < ∞, 0 < θ ≤ 2π.
+f (r, θ) = k r exp − r
+2
+Hence, R has density
+
+
+1
+f R (r ) = r exp − r 2
+2
+
+
+for 0 ≤ r < ∞,
+
+and ! has density
+f ! (θ) = k 2
+
+for 0 < θ ≤ 2π.
+
+It follows immediately that
+
+(9)
+
+(a) k 2 = (2π )−1 .
+(b) f (r, θ) = f R (r ) f ! (θ), so that ! and R are independent by Theorem 6. Hence, ! and
+R 2 are independent.
+(c) Finally, note that
+
+
+
+
+1
+1
+1
+π
+1
+1
+π < ! < π, 0 < ! < π = P
+π <!< π =
+P
+4
+2
+3
+4
+3
+12
+and
+
+(10)
+
+
+ FR (c) − FR (b) if c < a
+P(b < R < c, R < a) = FR (a) − FR (b) if b < a ≤ c
+
+0
+otherwise
+= FR ((a ∧ c) ∨ b) − FR (b),
+
+where x ∧ y = min {x, y} and x ∨ y = max {x, y}. Now, because R and ! are independent,
+
+
+1
+1
+1
+P b < R < c, π < ! < π|R < a, 0 < ! < π
+4
+2
+3
+
+
+1
+1
+1
+π < ! < π, 0 < ! < π
+P
+P(b < R < c, R < a)
+4
+2
+3
+
+
+=
+1
+P(R < a)
+P 0<!< π
+3
+1
+=
+(FR ((a ∧ c) ∨ b) − FR (b)), by (9) and (10).
+4FR (a)
+
+s
+
+348
+
+8 Jointly Continuous Random Variables
+8.4 Sums, Products, and Quotients
+
+We now return to the question of the distribution of functions of random vectors, and take
+a brief look at some particularly important special cases. Of these, the most important is
+the sum of two random variables.
+Theorem
+
+Let X and Y have joint density f (x, y). Show that if Z = X + Y , then
+f Z (z) =
+
+(1)
+
+∞
+−∞
+
+f (u, z − u) du,
+
+and that if X and Y are independent, then
+f Z (z) =
+
+(2)
+
+∞
+−∞
+
+f X (u) f Y (z − u) du.
+
+Proof
+First notice that by (8.3.3) the result (2) follows immediately from (1) when X
+and Y are independent. Turning to the proof of (1), we give two methods of solution.
+I
+
+Let A be the region in which u + v ≤ z. Then
+f (u, v) du dv =
+
+P(Z ≤ z) =
+=
+
+(u,v)∈A
+∞
+z
+−∞
+
+−∞
+
+f (u, w − u) dwdu
+
+Now differentiating with respect to z gives f Z (z) =
+
+∞
+
+z−u
+
+−∞
+
+−∞
+
+f (u, v) dvdu
+
+on setting v = w − u.
+
++∞
+
+−∞ f (u, z − u) du.
+
+II This time we use the change of variable technique of Section 8.2. Consider the
+transformation z = x + y and u = x, with inverse x = u and y = z − u. Here J = 1. This
+satisﬁes the conditions of Theorem 8.2.1, and so U = u(X, Y ) and Z = z(X, Y ) have joint
+density f (u, z − u). We require the marginal density of Z , which is of course just (1). 
+(3)
+
+Example
+
+Let X and Y have the bivariate normal distribution of Example 8.1.19,
+
+ 2
+
+1
+y2
+1
+2ρx y
+x
+f (x, y) =
+.
++ 2
+exp −
+−
+2π σ τ (1 − ρ 2 )1/2
+2(1 − ρ 2 ) σ 2
+στ
+τ
+
+Find the density of a X + bY for constants a and b.
+Remark:
+
+Note from 8.3.6 that X and Y are independent if and only if ρ = 0.
+
+Solution
+
+The joint density of U = a X and V = bY is
+1 u v
+f
+,
+.
+g(u, v) =
+ab
+a b
+
+8.4 Sums, Products, and Quotients
+
+(4)
+
+349
+
+Hence, by the above theorem, the density of Z = U + V = a X + bY is
+
+
+∞
+u z−u
+1
+f Z (z) =
+f
+,
+du.
+a
+b
+−∞ ab
+Rearranging the exponent in the integrand we have, after a little manipulation,
+ 2
+
+−1
+2ρu(z − u) (z − u)2
+u
++
+−
+2(1 − ρ 2 ) a 2 σ 2
+abσ τ
+b2 τ 2
+
+
+2
+β
+−1
+z2
+(1 − ρ 2 )
+=
+α u− z +
+− 2 2 2 2 ,
+2(1 − ρ 2 )
+α
+α
+a b σ τ
+where
+α=
+
+1
+a2σ 2
+
++
+
+1
+2ρ
++ 2 2,
+abσ τ
+b τ
+
+β=
+
+and
+
+ρ
+1
++ 2 2.
+abσ τ
+b τ
+
+Setting u = v + βα z in the integrand, we evaluate
+∞
+−∞
+
+
+exp −
+
+αv 2
+2(1 − ρ 2 )
+
+
+
+
+dv =
+
+2π (1 − ρ 2 )
+α
+
+ 12
+
+.
+
+Hence, after a little more manipulation, we ﬁnd that
+
+
+1
+z2
+f Z (z) =
+− 2 ,
+1 exp
+2ξ
+(2π ξ 2 ) 2
+where ξ 2 = a 2 σ 2 + 2ρabσ τ + b2 τ 2 . That is to say, Z is N (0, ξ 2 ).
+
+s
+
+One important special case arises when ρ = 0, and X and Y are therefore independent.
+The above result then shows we have proved the following.
+(5)
+
+Theorem
+Let X and Y be independent normal random variables having the densities
+N (0, σ 2 ) and N (0, τ 2 ). Then the sum Z = a X + bY has the density N (0, a 2 σ 2 + b2 τ 2 ).
+
+(See Example 8.20 for another approach.)
+Next we turn to products and quotients.
+
+(6)
+(7)
+
+Theorem
+
+Let X and Y have joint density f (x, y). Then the density of Z = X Y is
+∞
+1  z
+f (z) =
+f u,
+du,
+u
+−∞ |u|
+
+and the density of W =
+
+X
+is
+Y
+f (w) =
+
+∞
+−∞
+
+|u| f (uw, u) du.
+
+350
+
+(8)
+
+8 Jointly Continuous Random Variables
+
+Proof We use Theorem 8.2.1 again. Consider the transformation u = x and z = x y, with
+inverse x = u and y = z/u. Here,
+$
+$
+$1
+0$
+$
+$
+J (u, z) = $ −z 1 $ = u −1 .
+$ 2
+$
+u
+u
+This satisﬁes the conditions of Theorem 8.2.1, and so U = X and Z = X Y have joint
+density
+1  z
+f u,
+.
+f (u, z) =
+|u|
+u
+The result (7) follows immediately as it is the marginal density of Z obtained from f (u, z).
+Alternatively, it is possible to derive the result directly by the usual plod, as follows:
+
+
+z
+z
++ P X < 0, Y ≥
+P(X Y ≤ z) = P X > 0, Y ≤
+X
+X
+=
+=
+=
+
+0
+
+∞
+
+−∞
+
+z/u
+
+0
+
+z
+
+
+f
+
+−∞
+z
+
+−∞
+∞
+
+−∞
+
+−∞
+
+∞
+
+f (u, v) dv du +
+u,
+
+f
+
+t
+u
+
+t
+u,
+u
+
+
+
+
+0
+
+dt
+du +
+(−u)
+
+z/u
+−∞
+∞
+
+f (u, v) dv du
+
+
+z
+
+f
+0
+
+−∞
+
+u,
+
+t
+u
+
+
+
+dt
+du
+u
+
+du
+dt.
+|u|
+
+The required density is obtained by comparison of this expression with (7.1.15).
+Now we turn to the quotient W = X/Y . First, let V = 1/Y . Then, by deﬁnition,
+
+
+x
+∞
+1
+=
+f (s, t) dsdt.
+FX,V (x, v) = P(X ≤ x, V ≤ v) = P X ≤ x, Y ≥
+v
+−∞ 1/v
+Hence, on differentiating, the joint density of X and Y −1 is given by
+
+
+1
+1
+.
+f X,V (x, v) = 2 f x,
+v
+v
+Now W = X V , so by the ﬁrst part,
+f W (w) =
+
+1 u2  u
+du =
+f u,
+2
+w
+−∞ |u| w
+∞
+
+∞
+−∞
+
+|v| f (vw, v) dv
+
+on setting u = vw in the integrand. Alternatively, of course, you can obtain this by using
+Theorem 8.2.1 directly via the transformation w = x/y and u = y, or you can proceed
+
+via the routine plod.
+As usual, here are some illustrative examples.
+(9)
+
+Example
+Let X and Y be independent with respective density functions f X (x) =
+2
+1
+− x2
+for x > 0 and f Y (y) = π −1 (1 − y 2 )− 2 for |y| < 1.
+xe
+Show that X Y has a normal distribution.
+
+8.5 Expectation
+
+351
+
+Solution
+When X and Y are independent, we have f (x, y) = f X (x) f Y (y), and Theorem 6 takes the special form
+
+− 12
+1 − u2 −1
+z2
+1− 2
+ue 2 π
+du
+u
+u>z |u|
+
+z
+1
+f X (u) f Y
+du =
+f (z) =
+u
+−∞ |u|
+∞
+
+1
+=
+π
+
+∞
+
+u2
+
+e− 2
+
+1
+
+z
+
+(u 2 − z 2 ) 2
+
+u du.
+
+Now we make the substitution u 2 = z 2 + v 2 to ﬁnd that
+1 z2
+f (z) = e− 2
+π
+
+z2
+
+∞
+
+2
+
+e
+
+− v2
+
+dv =
+
+0
+
+e− 2
+
+1
+
+(2π ) 2
+
+,
+
+which is the N (0, 1) density.
+
+s
+
+(10) Example
+Let X and Y have density f (x, y) = e−x−y for x > 0, y > 0.
+Show that U = X/(X + Y ) has the uniform density on (0, 1).
+Solution
+To use Theorem 6, we need to know the joint density of X and V = X + Y .
+A trivial application of Theorem 8.2.1 shows that X and V have density f (x, v) = e−v
+for 0 < x < v < ∞. Hence, by Theorem 6,
+∞
+
+f (u) =
+=1
+
+ve−v dv,
+
+for 0 < uv < v
+
+,
+
+for 0 < u < 1.
+
+0
+
+Alternatively, we may use Theorem 8.2.1 directly by considering the transformation
+u=
+
+x
+,
+x+y
+
+v = x + y,
+
+with
+x = uv,
+
+y = v(1 − u)
+
+and |J | = v. Hence, U = X/(X + Y ) and V = X + Y have density f (u, v) = ve−v , for
+v > 0 and 0 < u < 1. The marginal density of U is 1, as required.
+
+s
+
+8.5 Expectation
+
+Suppose that the random variable Z = g(X, Y ) has density f (z). Then, by deﬁnition,
+E(Z ) =
+
+∞
+
+z f (z) dz
+−∞
+
+provided that E(|Z |) < ∞. However, suppose we know only the joint density f (x, y) of
+X and Y . As we have discovered above, ﬁnding the density of g(X, Y ) may not be a trivial
+matter. Fortunately, this task is rendered unnecessary by the following result, which we
+state without proof.
+
+352
+
+(1)
+
+Theorem
+
+8 Jointly Continuous Random Variables
+
+If X and Y have joint density f (x, y) and
+∞
+
+∞
+
+−∞
+
+−∞
+
+|g(u, v)| f (u, v) dudv < ∞,
+
+then
+E(g(X, Y )) =
+
+(2)
+
+∞
+
+∞
+
+−∞
+
+−∞
+
+g(u, v) f (u, v) dudv.
+
+This useful result has the same pleasing consequences as did the corresponding result
+(Theorem 5.3.1) for discrete random variables.
+(3)
+
+Corollary
+
+Let X and Y have ﬁnite expectations. Then
+
+(i) E(a X + bY ) = aE(X ) + bE(Y ), for any constants a and b.
+(ii) If P(X ≤ Y ) = 1, then E(X ) ≤ E(Y ).
+Suppose further that E(X 2 ) and E(Y 2 ) are ﬁnite. Then
+1
+
+(iii) E(X ) ≤ E(|X |) ≤ (E(X 2 )) 2 ,
+1
+(iv) E(X Y ) ≤ (E(X 2 )E(Y 2 )) 2 .
+Recall that this last result is the Cauchy–Schwarz inequality.
+Finally, suppose that E(g(X )) and E(h(Y )) are ﬁnite, and that X and Y are independent.
+Then
+(v) E(g(X )h(Y )) = E(g(X ))E(h(Y )).
+We omit the proofs of these results. Generally speaking, the proofs follow the same
+line of argument as in the discrete case, with the difference that those proofs used results
+about rearrangement of sums, whereas these proofs use standard results about multiple
+integrals.
+Deﬁnition
+Some important expectations deserve special mention. Just as we did for
+discrete random variables, we deﬁne the covariance as
+cov (X, Y ) = E((X − E(X ))(Y − E(Y ))),
+and the correlation as
+ρ(X, Y ) =
+
+cov (X, Y )
+1
+
+(var (X )var (Y )) 2
+
+.
+
+
+
+Remark
+When X and Y are independent, then it follows from Corollary 3(v) that
+cov (X, Y ) = ρ(X, Y ) = 0, but not conversely. There is an important exception to this, in
+that bivariate normal random variables are independent if and only if ρ(X, Y ) = 0. See
+Examples 8.11 and 8.20 for details
+(4)
+
+Example
+Let ! be uniformly distributed over (0, α). Find cov (sin !, cos !), and
+show that for α = kπ, (k = 0), sin ! and cos ! are uncorrelated and not independent.
+
+8.5 Expectation
+
+Solution
+
+353
+
+Routine calculations proceed thus:
+E(sin ! cos !) =
+
+1
+α
+
+α
+0
+
+1
+1
+sin 2θ dθ =
+(1 − cos 2α),
+2
+4α
+
+and E(sin !) = (1/α)(1 − cos α), and E(cos !) = (1/α) sin α. Hence,
+cov (sin !, cos !) =
+
+1
+1
+(1 − cos 2α) − 2 sin α(1 − cos α).
+4α
+α
+
+This covariance is zero whenever α = kπ, (k = 0), and so for these values of α, ρ = 0.
+However, sin ! and cos ! are not independent. This is obvious because sin ! = cos( π2 −
+!), but we can verify it formally by noting that
+
+
+ 
+
+
+3
+3
+3
+3
+= 0 = P sin ! >
+P cos ! >
+.
+P sin ! > , cos ! >
+4
+4
+4
+4
+
+s
+
+Generating functions have been so useful above that it is natural to introduce them again
+now. Because we are dealing with jointly continuous random variables, the obvious candidate for our attention is a joint moment generating function.
+(5)
+
+Deﬁnition
+Let X and Y be jointly distributed. The joint moment generating function of X and Y is
+M X,Y (s, t) = E(es X +tY ).
+
+(6)
+
+(7)
+
+
+
+If this exists in a neighbourhood of the origin, then it has the same attractive properties
+as the ordinary m.g.f. That is, it determines the joint distribution of X and Y uniquely,
+and also it does yield the moments, in that
+$
+$
+∂ m+n
+M(s, t)$$
+= E(X m Y n ).
+m
+n
+∂s ∂t
+s=t=0
+Furthermore, just as joint p.g.f.s factorize for independent discrete random variables,
+it is the case that joint m.g.f.s factorize for independent continuous random variables.
+That is to say,
+M X,Y (s, t) = M X (s)MY (t)
+if and only if X and Y are independent.
+We offer no proofs for the above statements, as a proper account would require a wealth
+of analytical details. Nevertheless, we will use them freely, as required.
+
+(8)
+
+Example
+
+Let X and Y have density (x, y) = e−y , 0 < x < y < ∞. Then
+∞
+
+M X,Y (s, t) =
+0
+
+∞
+x
+
+esx+t y−y d yd x = ((1 − t)(1 − s − t))−1 .
+
+354
+
+8 Jointly Continuous Random Variables
+
+Hence, differentiating, we obtain
+$
+$
+∂ M $$
+∂ M $$
+=
+1,
+∂s $
+∂t $
+s=t=0
+
+= 2,
+s=t=0
+
+$
+∂ 2 M $$
+= 3.
+∂s∂t $s=t=0
+
+Thus, cov (X, Y ) = 1.
+(9)
+
+s
+
+Example
+Let X and Y be independent and identically distributed normal random
+variables. Let M = 12 (X + Y ) and V = (X − M)2 + (Y − M)2 . Show that M and V are
+independent.
+Solution
+We will use an obvious extension of (7). Let E(X ) = µ and var (X ) = σ 2 .
+Then consider the joint moment generating function of M, X − M, and Y − M:
+E(exp (s M + t(X − M) + u(Y − M)))
+
+
+1
+1
+(s + t + u)X + (s − t − u)Y
+= E exp
+2
+2
+
+
+
+
+2
+σ2
+σ
+µ
+µ
+2
+2
+(s + t + u) +
+(s + t + u) exp
+(s − t − u) +
+(s − t − u) ,
+= exp
+2
+8
+2
+8
+
+
+
+
+because X and Y are independent,
+
+
+ 2
+
+σ
+σ2 2
+2
+s exp
+(t + u) .
+= exp µs +
+(10)
+4
+4
+Hence, M is independent of the random vector (X − M, Y − M), and so M is independent
+of V .
+
+s
+
+Remark
+This remarkable property of the normal distribution extends to any independent collection (X i ; 1 ≤ i ≤ n) of N (µ, σ 2 ) random variables, and is known as the
+independence of sample mean and sample variance property.
+(11) Example
+Let X and Y be independent and identically distributed with mean zero,
+variance 1, and moment generating function M(t), which is thrice differentiable at 0.
+Show that if X + Y and X − Y are independent, then X and Y are normally distributed.
+Solution
+(12)
+
+By the independence of X and Y ,
+M(s + t)M(s − t) = E(e(s+t)X )E(e(s−t)Y ) = E(es(X +Y )+t(X −Y ) )
+= E(es(X +Y ) )E(et(X −Y ) ),
+
+by the independence of X + Y and X − Y
+= (M(s))2 M(t)M(−t),
+using the independence of X and Y again. Next we note that, by the conditions of the
+problem, M  (0) = E(X ) = 0 and M  (0) = E(X 2 ) = 1. Now differentiating (12) twice
+with respect to t, and then setting t = 0 gives
+M(s)M  (s) − (M  (s))2 = (M(s))2 (M(0)M  (0) − (M  (0))2 )
+= (M(s))2 (E(X 2 ) − (E(X ))2 ) = (M(s))2 .
+
+8.6 Conditional Density and Expectation
+
+355
+
+Integrating this differential equation once gives
+M  (s)
+=s
+M(s)
+and integrating again yields M(s) = exp( 12 s 2 ). Because this is the moment generating
+function of the N (0, 1) density, it follows that X and Y have this density.
+
+s
+
+We are of course already aware from Chapter 6 that generating functions are of considerable
+value in handling sums of independent random variables.
+(13) Example
+Let (X 1 , . . . , X n ) be independent having the N (0, 1) density. Show that
+n
+X i2 has a χ 2 (n) density.
+Y = i=1
+Solution
+
+With a view to using moment generating functions, we ﬁrst ﬁnd
+
+
+∞
+1
+1 2
+1
+tX 12
+2
+E(e ) =
+tx − x d x =
+1 exp
+1 .
+2
+(1 − 2t) 2
+−∞ (2π ) 2
+
+Hence,
+(14)
+
+2
+
+E(etY ) = (E(etX 1 ))n
+1
+=
+n
+(1 − 2t) 2
+
+by independence
+
+and by (7.1.28) and (7.5.6), this is the m.g.f. of the χ 2 (n) density. Hence, by Theorem
+7.5.9, Y has a χ 2 (n) density.
+
+s
+
+Many results about sums of random variables can now be established by methods which,
+if not trivial, are at least straightforward.
+(15) Example
+Let (X k ; k ≥ 1) be independent and
+identically distributed exponential random variables, with parameter λ. Then for Sn = nk=1 X k ,
+E(etSn ) = (E(etX 1 ))n
+
+n
+λ
+=
+λ−t
+
+by independence
+by Example 7.5.4,
+
+and so Sn has a gamma distribution by (7.5.6).
+
+s
+
+8.6 Conditional Density and Expectation
+
+Suppose that X and Y have joint density f (x, y), and we are given the value of Y . By
+analogy with the conditional mass function that arises when X and Y are discrete, we
+make the following deﬁnition.
+
+356
+
+(1)
+
+(2)
+
+8 Jointly Continuous Random Variables
+
+Deﬁnition
+If X and Y have joint density f (x, y), then the conditional density of
+X given Y = y is given by
+
+ f (x, y)
+if 0 < f Y (y) < ∞
+f X |Y (x|y) =
+f Y (y)
+0
+elsewhere.
+
+
+
+We observe immediately that f X |Y (x|y) is indeed a density, because it is nonnegative and
+∞
+−∞
+
+f X |Y (x|y) d x =
+
+∞
+
+f (x, y)
+1
+dx =
+· f Y (y) = 1.
+f Y (y)
+−∞ f Y (y)
+
+The corresponding conditional distribution function is
+FX |Y (x, y) =
+
+x
+−∞
+
+f X |Y (u|y) du = P(X ≤ x|Y = y),
+
+and we have the Key Rule
+P(X ∈ A|Y = y) =
+
+(3)
+
+f X |Y (x|y) d x.
+x∈A
+
+(4)
+
+Example
+Let (X, Y ) be the coordinates of the point Q uniformly distributed on a
+circular disc of unit radius. What is f Y |X (y|x)?
+Solution
+deﬁnition,
+
+1
+
+Recall that for the marginal density f X (x) = (2/π )(1 − x 2 ) 2 . Hence, by
+f Y |X (y|x) =
+=
+
+f (x, y)
+1
+π
+=
+f X (x)
+π 2(1 − x 2 ) 12
+1
+1
+(1 − x 2 )− 2
+2
+
+1
+
+for |y| < (1 − x 2 ) 2 .
+1
+
+1
+
+This conditional density is uniform on (−(1 − x 2 ) 2 , (1 − x 2 ) 2 ), which is consistent with
+our earlier observations about conditioning of uniform densities.
+(5)
+
+s
+
+Example
+Let X and Y be independent and exponential with parameter λ. Show that
+the density of X conditional on X + Y = v is uniform on (0, v).
+Solution
+To use (1), we need to take some preliminary steps. First note that the joint
+density of X and Y is f (x, y) = λ2 e−λ(x+y) for x > 0, y > 0.
+Next we need the joint density of X and X + Y so we consider the transformation u = x
+and v = x + y, with inverse x = u and y = v − u, so that J = 1. Hence, by Theorem
+8.2.1,
+fU,V (u, v) = λ2 e−λv
+
+for 0 < u < v < ∞.
+
+8.6 Conditional Density and Expectation
+
+357
+
+It follows that
+v
+
+f V (v) =
+
+λ2 e−λv du = λ2 ve−λv ,
+
+0
+
+and so by deﬁnition
+1
+f (u, v)
+=
+f V (v)
+v
+
+fU |V (u|v) =
+
+for 0 < u < v.
+
+s
+
+This is the required uniform density.
+
+This striking result is related to the lack-of-memory property of the exponential density.
+Now, because f X |Y (x|y) is a density it may have an expected value, which naturally
+enough is called conditional expectation.
+(6)
+
++
+Deﬁnition
+If R |x| f X |Y (x|y) d x < ∞, then the conditional expectation of X
+given Y = y is given by
+E(X |Y = y) =
+
+(7)
+
+R
+
+x f X |Y (x|y)d x.
+
+
+
+Example (5) Revisited
+If X and Y are independent and exponential, then we showed
+that the density of X given X + Y = v is uniform on (0, v). Hence,
+E(X |X + Y = v) =
+
+1
+v.
+2
+
+s
+
+Actually, this is otherwise obvious because, for reasons of symmetry,
+E(X |X + Y = v) = E(Y |X + Y = v),
+and trivially E(X + Y |X + Y = v) = v. Hence the result follows, provided it is true that
+for random variables X , Y and V , we have
+E(X + Y |V = v) = E(X |V = v) + E(Y |V = v).
+
+(8)
+
+In fact, this is true as we now show.
+(9)
+
+Theorem
+
+Let X, Y , and V have joint density f (x, y, v). Then (8) holds.
+
+Proof The joint density of W = X + Y and V is
+Then, by deﬁnition,
+E(X + Y |V = v) =
+
+1
+f V (v)
+
++∞
+
+−∞ f (w − u, u, v) du.
+
+∞
+
+∞
+
+−∞
+
+−∞
+
+w f (w − u, u, v) dudw.
+
+Now consider the transformation x = w − u and y = u, with inverse w = x + y and
+u = y, so that J = 1. Changing the variables in the double integral accordingly and using
+
+358
+
+8 Jointly Continuous Random Variables
+
+standard results about such double integrals shows that
+1
+f V (v)
+1
+=
+f V (v)
+
+E(X + Y |V = v) =
+
+∞
+
+∞
+
+−∞
+∞
+
+−∞
+
+−∞
+
+(x + y) f (x, y, v) d x d y
+
+x f X,V (x, v) d x +
+
+1
+f V (v)
+
+∞
+−∞
+
+y f Y,V (y, v) dy
+
+
+= E(X |V = v) + E(Y |V = v).
+Next, we make the important observation that by writing
+ψ(y) = E(X |Y = y)
+
+(10)
+
+we emphasize the fact that the conditional expectation of X given Y is a function of Y . If
+the value of Y is left unspeciﬁed, we write
+ψ(Y ) = E(X |Y )
+on the understanding that when Y = y, ψ(Y ) takes the value E(X |Y = y) deﬁned above.
+It is therefore natural to think of E(X |Y ) as a random variable that is a function of Y .
+(A more rigorous analysis can indeed justify this assumption.) Just as in the discrete case,
+its expected value is E(X ).
+(11)
+
+Theorem
+
+The expected value of ψ(Y ) is E(X ); thus, EX = E(E(X |Y )).
+
+Proof Because ψ(Y ) is a function of Y , we can calculate its expected value in the usual
+way as
+E(ψ(Y )) =
+=
+=
+
+∞
+−∞
+∞
+
+ψ(y) f Y (y) dy
+∞
+
+−∞
+∞
+
+−∞
+∞
+
+−∞
+
+−∞
+
+x f X |Y (x|y) f Y (y) d x d y
+
+by Deﬁnition 6
+
+x f (x, y) d x d y = E(X ).
+
+We recall an earlier example.
+(12) Example
+Let X and Y have density f (x, y) = 8x y for 0 < y < x < 1.
+Find E(X |Y ) and E(Y |X ).
+Solution
+
+Because
+x
+
+f X (x) =
+
+8x y dy = 4x 3 ,
+
+0
+
+and
+1
+
+f Y (y) =
+y
+
+8x y d x = 4y(1 − y 2 ),
+
+
+
+8.6 Conditional Density and Expectation
+
+359
+
+we have f X |Y (x|y) = 2x/(1 − y 2 ), y < x < 1. Hence,
+1
+
+E(X |Y ) =
+Y
+
+Likewise, f Y |X (y|x) = 2y/x 2
+
+2x 2
+2
+dx =
+2
+(1 − Y )
+3
+
+
+
+1 − Y3
+1 − Y2
+
+
+.
+
+0 < y < x and, therefore,
+X
+
+E(Y |X ) =
+0
+
+s
+
+2y 2
+2
+dy = X.
+2
+X
+3
+
+The identity in Theorem 11 can also be used to calculate probabilities by the simple device
+of letting X be the indicator of the event of interest.
+(13) Example
+Solution
+
+Let U and Y have density f (u, y). What is P(U < Y )?
+Let X be the indicator of U < Y . Then
+
+P(U < Y ) = E(X ) = E(E(X |Y )) by Theorem 11
+
+ Y
+∞
+y
+f (u|Y ) du =
+f (u, y) dudy
+=E
+−∞
+
+−∞
+
+by (2).
+
+−∞
+
+s
+
+Of course, we could have written this down immediately by Theorem 8.1.9.
+(14) Example: Bivariate Normal
+f (x, y) =
+
+(15)
+
+Let X and Y have the bivariate normal density
+
+
+1
+1
+
+2π σ τ (1 − ρ 2 ) 2
+
+exp
+
+1
+−
+2(1 − ρ 2 )
+
+
+
+2ρx y
+x2
+y2
+−
++
+σ2
+στ
+τ2
+
+
+.
+
+(a) Find the conditional density of X given Y = y.
+(b) Find E(et X Y ), and hence ﬁnd the density of Z = X 1 Y1 + X 2 Y2 , where (X 1 , Y1 ) is
+independent of (X 2 , Y2 ) and each has the density (15).
+Solution
+
+(a) From Example 8.1.19, we know that Y has the N (0, τ 2 ) density. Hence,
+
+
+x
+1
+1
+ρy
+f (x, y)
+=
+exp
+−
+−
+f X |Y (x|y) =
+2
+1/2
+2
+f Y (y)
+σ (2π (1 − ρ ) )
+2(1 − ρ ) σ
+τ
+
+2
+
+
+.
+
+Hence, the conditional density of X given Y = y is N (ρσy/τ, σ 2 (1 − ρ 2 )). Note that if
+ρ = 0, then this does not depend on y, which is to say that X is independent of Y .
+(b) By part (a), the conditional moment generating function of X given Y is
+
+M X |Y (t) = exp
+
+
+ρσY
+1 2
+2 2
+t + σ (1 − ρ )t .
+τ
+2
+
+360
+
+8 Jointly Continuous Random Variables
+
+Hence, by conditional expectation,
+E(etXY ) = E(E(etXY |Y )) = E(M X |Y (tY ))
+ #
+
+"
+1 2
+ρσ
+2 2
+t + σ (1 − ρ )t Y 2
+= E exp
+τ
+2
+1
+=
+using Example 8.5.13,
+1
+(1 − 2ρσ τ t − σ 2 τ 2 (1 − ρ 2 )t 2 ) 2
+and so X 1 Y1 + X 2 Y2 has moment generating function,
+M(t) = (1 − 2ρσ τ t − σ 2 τ 2 (1 − ρ 2 )t 2 )−1
+1
+1+ρ
+1
+1−ρ
++
+.
+=
+2 1 + σ τ (1 − ρ)t
+2 1 − σ τ (1 + ρ)t
+Hence, Z = X 1 Y1 + X 2 Y2 has an asymmetric bilateral exponential density,
+
+1+ρ
+
+
+exp (−σ τ (1 + ρ)z) if z > 0
+2
+(16)
+f (z) =
+
+ 1 − ρ exp (σ τ (1 − ρ)z)
+if z < 0.
+2
+
+s
+
+We note without proof that ψ(Y ) has the useful properties that we recorded in the discrete
+case. Among the most important is that
+E(Xg(Y )|Y ) = g(Y )ψ(Y )
+
+(17)
+
+for any function g(Y ) of Y .
+Finally, we stress that conditional expectation is important in its own right, it should
+not be regarded merely as a stage on the way to calculating something else.
+For example, suppose that X and Y are random variables, and we want to record the
+value of X . Unfortunately, X is inaccessible to measurement, so we can only record the
+value of Y . Can this help us to make a good guess at X ?
+First, we have to decide what a “good” guess g(Y ) at X is. We decide that g1 (Y ) is a
+better guess than g2 (Y ) if
+E[(g1 (Y ) − X )2 ] < E[(g2 (Y ) − X )2 ].
+
+(18)
+
+According to this (somewhat arbitrary) rating, it turns out that the best guess at X given
+Y is ψ(Y ) = E(X |Y ).
+(19) Theorem
+
+For any function g(Y ) of Y ,
+E[(X − g(Y ))2 ] ≥ E[(X − ψ(Y ))2 ].
+
+Proof Using (17), we have
+E[(X − ψ)(ψ − g)] = E[(ψ − g)E(X − ψ|Y )] = 0.
+
+(20)
+Hence,
+
+E[(X − g)2 ] = E[(X − ψ + ψ − g)2 ] = E[(X − ψ)2 ] + E[(ψ − g)2 ] by (20)
+≥ E[(X − ψ)2 ].
+
+
+
+8.7 Transformations: Order Statistics
+
+361
+
+We conclude this section by recording one more useful property of conditional densities,
+which may be called the continuous partition rule. The proof is an easy exercise. For
+continuous random variables X and Y ,
+f X (x) =
+
+(21)
+
+R
+
+f X |Y (x|y) f Y (y) dy.
+
+8.7 Transformations: Order Statistics
+
+We introduced the change of variable technique in Section 8.2. We return to this topic to
+consider a particularly important class of transformations, namely, those that are linear.
+Thus, let the random vector (X 1 , . . . , X n ) have joint density f (x1 , . . . , xn ). Suppose that
+for 1 ≤ i, j ≤ n, and some constants ai j ,
+Yi =
+
+(1)
+
+n
+
+
+ai j X i .
+
+j=1
+
+What can be said about the joint density of (Y1 , . . . , Yn )?
+In Section 8.2, we required such transformations to be invertible, and we make the
+same restriction here. Therefore, we suppose that the matrix A = (ai j ) has an inverse
+A−1 = (bi j ) = B. A sufﬁcient condition for this is that the determinant det A is not zero.
+Then we have the following useful result, which we state without proof.
+(2)
+
+Theorem
+Suppose that (X 1 , . . . , X n ) has density f X (x1 , . . . , xn ), and that (Y1 , . . . , Yn )
+is related to (X 1 , . . . , X n ) by
+Yi =
+
+n
+
+
+ai j X j
+
+and
+
+Xi =
+
+j=1
+
+n
+
+
+bi j Y j ,
+
+j=1
+
+where B A = I , the identity matrix, and det A = 0. Then the density of (Y1 , . . . , Yn ) is
+given by
+(3)
+
+(4)
+
+(5)
+
+1
+f X (x1 (y1 , . . . , yn ) . . . xn (y1 , . . . , yn ))
+|det A|
+= |det B| f X (x1 , . . . , xn ).
+
+f Y (y1 , . . . , yn ) =
+
+Example: Normal Sample
+ables, and deﬁne
+
+Let (X 1 , . . . , X n ) be independent N (0, 1) random vari-
+
+Yj =
+
+n
+
+
+x j ai j
+
+for 1 ≤ j ≤ n,
+
+j=1
+
+where the matrix A = (ai j ) is an orthogonal rotation with det A = 1 and, denoting the
+transpose of A by A T ,
+A A T = I = A T A.
+
+362
+
+8 Jointly Continuous Random Variables
+
+(a) Show that (Y1 , . . . , Yn ) are independent N (0, 1) random variables.
+(b) Deduce that the sample mean
+X=
+
+
+1 n
+Xi
+n 1
+
+and the sample variance
+n
+1 
+(X i − X)2
+s =
+n − 1 i=1
+2
+
+s
+
+are independent, and that (n − 1)s 2 has a χ 2 density.
+
+Solution
+(a) It is convenient to use the standard notation for vectors and matrices in
+problems of this type. Thus, we write x T for the transpose of x, where
+x = (x1 , . . . , xn ) = yAT
+
+(6)
+
+from (5).
+
+Furthermore,
+n
+
+
+xi2 = x x T = yAT AyT = yyT =
+
+i=1
+
+n
+
+
+yi2 .
+
+i=1
+
+Hence, by (3), (Y1 , . . . , Yn ) have density
+
+n
+1
+1
+2
+fY =
+−
+y .
+n exp
+2 i=1 i
+(2π ) 2
+
+(7)
+
+Because this factorizes, (Y1 , . . . , Yn ) are independent with the N (0, 1) density.
+1
+(b) Now let (ai j ) be any rotation such that a1 j = n − 2 , giving
+Y1 =
+
+n
+
+
+√
+1
+√ X j = n X.
+n
+j=1
+
+Then
+(n − 1)s 2 =
+=
+=
+
+n
+
+i=1
+n
+
+i=1
+n
+
+i=1
+
+X i2 − 2X
+
+n
+
+
+X i + nX
+
+2
+
+i=1
+
+X i2 − nX
+
+2
+
+Yi2 − Y12 =
+
+n
+
+
+Yi2 .
+
+2
+
+Hence, s 2 is independent of X, by the independence of Y1 and (Y2 , . . . , Yn ). Finally, because
+each Yi is N (0, 1), (n − 1)s 2 has a χ 2 (n − 1) density by Example 8.5.13. See Problem
+8.43 for another way to do this.
+
+s
+
+8.7 Transformations: Order Statistics
+
+363
+
+A particularly important linear transformation is the one that places (X 1 , . . . , X n ) in nondecreasing order. Thus,
+Y1 = smallest of X 1 , . . . , X n
+Y2 = second smallest of X 1 , . . . , X n
+..
+.
+Yn = largest of X 1 , . . . , X n .
+We assume that each X k has a density f (xk ), so that the chance of ties is zero. It is
+customary to use the special notation
+Yk = X (k) ,
+and then X (1) , X (2) , . . . , X (n) are known as the order statistics of X 1 , . . . , X n . Now the
+above transformation is linear, but not one–one. It is in fact many–one; to see this, suppose
+that y1 < y2 < . . . < yn . Then the outcomes
+X 1 = y1 , X 2 = y2 , . . . , X n = yn
+and
+X 2 = y1 , X 1 = y2 , . . . , X n = yn
+both yield the same set of order statistics, namely,
+X (1) = y1 , X (2) = y2 , . . . , X (n) = yn .
+However, if (π(1), . . . , π (n)) is any one of the n! distinct permutations of the ﬁrst n integers
+and Rπ is the region xπ (1) < xπ(2) < . . . < xπ (n) , then the transformation
+x(k) = xπ (k) ;
+
+1≤k≤n
+
+is one–one and linear. In the notation of (2), we have
+
+1 if i = π( j)
+ai j =
+0 otherwise,
+n
+f (yi ).
+and |det A| = 1. Therefore, the density of X (1) , . . . , X (n) is i=1
+Now we observe that X 1 , X 2 , . . . , X n lies in just one of the n! regions Rπ ; hence, the
+order statistics have joint density
+(8)
+
+n!
+
+n
+
+
+f (yi )
+
+for y1 < y2 < . . . < yn .
+
+i=1
+
+Here are some applications of this useful result.
+(9)
+
+(10)
+
+Example
+Let (X 1 , . . . , X n ) be independently and uniformly distributed on (0, a).
+Then, by (8), their order statistics have the density
+f =
+
+n!
+an
+
+for y1 < y2 < . . . < yn .
+
+s
+
+364
+
+8 Jointly Continuous Random Variables
+
+It follows from (8) that we may in principle obtain the marginal density of any subset
+of the order statistics by performing appropriate integrations. For small subsets, this is
+actually unnecessary.
+(11) Example
+
+Solution
+Hence,
+(12)
+
+Show that X (k) has density
+ 
+n
+f (y)(1 − F(y))n−k [F(y)]k−1 .
+f (k) (y) = k
+k
+The event X (k) ≤ y occurs if and only if at least k of the X i lie in (−∞, y].
+n  
+
+n
+[F(y)] j (1 − F(y))n− j .
+F(k) (y) =
+j
+j=k
+
+Now, differentiating to obtain the density,
+
+
+#
+n
+ " n 
+n
+j−1
+n− j
+j
+n−( j+1)
+− ( j + 1)
+F (1 − F)
+j
+F (1 − F)
+f (k) (y) = f (y)
+j +1
+j
+j=k
+ 
+n
+(13)
+= f (y)k
+F k−1 (1 − F)n−k
+k
+by successive cancellation in the sum.
+
+s
+
+8.8 The Poisson Process: Martingales
+
+A recurring idea in previous chapters has been that of a series of events or happenings
+that may occur repeatedly at random times denoted by T1 , T2 , . . . . For example, we have
+considered light bulbs that may fail and be replaced at (Tn ; n ≥ 1), or machine bits that
+may wear out and be renewed at (Tn ; n ≥ 1) and so on. Other practical problems may also
+have this structure; for example, the Tn may be the times at which my telephone rings,
+cars arrive at the toll booth, meteorites fall from the sky, or you get stung by a wasp.
+You can think of many more such examples yourself, and it is clear that it would be
+desirable to have a general theory of such processes. This is beyond our scope, but we can
+now consider one exceptionally important special case of such processes.
+The basic requirement is that the times between events should be independent and
+identically distributed random variables (X k ; k ≥ 1); we assume further that they have an
+exponential distribution.
+(1)
+
+Deﬁnition
+Let (X k ; k ≥ 1) be independent identically distributed exponential
+random variables with parameter λ. Let T0 = 0, and set
+Tn =
+
+n
+
+1
+
+Xk;
+
+n ≥ 1.
+
+8.8 The Poisson Process: Martingales
+
+365
+
+Deﬁne
+N (t) = max{n: Tn ≤ t};
+
+(2)
+
+t ≥ 0.
+
+
+
+Then N (t) is a Poisson process with parameter λ.
+
+A couple of remarks are in order here. First, note that N (t) is just the number of happenings
+or events by time t; N (t) is constant until an event occurs, when it increases by 1. Second,
+the collection (N (t); t ≥ 0) is an uncountable collection of random variables. We have said
+nothing about such collections up to now, and so our analysis of N (t) must of necessity
+be rather informal.
+Our ﬁrst result explains why N (t) is called a Poisson process.
+(3)
+
+Theorem
+
+N (t) has mass function
+f N (k) =
+
+e−λt (λt)k
+;
+k!
+
+k ≥ 0.
+
+(4)
+
+Proof First, we note that from Deﬁnition 2 of N (t), the event N (t) ≥ k occurs if and only
+if Tk ≤ t. It follows that
+
+(5)
+
+P(N (t) ≥ k) = P(Tk ≤ t),
+and because Tk has a gamma density by (8.5.15) we have
+f N (k) = P(N (t) ≥ k) − P(N (t) ≥ k + 1) = P(Tk ≤ t) − P(Tk+1 ≤ t)
+
+t  k k−1
+λ v
+λk+1 v k
+e−λt (λt)k
+−
+e−λv dv =
+=
+(k − 1)!
+k!
+k!
+0
+after an integration by parts. As an alternative, we could argue straight from (5) and (6.1.7)
+that
+∞
+∞
+
+1 − sE(s N (t) ) 
+=
+s k P(N (t) ≥ k) = 1 +
+sk
+1−s
+0
+k=1
+t
+
+λk v k−1 −λv
+e dv
+0 (k − 1)!
+t
+
+s
+[eλv(s−1) ]t0
+1
+−
+s
+0
+seλt(s−1)
+1 − seλt(s−1)
+s
+−
+=
+,
+=1+
+1−s
+1−s
+1−s
+= 1 + sλ
+
+eλvs−λv dv = 1 −
+
+and the Poisson mass function of N (t) follows.
+
+
+
+Our next result is one of the most striking and important properties of N (t), from which
+many other results ﬂow.
+(6)
+
+Theorem: Conditional Property of the Poisson Process
+Let N (t) be a Poisson process as deﬁned in Deﬁnition 1. Conditional on the event N (t) = k, the k random variables
+
+366
+
+8 Jointly Continuous Random Variables
+
+T1 , . . . , Tk have conditional density
+f T |N =k (t1 , . . . , tk ) =
+
+(7)
+
+k!
+;
+tk
+
+0 < t1 < t2 < . . . < tk ≤ t.
+
+Before proving (7) let us interpret it. From Example 8.7.9, we recognize that the density
+k!/t k is the density of the order statistics of k independent random variables, each uniform
+on (0, t). Thus, Theorem 6 can be more dramatically expressed: given N (t) = k, the k
+events of the process are independently and uniformly distributed on (0, t).
+Proof of (6) Because X 1 , . . . , X k are independent and exponential, they have joint density
+f (x1 , . . . , xk ) = λk exp (−λ(x1 + · · · + xk )).
+
+(8)
+
+Next, observe that the transformation
+tn =
+
+n
+
+
+xi ;
+
+1≤n ≤k+1
+
+i=1
+
+is linear
+ and invertible with |J | = 1. Hence, by Theorem 8.7.2, the random variables
+Tn = n1 X i ; 1 ≤ n ≤ k + 1 have joint density
+f (t1 , . . . , tk+1 ) = λk+1 e−λtk+1 ;
+
+(9)
+
+0 < t1 < . . . < tk+1 .
+
+Now
+P(0 < T1 < t1 < T2 < . . . < Tk < tk ; N (t) = k)
+= P(0 < T1 < t1 < . . . < Tk < tk < t < Tk+1 )
+= λk t1 (t2 − t1 ) . . . (tk − tk−1 )e−λt
+on integrating the density (9). Hence, the conditional distribution of T1 , . . . , Tk given
+N (t) = k is given by
+(10)
+
+P(T1 ≤ t1 < . . . < Tk ≤ tk |N (t) = k) = P(T1 ≤ t1 < . . . < tk ; N (t) = k)/P(N (t) = k)
+k!
+= t1 (t2 − t1 ) . . . (tk − tk−1 ) k .
+t
+Now differentiating (10) with respect to all of t1 , . . . , tk gives (7), as required.
+
+
+
+As we have remarked, this result ﬁnds many applications, see Example 8.17 for some
+of them. For the moment we content ourselves with showing that N (t) has the so-called
+independent increments property.
+(11) Theorem: The Poisson Process has Independent Increments
+Let N (t) be a Poisson
+process, as usual, and let s < t ≤ u < v. Then N (t) − N (s) is independent of N (v) −
+N (u).
+Proof Let W = N (t) − N (s) and Z = N (v) − N (u). Then, by conditional expectation,
+(12)
+
+E(w W z Z ) = E[E(w W z Z |N (v))].
+
+8.8 The Poisson Process: Martingales
+
+367
+
+However, conditional on N (v) = k, these events are independently and uniformly distributed in (0, v), whence (W, Z , k − W − Z ) has a trinomial distribution with
+
+
+
+
+k
+
+v−u
+s+u−t
+t −s
+W Z
+w+
+z+
+(13)
+.
+E(w z |N (v) = k) =
+v
+v
+v
+Hence, combining (12) and (13) and Theorem (3) gives
+(14)
+
+E(w W z Z ) = exp (λw(t − s) + λz(v − u) + λ(s + u − t) − λv)
+= exp (λ(t − s)(w − 1) + λ(v − u)(z − 1)) = E(w W )E(z Z ),
+
+
+as required.
+
+We may also observe from (14) that because E(w W ) = exp (λ(t − s)(w − 1)), it follows
+that W is Poisson with parameter λ(t − s). That is to say, N (t) − N (s) has the same
+mass function as N (t − s). This property may be called homogeneity or the property of
+stationary increments. Note that it is possible, and often convenient, to deﬁne N (t) as a
+process with stationary independent Poisson-distributed increments. It is then necessary
+to prove that interevent times are independent identically distributed exponential random
+variables.
+Now looking back at Section 5.6, we see that the simple random walk also has the property of independent increments. In Section 5.7, we found that martingales were particularly
+useful in analysing the behaviour of such random walks. We may expect (correctly) that
+martingales will be equally useful here. First, we need to deﬁne what we mean by a
+martingale for an uncountably inﬁnite family of random variables (X (t); t ≥ 0).
+(15)
+
+Deﬁnition
+
+(X (t); t ≥ 0) is a martingale if
+
+(a) E|X (t)| < ∞, for all t.
+(b) E(X (t)|X (t1 ), X (t2 ), . . . , X (tn ), X (s)) = X (s), for any 0 ≤ t1 < t2 < . . . < tn <
+s < t.
+It is customary and convenient to rewrite (b) more brieﬂy as
+(b) E(X (t)|X (u); u ≤ s) = X (s),
+but note that this is slightly sloppy shorthand; we cannot condition on an inﬁnite number
+of values of X (u).
+A stopping time for X (t) is a random variable T taking values in [0, ∞), such that
+
+the event (T ≤ t) depends only on values of X (s) for s ≤ t.
+There are many technical details that should properly be dealt with here; we merely
+note that they can all be satisfactorily resolved and ignore them from now on.
+Such martingales and their stopping times can behave much like those with discrete
+parameter. We state this useful theorem without proof, or technical details.
+
+368
+
+8 Jointly Continuous Random Variables
+
+(16) Theorem: Optional Stopping
+Let X (t) be a continuous parameter martingale and
+T a stopping time for X (t). Then X (t ∧ T ) is a martingale, so
+EX (0) = EX (t ∧ T ) = EX (t).
+Furthermore, EX (T ) = EX (0) if any one of the following holds for some constant K <
+∞:
+(a) T is bounded (i.e., T ≤ K < ∞).
+(b) |X (t)| ≤ K for all t, and P(T < ∞) = 1.
+(c) E(sup X (t ∧ T ) < ∞, and P(T < ∞) = 1.
+(d) E|X (T )| ≤ K , and P(T < ∞) = 1, and lim E(X (t)I (T > t)) = 0.
+t→∞
+
+Note that similar appropriate deﬁnitions and theorems apply to sub- and supermartingales
+with continuous parameter, but we do not explore that further here. Note further that, just
+as in the discrete-time case, a popular technique when P(T < ∞) = 1 is to apply part
+(a) of the theorem at T ∧ t, allow t → ∞, and use either the Dominated or Monotone
+Convergence theorem, as appropriate.
+(17) Example: Poisson Martingales
+If (N (t); t ≥ 0) is a Poisson process with parameter
+λ, then the following are all martingales:
+(a) U (t) = N (t) − λt.
+(b) V (t) = (U (t))2 − λt.
+(c) W (t) = exp {−θ N (t) + λt(1 − e−θ )}, θ ∈ R.
+To see (a), we calculate
+E(U (t)|N (u); 0 ≤ u ≤ s) = E(N (t) − N (s) + N (s)|N (u), 0 ≤ u ≤ s)
+= U (s) + E[N (t) − N (s)] − λ(t − s)
+= U (s),
+where we used the independent increments property. The proof of (b) proceeds likewise:
+E(V (t)|N (u), 0 ≤ u ≤ s) =
+= E[N (t) − λt − N (s) + λs] + (N (s) − λs)]2 |N (u); 0 ≤ u ≤ s] − λt
+= [U (s)]2 + λ(t − s) − λt = V (s),
+on using the independence of the increments and var [N (t) − N (s)] = λ(t − s). Part (c)
+is left as an exercise, but see also Example (8.22).
+
+s
+
+8.9 Two Limit Theorems
+
+Perhaps surprisingly (as we are toward the end of the book), this is an appropriate moment
+to reconsider our basic ideas about chance. Suppose we are given a number n of similar
+observations or measurements, denoted by x1 , . . . , xn . For example, the xi may be the
+height of each of n men, or they may be the lifetimes of n light bulbs, or they may be
+the weight of potatoes yielded by each of n plants. By “similar” in this context, we mean
+that no measurement has any generic reason to be larger or smaller than the others; the
+
+8.9 Two Limit Theorems
+
+369
+
+potatoes are of the same variety and grown in the same circumstances; the light bulbs are
+of the same make and type, and the men are of the same age and race.
+It is convenient to have one number that gives an idea of the size of a typical xi , and a
+popular candidate for this number is the average x̄ given by
+x̄ n =
+
+n
+1
+xi .
+n i=1
+
+One reason for the popularity of x̄ is that it is empirically observed that, as n increases,
+the sequence x̄ n undergoes smaller and smaller ﬂuctuations, and indeed exhibits behaviour
+of the kind we call convergent.
+A special case of such measurements arises when each xi takes the value 1 or 0 according
+to whether some event A occurs. Then x̄ n is the proportion of times that A occurs in n
+trials, and the fact that x̄ n ﬂuctuates less and less as n increases is sometimes used as a
+basis to justify the axioms of probability.
+Of course, in mathematical terms, we think of xi as the outcome of some random variable
+X i . It follows that, if our theory of probability is as relevant as we have claimed, then the
+sequence
+Xn =
+
+(1)
+
+
+1 n
+Xi
+n i=1
+
+ought also to exhibit a similar kind of regularity in the long run as n → ∞. What kind
+might there be?
+To gain some insight into the problem, consider the case when each xi is 1 if A occurs,
+and 0 otherwise. In the mathematical formulation
+ of this, X i is the indicator of the event A,
+and we assume the X i are independent. Then n1 X i is a binomial random variable with
+parameters n and p, and we have shown in Examples 4.18 and 7.5.11 that, as n → ∞,
+$
+$
+
+$
+$1 n
+
+$
+$
+X i − p$ >  → 0
+P $
+$
+$ n i=1
+and
+
+(2)
+
+P
+
+n
+
+
+1
+1
+
+(npq) 2 i=1
+
+
+(X i − p) ≤ x
+
+→ (x),
+
+where (x) is the standard normal distribution. (Indeed, we proved something even
+stronger than (1) in Example
+4.18 and Theorem 5.8.8.)
+
+It seems that n −1 n1 (X i − E(X 1 )) is settling down around E(X i ) = p and that the
+1 
+distribution of (n var (X 1 ))− 2 n1 (X i − E(X 1 )) is getting closer to the standard normal
+distribution (x). More generally, we showed in Theorem 5.8.6 that (1) holds for any
+collection of independent discrete random variables with the same mean and variance. We
+called this the weak law of large numbers.
+This is deliberately vague and informal, but it should now seem at least plausible that
+the following results might be true.
+
+370
+
+(3)
+
+(i)
+(4)
+(ii)
+(5)
+
+8 Jointly Continuous Random Variables
+
+Theorem
+Let (X k ; k ≥ 1) be independent and identically distributed random variables with mean µ, variance σ 2 < ∞, and moment generating function M X (t), |t| <
+a. Then we have:
+Weak Law of Large Numbers
+For ε > 0, as n → ∞,
+$
+$
+
+$1 n
+$
+
+$
+$
+P $
+(X − µ)$ > ε → 0.
+$ n i=1 i
+$
+Central Limit Theorem
+P
+
+As n → ∞,
+
+
+n
+
+1
+(X i − µ) ≤ x
+√
+σ n i=1
+
+→ (x) =
+
+x
+
+(2π )− 2 e− 2 y dy.
+1
+
+1
+
+2
+
+−∞
+
+It is a remarkable fact that both of these are indeed true, and we now prove them.
+Proof of (4) The essential step here is to recall Chebyshov’s inequality, for then we may
+write, using Theorem 7.4.16,
+
+$
+$
+
+2 
+n
+n
+$
+$
+
+
+1$
+$
+(X i − µ) 
+P
+$ (X i − µ)$ > ε ≤ ε−2 E n −2
+$
+n$ 1
+1
+= ε −2 n −2 E
+
+n
+
+
+
+(X i − µ)2
+
+by independence,
+
+1
+
+= ε −2 n −1 σ 2 → 0
+
+as n → ∞
+
+
+
+Note that the proof here is the same as that of Theorem 5.8.6. So it is not necessary for (4)
+that the X i be identically distributed or have an m.g.f., it is sufﬁcient that they have the
+same mean and variance.
+Proof of (5) The essential step here is to recall the continuity theorem (7.5.10), for then
+we may write
+*
+)
+ 
+"
+#n
+n
+t
+t 
+by
+(X i − µ)
+= E exp √ (X 1 − µ)
+,
+E exp √
+independence
+σ n 1
+σ n
+√
+= (MY (t/(σ n)))n where Y = X − µ,
+
+ 2 2
+t
+t2
+by
+2
+= 1 + E(Y ) 2 + o
+Theorem 7.5.9
+2σ n
+n
+1 2
+
+→ e 2 t , because E(Y 2 ) = σ 2 .
+
+8.10 Review and Checklist for Chapter 8
+
+371
+
+1 2
+
+Now we recall that e 2 t is the moment generating function of the standard normal density
+φ(x), and (5) follows by the continuity theorem (7.5.10).
+
+
+8.10 Review and Checklist for Chapter 8
+
+In this chapter, we consider the joint behaviour of collections of continuous random variables having joint density functions. We also introduce the joint distribution function, and
+show how these yield the marginal densities and distributions. The change of variable technique is given and used to study important functions of sets of random variables (including
+sums, products, quotients, and order statistics). We look at expectation, independence, and
+conditioning, especially the key concept of conditional expectation. Finally, we discuss
+the Poisson process and its crucial properties, together with continuous parameter martingales and the optional stopping theorem, and prove simple forms of the weak law of large
+numbers and the central limit theorem.
+We summarize most of these principal properties for the bivariate case (X, Y ). The
+extension to larger collections of random variables (X 1 , X 2 , X 3 , . . . ; the multivariate case)
+is straightforward but typographically tedious.
+SYNOPSIS OF FORMULAE:
+The random vector (X, Y ) is supposed to have joint density f (x, y) and distribution
+F(x, y).
+Key rule:
+
+P[(X, Y ) ∈ B] =
+
+f (x, y) d xd y.
+(x,y)∈B
+
+Basic rules:
+F(x, y) =
+
+x
+
+y
+
+−∞
+
+−∞
+
+f (u, v) dudv = P(X ≤ x, Y ≤ y).
+
+For small h and k,
+P(x < X ≤ x + h, y < Y ≤ y + k) ≃ f (x, y) hk,
+and when F is differentiable,
+∂ 2 F(x, y)
+= f (x, y).
+∂ x∂ y
+Marginals:
+f X (x) =
+
+f (x, y)dy;
+R
+
+FX (x) = F(x, ∞);
+
+f Y (y) =
+
+f (x, y)d x,
+R
+
+FY (y) = F(∞, y).
+
+Functions:
+P(g(X, Y ) ≤ z) =
+
+f (x, y) d xd y.
+g≤z
+
+372
+
+8 Jointly Continuous Random Variables
+
+In particular,
+f X +Y (z) =
+
+R
+
+f (x, z − x) d x.
+
+Transformations:
+More generally, suppose (u, v) = (u(x, y), v(x, y)) deﬁnes a one–one invertible function;
+let
+J (u, v) =
+
+∂y ∂x
+∂x ∂y
+−
+,
+∂u ∂v ∂u ∂v
+
+where the derivatives are continuous in the domain of (u, v). Then the random variables
+(U, V ) = (u(X, Y ), v(X, Y )) are jointly continuous with density
+fU,V (u, v) = f X,Y (x(u, v), y(u, v))|J (u, v)|.
+Independence: X and Y are independent, if and only if
+FX,Y (x, y) = FX (x)FY (y),
+
+for all x, y,
+
+f X,Y (x, y) = f X (x) f Y (y),
+
+for all x, y.
+
+or
+
+Expectation: If
+
+++
+
+|g| f (x, y)d xd y < ∞, then g(X, Y ) has an expected value given by
+Eg(X, Y ) =
+
+g(x, y) f (x, y)d xd y.
+
+Moments: Joint moments, covariance, and correlation are deﬁned as they were in the
+discrete case.
+Joint generating functions: The joint probability generating function of integer-valued
+X and Y is
+G X,Y (x, y) = E(x X y Y ).
+The joint moment generating function of X and Y is
+M X,Y (s, t) = E(es X +tY ) = G X,Y (es , et ).
+Moments are obtained by appropriate differentiation, so
+ ∂2G
+(1, 1) − ∂G
+(1, 1) ∂G
+(1, 1)
+∂ x∂ y
+∂x
+∂y
+cov (X, Y ) =
+∂2 M
+∂M
+∂M
+(0, 0) − ∂s (0, 0) ∂t (0, 0)
+∂s∂t
+
+if X, Y are discrete
+in any case.
+
+Random variables X and Y are independent if and only if the moment generating function
+factorizes as a product of separate functions of s and t for all s, t; thus,
+M(s, t) = M(s, 0)M(0, t).
+
+8.10 Review and Checklist for Chapter 8
+
+373
+
+Conditioning: The conditional density of X given Y = y is
+
+ f (x, y)
+, 0 < f Y (y) < ∞
+f X |Y (x|y) =
+f (y)
+ 0, Y
+otherwise.
+The Key Rule is
+P(X ∈ A|Y = y) =
+
+f X |Y (x|y) d x,
+x∈A
+
+the continuous partition rule is
+f X (x) =
+
+R
+
+f X |Y (x|y) f Y (y) dy,
+
+and the conditional distribution function is
+FX |Y (x|y) =
+If
+
++
+
+x
+−∞
+
+f X |Y (x|y)d x = P(X < x|Y = y).
+
+|x| f X |Y (x|y)d x < ∞, then the conditional expectation of X given Y = y is
+E(X |Y = y) =
+
+R
+
+x f X |Y (x|y) d x.
+
+As Y varies, this deﬁnes a function E(X |Y ), where E(X |Y ) = E(X |Y = y) when Y = y.
+Key theorem for conditional expectation:
+E(E(X |Y )) = EX.
+This has the same properties as the conditional expectation in the discrete case.
+Limit Theorems: We established the Weak Law of Large Numbers and the Central Limit
+Theorem in (8.9.3).
+Multivariate normal density: Jointly normal random variables are particularly important.
+Recall that the standard normal density is
+
+
+1
+1 2
+φ(x) = f X (x) = √ exp − x , − ∞ < x < ∞.
+2
+2π
+If the random variables X and Y are jointly distributed, and a X + bY has a normal
+distribution for all choices of the constants a and b, then X and Y are said to have a
+bivariate normal, or binormal, density. In particular, X and Y have the standard binormal
+density with correlation coefﬁcient (or parameter) ρ, if
+
+!
+−1
+−1
+2 −1/2
+2
+2
+(x − 2ρx y + y ) .
+exp
+f (x, y) = (2π) (1 − ρ )
+2(1 − ρ 2 )
+Thus X and Y are independent if and only if uncorrelated.
+More generally, X = (X 1 , . . . , X n ) is said to be multivariate normal (or multinormal)
+
+if n1 ai X i has a normal distribution for all choices of a = (a1 , . . . , an ). It follows that the
+multinormal distribution is determined by the means and covariances of (X 1 , . . . , X n ).
+
+374
+
+8 Jointly Continuous Random Variables
+
+To see this, we simply calculate the joint moment generating function of X:
+
+n
+
+tr X r .
+MX (t) = E exp
+n
+
+1
+
+
+This
+is easy because
+1 tr X r is normal with mean
+i ti EX i and variance
+
+i, j cov (X i , X j )ti t j . Hence, by Example 7.5.7,
+#
+"
+1
+MX (t) = exp
+ti EX i +
+cov (X i , X j )ti t j ,
+2 i, j
+i
+and this determines the joint distribution by the basic property of m.g.f.s.
+In particular, X 1 , X 2 , X 3 have the standard trivariate normal distribution (or trinormal)
+when varX 1 = varX 2 = varX 3 = 1, EX 1 X 2 = ρ12 , EX 1 X 3 = ρ23 , EX 3 X 1 = ρ31 , and
+
+!
+1 
+1
+a jk x j xk ,
+f (x1 , x2 , x3 ) = (2π )−3/2 A− 2 exp −
+2A j k
+2
+2
+2
+where a11 = 1 − ρ23
+, a22 = 1 − ρ31
+, a33 = 1 − ρ12
+, a12 = a21 = ρ31 ρ23 − ρ12 , a13 =a31 =
+2
+2
+2
+− ρ23
+− ρ31
++ 2ρ12 ρ23 ρ31 .
+ρ12 ρ23 − ρ31 , a23 = a32 = ρ12 ρ31 − ρ23 , and A = 1 − ρ12
+The joint moment generating function of X 1 , X 2 , X 3 is
+
+!
+
+1 2
+t1 + t22 + t32 + ρ12 t1 t2 + ρ23 t2 t3 + ρ31 t3 t1 .
+M(t1 , t2 , t3 ) = exp
+2
+
+Checklist of Terms for Chapter 8
+
+8.1 joint distribution function
+joint density function
+marginals
+bivariate normal density
+8.2 change of variable formula
+8.3 independence and factorization
+8.4 sums, products, and quotients
+8.5 expectation
+Cauchy–Schwarz inequality
+independence and expectation
+covariance and correlation
+joint moment generating function
+normal sample
+8.6 conditional density
+conditional distribution
+conditional expectation
+8.7 normal sample
+order statistics
+8.8 Poisson process
+conditional property
+
+Worked Examples and Exercises
+
+375
+
+independent increments
+martingales
+optional stopping theorem
+8.9 weak law of large numbers
+central limit theorem
+
+WORKED EXAMPLES AND EXERCISES
+
+8.11 Example: Bivariate Normal Density
+
+Let X and Y have the standard bivariate normal joint density
+
+ 2
+1
+x − 2ρx y + y 2
+f (x, y) =
+.
+−
+1 exp
+2(1 − ρ 2 )
+2π(1 − ρ 2 ) 2
+Show that the joint moment generating function of X and Y is
+
+
+1 2
+(s + 2ρst + t 2 ) .
+exp
+2
+Solution
+
+We are asked to ﬁnd
+M = E(es X +tY ) =
+
+(1)
+
+∞
+
+∞
+
+−∞
+
+−∞
+
+f (x, y)esx+t y d xd y.
+
+After a little thought, we observe that the terms in the exponents in the integrand can be
+rearranged to give
+2
+x2
+1
+y − ρx
+1
+exp −
++ x(s + tρ) −
+M=
+1
+2
+2 (1 − ρ 2 ) 12
+2π(1 − ρ 2 ) 2
+
+y − ρx
+1
+2 2
+d xd y.
++
+1 t(1 − ρ )
+(1 − ρ 2 ) 2
+1
+
+This suggests that we make the change of variables u = x, v = (y − ρx)/(1 − ρ 2 ) 2 in the
+1
+integral. This map is one–one, and J = (1 − ρ 2 ) 2 . Hence,
+
+
+−∞
+−∞
+1
+1 2
+1 2
+2 12
+M=
+exp − u + (s + tρ)u − v + t(1 − ρ ) v dudv.
+2π −∞ −∞
+2
+2
+Because the integrand factorizes, we now recognize the right-hand side as being equal to
+2
+
+1
+
+E(e(s+tρ)U )E(et(1−ρ ) 2 V ),
+where U and V are standard normal random variables. But we know the m.g.f. E(et V ) of
+1 2
+a standard normal random variable V to be e 2 t . Hence,
+1
+
+2
+
+1 2
+
+2
+
+M = e 2 (s+tρ) e 2 t (1−ρ ) ,
+
+(2)
+as required.
+
+Problems
+
+391
+
+but
+| cos t X + i sin t X | = cos2 t X + sin2 t X = 1,
+and so |φ(t)| ≤ 1. If X is exponential,
+∞
+
+Eeit X =
+
+∞
+
+λe−λx cos t x d x + i
+
+0
+
+λe−λx sin t x d x.
+
+0
+
+Integrating by parts gives
+∞
+
+∞
+
+λe−λx cos t x d x = 1 −
+
+0
+
+0
+
+0
+
+Hence,
+∞
+
+−λx
+
+
+
+t2
+cos t x d x 1 − 2 = 1
+λ
+
+−λx
+
+
+
+t
+t2
+sin t x d x 1 + 2 = .
+λ
+λ
+
+λe
+
+0
+
+Likewise,
+∞
+0
+
+λe
+
+∞
+
+te−λx sin t x d x = 1 −
+
+t 2 −λx
+λe
+cos t x d x.
+λ2
+
+Hence,
+Eeit X =
+
+1 + it/λ
+λ
+.
+=
+2
+2
+1 + t /λ
+λ − it
+
+Remark
+φ(t) is called the characteristic function of X . We have occasionally
+been frustrated by the nonexistence of a moment generating function. This example
+shows that we can use the characteristic function in such cases because it always
+3−1
+2
+exists. For example, it can be shown that the Cauchy density f (x) = π (1 + x 2 ) ,
+which has no moments at all, has characteristic function φ(t) = e−|t| .
+Furthermore, for any random variable X that does have a moment generating function
+M(θ ) = Eeθ X , for |θ| < ε > 0, the characteristic function of X is given by φ(t) = M(it).
+(1)
+(2)
+(3)
+
+Exercise
+Show that the random variable uniform on [−1, 1] has characteristic function φ(t) =
+sin t
+.
+t
+
+Exercise
+If X 1 , . . . , X n are independent Cauchy random variables, show that X = n1 n1 X i has
+the same Cauchy density as the X i .
+Exercise
+Find the characteristic function of the random variable X with density
+f (x) =
+
+1 −|x|
+e ,
+2
+
+x ∈ R.
+
+P RO B L E M S
+
+1
+2
+
+When is f (x, y) = x y + ax + by + 1 a joint density function on 0 ≤ x, y ≤ 1? Can it be the joint
+density of random variables X and Y that are independent?
+Find cov (X, Y ) for the joint density of Problem 1.
+
+392
+3
+4
+5
+6
+7
+
+8
+9
+10
+11
+
+8 Jointly Continuous Random Variables
+
+Let X and Y have joint density f (x, y) = c exp(−x − y) for x > 0, y > 0. Find (a) c, (b) P(X +
+Y > 1), and (c) P(X < Y ).
+Let X and Y have joint density f (x, y) = g(x + y) for x ≥ 0, y ≥ 0. Find the density of Z = X + Y.
+3
+Let X and Y have joint density f = c(1 + x 2 + y 2 )− 2 for all x and y. (a) What is c? (b) Find the
+marginal density of X .
+Let X and Y have the joint density of Problem 5, and deﬁne W = X 2 + Y 2 , Z = Y/ X. Show that
+W and Z are independent.
+Let U and V be independently and uniformly distributed on (0, 1). Find the joint density of X =
+1
+1
+1
+1
+1
+U 2 /(U 2 + V 2 ) and Y = U 2 + V 2 . By considering P(X ≤ x|Y ≤ 1), devise a rejection sampling
+procedure for simulating a random variable with density 6x(1 − x); 0 < x < 1.
+Let U1 , U2 , and U3 be independently and uniformly distributed on (0, 1), with order statistics
+U(1) < U(2) < U(3) . Show that the density of U(2) is 6x(1 − x); 0 < x < 1.
+Let U1 , U2 , U3 , and U4 be independently and uniformly distributed on (0, 1). What is the density
+of X = log (U1 U2 )/ log (U1 U2 U3 U4 )? (Hint: One way uses Example 8.15).
+Let X and Y be independent normal random variables, and set U = X + Y, V = X − Y. Show that
+U and V are independent if and only if var (X ) = var (Y ).
+Simulation Using Bivariate Rejection
+Let U and V be independent and uniform on (0, 1).
+Deﬁne the random variables
+Z = (2U − 1)2 + (2V − 1)2 ,
+1
+X = (2U − 1)(2Z −1 log Z −1 ) 2
+Y = (2V − 1)(2Z −1 log Z −1 ) 2 .
+1
+
+12
+13
+14
+
+15
+
+16
+17
+
+Show that the conditional joint density of X and Y given Z < 1, is (2π)−1 exp (− 12 (x 2 + y 2 )).
+Explain how this provides a method for simulating normal random variables.
+Let X and Y be independent exponential random variables with respective parameters λ and µ.
+Find P(max {X, Y } ≤ a X ) for a > 0.
+Let X and Y have joint density f = cye−y(x+1) , 0 ≤ x < y < ∞ for some constant c. What is the
+conditional density of X given Y = y?
+A spherical melon has radius 1. Three gravid insects alight independently (for oviposition) at A, B,
+and C, where A, B, and C are uniformly distributed on the surface of the melon. For any two insects,
+if the distance between them (along a great circle of the melon) is less than π/2, then they detect
+each other’s presence and will both ﬂy off to seek an unoccupied melon. Show that the probability
+that exactly one insect is left in possession of the melon is 3(π − 1)/4π, and that the probability
+that all three remain on the melon is 1/4π .
+Let X and Y have joint density f (x, y) = c sin(x + y), 0 < x, y < π/2.
+1 2
+Show that c = 12 ; cov (X, Y ) = 12 (π − 2) − 16
+π , and ρ(X, Y ) = (8(π − 2) − π 2 )/(π 2 + 8π −
+32).
+Let X and Y be independent exponential with parameters λ and µ, respectively. Now deﬁne U =
+X ∧ Y and V = X ∨ Y. Find P(U = X ), and show that U and V − U are independent.
+n
+Let (X i ; i ≥ 1) be independent with the uniform density on (−1, 1). Let the density of i=1
+X i be
+f n (x). Show that
+f n (x) =
+
+18
+
+1
+2
+
+x+1
+
+f n−1 (u) du
+
+for n ≥ 2,
+
+x−1
+
+and deduce that for any integer k, the density f n (x) is a polynomial in x for x ∈ [k, k + 1).
+Let X and Y have the bivariate normal density of Examples 8.4.3 and 8.20.
+(a) If σ = τ, what is E(X |X + Y )?
+(b) If σ = τ , what are E(X |X + Y ) and E(Y |X + Y )?
+
+Problems
+19
+
+393
+
+Let (X n ; n ≥ 1) be independent and uniformly distributed on (0, 1). Deﬁne
+
+
+n
+
+T = min n:
+Xi > 1 .
+i=1
+
+20
+21
+
+22
+
+23
+24
+
+25
+
+26
+27
+28
+
+29
+30
+31
+32
+
+Show that P(T ≥ j + 1) = 1/j! for j ≥ 1. Deduce that E(T ) = e.
+Let (X 1 , X 2 , X 3 ) be independent and uniformly distributed on (0, 1). What is the probability that
+the lengths X 1 , X 2 , X 3 can form a triangle?
+Let (Ui ; i ≥ 1) be independently and uniformly distributed on (0, 1), and deﬁne Mn =
+max {U1 , . . . , Un } . Show that, as n → ∞, the distribution of Z n = n(1 − Mn ) converges to an
+exponential distribution.
+Let (X i ; i ≥ 1) be independent exponential random variables each with parameter µ. Let N be
+independent
+of the X i having mass function f N (n) = (1 − p) p n−1 ; n ≥ 1. What is the density of
+N
+Y = i=1
+Xi ?
+Let N (t) be a Poisson process, C(t) its current life at t, and X 1 the time of the ﬁrst event. Show that
+cov (X 1 , C(t)) = 12 t 2 e−λt .
+Simulating Gamma
+Let U and X be independent, where U is uniform on (0, 1)
+and X is exponential with parameter α −1 ≤ 1. Show that the density of X conditional on
+
+ 
+
+ 
+eX α−1
+α−1
+exp −
+X ≥U
+α
+α
+is x α−1 e−x / (α). Why is this of value?
+(a) Let X be exponential with parameter 1. Show that X/λ is exponential with parameter λ.
+(b) Let (X i ; 1 ≤ i ≤ n) be independent and exponential with parameter 1. Use the lack-of-memory
+property of the exponential density to show that max {X 1 , . . . , X n } has the same distribution as
+X 1 + X 2 /2 + . . . + X n /n.
+Let X 1 , X 2 , X 3 , and X 4 be independent standard normal random variables. Show that W = X 1 / X 2
+has the Cauchy density, and Z = |X 1 X 2 + X 3 X 4 | has an exponential density.
+Let X and Y be independent
+Poisson random variables each with parameter n. Show that, as
+√
+n → ∞, P(X − Y ≤ 2nx) → (x).
+Let (Ui ; i ≥ 1) be a collection of independent random variables each uniform on (0, 1). Let
+X have mass function f X (x) = (e − 1)e−x ; x ≥ 1 and let Y have mass function f Y (y) = 1/
+{(e − 1)y!} y ≥ 1. Show that Z = X − max {U1 , . . . , UY } is exponential. (Assume X and Y
+are independent of each other and of the Ui ).
+Let X and Y be independent gamma with parameters (α, 1) and (β, 1), respectively. Find the
+conditional density of X given X + Y = z.
+Let X and Y be independent standard normal random variables. Show that the pair X and Z , where
+1
+Z = ρ X + (1 − ρ 2 ) 2 Y, |ρ| ≤ 1, has a standard bivariate normal density.
+Let X and Y have joint moment generating function M(s, t) and deﬁne K (s, t) = log M(s, t). Show
+that K s (0, 0) = E(X ), K ss (0, 0) = var (X ), and K st (0, 0) = cov (X, Y ).
+A sorcerer has hidden a ring in one of an inﬁnite number of boxes numbered . . . , −2, −1, 0, 1, 2, 3, . . . . You only have time to look in 11 boxes. The sorcerer
+gives you a hint. He tosses 100 fair coins and counts the number of heads. He does not tell you this
+number, nor does he tell you the number of the box with the ring in it, but he tells you the sum of
+these two numbers.
+(a) If the sum is 75, which 11 boxes should you look in?
+(b) Give an approximation to the probability of ﬁnding the ring.
+
+11
+10
+1
+u2
+e− 2 du = 0.36.
+√
+2π 0
+
+394
+33
+
+8 Jointly Continuous Random Variables
+
+Multivariate Normal Density
+sity. If
+Xi =
+
+Let (Y1 , . . . , Yn ) be independent, each having the N (0, 1) den
+
+ai j Y j + bi
+
+for 1 ≤ i, j ≤ n,
+
+j
+
+34
+
+35
+
+36
+
+then (X 1 , . . . , X n ) are 
+said to have a multivariate normal density. Find the joint m.g.f.
+n
+Mn (t1 , . . . , tn ) = E(exp( i=1
+ti X i )). Deduce that the following three statements are equivalent:
+(a) The random variables (X 1 , . . . , X n ) are independent.
+(b) (X 1 , . . . , X n ) are pairwise independent.
+(c) cov (X i , X j ) = 0 for 1 ≤ i = j ≤ n.
+A sequence of random variables X 1 , X 2 , . . . is said to obey the Central Limit Theorem (CLT) if and
+√
+only ifthe distribution of (Sn − E(Sn ))/ var(Sn ) tends to the standard normal distribution, where
+n
+Sn = i=1
+Xi .
+State sufﬁcient conditions on (X n ) for the sequence to obey the CLT and say which of your
+conditions are necessary.
+Let (Un (λn )) be a sequence of independent random variables having the Poisson distribution with
+nonzero means (λn ). In each of the following cases, determine whether the sequence (X n ) obeys
+the CLT:
+(i) X n = Un (1).
+(iv) X n = U2n (1)/(1 + U2n−1 (1)).
+(ii) X n = Un (1) + n.
+(v) X n = Un (n).
+(iii) X n = Un ( 12 )!.
+Let X 1 and X 2 be independent with the same density f (x). Let U be independent of both and
+uniformly distributed on (0, 1). Let Y = U (X 1 + X 2 ). Find f (x) such that Y can also have density
+f (x).
+Molecules
+A molecule M has velocity v = (v1 , v2 , v3 ) in Cartesian corrdinates. Suppose that
+v1 , v2 , and v3 have joint density:
+
+
+1
+2 − 32
+2
+2
+2
+f (x, y, z) = (2π σ ) exp − 2 (x + y + z ) .
+2σ
+Show that the density of the magnitude |v| of v is
+  12
+
+
+2
+1
+f (w) =
+σ −3 w2 exp − 2 w2 ,
+π
+2σ
+
+37
+
+38
+
+39
+
+w > 0.
+
+Let C be a circle radius r with centre O. Choose two points P and Q independently at random in
+C. Show that the probability that the triangle OPQ contains an obtuse angle is 32 .
+(Note: No integration is required.)
+Given a ﬁxed line AB, a point C is picked at random such that max {AC, BC} ≤ AB. Show that
+the probability that the triangle ABC contains an obtuse angle is
+
+
+1
+1
+1 √ −1
+π
+π−
+3
+.
+8
+3
+4
+[Note: No integration is required. This is a version of a problem given by Lewis Carroll. To combat
+insomnia, he solved mathematical problems in his head; this one was solved on the night of 20
+January 1884. He collected a number of these mental exercises in a book entitled Pillow problems
+(Macmillan, 1895).]
+Let X be a nonnegative random variable such
+that P(X > x) > 0 for all x > 0. Show that P(X >
+1
+x) ≤ EX n /x n for all n ≥ 0. Deduce that s = ∞
+n=0 EX n < ∞.
+1
+Let N be a random variable with the mass function P(N = n) = sEX
+n .
+Show that: (a) for all x > 0, Ex N < ∞; (b) EX N = ∞.
+
+Problems
+40
+41
+
+42
+
+43
+
+395
+
+Let X and Y be independent and uniform on [0, 1], and let Z be the fractional part of X + Y. Show
+that Z is uniform on [0, 1] and that X, Y, Z are pairwise independent but not independent.
+Let (X (k) ; 1 ≤ k ≤ n) be the order statistics derived from n independent random variables, each
+uniformly distributed on [0, 1]. Show that
+k
+(a) EX (k) =
+.
+n+1
+k(n − k + 1)
+(b) var X (k) =
+.
+(n + 1)2 (n + 2)
+Let (X (k) ; 1 ≤ k ≤ n) be the order statistics derived from n independent random variables each
+uniformly distributed on [0, 1]. Show that they have the same distribution as (Yk ; 1 ≤ k ≤ n),
+where Y0 = 0 and, given Y j−1 , Y j , has the density (1 − y)n− j ; Y j−1 ≤ y ≤ 1, for 1 ≤ j ≤ n.
+Normal Sample:
+Example 8.7.4 Revisited Let (X r ; 1 ≤ r ≤ n) be independent N (µ, σ 2 ) random variables.
+(a) By considering
+the joint moment generating function of X and (X r − X ; 1 ≤ r ≤ n), show that
+
+X = n1 n1 X r and
+S2 =
+
+n
+1 
+(X r − X )2
+n−1 1
+
+are independent.
+(b) Show that X and X r − X are uncorrelated, and deduce that X and S 2 are independent.
+44
+
+(i) Suppose that the random variable Q has density sin q, on [0, π ]. Find the distribution
+function of Q, and deduce that sin2 {Q/2} has the uniform density on [0, 1].
+(ii) Suppose that the random vector (X, Y ) is uniformly distributed on the unit circle, and
+set R 2 = X 2 + Y 2 . Show that R 2 has the uniform density on [0, 1]. Deduce that the
+random vector (U, V, W ) is uniformly distributed on the unit sphere, where U = 2X (1 −
+1
+1
+R 2 ) 2 , V = 2Y (1 − R 2 ) 2 , and W = 1 − 2R 2 .
+
+

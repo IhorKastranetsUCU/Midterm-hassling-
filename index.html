@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UCU StatHustle: Probability & Statistics Midterm 2 & Colloquium Mastery</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81',
+              950: '#1e1b4b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Identity Services (Sign-In with Google) -->
+  <meta name="google-signin-client_id" content="794609556919-4ac9ftru7l363jbqcjpgovn9kb3vbkjm.apps.googleusercontent.com">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- KaTeX for crisp LaTeX formulas -->
+  <link rel="stylesheet" href="vendor/katex/katex.min.css">
+  <script src="vendor/katex/katex.min.js"></script>
+  <script src="vendor/katex/auto-render.min.js"></script>
+  <script>
+    // KaTeX fallback to CDN if vendor is unavailable
+    if (typeof window.katex === 'undefined') {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css';
+      document.head.appendChild(link);
+      const s1 = document.createElement('script');
+      s1.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js';
+      s1.onload = () => {
+        const s2 = document.createElement('script');
+        s2.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js';
+        s2.onload = () => { if (window.app?.renderAllMath) window.app.renderAllMath(); };
+        document.head.appendChild(s2);
+      };
+      document.head.appendChild(s1);
+    }
+  </script>
+
+  <!-- Custom Theme CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased min-h-screen flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+
+  <!-- ================= TOP APP HEADER ================= -->
+  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Brand & Exam Badges -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-black text-white text-lg shadow-indigo-500/20 shadow-lg">
+          AG
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-extrabold text-base tracking-tight text-white">UCU StatHustle</span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-950 text-indigo-300 border border-indigo-700">MIDTERM 2 & COL 2</span>
+          </div>
+          <div class="flex items-center gap-3 text-[11px] text-slate-400">
+            <span id="colloquium-countdown-text">⚡ 3 days to Colloquium</span>
+            <span>•</span>
+            <span id="midterm-countdown-text">🔥 5 days to Midterm 2</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Readiness Pill & Pomodoro Mini-Widget -->
+      <div class="hidden lg:flex items-center gap-4">
+        
+        <!-- Overall Readiness Score Badge (Starts strictly at 0%) -->
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/90 border border-slate-700 shadow-sm" title="Calculated strictly: 1% per definition scored >= 6/10, 1% per topic test solved, and rest for solving problems!">
+          <span class="text-xs text-slate-400 font-medium">Readiness:</span>
+          <span id="header-readiness-percent" class="text-xs font-black text-emerald-400">0%</span>
+          <div class="w-16 h-2 rounded-full bg-slate-700 overflow-hidden">
+            <div id="bar-readiness-header" class="h-full bg-emerald-500 transition-all duration-500" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Pomodoro Quick Controller -->
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/90 border border-slate-700">
+          <span class="text-xs text-slate-400">⏱️</span>
+          <span id="header-pomodoro-time" class="text-xs font-mono font-bold text-amber-300">25:00</span>
+          <button id="pomodoro-toggle-btn" class="px-2.5 py-0.5 rounded text-[11px] font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition">
+            Focus
+          </button>
+        </div>
+
+      </div>
+
+      <!-- User Profile, Google Auth & Action Buttons -->
+      <div class="flex items-center gap-2.5">
+        
+        <!-- User Profile & Wardrobe Header Button -->
+        <button id="header-user-profile-btn" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-750 border border-slate-700 shadow-sm transition" title="User Profile, Study Stats & Avatar Wardrobe">
+          <div class="w-7 h-7 rounded-lg overflow-hidden bg-indigo-900 border border-indigo-700 flex items-center justify-center text-xs font-bold text-white shrink-0">
+            <img id="user-header-photo" class="w-full h-full object-cover hidden" alt="Profile" />
+            <span id="user-header-default-avatar" class="mini-avatar-icon text-sm">👕</span>
+          </div>
+          <div class="text-left hidden md:block">
+            <div id="user-header-name" class="text-xs font-bold text-slate-200 leading-tight truncate max-w-[110px]">Ihor (UCU)</div>
+            <div class="flex items-center gap-1.5 text-[10px] text-amber-400 font-mono leading-tight">
+              <span>⏱️</span>
+              <span id="user-header-study-time">0m 0s</span>
+            </div>
+          </div>
+        </button>
+
+        <!-- Logout / Switch Account Button -->
+        <button onclick="window.userProfile?.logout()" class="p-2 rounded-xl bg-slate-800 hover:bg-rose-950/70 border border-slate-700 hover:border-rose-800 text-slate-300 hover:text-rose-200 text-xs transition" title="Вийти з акаунту / Змінити користувача">
+          🚪
+        </button>
+
+        <!-- Cloud Sync Status Pill -->
+        <div id="cloud-sync-status-indicator" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700 text-[11px] shadow-sm" title="Статус синхронізації з AWS S3">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span class="text-emerald-400 font-semibold">Хмара синхронізована</span>
+        </div>
+
+        <button id="gemini-open-drawer-btn" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-indigo-600/20 shadow-md transition">
+          <span>🤖 Gemini AI Mentor</span>
+        </button>
+
+        <button id="open-api-key-settings" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition" title="Configure Gemini API Key">
+          ⚙️
+        </button>
+
+        <button id="theme-toggle-btn" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition" title="Toggle Theme">
+          🌙
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Sub-Nav Tab Bar -->
+    <div class="border-t border-slate-800/80 bg-slate-900/50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto space-x-1 py-1.5 scrollbar-none text-xs font-semibold">
+        <button data-tab-target="dashboard" class="px-4 py-2 rounded-lg tab-active transition flex items-center gap-1.5 whitespace-nowrap">
+          <span>📊</span> Dashboard & Schedule
+        </button>
+        <button data-tab-target="colloquium" class="px-4 py-2 rounded-lg tab-inactive transition flex items-center gap-1.5 whitespace-nowrap">
+          <span>🎯</span> Colloquium Focus (21 Defs & Oral)
+        </button>
+        <button data-tab-target="problems" class="px-4 py-2 rounded-lg tab-inactive transition flex items-center gap-1.5 whitespace-nowrap">
+          <span>📝</span> Exam Problems (Submit Answers)
+        </button>
+        <button data-tab-target="quizzes" class="px-4 py-2 rounded-lg tab-inactive transition flex items-center gap-1.5 whitespace-nowrap">
+          <span>🧠</span> Topic Tests (600 Questions Pool)
+        </button>
+        <button data-tab-target="topics" class="px-4 py-2 rounded-lg tab-inactive transition flex items-center gap-1.5 whitespace-nowrap">
+          <span>📖</span> Course Topics Deep-Dive
+        </button>
+        <button data-tab-target="formulas" class="px-4 py-2 rounded-lg tab-inactive transition flex items-center gap-1.5 whitespace-nowrap">
+          <span>📐</span> Formula & Distribution Matrix
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTAINER ================= -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+
+    <!-- ================= TAB 1: DASHBOARD & SCHEDULE ================= -->
+    <section id="tab-dashboard" class="tab-content-panel">
+      
+      <!-- Top Hero Grid: Readiness Gauge + Avatar Wardrobe & Real Study Stats + Pomodoro -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        
+        <!-- Card 1: Strict Readiness Mastery Gauge -->
+        <div class="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 shadow-xl flex flex-col justify-between">
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <span class="text-xs uppercase font-extrabold tracking-wider text-indigo-400">Exam Readiness</span>
+              <h2 class="text-xl font-bold text-slate-100">Mastery Meter</h2>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-950 text-indigo-300 border border-indigo-700">Target: 100%</span>
+          </div>
+
+          <div class="flex items-center justify-around my-2">
+            <!-- Circular Gauge -->
+            <div class="relative w-28 h-28 flex items-center justify-center shrink-0">
+              <svg class="w-full h-full" viewBox="0 0 100 100">
+                <circle class="text-slate-800 stroke-current" stroke-width="10" cx="50" cy="50" r="40" fill="transparent"></circle>
+                <circle id="readiness-progress-circle" class="text-indigo-500 stroke-current progress-ring-circle" stroke-width="10" stroke-linecap="round" cx="50" cy="50" r="40" fill="transparent" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+              </svg>
+              <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span id="dashboard-readiness-val" class="text-2xl font-black text-slate-100">0%</span>
+                <span class="text-[10px] text-slate-400 uppercase font-semibold">Ready</span>
+              </div>
+            </div>
+
+            <!-- Category Breakdown Bars -->
+            <div class="space-y-2 text-xs flex-1 ml-4">
+              <div>
+                <div class="flex justify-between text-slate-400 mb-0.5">
+                  <span>21 Definitions (21%)</span>
+                  <span id="text-readiness-defs" class="font-bold text-slate-200">0/21 (0%)</span>
+                </div>
+                <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div id="bar-readiness-defs" class="h-full bg-amber-400 rounded-full" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-slate-400 mb-0.5">
+                  <span>12 Topic Tests (12%)</span>
+                  <span id="text-readiness-quiz" class="font-bold text-slate-200">0/12 (0%)</span>
+                </div>
+                <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div id="bar-readiness-quiz" class="h-full bg-indigo-500 rounded-full" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-slate-400 mb-0.5">
+                  <span>Exam Problems (57%)</span>
+                  <span id="text-readiness-probs" class="font-bold text-slate-200">0/23 (0%)</span>
+                </div>
+                <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div id="bar-readiness-probs" class="h-full bg-emerald-400 rounded-full" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-slate-400 mb-0.5">
+                  <span>Day Milestones (10%)</span>
+                  <span id="text-readiness-oral" class="font-bold text-slate-200">0/5 Days (0%)</span>
+                </div>
+                <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div id="bar-readiness-oral" class="h-full bg-rose-400 rounded-full" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-[11px] text-slate-400 mt-2 text-center bg-slate-950/60 p-2 rounded-lg border border-slate-800">
+            ⚖️ <strong>Strict Rule:</strong> 1% per definition scored ≥6/10, 1% per topic test, & remainder for submitted problem answers!
+          </div>
+        </div>
+
+        <!-- Card 2: Student Avatar & Real-time Live Stats Gamification -->
+        <div class="p-6 rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-indigo-950/30 to-slate-900 shadow-xl flex flex-col justify-between">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <span class="text-xs uppercase font-extrabold tracking-wider text-amber-400">Student Profile & Wardrobe</span>
+              <h2 class="text-xl font-bold text-slate-100">Study Gamification</h2>
+            </div>
+            <button onclick="document.getElementById('header-user-profile-btn').click()" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition">
+              👗 Wardrobe
+            </button>
+          </div>
+
+          <!-- Avatar Display & Real-time Hours Studied -->
+          <div class="flex items-center gap-4 my-2 p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
+            <div id="user-avatar-display" class="w-20 h-24 shrink-0 flex items-center justify-center">
+              <!-- Dynamically populated SVG with equipped clothes -->
+            </div>
+            <div class="flex-1 space-y-1.5 text-xs">
+              <div class="font-bold text-slate-100 flex items-center gap-2">
+                <span>⏱️ Real-time Studied:</span>
+                <span id="user-dash-study-time" class="font-mono text-amber-300 font-extrabold">0m 00s</span>
+              </div>
+              <div class="text-slate-400 text-[11px]">
+                Total Focus Time: <strong id="user-dash-study-hours" class="text-slate-200">0.0 hrs</strong>
+              </div>
+              <div class="p-1.5 rounded bg-slate-900 text-[11px] text-indigo-300 font-medium">
+                👕 Equip clothes by hitting readiness % thresholds!
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center pt-2 border-t border-slate-800/80 text-xs">
+            <span class="text-slate-400">7 Unlockable Tiers</span>
+            <button onclick="document.getElementById('header-user-profile-btn').click()" class="text-indigo-400 hover:text-indigo-300 font-bold">
+              View Wardrobe & Custom Photo ➔
+            </button>
+          </div>
+        </div>
+
+        <!-- Card 3: Built-in Pomodoro Focus Station -->
+        <div class="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 shadow-xl flex flex-col justify-between">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <span class="text-xs uppercase font-extrabold tracking-wider text-amber-400">Focus Station</span>
+              <h2 class="text-xl font-bold text-slate-100">Pomodoro Timer</h2>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-950 text-amber-300 border border-amber-800">25m Work / 5m Rest</span>
+          </div>
+
+          <div class="text-center my-3">
+            <div id="main-pomodoro-time" class="text-5xl font-mono font-extrabold text-slate-100 tracking-wider">
+              25:00
+            </div>
+            <div id="pomodoro-stats-display" class="text-xs text-slate-400 mt-2 font-medium">
+              0 sessions today (0 min total)
+            </div>
+          </div>
+
+          <div class="flex items-center justify-center gap-3 mt-2">
+            <button id="main-pomodoro-toggle" class="btn btn-primary px-6 py-2.5 text-sm font-bold shadow-lg shadow-indigo-600/20">
+              ▶️ Start Focus Session
+            </button>
+            <button id="main-pomodoro-reset" class="px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">
+              Reset
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= PER-TAB FOCUS TIME & MISTAKES ANALYTICS ================= -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        
+        <!-- Tab 1: Per-Tab Focus Time Analytics -->
+        <div class="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 shadow-xl flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+              <div>
+                <span class="text-xs uppercase font-extrabold tracking-wider text-indigo-400">Час у вкладках</span>
+                <h3 class="text-lg font-bold text-slate-100">Аналітика фокус-часу по розділах</h3>
+              </div>
+              <span class="text-xs text-slate-400 font-mono">Авто-трекінг</span>
+            </div>
+            
+            <div id="tab-time-analytics-grid" class="space-y-2.5">
+              <!-- Dynamically populated by user.js with exact time and % for each tab -->
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-800/80 mt-4 text-[11px] text-slate-400 flex justify-between items-center">
+            <span>⏱️ Фіксується окремо для кожної вкладки</span>
+            <button onclick="window.userProfile?.resetStudyTimer();" class="text-rose-400 hover:underline">Скинути таймер</button>
+          </div>
+        </div>
+
+        <!-- Tab 2: Mistakes & Weak Points Tracker -->
+        <div class="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 shadow-xl flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+              <div>
+                <span class="text-xs uppercase font-extrabold tracking-wider text-rose-400">Слабкі місця</span>
+                <h3 class="text-lg font-bold text-slate-100">Часті помилки та невдалі спроби</h3>
+              </div>
+              <span class="text-xs text-slate-400 font-mono">Аналіз слабких тем</span>
+            </div>
+
+            <div id="mistakes-analytics-list" class="space-y-2 max-h-72 overflow-y-auto">
+              <!-- Dynamically populated by user.js with questions the user failed -->
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-800/80 mt-4 text-[11px] text-slate-400">
+            💡 Завдання сортуються за кількістю помилок. Повторіть їх перед іспитом!
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Day-by-Day Study Roadmap (Non-manual: Automatically verified by performance) -->
+      <div class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+          <div>
+            <h2 class="text-2xl font-black text-slate-100 tracking-tight">Structured Day-by-Day Study Plan</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Tasks cannot be clicked manually; they automatically verify and check off as you solve problems and pass quizzes!</p>
+          </div>
+          <div class="text-xs text-emerald-400 font-semibold flex items-center gap-1.5 bg-emerald-950/60 px-3 py-1.5 rounded-xl border border-emerald-800">
+            <span>🛡️ Automated Verification Active</span>
+          </div>
+        </div>
+
+        <div id="dashboard-schedule-list">
+          <!-- Dynamically populated by app.js with non-manual verified states -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ================= TAB 2: COLLOQUIUM FOCUS ================= -->
+    <section id="tab-colloquium" class="tab-content-panel hidden">
+      
+      <!-- Colloquium Hero Banner -->
+      <div class="p-6 rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-950/20 via-slate-900 to-indigo-950/20 mb-8 shadow-xl">
+        <div class="max-w-3xl">
+          <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-amber-900/60 text-amber-300 border border-amber-700">COLLOQUIUM II DEFENSE HEADQUARTERS</span>
+          <h2 class="text-2xl font-black text-slate-100 mt-2 mb-1">The 21 Definitions & 12 Oral Examination Questions</h2>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            UCU Colloquium II consists of oral questions drawn from the official 21 notions and 12 core lecture questions. Every definition written and scored ≥6/10 earns you <strong>+1% Readiness</strong>!
+          </p>
+        </div>
+      </div>
+
+      <!-- Section A: Interactive Flashcard Hub -->
+      <div class="mb-12">
+        <div class="text-center mb-6">
+          <h3 class="text-xl font-extrabold text-slate-100">Interactive Definition Flashcards (Score ≥6/10 for 1%)</h3>
+          <p class="text-xs text-slate-400 mt-1">Practice with Gemini or self-verify to earn 1% per definition.</p>
+        </div>
+
+        <div id="flashcard-container">
+          <!-- Dynamically populated by app.js -->
+        </div>
+      </div>
+
+      <!-- Section B: All 21 Definitions Directory -->
+      <div class="mb-12">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xl font-bold text-slate-100">All 21 Official Colloquium Definitions</h3>
+          <span class="text-xs text-slate-400">Score ≥6/10 to unlock readiness credit</span>
+        </div>
+
+        <div id="definitions-grid-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Dynamically populated by app.js -->
+        </div>
+      </div>
+
+      <!-- Section C: The 12 Official Colloquium Oral Defense Guides -->
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-xl font-bold text-slate-100">The 12 Colloquium Oral Questions & Defense Guides</h3>
+            <p class="text-xs text-slate-400">Complete structured 4-step oral answer templates with LaTeX board formulas and examiner follow-ups.</p>
+          </div>
+        </div>
+
+        <div id="oral-questions-list">
+          <!-- Dynamically populated by app.js -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ================= TAB 3: PROBLEMS BANK ================= -->
+    <section id="tab-problems" class="tab-content-panel hidden">
+      
+      <!-- Problems Filter Bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
+        <div>
+          <h2 class="text-2xl font-black text-slate-100">Colloquium & Midterm Exam Problems</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Enter your final answer and submit to receive readiness %. Step-by-step solutions are visible for study!</p>
+        </div>
+        
+        <!-- Topic Filters -->
+        <div class="flex flex-wrap gap-2 text-xs font-semibold">
+          <button data-prob-filter="all" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white transition">All</button>
+          <button data-prob-filter="Seminar 4" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Seminar 4 (Discrete)</button>
+          <button data-prob-filter="Seminar 5" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Seminar 5 (Expectation)</button>
+          <button data-prob-filter="Seminar 6" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Seminar 6 (Continuous)</button>
+          <button data-prob-filter="Colloquium II New" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Colloquium Advanced</button>
+          <button data-prob-filter="Midterm Exam 2" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Midterm 2017</button>
+        </div>
+      </div>
+
+      <div id="problems-list-container">
+        <!-- Dynamically populated by app.js with interactive answer submission and visible solutions -->
+      </div>
+
+    </section>
+
+    <!-- ================= TAB 4: QUIZZES ================= -->
+    <section id="tab-quizzes" class="tab-content-panel hidden">
+      
+      <div class="max-w-4xl mx-auto">
+        <div id="quiz-question-container">
+          <!-- Dynamically populated by quiz.js (12 Topics x 50 questions = 600 questions) -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ================= TAB 5: TOPICS DEEP DIVE ================= -->
+    <section id="tab-topics" class="tab-content-panel hidden">
+      <div class="mb-6">
+        <h2 class="text-2xl font-black text-slate-100">Course Topics Deep-Dive & Lecture Summaries</h2>
+        <p class="text-xs text-slate-400 mt-0.5">12 comprehensive modules covering Lectures 4–6 and Seminars 4–6.</p>
+      </div>
+
+      <div id="topics-notes-container">
+        <!-- Dynamically populated by app.js -->
+      </div>
+    </section>
+
+    <!-- ================= TAB 6: FORMULA MATRIX ================= -->
+    <section id="tab-formulas" class="tab-content-panel hidden">
+      <div class="mb-6">
+        <h2 class="text-2xl font-black text-slate-100">Master Distribution Matrix & Golden Formulas</h2>
+        <p class="text-xs text-slate-400 mt-0.5">High-yield reference table for Discrete and Continuous distributions.</p>
+      </div>
+
+      <!-- Distributions Table -->
+      <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl mb-8">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-slate-800 bg-slate-950/60 text-xs font-bold text-slate-400">
+              <th class="p-3">Distribution</th>
+              <th class="p-3">Support</th>
+              <th class="p-3">PMF / PDF</th>
+              <th class="p-3">Mean $E[X]$</th>
+              <th class="p-3">Variance $\text{Var}(X)$</th>
+              <th class="p-3">PGF $G_X(s)$</th>
+              <th class="p-3">MGF $M_X(t)$</th>
+              <th class="p-3">Key Exam Nuance</th>
+            </tr>
+          </thead>
+          <tbody id="distributions-table-body" class="divide-y divide-slate-800/60">
+            <!-- Dynamically populated by app.js -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Golden Formulas Cheat Sheet -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 text-xs text-slate-300 space-y-3">
+          <h3 class="text-base font-bold text-slate-100 border-b border-slate-800 pb-2">🔑 Variance & Covariance Golden Identities</h3>
+          <p>$$\text{Var}(aX + b) = a^2 \text{Var}(X)$$</p>
+          <p>$$\text{Var}(X + Y) = \text{Var}(X) + \text{Var}(Y) + 2\text{Cov}(X, Y)$$</p>
+          <p>$$\text{Var}(aX + bY) = a^2\text{Var}(X) + b^2\text{Var}(Y) + 2ab\text{Cov}(X, Y)$$</p>
+          <p>$$\text{Cov}(X, Y) = E[XY] - E[X]E[Y]$$</p>
+          <p>$$\rho(X, Y) = \frac{\text{Cov}(X, Y)}{\sigma_X \sigma_Y} \in [-1, 1]$$</p>
+        </div>
+
+        <div class="p-5 rounded-2xl border border-slate-800 bg-slate-900/80 text-xs text-slate-300 space-y-3">
+          <h3 class="text-base font-bold text-slate-100 border-b border-slate-800 pb-2">⚡ PGF & MGF Moment Formulas</h3>
+          <p>$$G'(1) = E[X], \quad G''(1) = E[X(X-1)]$$</p>
+          <p>$$\text{Var}(X) = G''(1) + G'(1) - (G'(1))^2$$</p>
+          <p>$$M^{(k)}(0) = E[X^k]$$</p>
+          <p>$$M_{aX+b}(t) = e^{bt} M_X(at)$$</p>
+          <p>$$X \perp Y \implies M_{X+Y}(t) = M_X(t) M_Y(t)$$</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= MANDATORY WELCOME ONBOARDING & AUTH GATE MODAL ================= -->
+  <div id="auth-gate-modal" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-2xl flex items-center justify-center p-4 hidden overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl my-8">
+      
+      <!-- Brand & Header -->
+      <div class="text-center mb-6">
+        <div class="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 items-center justify-center font-black text-white text-2xl shadow-indigo-500/20 shadow-xl mb-3">
+          AG
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-black text-slate-100 tracking-tight">Ласкаво просимо до UCU StatHustle!</h2>
+        <p class="text-xs sm:text-sm text-slate-400 mt-1 max-w-lg mx-auto">
+          Автономна платформа для підготовки до <strong>Colloquium 2 (Середа)</strong> та <strong>Midterm 2 (П'ятниця)</strong> з теорії ймовірностей та статистики в УКУ.
+        </p>
+      </div>
+
+      <!-- How It Works & What You Can Do Walkthrough -->
+      <div class="mb-6 space-y-2.5">
+        <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 flex items-start gap-3 text-xs">
+          <span class="text-xl">🎯</span>
+          <div>
+            <strong class="text-indigo-300 font-bold">Колоквіум 2 (Середа):</strong>
+            <p class="text-slate-300 mt-0.5">21 офіційне означення та 12 усних питань. Здай кожне штучному інтелекту Gemini на ≥6/10, щоб заробити готовність.</p>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 flex items-start gap-3 text-xs">
+          <span class="text-xl">🧠</span>
+          <div>
+            <strong class="text-emerald-300 font-bold">Мідтерм 2 (П'ятниця):</strong>
+            <p class="text-slate-300 mt-0.5">600 інтерактивних тестових завдань (по 50 на кожну з 12 тем) з KaTeX формулами та 23 офіційні задачі з вводом кінцевої відповіді.</p>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 flex items-start gap-3 text-xs">
+          <span class="text-xl">⏱️</span>
+          <div>
+            <strong class="text-amber-300 font-bold">Аналітика фокус-часу та помилок:</strong>
+            <p class="text-slate-300 mt-0.5">Платформа фіксує час у кожній вкладці, зберігає ваші помилки та показує слабкі місця. Усі ваші досягнення зберігаються у вашому персональному акаунті.</p>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 flex items-start gap-3 text-xs">
+          <span class="text-xl">👕</span>
+          <div>
+            <strong class="text-violet-300 font-bold">Аватар та 7 рівнів гардеробу:</strong>
+            <p class="text-slate-300 mt-0.5">Відкривайте новий одяг для свого аватара (від футболки першокурсника до золотого вінця 100/100) з ростом відсотка готовності!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auth Selection Tabs: Login vs Register -->
+      <div class="border-t border-slate-800 pt-5">
+        <div class="flex rounded-xl bg-slate-950 p-1 mb-5 border border-slate-800">
+          <button id="auth-tab-btn-login" onclick="window.userProfile?.switchAuthTab('login')" class="flex-1 py-2 text-xs font-bold rounded-lg transition border border-indigo-500 text-white bg-indigo-950/50">
+            Вхід в акаунт
+          </button>
+          <button id="auth-tab-btn-register" onclick="window.userProfile?.switchAuthTab('register')" class="flex-1 py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-white">
+            Реєстрація
+          </button>
+        </div>
+
+        <!-- Google Sign-In Option -->
+        <div class="mb-4">
+          <div class="text-[11px] font-bold text-slate-400 mb-2 text-center uppercase tracking-wider">Швидкий вхід через Google:</div>
+          <div id="auth-gate-google-btn-container" class="flex justify-center my-2"></div>
+        </div>
+
+        <div class="flex items-center gap-3 my-4">
+          <div class="flex-1 h-px bg-slate-800"></div>
+          <span class="text-[11px] text-slate-500 uppercase font-semibold">Або через пошту</span>
+          <div class="flex-1 h-px bg-slate-800"></div>
+        </div>
+
+        <!-- Login Form -->
+        <form id="auth-gate-login-form" onsubmit="event.preventDefault(); window.userProfile?.login(document.getElementById('gate-login-email').value, document.getElementById('gate-login-pass').value);" class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Електронна пошта:</label>
+            <input type="email" id="gate-login-email" required placeholder="student@ucu.edu.ua" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Пароль:</label>
+            <input type="password" id="gate-login-pass" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
+          <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow-lg shadow-indigo-600/20">
+            Увійти та продовжити навчання ➔
+          </button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="auth-gate-register-form" onsubmit="event.preventDefault(); window.userProfile?.register(document.getElementById('gate-reg-name').value, document.getElementById('gate-reg-email').value, document.getElementById('gate-reg-pass').value);" class="space-y-3 hidden">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Ваше ім'я та прізвище:</label>
+            <input type="text" id="gate-reg-name" required placeholder="Ігор (UCU Student)" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Електронна пошта:</label>
+            <input type="email" id="gate-reg-email" required placeholder="student@ucu.edu.ua" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Створіть пароль:</label>
+            <input type="password" id="gate-reg-pass" required placeholder="Мінімум 4 символи" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
+          <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow-lg shadow-emerald-600/20">
+            Зареєструватись та зберегти профіль ➔
+          </button>
+        </form>
+
+        <!-- Guest / Quick Access -->
+        <div class="mt-4 pt-3 border-t border-slate-800/80 text-center">
+          <button type="button" onclick="window.userProfile?.loginAsGuest();" class="text-xs text-slate-400 hover:text-indigo-300 font-semibold underline">
+            🚀 Швидкий старт як гість (Ihor UCU Guest)
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= USER PROFILE, GOOGLE AUTH & WARDROBE MODAL ================= -->
+  <div id="user-profile-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-3xl w-full p-6 shadow-2xl overflow-y-auto max-h-[92vh]">
+      
+      <!-- Modal Header -->
+      <div class="flex justify-between items-start mb-6 border-b border-slate-800 pb-4">
+        <div>
+          <span class="text-xs uppercase font-extrabold text-indigo-400">Student Profile & Wardrobe</span>
+          <h3 class="text-2xl font-black text-slate-100 mt-1">Google Account, Avatar & Clothes</h3>
+        </div>
+        <button id="close-profile-modal-btn" class="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 text-sm">✕</button>
+      </div>
+
+      <!-- Grid: Left side Profile & Google Sign-In, Right side Avatar Preview & Wardrobe -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        
+        <!-- Left: Google Auth & Name/Photo Edit -->
+        <div class="space-y-4">
+          
+          <!-- Google Sign-In Container -->
+          <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800">
+            <div class="text-xs font-bold text-slate-300 mb-2">⚡ Quick Sign-In with Google:</div>
+            <div id="google-account-status" class="mb-2"></div>
+            <div id="google-signin-btn-container" class="my-2 flex justify-center">
+              <!-- Rendered by Google GSI Client -->
+            </div>
+            <p class="text-[11px] text-slate-400 mt-2">Syncs your name, profile photo, and study statistics across devices.</p>
+          </div>
+
+          <!-- Custom Name -->
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1">Display Name:</label>
+            <div class="flex gap-2">
+              <input type="text" id="profile-name-input" placeholder="Your name or nickname..." class="flex-1 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 font-semibold">
+              <button id="profile-save-name-btn" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition">
+                Save
+              </button>
+            </div>
+          </div>
+
+          <!-- Custom Photo Upload -->
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1">Custom Photo Upload:</label>
+            <input type="file" id="profile-photo-upload" accept="image/*" class="block w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer">
+            <p class="text-[10px] text-slate-400 mt-1">Upload JPEG, PNG or SVG photo to customize your avatar badge.</p>
+          </div>
+
+          <!-- Study Time Controller -->
+          <div class="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
+            <span class="text-slate-400">Live Study Timer:</span>
+            <button id="profile-reset-timer-btn" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-rose-950/80 border border-slate-700 hover:border-rose-800 text-slate-300 hover:text-rose-200 text-[11px] font-semibold transition">
+              🔄 Reset Timer to 0:00
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Right: Live Avatar Preview -->
+        <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-col items-center justify-center text-center">
+          <div class="text-xs uppercase font-bold text-indigo-400 mb-2">Live Equipped Avatar</div>
+          <div id="modal-avatar-preview" class="w-28 h-32 flex items-center justify-center">
+            <!-- Rendered SVG avatar with clothes -->
+          </div>
+          <div class="text-xs text-slate-300 font-semibold mt-2">
+            Equip clothes below to change your avatar!
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Wardrobe Items Catalog -->
+      <div>
+        <div class="flex items-center justify-between mb-3 border-t border-slate-800 pt-4">
+          <h4 class="font-extrabold text-base text-slate-100">Unlockable Wardrobe & Outfits</h4>
+          <span class="text-xs text-slate-400">Requires Readiness % Thresholds</span>
+        </div>
+
+        <div id="wardrobe-items-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <!-- Dynamically populated by user.js with lock/unlock states -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= GEMINI AI MENTOR DRAWER ================= -->
+  <aside id="gemini-drawer" class="fixed inset-y-0 right-0 w-full sm:w-[460px] bg-slate-900 border-l border-slate-800 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+    <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <h3 class="font-bold text-sm text-slate-100">Gemini P&S Mentor</h3>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="drawer-api-key-btn" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-bold text-amber-300 border border-slate-700 flex items-center gap-1 transition" title="Налаштувати Gemini API ключ">
+          🔑 <span id="gemini-key-status-label">API Key</span>
+        </button>
+        <button id="gemini-close-drawer-btn" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-xs">
+          ✕ Close
+        </button>
+      </div>
+    </div>
+
+    <!-- Message History -->
+    <div id="gemini-chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3 flex flex-col text-xs">
+      <div class="p-3 rounded-xl bg-slate-800/80 text-slate-200 self-start max-w-[85%] border border-slate-700/80 leading-relaxed">
+        👋 Привіт! I am your <strong>Gemini P&S Mentor</strong> for Midterm 2 and Colloquium 2. Ask me any definition, request a hint for a seminar problem, or let me evaluate your oral exam proof!
+      </div>
+    </div>
+
+    <!-- Quick Prompt Chips -->
+    <div class="px-4 py-2 border-t border-slate-800/80 bg-slate-950/50 flex gap-2 overflow-x-auto text-[11px] scrollbar-none">
+      <button onclick="document.getElementById('gemini-chat-input').value = 'Test me on Oral Question 3 (Joint & Conditional distributions)'; document.getElementById('gemini-chat-send-btn').click();" class="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 whitespace-nowrap">
+        🎯 Test Q3
+      </button>
+      <button onclick="document.getElementById('gemini-chat-input').value = 'Explain why Cov(X,Y)=0 does not mean independent with an example'; document.getElementById('gemini-chat-send-btn').click();" class="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 whitespace-nowrap">
+        💡 Cov=0 counterexample
+      </button>
+      <button onclick="document.getElementById('gemini-chat-input').value = 'How do I prove the memoryless property of the Exponential distribution?'; document.getElementById('gemini-chat-send-btn').click();" class="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 whitespace-nowrap">
+        ⏳ Memoryless proof
+      </button>
+    </div>
+
+    <!-- Input Bar -->
+    <div class="p-3 border-t border-slate-800 bg-slate-950 flex gap-2">
+      <input id="gemini-chat-input" type="text" placeholder="Ask about formulas, proofs, or definitions..." class="flex-1 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+      <button id="gemini-chat-send-btn" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition">
+        Send
+      </button>
+    </div>
+  </aside>
+
+  <!-- ================= ORAL DEFENSE SIMULATOR MODAL ================= -->
+  <div id="oral-simulator-modal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+      <div class="flex justify-between items-start mb-4 border-b border-slate-800 pb-3">
+        <div>
+          <span class="text-xs uppercase font-bold text-amber-400">Oral Exam Defense Simulation</span>
+          <h3 id="modal-oral-title" class="text-lg font-bold text-slate-100 mt-1">Colloquium Question</h3>
+        </div>
+        <button id="modal-oral-close-btn" class="text-slate-400 hover:text-white p-1 text-sm">✕</button>
+      </div>
+
+      <div class="mb-4">
+        <div class="text-xs font-semibold text-slate-400 mb-1">Expected Points & Criteria:</div>
+        <div id="modal-oral-rubric" class="p-3 rounded-lg bg-slate-950 text-xs text-slate-300 whitespace-pre-line border border-slate-800 font-mono"></div>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-xs font-bold text-slate-200 mb-1">Your Spoken / Written Presentation:</label>
+        <textarea id="modal-oral-student-answer" rows="5" placeholder="State the formal definition, measurability, axioms, key properties, and an illustrative example..." class="w-full p-3 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"></textarea>
+      </div>
+
+      <div id="modal-oral-feedback-box" class="hidden mb-4 p-4 rounded-xl bg-slate-950 border border-indigo-900 text-xs text-slate-200 leading-relaxed whitespace-pre-line">
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button id="modal-oral-submit-btn" class="px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition">
+          🚀 Submit to Gemini for Grading (0–10)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= GEMINI SETTINGS MODAL ================= -->
+  <div id="gemini-settings-modal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl">
+      <div class="flex justify-between items-start mb-4 border-b border-slate-800 pb-3">
+        <div>
+          <span class="text-xs uppercase font-bold text-indigo-400">Configuration</span>
+          <h3 class="text-lg font-bold text-slate-100 mt-0.5">Gemini AI Model & API Settings</h3>
+        </div>
+        <button id="close-gemini-settings-btn" class="text-slate-400 hover:text-white p-1 text-sm">✕</button>
+      </div>
+
+      <div class="space-y-4 mb-5">
+        <div class="p-3.5 rounded-xl bg-indigo-950/40 border border-indigo-800 text-xs text-indigo-200 leading-relaxed">
+          <div class="font-bold flex items-center gap-1.5 mb-1">
+            <span>🔑</span> <span>Як отримати безкоштовний Gemini API ключ:</span>
+          </div>
+          <ol class="list-decimal list-inside space-y-1 text-[11px] text-slate-300">
+            <li>Перейдіть на <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="text-indigo-400 font-bold underline hover:text-indigo-300">Google AI Studio (aistudio.google.com) ↗</a></li>
+            <li>Натисніть <strong>Create API Key</strong></li>
+            <li>Скопіюйте ключ і вставте в поле нижче</li>
+          </ol>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Gemini API Key:</label>
+          <div class="relative">
+            <input id="settings-api-key-input" type="password" placeholder="Вставте ваш Gemini API ключ..." class="w-full px-3 py-2 pr-16 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-100 font-mono focus:outline-none focus:border-indigo-500">
+            <button id="toggle-key-visibility-btn" class="absolute right-2 top-2 text-[11px] font-semibold text-indigo-400 hover:text-indigo-300">Show</button>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Зберігається в браузері та автоматично синхронізується з вашим акаунтом.</p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Модель нейромережі:</label>
+          <select id="settings-model-select" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+            <option value="gemini-3.8-flash" selected>gemini-3.8-flash (🔥 Gemini 3.8 - За замовчуванням)</option>
+            <option value="gemini-3.5-flash">gemini-3.5-flash (Gemini 3.5)</option>
+            <option value="gemini-2.5-flash">gemini-2.5-flash (Gemini 2.5)</option>
+            <option value="gemini-flash-latest">gemini-flash-latest</option>
+          </select>
+        </div>
+
+        <div id="settings-test-status" class="hidden p-3 rounded-xl text-xs font-medium"></div>
+      </div>
+
+      <div class="flex justify-between items-center pt-3 border-t border-slate-800">
+        <button id="settings-test-connection-btn" class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition">
+          ⚡ Test Connection
+        </button>
+        <div class="flex gap-2">
+          <button id="settings-clear-key-btn" class="px-3 py-2 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 text-xs font-semibold transition">
+            Clear Key
+          </button>
+          <button id="settings-save-btn" class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition">
+            Save & Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/user.js"></script>
+  <script src="js/gemini.js"></script>
+  <script src="js/pomodoro.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

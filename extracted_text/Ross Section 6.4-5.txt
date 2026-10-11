@@ -1,0 +1,784 @@
+Section 6.4
+
+Conditional Distributions: Discrete Case
+
+263
+
+Now, using that
+1 +
+
+qn
+pn − pi + qn
+qi
+=
+=
+pn − pi
+pn − pi
+pn − pi
+
+the preceding gives
+P{Sn = k} =
+=
+
+n−1
+
+i=1
+n
+
+
+pi qk−1
+i
+
+
+iZj…n
+
+pi qk−1
+i
+
+
+jZi
+
+i=1
+
+
+pj
+pj
++ pn qk−1
+n
+pj − pi
+pj − pn
+j<n
+
+pj
+pj − pi
+.
+
+and the proof by induction is complete.
+6.4
+
+CONDITIONAL DISTRIBUTIONS: DISCRETE CASE
+Recall that, for any two events E and F, the conditional probability of E given F is
+deﬁned, provided that P(F) > 0, by
+P(E|F) =
+
+P(EF)
+P(F)
+
+Hence, if X and Y are discrete random variables, it is natural to deﬁne the conditional
+probability mass function of X given that Y = y, by
+pX|Y (x|y) = P{X = x|Y = y}
+P{X = x, Y = y}
+=
+P{Y = y}
+p(x, y)
+=
+pY (y)
+for all values of y such that pY (y) > 0. Similarly, the conditional probability distribution function of X given that Y = y is deﬁned, for all y such that pY (y) > 0, by
+FX|Y (x|y) = P{X … x|Y = y}
+
+=
+pX|Y (a|y)
+a…x
+
+In other words, the deﬁnitions are exactly the same as in the unconditional case,
+except that everything is now conditional on the event that Y = y. If X is independent of Y, then the conditional mass function and the distribution function are the
+same as the respective unconditional ones. This follows because if X is independent
+of Y, then
+pX|Y (x|y) = P{X = x|Y = y}
+P{X = x, Y = y}
+=
+P{Y = y}
+P{X = x}P{Y = y}
+=
+P{Y = y}
+= P{X = x}
+
+264
+
+Chapter 6
+
+Jointly Distributed Random Variables
+
+EXAMPLE 4a
+Suppose that p(x, y), the joint probability mass function of X and Y, is given by
+p(0, 0) = .4 p(0, 1) = .2 p(1, 0) = .1 p(1, 1) = .3
+Calculate the conditional probability mass function of X given that Y = 1.
+Solution. We ﬁrst note that
+pY (1) =
+
+
+
+p(x, 1) = p(0, 1) + p(1, 1) = .5
+
+x
+
+Hence,
+pX|Y (0|1) =
+
+2
+p(0, 1)
+=
+pY (1)
+5
+
+pX|Y (1|1) =
+
+3
+p(1, 1)
+=
+pY (1)
+5
+
+and
+.
+
+EXAMPLE 4b
+If X and Y are independent Poisson random variables with respective parameters λ1
+and λ2 , calculate the conditional distribution of X given that X + Y = n.
+Solution. We calculate the conditional probability mass function of X given that X +
+Y = n as follows:
+P{X = k, X + Y = n}
+P{X + Y = n}
+P{X = k, Y = n − k}
+=
+P{X + Y = n}
+P{X = k}P{Y = n − k}
+=
+P{X + Y = n}
+
+P{X = k|X + Y = n} =
+
+where the last equality follows from the assumed independence of X and Y. Recalling
+(Example 3e) that X + Y has a Poisson distribution with parameter λ1 + λ2 , we see
+that the preceding equals
+e−λ1 λk1 e−λ2 λn−k
+2
+P{X = k|X + Y = n} =
+k! (n − k)!
+
+
+
+e−(λ1 +λ2 ) (λ1 + λ2 )n
+n!
+
+−1
+
+λk1 λn−k
+n!
+2
+(n − k)! k! (λ1 + λ2 )n
+ 
+k 
+n−k
+λ1
+λ2
+n
+=
+k
+λ 1 + λ2
+λ1 + λ2
+=
+
+In other words, the conditional distribution of X given that X + Y = n is the binomial
+distribution with parameters n and λ1 /(λ1 + λ2 ).
+.
+We can also talk about joint conditional distributions, as is indicated in the next
+two examples.
+
+Section 6.4
+
+Conditional Distributions: Discrete Case
+
+265
+
+EXAMPLE 4c
+Consider the multinomial distribution with joint probability mass function
+P{Xi = ni , i = 1, . . . , k} =
+
+n!
+n
+n
+p 1 · · · pkk ,
+n1 ! · · · nk ! 1
+
+ni Ú 0,
+
+k
+
+
+ni = n
+
+i=1
+
+Such a mass function results when n independent trials are performed, with each
+trial resulting in outcome i with probability pi , ki=1 pi = 1. The random variables
+Xi , i = 1, . . . , k, represent, respectively, the number of trials that result in outcome i,
+i = 1, . . . , k. Suppose we are given that nj of the trials resulted in outcome j, for j =
+r + 1, . . . , k, where kj=r+1 nj = m … n. Then, because each of the other n − m trials
+must have resulted in one of the trials 1, . . . , r, it would seem that the conditional distribution of X1 , . . . , Xr is the multinomial distribution on n − m trials with respective
+trial outcome probabilities
+P{outcome i|outcome is not any of r + 1, . . . , k} =
+where Fr =
+1, . . . , r.
+
+pi
+, i = 1, . . . , r
+Fr
+
+r
+i=1 pi is the probability that a trial results in one of the outcomes
+
+Solution. To verify this intuition, let n1 , . . . , nr , be such that
+
+r
+i=1 ni = n − m. Then
+
+P{X1 = n1 , . . . , Xr = nr |Xr+1 = nr+1 , . . . Xk = nk }
+=
+
+P{X1 = n1 , . . . , Xk = nk }
+P{Xr+1 = nr+1 , . . . Xk = nk }
+
+nk
+n1
+nr nr+1
+n!
+n1 !···nk ! p1 · · · pr pr+1 · · · pk
+=
+n
+n−m nr+1
+n!
+pr+1 · · · pkk
+(n−m)!nr+1 !···nk ! Fr
+
+where the probability in the denominator was obtained by regarding outcomes 1, . . . , r
+as a single outcome having probability Fr , thus showing that the probability is a multinomial probability on n trials with outcome probabilities Fr , pr+1 , . . . , pk . Because
+r
+i=1 ni = n − m, the preceding can be written as
+P{X1 = n1 , . . . , Xr = nr |Xr+1 = nr+1 , . . . Xk = nk }
+=
+and our intuition is upheld.
+
+pr
+(n − m)! p1 n1
+( ) · · · ( )nr
+n1 ! · · · nr ! Fr
+Fr
+.
+
+EXAMPLE 4d
+Consider n independent trials, with each trial being a success with probability p.
+Given a total of k successes, show that all possible orderings of the k successes and
+n − k failures are equally likely.
+ 
+Solution. We want to show that, given a total of k successes, each of the nk possible
+orderings of k successes and n − k failures is equally likely. Let X denote the number
+of successes, and consider any ordering of k successes and n − k failures, say, o =
+(s, s, f , f , . . . , f ). Then
+
+266
+
+Chapter 6
+
+Jointly Distributed Random Variables
+
+P(o, X = k)
+P(X = k)
+P(o)
+=
+P(X = k)
+pk (1 − p)n−k
+= n k
+n−k
+k p (1 − p)
+1
+= n
+
+P(o|X = k) =
+
+k
+
+6.5
+
+.
+
+CONDITIONAL DISTRIBUTIONS: CONTINUOUS CASE
+If X and Y have a joint probability density function f (x, y), then the conditional probability density function of X given that Y = y is deﬁned, for all values of y such that
+fY (y) > 0, by
+f (x, y)
+fX|Y (x|y) =
+fY (y)
+To motivate this deﬁnition, multiply the left-hand side by dx and the right-hand side
+by (dx dy)/dy to obtain
+f (x, y) dx dy
+fY (y) dy
+P{x … X … x + dx, y … Y … y + dy}
+L
+P{y … Y … y + dy}
+= P{x … X … x + dx|y … Y … y + dy}
+
+fX|Y (x|y) dx =
+
+In other words, for small values of dx and dy, fX|Y (x|y)dx represents the conditional
+probability that X is between x and x + dx given that Y is between y and y + dy.
+The use of conditional densities allows us to deﬁne conditional probabilities of
+events associated with one random variable when we are given the value of a second
+random variable. That is, if X and Y are jointly continuous, then, for any set A,
+*
+P{X ∈ A|Y = y} =
+fX|Y (x|y) dx
+A
+
+In particular, by letting A = (−q, a], we can deﬁne the conditional cumulative distribution function of X given that Y = y by
+* a
+fX|Y (x|y) dx
+FX|Y (a|y) K P{X … a|Y = y} =
+−q
+
+The reader should note that, by using the ideas presented in the preceding discussion,
+we have been able to give workable expressions for conditional probabilities, even
+though the event on which we are conditioning (namely, the event {Y = y}) has
+probability 0.
+EXAMPLE 5a
+The joint density of X and Y is given by
+0
+12
+5 x(2 − x − y)
+f (x, y) =
+0
+
+0 < x < 1, 0 < y < 1
+otherwise
+
+Compute the conditional density of X given that Y = y, where 0 < y < 1.
+
+Section 6.5
+
+Conditional Distributions: Continuous Case
+
+267
+
+Solution. For 0 < x < 1, 0 < y < 1, we have
+f (x, y)
+fY (y)
+f (x, y)
+= -q
+−q f (x, y) dx
+x(2 − x − y)
+= -1
+0 x(2 − x − y) dx
+x(2 − x − y)
+=
+2
+3 − y/2
+6x(2 − x − y)
+=
+4 − 3y
+
+fX|Y (x|y) =
+
+.
+
+EXAMPLE 5b
+Suppose that the joint density of X and Y is given by
+⎧
+−x/y e−y
+⎪
+⎨e
+0 < x < q, 0 < y < q
+f (x, y) =
+y
+⎪
+⎩0
+otherwise
+Find P{X > 1|Y = y}.
+Solution. We ﬁrst obtain the conditional density of X given that Y = y.
+f (x, y)
+fY (y)
+e−x/y e−y /y
+= −y - q
+−x/y dx
+e
+0 (1/y)e
+1
+= e−x/y
+y
+
+fX|Y (x|y) =
+
+Hence,
+
+* q
+
+1 −x/y
+e
+dx
+1 y
+6q
+6
+= −e−x/y 6
+
+P{X > 1|Y = y} =
+
+−1/y
+
+1
+
+=e
+
+.
+
+If X and Y are independent continuous random variables, the conditional density
+of X given that Y = y is just the unconditional density of X. This is so because, in the
+independent case,
+fX|Y (x|y) =
+
+fX (x)fY (y)
+f (x, y)
+=
+= fX (x)
+fY (y)
+fY (y)
+
+We can also talk about conditional distributions when the random variables are neither jointly continuous nor jointly discrete. For example, suppose that X is a continuous random variable having probability density function f and N is a discrete random
+variable, and consider the conditional distribution of X given that N = n. Then
+
+268
+
+Chapter 6
+
+Jointly Distributed Random Variables
+
+P{x < X < x + dx|N = n}
+dx
+P{N = n|x < X < x + dx} P{x < X < x + dx}
+=
+P{N = n}
+dx
+and letting dx approach 0 gives
+lim
+dx→0
+
+P{N = n|X = x}
+P{x < X < x + dx|N = n}
+=
+f (x)
+dx
+P{N = n}
+
+thus showing that the conditional density of X given that N = n is given by
+fX|N (x|n) =
+
+P{N = n|X = x}
+f (x)
+P{N = n}
+
+EXAMPLE 5c The Bivariate Normal Distribution
+One of the most important joint distributions is the bivariate normal distribution.
+We say that the random variables X, Y have a bivariate normal distribution if, for
+constants μx , μy , σx > 0, σy > 0, −1 < ρ < 1, their joint density function is given,
+for all −q < x, y < q, by
+⎧
+
+
+⎨
+1
+1
+x − μx 2
+.
+exp −
+f (x, y) =
+⎩ 2(1 − ρ 2 )
+σx
+2πσx σy 1 − ρ 2
+⎤⎫
+
+2
+⎪
+y − μy
+(x − μx )(y − μy ) ⎬
+⎦
++
+− 2ρ
+⎪
+σy
+σx σy
+⎭
+We now determine the conditional density of X given that Y = y. In doing so, we
+will continually collect all factors that do not depend on x and represent
+them by the
+-q
+constants Ci . The ﬁnal constant will then be found by using that −q fX|Y (x|y) dx = 1.
+We have
+f (x, y)
+fX|Y (x|y) =
+fY (y)
+= C1 f (x, y)
+⎧
+⎫
+
+2
+⎨
+x(y − μy ) ⎬
+1
+x − μx
+= C2 exp −
+−
+2ρ
+⎭
+⎩ 2(1 − ρ 2 )
+σx
+σx σy
+⎧
+⎫
+⎡
+
+⎤⎪
+⎪
+⎨
+⎬
+1
+⎣x2 − 2x μx + ρ σx (y − μy ) ⎦
+= C3 exp − 2
+2
+⎪
+⎪
+σy
+⎩ 2σx (1 − ρ )
+⎭
+⎫
+⎧
+⎡
+⎤2 ⎪
+
+⎪
+⎬
+⎨
+1
+⎣x − μx + ρ σx (y − μy ) ⎦
+= C4 exp − 2
+2
+⎪
+⎪
+σy
+⎭
+⎩ 2σx (1 − ρ )
+Recognizing the preceding equation as a normal density, we can conclude that, given
+Y = y, the random variable X is normally distributed with mean μx + ρ σσxy (y − μy )
+
+and variance σx2 (1 − ρ 2 ). Also, because the joint density of Y, X is exactly the same as
+that of X, Y, except that μx , σx are interchanged with μy , σy , it similarly follows that
+
+Section 6.5
+
+Conditional Distributions: Continuous Case
+
+269
+
+the conditional distribution of Y given X = x is the normal distribution with mean
+σ
+μy + ρ σyx (x − μx ) and variance σy2 (1 − ρ 2 ). It follows from these results that the
+necessary and sufﬁcient condition for the bivariate normal random variables X and
+Y to be independent is that ρ = 0 (a result that also follows directly from their joint
+density, because it is only when ρ = 0 that the joint density factors into two terms,
+one depending only on x and the other only on y).
+1√
+With C =
+, the marginal density of X can be obtained from
+2
+2πσx σy
+
+fX (x) =
+
+1−ρ
+
+* q
+
+f (x, y) dy
+⎧
+⎡
+2
+
+⎪
+2
+
+* q
+⎨
+y − μy
+1
+x
+−
+μ
+x
+⎣
+=C
+exp −
++
+2
+⎪
+σx
+σy
+−q
+⎩ 2(1 − ρ )
+⎫
+(x − μx )(y − μy ) ⎬
+dy
+−2ρ
+⎭
+σx σy
+−q
+
+Making the change of variables w =
+
+y−μy
+σy gives
+
+0
+
+ 7
+
+1
+x − μx 2
+fX (x) = Cσy exp −
+σx
+2(1 − ρ 2 )
+0
+7
+
+* q
+1
+x − μx
+2
+exp −
+w
+dw
+*
+w − 2ρ
+σx
+2(1 − ρ 2 )
+−q
+0
+7
+
+
+x − μx 2
+1
+(1 − ρ 2 )
+= Cσy exp −
+σx
+2(1 − ρ 2 )
+0
+ 7
+
+* q
+1
+x − μx 2
+*
+exp −
+dw
+w − ρ
+σx
+2(1 − ρ 2 )
+−q
+Because
+
+2 7
+
+1
+ρ
+.
+dw = 1
+exp −
+(x − μx )
+w −
+σx
+2(1 − ρ 2 )
+2π(1 − ρ 2 ) −q
+1
+
+we see that
+
+* q
+
+0
+
+8
+2
+2
+fX (x) = Cσy 2π(1 − ρ 2 ) e−(x−μx ) /2σx
+1
+2
+2
+=√
+e−(x−μx ) /2σx
+2π σx
+
+That is, X is normal with mean μx and variance σx2 . Similarly, Y is normal with
+mean μy and variance σy2 .
+.
+EXAMPLE 5d
+Consider n + m trials having a common probability of success. Suppose, however,
+that this success probability is not ﬁxed in advance but is chosen from a uniform (0, 1)
+
+270
+
+Chapter 6
+
+Jointly Distributed Random Variables
+
+population. What is the conditional distribution of the success probability given that
+the n + m trials result in n successes?
+Solution. If we let X denote the probability that a given trial is a success, then X
+is a uniform (0, 1) random variable. Also, given that X = x, the n + m trials are
+independent with common probability of success x, so N, the number of successes,
+is a binomial random variable with parameters (n + m, x). Hence, the conditional
+density of X given that N = n is
+fX|N (x|n) =
+
+=
+
+P{N = n|X = x}fX (x)
+P{N = n}
+
+
+n + m
+xn (1 − x)m
+n
+
+P{N = n}
+n
+= cx (1 − x)m
+
+0 < x < 1
+
+where c does not depend on x. Thus, the conditional density is that of a beta random
+variable with parameters n + 1, m + 1.
+The preceding result is quite interesting, for it states that if the original or prior
+(to the collection of data) distribution of a trial success probability is uniformly distributed over (0, 1) [or, equivalently, is beta with parameters (1, 1)] then the posterior
+(or conditional) distribution given a total of n successes in n + m trials is beta with
+parameters (1 + n, 1 + m). This is valuable, for it enhances our intuition as to what
+it means to assume that a random variable has a beta distribution.
+.
+∗ 6.6
+
+ORDER STATISTICS
+Let X1 , X2 , . . . , Xn be n independent and identically distributed continuous random
+variables having a common density f and distribution function F. Deﬁne
+X(1) = smallest of X1 , X2 , . . . , Xn
+X(2) = second smallest of X1 , X2 , . . . , Xn
+#
+#
+#
+X(j) = jth smallest of X1 , X2 , . . . , Xn
+#
+#
+#
+X(n) = largest of X1 , X2 , . . . , Xn
+The ordered values X(1) … X(2) … · · · … X(n) are known as the order statistics corresponding to the random variables X1 , X2 , . . . , Xn . In other words, X(1) , . . . , X(n) are
+the ordered values of X1 , . . . , Xn .
+The joint density function of the order statistics is obtained by noting that the order
+statistics X(1) , . . . , X(n) will take on the values x1 … x2 … · · · … xn if and only if, for
+some permutation (i1 , i2 , . . . , in ) of (1, 2, . . . , n),
+X1 = xi1 , X2 = xi2 , . . . , Xn = xin
+
+
