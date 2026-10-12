@@ -229,6 +229,18 @@ class UserProfileManager {
     this.initTabTimeTracker();
     this.initGoogleAuth();
     this.syncWithServer();
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        this.initExamScheduleControls();
+        this.renderExamScheduleAndGrades();
+      });
+    } else {
+      setTimeout(() => {
+        this.initExamScheduleControls();
+        this.renderExamScheduleAndGrades();
+      }, 50);
+    }
   }
 
   createDefaultProfile(email = '', name = 'UCU Student') {
@@ -249,6 +261,14 @@ class UserProfileManager {
         quizzes: 0,
         topics: 0,
         formulas: 0
+      },
+      examSchedule: {
+        colloquiumDate: '2026-10-14T09:00',
+        midtermDate: '2026-10-16T08:30'
+      },
+      examGrades: {
+        colloquium: { grade: '', notes: '', updatedAt: null },
+        midterm: { grade: '', notes: '', updatedAt: null }
       },
       mistakesHistory: {},
       readinessState: null,
@@ -427,6 +447,19 @@ class UserProfileManager {
 
     // Preserve Gemini API Key if available in either
     merged.geminiApiKey = local.geminiApiKey || cloud.geminiApiKey || '';
+
+    // Merge examSchedule
+    merged.examSchedule = Object.assign(
+      { colloquiumDate: '2026-10-14T09:00', midtermDate: '2026-10-16T08:30' },
+      local.examSchedule || {},
+      cloud.examSchedule || {}
+    );
+
+    // Merge examGrades
+    merged.examGrades = {
+      colloquium: Object.assign({}, local.examGrades?.colloquium || {}, cloud.examGrades?.colloquium || {}),
+      midterm: Object.assign({}, local.examGrades?.midterm || {}, cloud.examGrades?.midterm || {})
+    };
 
     return merged;
   }
@@ -1086,6 +1119,7 @@ class UserProfileManager {
     this.renderMistakesAnalytics();
     this.renderAvatar();
     this.renderWardrobeList();
+    this.renderExamScheduleAndGrades();
     this.updateCloudStatusUI('synced');
 
     // Google Account status in profile modal
@@ -1215,6 +1249,301 @@ class UserProfileManager {
       return JSON.parse(jsonPayload);
     } catch (e) {
       return null;
+    }
+  }
+
+  // --- EXAM SCHEDULE & GRADES ENGINE ---
+  getExamSchedule() {
+    if (this.profile?.examSchedule?.colloquiumDate) {
+      return this.profile.examSchedule;
+    }
+    try {
+      const raw = localStorage.getItem('stathustle_exam_schedule');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.colloquiumDate) {
+          if (this.profile) this.profile.examSchedule = parsed;
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    const def = {
+      colloquiumDate: '2026-10-14T09:00',
+      midtermDate: '2026-10-16T08:30'
+    };
+    if (this.profile) this.profile.examSchedule = def;
+    return def;
+  }
+
+  saveExamSchedule(colloquiumDate, midtermDate) {
+    if (!this.profile) this.profile = this.createDefaultProfile();
+    if (!this.profile.examSchedule) this.profile.examSchedule = {};
+    if (colloquiumDate) this.profile.examSchedule.colloquiumDate = colloquiumDate;
+    if (midtermDate) this.profile.examSchedule.midtermDate = midtermDate;
+
+    try {
+      localStorage.setItem('stathustle_exam_schedule', JSON.stringify(this.profile.examSchedule));
+    } catch (e) {}
+    this.saveProfile();
+    this.renderExamScheduleAndGrades();
+    if (window.app?.setupCountdowns) {
+      window.app.setupCountdowns();
+    }
+  }
+
+  getExamGrades() {
+    if (this.profile?.examGrades) {
+      return this.profile.examGrades;
+    }
+    try {
+      const raw = localStorage.getItem('stathustle_exam_grades');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed) {
+          if (this.profile) this.profile.examGrades = parsed;
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    const def = {
+      colloquium: { grade: '', notes: '', updatedAt: null },
+      midterm: { grade: '', notes: '', updatedAt: null }
+    };
+    if (this.profile) this.profile.examGrades = def;
+    return def;
+  }
+
+  saveExamGrade(type, grade, notes = '') {
+    if (!this.profile) this.profile = this.createDefaultProfile();
+    if (!this.profile.examGrades) {
+      this.profile.examGrades = {
+        colloquium: { grade: '', notes: '', updatedAt: null },
+        midterm: { grade: '', notes: '', updatedAt: null }
+      };
+    }
+    this.profile.examGrades[type] = {
+      grade: (grade || '').trim(),
+      notes: (notes || '').trim(),
+      updatedAt: Date.now()
+    };
+
+    try {
+      localStorage.setItem('stathustle_exam_grades', JSON.stringify(this.profile.examGrades));
+    } catch (e) {}
+    this.saveProfile();
+    this.renderExamScheduleAndGrades();
+    if (window.app?.setupCountdowns) {
+      window.app.setupCountdowns();
+    }
+  }
+
+  renderExamScheduleAndGrades() {
+    const schedule = this.getExamSchedule();
+    const grades = this.getExamGrades();
+
+    // 1. Populate Colloquium Date Picker
+    const colInput = document.getElementById('colloquium-datetime-input');
+    if (colInput && schedule.colloquiumDate) {
+      colInput.value = schedule.colloquiumDate;
+    }
+
+    // 2. Populate Midterm Date Picker
+    const midInput = document.getElementById('midterm-datetime-input');
+    if (midInput && schedule.midtermDate) {
+      midInput.value = schedule.midtermDate;
+    }
+
+    // 3. Render Colloquium Grade
+    const colGradeForm = document.getElementById('colloquium-grade-form');
+    const colGradeDisplay = document.getElementById('colloquium-grade-display');
+    const colStatusBadge = document.getElementById('colloquium-status-badge');
+    const colDateLabel = document.getElementById('colloquium-grade-saved-date');
+
+    const colG = grades.colloquium;
+    if (colG && colG.grade) {
+      if (colGradeForm) colGradeForm.classList.add('hidden');
+      if (colGradeDisplay) {
+        colGradeDisplay.classList.remove('hidden');
+        const badgeVal = document.getElementById('colloquium-grade-badge-val');
+        const notesVal = document.getElementById('colloquium-grade-notes-val');
+        if (badgeVal) badgeVal.textContent = colG.grade;
+        if (notesVal) notesVal.textContent = colG.notes || 'Без додаткового коментаря';
+      }
+      if (colStatusBadge) {
+        colStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-700 shrink-0';
+        colStatusBadge.textContent = `✅ Складено: ${colG.grade}`;
+      }
+      if (colDateLabel && colG.updatedAt) {
+        const d = new Date(colG.updatedAt);
+        colDateLabel.textContent = `Збережено: ${d.toLocaleDateString('uk-UA')} ${d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}`;
+      }
+    } else {
+      if (colGradeDisplay) colGradeDisplay.classList.add('hidden');
+      if (colGradeForm) colGradeForm.classList.remove('hidden');
+      if (colStatusBadge) {
+        colStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-950 text-amber-300 border border-amber-800 shrink-0';
+        colStatusBadge.textContent = '⚡ Очікується';
+      }
+      if (colDateLabel) colDateLabel.textContent = '';
+    }
+
+    // 4. Render Midterm Grade
+    const midGradeForm = document.getElementById('midterm-grade-form');
+    const midGradeDisplay = document.getElementById('midterm-grade-display');
+    const midStatusBadge = document.getElementById('midterm-status-badge');
+    const midDateLabel = document.getElementById('midterm-grade-saved-date');
+
+    const midG = grades.midterm;
+    if (midG && midG.grade) {
+      if (midGradeForm) midGradeForm.classList.add('hidden');
+      if (midGradeDisplay) {
+        midGradeDisplay.classList.remove('hidden');
+        const badgeVal = document.getElementById('midterm-grade-badge-val');
+        const notesVal = document.getElementById('midterm-grade-notes-val');
+        if (badgeVal) badgeVal.textContent = midG.grade;
+        if (notesVal) notesVal.textContent = midG.notes || 'Без додаткового коментаря';
+      }
+      if (midStatusBadge) {
+        midStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-700 shrink-0';
+        midStatusBadge.textContent = `🏆 Оцінка: ${midG.grade}`;
+      }
+      if (midDateLabel && midG.updatedAt) {
+        const d = new Date(midG.updatedAt);
+        midDateLabel.textContent = `Збережено: ${d.toLocaleDateString('uk-UA')} ${d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}`;
+      }
+    } else {
+      if (midGradeDisplay) midGradeDisplay.classList.add('hidden');
+      if (midGradeForm) midGradeForm.classList.remove('hidden');
+      if (midStatusBadge) {
+        midStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-950 text-indigo-300 border border-indigo-800 shrink-0';
+        midStatusBadge.textContent = '🔥 Пт, 08:30 Київ';
+      }
+      if (midDateLabel) midDateLabel.textContent = '';
+    }
+  }
+
+  initExamScheduleControls() {
+    if (this._examControlsBound) return;
+    this._examControlsBound = true;
+
+    // Colloquium save time
+    document.getElementById('save-colloquium-datetime-btn')?.addEventListener('click', () => {
+      const input = document.getElementById('colloquium-datetime-input');
+      if (!input || !input.value) {
+        alert('Будь ласка, оберіть дату та час для колоквіуму!');
+        return;
+      }
+      this.saveExamSchedule(input.value, null);
+      alert(`✅ Час колоквіуму успішно збережено: ${input.value.replace('T', ' ')}! Таймер оновлено.`);
+    });
+
+    // Midterm save time
+    document.getElementById('save-midterm-datetime-btn')?.addEventListener('click', () => {
+      const input = document.getElementById('midterm-datetime-input');
+      if (!input || !input.value) {
+        alert('Будь ласка, оберіть дату та час для мідтерму!');
+        return;
+      }
+      this.saveExamSchedule(null, input.value);
+      alert(`✅ Час мідтерму успішно збережено: ${input.value.replace('T', ' ')}! Таймер оновлено.`);
+    });
+
+    // Colloquium preset buttons
+    document.querySelectorAll('.col-slot-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const dt = btn.getAttribute('data-dt');
+        const input = document.getElementById('colloquium-datetime-input');
+        if (input && dt) {
+          input.value = dt;
+          this.saveExamSchedule(dt, null);
+        }
+      });
+    });
+
+    // Midterm preset buttons
+    document.querySelectorAll('.mid-slot-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const dt = btn.getAttribute('data-dt');
+        const input = document.getElementById('midterm-datetime-input');
+        if (input && dt) {
+          input.value = dt;
+          this.saveExamSchedule(null, dt);
+        }
+      });
+    });
+
+    // Colloquium save grade
+    document.getElementById('save-colloquium-grade-btn')?.addEventListener('click', () => {
+      const gradeInput = document.getElementById('colloquium-grade-input');
+      const notesInput = document.getElementById('colloquium-notes-input');
+      const val = gradeInput?.value?.trim();
+      if (!val) {
+        alert('Будь ласка, введіть отриману оцінку за колоквіум (наприклад, 10/10 або 9.5)!');
+        return;
+      }
+      this.saveExamGrade('colloquium', val, notesInput?.value || '');
+      alert(`🎉 Оцінку за колоквіум збережено: ${val}! Вітаємо зі складанням!`);
+    });
+
+    // Colloquium edit grade
+    document.getElementById('edit-colloquium-grade-btn')?.addEventListener('click', () => {
+      const grades = this.getExamGrades();
+      const gradeInput = document.getElementById('colloquium-grade-input');
+      const notesInput = document.getElementById('colloquium-notes-input');
+      if (gradeInput && grades.colloquium?.grade) gradeInput.value = grades.colloquium.grade;
+      if (notesInput && grades.colloquium?.notes) notesInput.value = grades.colloquium.notes;
+
+      document.getElementById('colloquium-grade-display')?.classList.add('hidden');
+      document.getElementById('colloquium-grade-form')?.classList.remove('hidden');
+    });
+
+    // Midterm save grade
+    document.getElementById('save-midterm-grade-btn')?.addEventListener('click', () => {
+      const gradeInput = document.getElementById('midterm-grade-input');
+      const notesInput = document.getElementById('midterm-notes-input');
+      const val = gradeInput?.value?.trim();
+      if (!val) {
+        alert('Будь ласка, введіть отриману оцінку за мідтерм (наприклад, 95/100 або 24/25)!');
+        return;
+      }
+      this.saveExamGrade('midterm', val, notesInput?.value || '');
+      alert(`🏆 Оцінку за мідтерм збережено: ${val}! Чудовий результат!`);
+    });
+
+    // Midterm edit grade
+    document.getElementById('edit-midterm-grade-btn')?.addEventListener('click', () => {
+      const grades = this.getExamGrades();
+      const gradeInput = document.getElementById('midterm-grade-input');
+      const notesInput = document.getElementById('midterm-notes-input');
+      if (gradeInput && grades.midterm?.grade) gradeInput.value = grades.midterm.grade;
+      if (notesInput && grades.midterm?.notes) notesInput.value = grades.midterm.notes;
+
+      document.getElementById('midterm-grade-display')?.classList.add('hidden');
+      document.getElementById('midterm-grade-form')?.classList.remove('hidden');
+    });
+
+    // Make header countdowns jump to schedule card on click
+    const colHeader = document.getElementById('colloquium-countdown-text');
+    if (colHeader) {
+      colHeader.style.cursor = 'pointer';
+      colHeader.setAttribute('title', 'Натисніть, щоб налаштувати дату або внести оцінку за колоквіум');
+      colHeader.onclick = () => {
+        window.app?.switchTab('dashboard');
+        setTimeout(() => {
+          document.getElementById('exam-schedule-grades-card')?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      };
+    }
+    const midHeader = document.getElementById('midterm-countdown-text');
+    if (midHeader) {
+      midHeader.style.cursor = 'pointer';
+      midHeader.setAttribute('title', 'Натисніть, щоб переглянути розклад або внести оцінку за мідтерм');
+      midHeader.onclick = () => {
+        window.app?.switchTab('dashboard');
+        setTimeout(() => {
+          document.getElementById('exam-schedule-grades-card')?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      };
     }
   }
 

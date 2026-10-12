@@ -28,7 +28,9 @@ class AppController {
 
     // Trigger initial KaTeX rendering and readiness update
     window.quizManager?.updateReadinessUI();
+    window.userProfile?.initExamScheduleControls?.();
     window.userProfile?.updateUserUI();
+    window.userProfile?.renderExamScheduleAndGrades?.();
     window.geminiMentor?.updateKeyStatusUI();
     this.renderAllMath();
   }
@@ -92,27 +94,21 @@ class AppController {
   }
 
   setupCountdowns() {
-    const getTargetDate = (dayOfWeek, targetHour = 9, targetMinute = 0) => {
-      const now = new Date();
-      // Target Wednesday Oct 14, 2026 09:00 and Friday Oct 16, 2026 10:00 if in 2026
-      const fixedCol = new Date(2026, 9, 14, 9, 0, 0);
-      const fixedMid = new Date(2026, 9, 16, 10, 0, 0);
-      if (now <= fixedMid && now.getFullYear() === 2026) {
-        return dayOfWeek === 3 ? fixedCol : fixedMid;
+    const parseTargetDate = (dateStr, fallbackDayOfWeek, fallbackHour = 9, fallbackMinute = 0) => {
+      if (dateStr) {
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) return d;
       }
-      // Otherwise target next upcoming day of week
+      const now = new Date();
       const target = new Date(now);
-      target.setHours(targetHour, targetMinute, 0, 0);
-      let diffDays = (dayOfWeek - now.getDay() + 7) % 7;
+      target.setHours(fallbackHour, fallbackMinute, 0, 0);
+      let diffDays = (fallbackDayOfWeek - now.getDay() + 7) % 7;
       if (diffDays === 0 && now.getTime() >= target.getTime()) {
         diffDays = 7;
       }
       target.setDate(now.getDate() + diffDays);
       return target;
     };
-
-    const colTarget = getTargetDate(3, 9, 0);  // Wednesday 09:00
-    const midTarget = getTargetDate(5, 10, 0); // Friday 10:00
 
     const formatCountdown = (diffMs) => {
       if (diffMs <= 0) return 'Сьогодні!';
@@ -128,14 +124,62 @@ class AppController {
     };
 
     const updateTimer = () => {
+      const schedule = window.userProfile?.getExamSchedule?.() || {
+        colloquiumDate: '2026-10-14T09:00',
+        midtermDate: '2026-10-16T08:30'
+      };
+      const grades = window.userProfile?.getExamGrades?.() || {
+        colloquium: { grade: '' },
+        midterm: { grade: '' }
+      };
+
+      const colTarget = parseTargetDate(schedule.colloquiumDate, 3, 9, 0);
+      // Midterm 2 strictly at 08:30 Kyiv time on Friday
+      const midTarget = parseTargetDate(schedule.midtermDate, 5, 8, 30);
+
       const now = new Date();
       const colDiff = colTarget.getTime() - now.getTime();
       const midDiff = midTarget.getTime() - now.getTime();
 
+      // Top Header Countdown Display
       const colEl = document.getElementById('colloquium-countdown-text');
       const midEl = document.getElementById('midterm-countdown-text');
-      if (colEl) colEl.innerHTML = `⚡ <span class="font-bold text-amber-400 font-mono">${formatCountdown(colDiff)}</span> to Colloquium (Wed)`;
-      if (midEl) midEl.innerHTML = `🔥 <span class="font-bold text-rose-400 font-mono">${formatCountdown(midDiff)}</span> to Midterm 2 (Fri)`;
+
+      if (colEl) {
+        if (grades.colloquium?.grade) {
+          colEl.innerHTML = `<span class="px-2 py-0.5 rounded font-extrabold bg-amber-950 text-amber-300 border border-amber-700">🎯 Колоквіум: ${grades.colloquium.grade}</span>`;
+        } else {
+          colEl.innerHTML = `⚡ <span class="font-bold text-amber-400 font-mono">${formatCountdown(colDiff)}</span> to Colloquium`;
+        }
+      }
+
+      if (midEl) {
+        if (grades.midterm?.grade) {
+          midEl.innerHTML = `<span class="px-2 py-0.5 rounded font-extrabold bg-emerald-950 text-emerald-300 border border-emerald-700">🏆 Мідтерм 2: ${grades.midterm.grade}</span>`;
+        } else {
+          midEl.innerHTML = `🔥 <span class="font-bold text-rose-400 font-mono">${formatCountdown(midDiff)}</span> to Midterm 2 (Пт 08:30)`;
+        }
+      }
+
+      // Dashboard Card Countdown Displays
+      const colCardTimer = document.getElementById('colloquium-card-countdown');
+      const midCardTimer = document.getElementById('midterm-card-countdown');
+
+      if (colCardTimer) {
+        if (grades.colloquium?.grade) {
+          colCardTimer.innerHTML = `<span class="text-emerald-400 text-lg">🎉 Складено (${grades.colloquium.grade})</span>`;
+        } else {
+          colCardTimer.textContent = formatCountdown(colDiff);
+        }
+      }
+
+      if (midCardTimer) {
+        if (grades.midterm?.grade) {
+          midCardTimer.innerHTML = `<span class="text-emerald-400 text-lg">🏆 Складено (${grades.midterm.grade})</span>`;
+        } else {
+          midCardTimer.textContent = formatCountdown(midDiff);
+        }
+      }
     };
 
     updateTimer();

@@ -372,6 +372,197 @@
 
       </div>
 
+      <!-- ================= EXAM SCHEDULE & GRADE TRACKER ================= -->
+      <div id="exam-schedule-grades-card" class="p-6 rounded-2xl border border-indigo-900/60 bg-gradient-to-br from-slate-900 via-indigo-950/20 to-slate-900 shadow-xl mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800 gap-3 mb-6">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs uppercase font-extrabold tracking-wider text-indigo-400">Індивідуальний розклад & Оцінки</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-950 text-indigo-300 border border-indigo-800">AWS Cloud Sync</span>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-100 mt-1">📅 Розклад іспитів та Внесення оцінок</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Встановіть дату і час свого індивідуального слоту колоквіуму (20 хв), перевіряйте таймер до мідтерму (пт, 08:30) та запишіть свої оцінки після складання!</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="exam-schedule-cloud-indicator" class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-800/90 text-emerald-400 border border-slate-700 flex items-center gap-1.5 shadow-sm">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span>Зберігається в акаунті</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Card 1: Colloquium 2 -->
+          <div class="p-5 rounded-2xl border border-amber-900/40 bg-slate-950/70 shadow-lg flex flex-col justify-between">
+            <div>
+              <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-10 h-10 rounded-xl bg-amber-950/80 border border-amber-800/80 flex items-center justify-center text-xl shrink-0">
+                    🎯
+                  </div>
+                  <div>
+                    <h3 class="text-lg font-bold text-slate-100 leading-tight">Колоквіум 2 (Colloquium 2)</h3>
+                    <p class="text-[11px] text-slate-400">Усна співбесіда (20 хв) • 21 означення + 12 усних запитань</p>
+                  </div>
+                </div>
+                <span id="colloquium-status-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-950 text-amber-300 border border-amber-800 shrink-0">
+                  ⚡ Очікується
+                </span>
+              </div>
+
+              <!-- Live Countdown Display -->
+              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-amber-900/40 mb-4 text-center">
+                <span class="text-[11px] uppercase tracking-wider text-slate-400 font-bold block mb-1">Зворотний відлік до Колоквіуму:</span>
+                <div id="colloquium-card-countdown" class="text-2xl font-mono font-extrabold text-amber-300">
+                  --:--:--
+                </div>
+              </div>
+
+              <!-- Date & Time Picker -->
+              <div class="space-y-2 mb-5">
+                <label for="colloquium-datetime-input" class="block text-xs font-bold text-slate-300">
+                  🕒 Дата та час вашої здачі (індивідуальний слот):
+                </label>
+                <div class="flex flex-col sm:flex-row gap-2">
+                  <input type="datetime-local" id="colloquium-datetime-input" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 font-mono focus:border-amber-500 focus:outline-none transition">
+                  <button id="save-colloquium-datetime-btn" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold text-xs transition whitespace-nowrap shadow-sm">
+                    💾 Зберегти час
+                  </button>
+                </div>
+                <div class="flex flex-wrap gap-1.5 pt-1">
+                  <span class="text-[10px] text-slate-400 self-center mr-1">Швидкі слоти:</span>
+                  <button type="button" class="col-slot-preset-btn px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition" data-dt="2026-10-14T09:00">Ср 14.10, 09:00</button>
+                  <button type="button" class="col-slot-preset-btn px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition" data-dt="2026-10-14T11:20">Ср 14.10, 11:20</button>
+                  <button type="button" class="col-slot-preset-btn px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition" data-dt="2026-10-14T14:00">Ср 14.10, 14:00</button>
+                  <button type="button" class="col-slot-preset-btn px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition" data-dt="2026-10-14T16:30">Ср 14.10, 16:30</button>
+                </div>
+              </div>
+
+              <!-- Post-Exam Grade Container -->
+              <div class="pt-4 border-t border-slate-800/80">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-bold text-slate-200">🏆 Оцінка після колоквіуму:</span>
+                  <span id="colloquium-grade-saved-date" class="text-[10px] text-slate-400"></span>
+                </div>
+
+                <!-- Display Mode (when grade is already recorded) -->
+                <div id="colloquium-grade-display" class="hidden p-3.5 rounded-xl bg-gradient-to-r from-amber-950/40 to-slate-900 border border-amber-800/60 flex items-center justify-between gap-3">
+                  <div class="flex items-center gap-3">
+                    <span class="text-3xl">🎉</span>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-xs text-slate-400">Отримано:</span>
+                        <span id="colloquium-grade-badge-val" class="text-lg font-black text-amber-300 font-mono">10/10</span>
+                      </div>
+                      <div id="colloquium-grade-notes-val" class="text-[11px] text-slate-300 italic truncate max-w-[200px] sm:max-w-[280px]">Відмінна відповідь!</div>
+                    </div>
+                  </div>
+                  <button id="edit-colloquium-grade-btn" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition shrink-0">
+                    ✏️ Змінити
+                  </button>
+                </div>
+
+                <!-- Edit / Input Form Mode -->
+                <div id="colloquium-grade-form" class="space-y-2">
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input type="text" id="colloquium-grade-input" placeholder="Оцінка (напр. 10/10 або 9.5)" class="sm:col-span-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 font-bold focus:border-amber-500 focus:outline-none">
+                    <input type="text" id="colloquium-notes-input" placeholder="Коментар: номер білета, питання..." class="sm:col-span-2 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:border-amber-500 focus:outline-none">
+                  </div>
+                  <button id="save-colloquium-grade-btn" class="w-full py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold text-xs transition shadow-sm">
+                    ✅ Зберегти оцінку за колоквіум
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Midterm 2 -->
+          <div class="p-5 rounded-2xl border border-indigo-900/40 bg-slate-950/70 shadow-lg flex flex-col justify-between">
+            <div>
+              <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-10 h-10 rounded-xl bg-indigo-950/80 border border-indigo-800/80 flex items-center justify-center text-xl shrink-0">
+                    🔥
+                  </div>
+                  <div>
+                    <h3 class="text-lg font-bold text-slate-100 leading-tight">Мідтерм 2 (Midterm 2)</h3>
+                    <p class="text-[11px] text-slate-400">Письмовий іспит (closed-book) • П'ятниця о 08:30 (Київ)</p>
+                  </div>
+                </div>
+                <span id="midterm-status-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-950 text-indigo-300 border border-indigo-800 shrink-0">
+                  🔥 Пт, 08:30 Київ
+                </span>
+              </div>
+
+              <!-- Live Countdown Display -->
+              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-indigo-900/40 mb-4 text-center">
+                <span class="text-[11px] uppercase tracking-wider text-slate-400 font-bold block mb-1">Зворотний відлік до Мідтерму 2:</span>
+                <div id="midterm-card-countdown" class="text-2xl font-mono font-extrabold text-rose-400">
+                  --:--:--
+                </div>
+              </div>
+
+              <!-- Date & Time Picker -->
+              <div class="space-y-2 mb-5">
+                <div class="flex items-center justify-between">
+                  <label for="midterm-datetime-input" class="block text-xs font-bold text-slate-300">
+                    🕒 Точний час мідтерму:
+                  </label>
+                  <span class="text-[10px] text-indigo-400 font-bold">Офіційно: Пт 08:30 (Київ)</span>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-2">
+                  <input type="datetime-local" id="midterm-datetime-input" value="2026-10-16T08:30" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 font-mono focus:border-indigo-500 focus:outline-none transition">
+                  <button id="save-midterm-datetime-btn" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition whitespace-nowrap shadow-sm">
+                    💾 Зберегти час
+                  </button>
+                </div>
+                <div class="flex flex-wrap gap-1.5 pt-1">
+                  <span class="text-[10px] text-slate-400 self-center mr-1">Швидкі пресети:</span>
+                  <button type="button" class="mid-slot-preset-btn px-2 py-0.5 rounded-lg bg-indigo-950 border border-indigo-800 text-indigo-300 text-[10px] font-bold transition" data-dt="2026-10-16T08:30">Пт 16.10, 08:30 (Київ - Офіційний)</button>
+                  <button type="button" class="mid-slot-preset-btn px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition" data-dt="2026-10-16T10:00">Пт 16.10, 10:00</button>
+                </div>
+              </div>
+
+              <!-- Post-Exam Grade Container -->
+              <div class="pt-4 border-t border-slate-800/80">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-bold text-slate-200">🏆 Оцінка після мідтерму:</span>
+                  <span id="midterm-grade-saved-date" class="text-[10px] text-slate-400"></span>
+                </div>
+
+                <!-- Display Mode (when grade is already recorded) -->
+                <div id="midterm-grade-display" class="hidden p-3.5 rounded-xl bg-gradient-to-r from-emerald-950/40 to-slate-900 border border-emerald-800/60 flex items-center justify-between gap-3">
+                  <div class="flex items-center gap-3">
+                    <span class="text-3xl">🏆</span>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-xs text-slate-400">Отримано:</span>
+                        <span id="midterm-grade-badge-val" class="text-lg font-black text-emerald-400 font-mono">95/100</span>
+                      </div>
+                      <div id="midterm-grade-notes-val" class="text-[11px] text-slate-300 italic truncate max-w-[200px] sm:max-w-[280px]">Максимальний бал за всі задачі!</div>
+                    </div>
+                  </div>
+                  <button id="edit-midterm-grade-btn" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition shrink-0">
+                    ✏️ Змінити
+                  </button>
+                </div>
+
+                <!-- Edit / Input Form Mode -->
+                <div id="midterm-grade-form" class="space-y-2">
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input type="text" id="midterm-grade-input" placeholder="Оцінка (напр. 95/100, 24/25 або 96%)" class="sm:col-span-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 font-bold focus:border-indigo-500 focus:outline-none">
+                    <input type="text" id="midterm-notes-input" placeholder="Коментар: розбивка по задачах, бали..." class="sm:col-span-2 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:border-indigo-500 focus:outline-none">
+                  </div>
+                  <button id="save-midterm-grade-btn" class="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition shadow-sm">
+                    ✅ Зберегти оцінку за мідтерм
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Day-by-Day Study Roadmap (Non-manual: Automatically verified by performance) -->
       <div class="mb-8">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
