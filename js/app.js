@@ -10,6 +10,8 @@ class AppController {
     this.currentProbFilter = 'all';
     this.flashcardIndex = 0;
     this.isCardFlipped = false;
+    this.colloquiumMode = 'browse'; // 'browse' | 'drill' | 'ticket'
+    this.hintLevels = {};           // probId -> how many hint steps are open
   }
 
   init() {
@@ -25,6 +27,8 @@ class AppController {
     this.setupGeminiSettingsModal();
     this.setupEventListeners();
     this.setupProfileModal();
+    this.setupColloquiumModes();
+    window.definitionDrill?.init();
 
     // Trigger initial KaTeX rendering and readiness update
     window.quizManager?.updateReadinessUI();
@@ -36,18 +40,23 @@ class AppController {
   }
 
   setupTheme() {
-    const savedTheme = localStorage.getItem('stathustle_theme') || 'dark';
-    if (savedTheme === 'light') {
-      document.documentElement.classList.remove('dark');
-    } else {
-      document.documentElement.classList.add('dark');
-    }
-
+    // The initial theme (saved choice or system preference) is applied by an inline script in <head>
+    const root = document.documentElement;
     const themeToggle = document.getElementById('theme-toggle-btn');
+    const syncToggle = () => {
+      if (!themeToggle) return;
+      const isDark = root.classList.contains('dark');
+      themeToggle.textContent = isDark ? '🌙' : '☀️';
+      themeToggle.title = isDark ? 'Увімкнути світлу тему' : 'Увімкнути темну тему';
+    };
+    syncToggle();
+
     themeToggle?.addEventListener('click', () => {
-      const isDark = document.documentElement.classList.toggle('dark');
-      localStorage.setItem('stathustle_theme', isDark ? 'dark' : 'light');
-      if (themeToggle) themeToggle.textContent = isDark ? '🌙' : '☀️';
+      const isDark = !root.classList.contains('dark');
+      root.classList.toggle('dark', isDark);
+      root.classList.toggle('light', !isDark);
+      try { localStorage.setItem('stathustle_theme', isDark ? 'dark' : 'light'); } catch (e) {}
+      syncToggle();
     });
   }
 
@@ -295,6 +304,38 @@ class AppController {
     this.renderOralQuestionsList();
   }
 
+  setupColloquiumModes() {
+    document.querySelectorAll('[data-fc-mode]').forEach(btn => {
+      btn.addEventListener('click', () => this.setColloquiumMode(btn.getAttribute('data-fc-mode')));
+    });
+  }
+
+  // Flashcard hub has three modes: browse cards, random definition drill, exam ticket
+  setColloquiumMode(mode) {
+    this.colloquiumMode = mode;
+    document.querySelectorAll('[data-fc-mode]').forEach(btn => {
+      const active = btn.getAttribute('data-fc-mode') === mode;
+      btn.classList.toggle('tab-active', active);
+      btn.classList.toggle('tab-inactive', !active);
+    });
+
+    const panels = { browse: 'flashcard-container', drill: 'definition-drill-container', ticket: 'exam-ticket-container' };
+    Object.entries(panels).forEach(([m, id]) => {
+      document.getElementById(id)?.classList.toggle('hidden', m !== mode);
+    });
+
+    if (mode !== 'ticket') window.examTicket?.hide();
+
+    if (mode === 'drill') {
+      window.definitionDrill?.show();
+    } else if (mode === 'ticket') {
+      window.examTicket?.show();
+    } else {
+      this.renderFlashcard();
+      this.renderAllMath(document.getElementById('flashcard-container'));
+    }
+  }
+
   renderFlashcard() {
     const cardContainer = document.getElementById('flashcard-container');
     if (!cardContainer || !window.PS_DATA?.DEFINITIONS_21) return;
@@ -322,12 +363,21 @@ class AppController {
             </div>
 
             <div id="flashcard-revealed-details" class="${this.isCardFlipped ? '' : 'hidden'} text-xs text-slate-300 space-y-3 mt-4 border-t border-slate-800 pt-4">
-              <p><strong>Formal Definition:</strong> ${def.definition}</p>
+              <p><strong>Formal Definition:</strong> ${this.formatMd(def.definition)}</p>
+              ${def.keyPoints?.length ? `
+                <div class="p-3 rounded-lg bg-indigo-950/40 border border-indigo-600/60">
+                  <div class="font-bold text-indigo-200 mb-1.5">📌 Обов'язково знати (${def.keyPoints.length})</div>
+                  <ul class="list-disc pl-4 space-y-1 text-slate-200">
+                    ${def.keyPoints.map(p => `<li>${this.formatMd(p)}</li>`).join('')}
+                  </ul>
+                </div>
+              ` : ''}
+              ${def.example ? `<p><strong>💡 Приклад:</strong> ${this.formatMd(def.example)}</p>` : ''}
               <div class="p-2.5 rounded bg-amber-950/30 border border-amber-800/50 text-amber-200">
-                <strong>🎯 Colloquium Oral Tip:</strong> ${def.colloquiumTip}
+                <strong>🎯 Colloquium Oral Tip:</strong> ${this.formatMd(def.colloquiumTip)}
               </div>
               <div class="p-2.5 rounded bg-rose-950/30 border border-rose-800/50 text-rose-200">
-                <strong>⚠️ Professor Trap:</strong> ${def.trap}
+                <strong>⚠️ Professor Trap:</strong> ${this.formatMd(def.trap)}
               </div>
             </div>
           </div>
@@ -405,9 +455,10 @@ class AppController {
           </div>
           <h4 class="font-bold text-slate-100 text-sm mb-1">${def.name}</h4>
           <div class="text-xs text-slate-400 font-mono mb-2">$${def.latex}$</div>
-          <p class="text-xs text-slate-300 line-clamp-3 mb-3">${def.definition}</p>
+          <p class="text-xs text-slate-300 line-clamp-3 mb-2">${this.formatMd(def.definition)}</p>
+          ${def.keyPoints?.length ? `<div class="text-[11px] font-semibold text-indigo-300 mb-3">📌 Обов'язково знати: ${def.keyPoints.length}</div>` : ''}
           <div class="flex justify-between items-center text-[11px] pt-2 border-t border-slate-800/80">
-            <span class="text-amber-400/90 font-medium truncate max-w-[160px]">⚠️ ${def.trap}</span>
+            <span class="text-amber-400/90 font-medium truncate max-w-[160px]">⚠️ ${this.formatMd(def.trap)}</span>
             <button class="def-jump-btn text-indigo-400 hover:text-indigo-300 font-semibold" data-def-index="${def.id - 1}">Test / Practice ➔</button>
           </div>
         </div>
@@ -418,6 +469,7 @@ class AppController {
       btn.addEventListener('click', () => {
         this.flashcardIndex = parseInt(btn.getAttribute('data-def-index'), 10);
         this.isCardFlipped = true;
+        if (this.colloquiumMode !== 'browse') this.setColloquiumMode('browse');
         this.renderFlashcard();
         this.renderAllMath();
         window.scrollTo({ top: 300, behavior: 'smooth' });
@@ -491,6 +543,66 @@ class AppController {
     });
   }
 
+  // Hint ladder: first a direction (which approach, no computations), then the dataset's step hints
+  getHintSteps(prob) {
+    const steps = [];
+    const direction = window.PS_DATA?.PROBLEM_DIRECTIONS?.[prob.id];
+    if (direction) {
+      steps.push({
+        label: '🧭 Куди рухатись?',
+        html: `<strong>🧭 Напрямок:</strong> ${direction}`,
+        cls: 'p-2.5 rounded-lg bg-amber-950/30 border border-amber-800/50 text-amber-100'
+      });
+    }
+    const hints = prob.hints || [];
+    hints.forEach((h, i) => steps.push({
+      label: `💡 Підказка ${i + 1} з ${hints.length}`,
+      html: h,
+      cls: 'text-slate-300'
+    }));
+    return steps;
+  }
+
+  renderHintLadder(prob) {
+    const steps = this.getHintSteps(prob);
+    if (!steps.length) return '';
+    const shown = Math.min(this.hintLevels[prob.id] || 0, steps.length);
+    const next = steps[shown];
+
+    return `
+      <div class="text-xs bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <span class="font-semibold text-amber-300">💡 Підказки${shown ? ` · відкрито ${shown} з ${steps.length}` : ' — не розв\'язок, а поштовх'}</span>
+          ${next
+            ? `<button class="hint-next-btn px-3 py-1 rounded-lg bg-amber-950/60 hover:bg-amber-900 border border-amber-800 text-amber-200 font-semibold cursor-pointer transition" data-prob-id="${prob.id}">${next.label}</button>`
+            : '<span class="text-[11px] text-slate-500">Підказки закінчились — далі тільки повний розв\'язок нижче</span>'}
+        </div>
+        ${shown ? `
+          <div class="mt-2.5 pt-2.5 border-t border-slate-800 space-y-2">
+            ${steps.slice(0, shown).map(s => `<div class="${s.cls}">${s.html}</div>`).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // Quiz over the questions currently in the mistakes registry
+  openMistakesPractice() {
+    this.switchTab('quizzes');
+    window.quizManager?.startQuiz('mistakes');
+  }
+
+  // Jump to a problem card from elsewhere (e.g. the dashboard mistakes panel)
+  openProblem(probId) {
+    this.switchTab('problems');
+    if (!document.getElementById(`prob-card-${probId}`)) {
+      document.querySelector('[data-prob-filter="all"]')?.click(); // card is hidden by the active filter
+    }
+    requestAnimationFrame(() => {
+      document.getElementById(`prob-card-${probId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
   // --- PROBLEM BANK WITH INTERACTIVE FINAL ANSWER SUBMISSION ---
   renderProblemsSection() {
     const container = document.getElementById('problems-list-container');
@@ -540,7 +652,7 @@ class AppController {
             </div>
             <p class="text-xs text-slate-300 mb-2">${prob.inputPrompt || 'Enter final answer:'}</p>
             <div class="flex flex-col sm:flex-row gap-2">
-              <input type="text" id="prob-input-${prob.id}" placeholder="Enter answer, e.g. ${prob.expectedAnswer}..." 
+              <input type="text" id="prob-input-${prob.id}" placeholder="Твоя відповідь…"
                      value="${isSolved ? prob.expectedAnswer : ''}" ${isSolved ? 'disabled' : ''}
                      class="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 font-mono focus:outline-none focus:border-indigo-500">
               <button class="prob-submit-btn px-5 py-2 rounded-lg ${isSolved ? 'bg-emerald-600' : 'bg-indigo-600 hover:bg-indigo-500'} text-white font-bold text-xs transition" 
@@ -553,16 +665,11 @@ class AppController {
             </div>
           </div>
 
-          <!-- Explanations & Step-by-Step Rigorous Derivation (Always Visible for Study) -->
+          <!-- Hints open one at a time; the full derivation stays collapsed until asked for -->
           <div class="space-y-3">
-            <details class="text-xs bg-slate-950/60 p-3 rounded-xl border border-slate-800">
-              <summary class="font-semibold text-amber-300 cursor-pointer hover:underline">💡 Progressive Hints</summary>
-              <div class="mt-2.5 pt-2.5 border-t border-slate-800 text-slate-300 space-y-1.5">
-                ${prob.hints.map(h => `<div>${h}</div>`).join('')}
-              </div>
-            </details>
+            <div id="hint-ladder-${prob.id}">${this.renderHintLadder(prob)}</div>
 
-            <details open class="text-xs bg-slate-950/80 p-4 rounded-xl border border-indigo-900/50">
+            <details class="text-xs bg-slate-950/80 p-4 rounded-xl border border-indigo-900/50">
               <summary class="font-bold text-indigo-400 cursor-pointer hover:underline text-sm">📝 Complete Rigorous Step-by-Step Solution & Working</summary>
               <div class="mt-3 pt-3 border-t border-slate-800 text-slate-200 leading-relaxed space-y-2 whitespace-pre-line">
                 ${prob.solution}
@@ -572,6 +679,23 @@ class AppController {
         </div>
       `;
     }).join('');
+
+    // One delegated listener survives the innerHTML re-renders of the problem list
+    if (!container.dataset.hintsBound) {
+      container.dataset.hintsBound = 'true';
+      container.addEventListener('click', (e) => {
+        const btn = e.target.closest('.hint-next-btn');
+        if (!btn) return;
+        const pid = parseInt(btn.getAttribute('data-prob-id'), 10);
+        this.hintLevels[pid] = (this.hintLevels[pid] || 0) + 1;
+        const ladder = document.getElementById(`hint-ladder-${pid}`);
+        const prob = window.PS_DATA.PROBLEMS_BANK.find(p => p.id === pid);
+        if (ladder && prob) {
+          ladder.innerHTML = this.renderHintLadder(prob);
+          this.renderAllMath(ladder);
+        }
+      });
+    }
 
     // Attach answer submission handlers
     container.querySelectorAll('.prob-submit-btn').forEach(btn => {
@@ -660,8 +784,8 @@ class AppController {
             `}
           </div>
           <p class="text-xs text-slate-400 mb-4 italic">${t.summary}</p>
-          <div class="prose prose-invert max-w-none text-xs text-slate-300 leading-relaxed space-y-2 whitespace-pre-line border-t border-slate-800 pt-4">
-            ${t.content}
+          <div class="max-w-none text-xs text-slate-300 leading-relaxed space-y-2 border-t border-slate-800 pt-4">
+            ${this.formatNotes(t.content)}
           </div>
           <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
             <div class="text-xs text-slate-400">
@@ -1000,6 +1124,47 @@ class AppController {
       if (window.pomodoroTimer?.isRunning) window.pomodoroTimer.pause();
       else window.pomodoroTimer.start();
     });
+  }
+
+  // Dataset strings mark the must-know terms with **bold** markdown
+  formatMd(text = '') {
+    return String(text).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  }
+
+  // Topic notes are light markdown: ### headings, -/* bullets, 1. lists, **bold**, one-line $$ formulas
+  formatNotes(md = '') {
+    const html = [];
+    let list = null; // currently open 'ul' | 'ol'
+    const closeList = () => {
+      if (list) html.push(`</${list}>`);
+      list = null;
+    };
+
+    String(md).split('\n').forEach(raw => {
+      const line = raw.trim();
+      const heading = line.match(/^#{1,6}\s+(.*)$/);
+      const item = line.match(/^(?:([-*])|\d+\.)\s+(.*)$/);
+
+      if (!line) {
+        closeList();
+      } else if (heading) {
+        closeList();
+        html.push(`<h4 class="text-sm font-bold text-slate-100 pt-2">${this.formatMd(heading[1])}</h4>`);
+      } else if (item) {
+        const tag = item[1] ? 'ul' : 'ol';
+        if (list !== tag) {
+          closeList();
+          html.push(`<${tag} class="${tag === 'ul' ? 'list-disc' : 'list-decimal'} pl-5 space-y-1">`);
+          list = tag;
+        }
+        html.push(`<li>${this.formatMd(item[2])}</li>`);
+      } else {
+        closeList();
+        html.push(`<p>${this.formatMd(line)}</p>`);
+      }
+    });
+    closeList();
+    return html.join('');
   }
 
   renderAllMath(targetElem = null) {
