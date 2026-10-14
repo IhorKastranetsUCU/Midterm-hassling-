@@ -527,6 +527,17 @@ class AppController {
     });
   }
 
+  // Jump to a problem card from elsewhere (e.g. the dashboard mistakes panel)
+  openProblem(probId) {
+    this.switchTab('problems');
+    if (!document.getElementById(`prob-card-${probId}`)) {
+      document.querySelector('[data-prob-filter="all"]')?.click(); // card is hidden by the active filter
+    }
+    requestAnimationFrame(() => {
+      document.getElementById(`prob-card-${probId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
   // --- PROBLEM BANK WITH INTERACTIVE FINAL ANSWER SUBMISSION ---
   renderProblemsSection() {
     const container = document.getElementById('problems-list-container');

@@ -963,12 +963,14 @@ class UserProfileManager {
   }
 
   renderMistakesAnalytics() {
-    const container = document.getElementById('user-mistakes-list');
+    const container = document.getElementById('mistakes-analytics-list');
     const badge = document.getElementById('user-mistakes-badge');
     if (!container || !this.profile) return;
 
-    const mistakes = Object.values(this.profile.mistakesHistory || {});
-    if (badge) badge.textContent = `${mistakes.length} mistakes`;
+    // Most frequent first, as the panel footer promises
+    const mistakes = Object.values(this.profile.mistakesHistory || {})
+      .sort((a, b) => (b.count - a.count) || ((b.lastErrorAt || 0) - (a.lastErrorAt || 0)));
+    if (badge) badge.textContent = `Помилок: ${mistakes.length}`;
 
     if (mistakes.length === 0) {
       container.innerHTML = `
@@ -985,13 +987,19 @@ class UserProfileManager {
           <div class="font-bold text-slate-200 truncate">${m.title}</div>
           <div class="text-[11px] text-slate-400">${m.topic} • Тип: <span class="text-indigo-400 font-semibold">${m.type}</span></div>
         </div>
-        <div class="text-right shrink-0">
+        <div class="text-right shrink-0 flex items-center gap-2">
+          ${m.type === 'problem' ? `<button class="mistake-open-problem-btn text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 cursor-pointer transition" data-prob-id="${String(m.id).replace('prob_', '')}">До задачі ➔</button>` : ''}
           <span class="px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800 text-[10px] font-bold">
             ${m.count} ${m.count === 1 ? 'error' : 'errors'}
           </span>
         </div>
       </div>
     `).join('');
+
+    container.querySelectorAll('.mistake-open-problem-btn').forEach(btn => {
+      btn.addEventListener('click', () => window.app?.openProblem(btn.getAttribute('data-prob-id')));
+    });
+    window.app?.renderAllMath(container);
   }
 
   // --- AVATAR & WARDROBE GAMIFICATION ---

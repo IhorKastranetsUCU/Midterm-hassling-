@@ -102,7 +102,10 @@ class QuizManager {
   }
 
   getPassingDefinitionsCount() {
-    return Object.values(this.readinessState.definitionsScores).filter(score => score >= 6).length;
+    // Oral-question scores share this map under `oral_<id>` keys — only the 21 definitions count here
+    const defIds = new Set((window.PS_DATA?.DEFINITIONS_21 || []).map(d => String(d.id)));
+    return Object.entries(this.readinessState.definitionsScores)
+      .filter(([id, score]) => defIds.has(id) && score >= 6).length;
   }
 
   // --- PROBLEM MASTERING: Earn % by submitting correct final answers ---
