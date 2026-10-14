@@ -11,6 +11,7 @@ class AppController {
     this.flashcardIndex = 0;
     this.isCardFlipped = false;
     this.colloquiumMode = 'browse'; // 'browse' | 'drill' | 'ticket'
+    this.hintLevels = {};           // probId -> how many hint steps are open
   }
 
   init() {
@@ -537,6 +538,49 @@ class AppController {
     });
   }
 
+  // Hint ladder: first a direction (which approach, no computations), then the dataset's step hints
+  getHintSteps(prob) {
+    const steps = [];
+    const direction = window.PS_DATA?.PROBLEM_DIRECTIONS?.[prob.id];
+    if (direction) {
+      steps.push({
+        label: '🧭 Куди рухатись?',
+        html: `<strong>🧭 Напрямок:</strong> ${direction}`,
+        cls: 'p-2.5 rounded-lg bg-amber-950/30 border border-amber-800/50 text-amber-100'
+      });
+    }
+    const hints = prob.hints || [];
+    hints.forEach((h, i) => steps.push({
+      label: `💡 Підказка ${i + 1} з ${hints.length}`,
+      html: h,
+      cls: 'text-slate-300'
+    }));
+    return steps;
+  }
+
+  renderHintLadder(prob) {
+    const steps = this.getHintSteps(prob);
+    if (!steps.length) return '';
+    const shown = Math.min(this.hintLevels[prob.id] || 0, steps.length);
+    const next = steps[shown];
+
+    return `
+      <div class="text-xs bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <span class="font-semibold text-amber-300">💡 Підказки${shown ? ` · відкрито ${shown} з ${steps.length}` : ' — не розв\'язок, а поштовх'}</span>
+          ${next
+            ? `<button class="hint-next-btn px-3 py-1 rounded-lg bg-amber-950/60 hover:bg-amber-900 border border-amber-800 text-amber-200 font-semibold cursor-pointer transition" data-prob-id="${prob.id}">${next.label}</button>`
+            : '<span class="text-[11px] text-slate-500">Підказки закінчились — далі тільки повний розв\'язок нижче</span>'}
+        </div>
+        ${shown ? `
+          <div class="mt-2.5 pt-2.5 border-t border-slate-800 space-y-2">
+            ${steps.slice(0, shown).map(s => `<div class="${s.cls}">${s.html}</div>`).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
   // Jump to a problem card from elsewhere (e.g. the dashboard mistakes panel)
   openProblem(probId) {
     this.switchTab('problems');
@@ -597,7 +641,7 @@ class AppController {
             </div>
             <p class="text-xs text-slate-300 mb-2">${prob.inputPrompt || 'Enter final answer:'}</p>
             <div class="flex flex-col sm:flex-row gap-2">
-              <input type="text" id="prob-input-${prob.id}" placeholder="Enter answer, e.g. ${prob.expectedAnswer}..." 
+              <input type="text" id="prob-input-${prob.id}" placeholder="Твоя відповідь…"
                      value="${isSolved ? prob.expectedAnswer : ''}" ${isSolved ? 'disabled' : ''}
                      class="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 font-mono focus:outline-none focus:border-indigo-500">
               <button class="prob-submit-btn px-5 py-2 rounded-lg ${isSolved ? 'bg-emerald-600' : 'bg-indigo-600 hover:bg-indigo-500'} text-white font-bold text-xs transition" 
@@ -610,16 +654,11 @@ class AppController {
             </div>
           </div>
 
-          <!-- Explanations & Step-by-Step Rigorous Derivation (Always Visible for Study) -->
+          <!-- Hints open one at a time; the full derivation stays collapsed until asked for -->
           <div class="space-y-3">
-            <details class="text-xs bg-slate-950/60 p-3 rounded-xl border border-slate-800">
-              <summary class="font-semibold text-amber-300 cursor-pointer hover:underline">💡 Progressive Hints</summary>
-              <div class="mt-2.5 pt-2.5 border-t border-slate-800 text-slate-300 space-y-1.5">
-                ${prob.hints.map(h => `<div>${h}</div>`).join('')}
-              </div>
-            </details>
+            <div id="hint-ladder-${prob.id}">${this.renderHintLadder(prob)}</div>
 
-            <details open class="text-xs bg-slate-950/80 p-4 rounded-xl border border-indigo-900/50">
+            <details class="text-xs bg-slate-950/80 p-4 rounded-xl border border-indigo-900/50">
               <summary class="font-bold text-indigo-400 cursor-pointer hover:underline text-sm">📝 Complete Rigorous Step-by-Step Solution & Working</summary>
               <div class="mt-3 pt-3 border-t border-slate-800 text-slate-200 leading-relaxed space-y-2 whitespace-pre-line">
                 ${prob.solution}
@@ -629,6 +668,23 @@ class AppController {
         </div>
       `;
     }).join('');
+
+    // One delegated listener survives the innerHTML re-renders of the problem list
+    if (!container.dataset.hintsBound) {
+      container.dataset.hintsBound = 'true';
+      container.addEventListener('click', (e) => {
+        const btn = e.target.closest('.hint-next-btn');
+        if (!btn) return;
+        const pid = parseInt(btn.getAttribute('data-prob-id'), 10);
+        this.hintLevels[pid] = (this.hintLevels[pid] || 0) + 1;
+        const ladder = document.getElementById(`hint-ladder-${pid}`);
+        const prob = window.PS_DATA.PROBLEMS_BANK.find(p => p.id === pid);
+        if (ladder && prob) {
+          ladder.innerHTML = this.renderHintLadder(prob);
+          this.renderAllMath(ladder);
+        }
+      });
+    }
 
     // Attach answer submission handlers
     container.querySelectorAll('.prob-submit-btn').forEach(btn => {

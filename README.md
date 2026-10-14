@@ -70,6 +70,7 @@ Tracks your real progress across 4 weighted pillars:
 ### 4. 🧠 Interactive Quizzes & Automated Problem Solver
 * High-yield multiple choice and calculation questions with KaTeX formula rendering.
 * Instant visual feedback (green/red) with complete step-by-step mathematical proofs.
+* **Hint ladder on every problem**: first a "🧭 Куди рухатись?" nudge (which approach makes it easy — no computations), then the step hints one at a time. The full solution stays collapsed until you open it, and answer prompts no longer show the answer as an "e.g." example.
 * Complete problem bank covering:
   * Seminar 4 (Discrete, Rankings, Dice, Redundancy Channel).
   * Seminar 5 (Expectation algebra, Waiting for HH, Geometric tail sum, Urn indicators).
@@ -105,6 +106,7 @@ midterm2/
 │   └── style.css         # Modern dark/light theme & layout styles
 ├── js/
 │   ├── data.js           # 137KB verified course dataset (definitions, problems, schedule)
+│   ├── problem-directions.js # "Куди рухатись" direction hints, one per problem (kept out of generated data.js)
 │   ├── gemini.js         # Gemini AI Mentor & oral evaluator
 │   ├── pomodoro.js       # Pomodoro timer with Web Audio synthesizer
 │   ├── quiz.js           # Interactive quiz manager & readiness engine
