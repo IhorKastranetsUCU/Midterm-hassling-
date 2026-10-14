@@ -23,6 +23,12 @@ python3 server.py
 ```
 Open **`http://localhost:8080`**.
 
+### Tests
+Pure logic (drill queue, ticket picker) is covered by Node's built-in test runner — no dependencies:
+```bash
+node --test tests/*.test.js
+```
+
 ---
 
 ## 🌟 Key Features Built From Scratch
@@ -33,6 +39,10 @@ Open **`http://localhost:8080`**.
   * Exact mathematical definitions with measurability and integrability conditions.
   * Colloquium tips and **Professor Traps** (the exact nuances examiners check).
   * Direct "Mark as Mastered" checkboxes that feed into your Readiness Meter.
+* **🎲 Random Definition Drill (Quizlet-style)** — toggle "Рандомний тест" above the flashcards:
+  * Definitions come in shuffled order: type (or say) the definition, reveal the reference, tick the key points you actually covered and grade yourself ✗ / ~ / ✓ (keys `1` `2` `3`, `Ctrl/⌘+Enter` to reveal).
+  * "Didn't know" cards come back 3 cards later, "partially" ones go to the end of the queue; the round ends with a summary and a one-click re-run of the weak ones.
+  * Scope: all 21 or only the ones not yet scored ≥6/10. Grades feed the same readiness score as the flashcards.
 * **The 12 Colloquium Oral Questions & Defense Guides**:
   * Structured 4-step oral answer templates (Definition -> Axioms -> Proof/Formulas -> Counterexample).
   * Key formulas to write down on the board immediately.
@@ -98,7 +108,9 @@ midterm2/
 │   ├── gemini.js         # Gemini AI Mentor & oral evaluator
 │   ├── pomodoro.js       # Pomodoro timer with Web Audio synthesizer
 │   ├── quiz.js           # Interactive quiz manager & readiness engine
+│   ├── definition-drill.js # Random definition drill (shuffled recall + self-grading)
 │   └── app.js            # UI controller, routing & event handling
+├── tests/                # node --test unit tests for pure logic
 ├── vendor/
 │   └── katex/            # Offline KaTeX assets (css, js, auto-render)
 └── extracted_text/       # Clean text extractions from course PDFs

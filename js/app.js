@@ -10,6 +10,7 @@ class AppController {
     this.currentProbFilter = 'all';
     this.flashcardIndex = 0;
     this.isCardFlipped = false;
+    this.colloquiumMode = 'browse'; // 'browse' | 'drill' | 'ticket'
   }
 
   init() {
@@ -25,6 +26,8 @@ class AppController {
     this.setupGeminiSettingsModal();
     this.setupEventListeners();
     this.setupProfileModal();
+    this.setupColloquiumModes();
+    window.definitionDrill?.init();
 
     // Trigger initial KaTeX rendering and readiness update
     window.quizManager?.updateReadinessUI();
@@ -295,6 +298,38 @@ class AppController {
     this.renderOralQuestionsList();
   }
 
+  setupColloquiumModes() {
+    document.querySelectorAll('[data-fc-mode]').forEach(btn => {
+      btn.addEventListener('click', () => this.setColloquiumMode(btn.getAttribute('data-fc-mode')));
+    });
+  }
+
+  // Flashcard hub has three modes: browse cards, random definition drill, exam ticket
+  setColloquiumMode(mode) {
+    this.colloquiumMode = mode;
+    document.querySelectorAll('[data-fc-mode]').forEach(btn => {
+      const active = btn.getAttribute('data-fc-mode') === mode;
+      btn.classList.toggle('tab-active', active);
+      btn.classList.toggle('tab-inactive', !active);
+    });
+
+    const panels = { browse: 'flashcard-container', drill: 'definition-drill-container', ticket: 'exam-ticket-container' };
+    Object.entries(panels).forEach(([m, id]) => {
+      document.getElementById(id)?.classList.toggle('hidden', m !== mode);
+    });
+
+    if (mode !== 'ticket') window.examTicket?.hide();
+
+    if (mode === 'drill') {
+      window.definitionDrill?.show();
+    } else if (mode === 'ticket') {
+      window.examTicket?.show();
+    } else {
+      this.renderFlashcard();
+      this.renderAllMath(document.getElementById('flashcard-container'));
+    }
+  }
+
   renderFlashcard() {
     const cardContainer = document.getElementById('flashcard-container');
     if (!cardContainer || !window.PS_DATA?.DEFINITIONS_21) return;
@@ -418,6 +453,7 @@ class AppController {
       btn.addEventListener('click', () => {
         this.flashcardIndex = parseInt(btn.getAttribute('data-def-index'), 10);
         this.isCardFlipped = true;
+        if (this.colloquiumMode !== 'browse') this.setColloquiumMode('browse');
         this.renderFlashcard();
         this.renderAllMath();
         window.scrollTo({ top: 300, behavior: 'smooth' });

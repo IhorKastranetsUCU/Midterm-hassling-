@@ -601,10 +601,18 @@
         <div class="text-center mb-6">
           <h3 class="text-xl font-extrabold text-slate-100">Interactive Definition Flashcards (Score ≥6/10 for 1%)</h3>
           <p class="text-xs text-slate-400 mt-1">Practice with Gemini or self-verify to earn 1% per definition.</p>
+          <div class="inline-flex gap-1 p-1 mt-4 rounded-xl bg-slate-900 border border-slate-800 text-sm font-semibold">
+            <button data-fc-mode="browse" class="px-4 py-1.5 rounded-lg tab-active cursor-pointer transition">📇 Перегляд карток</button>
+            <button data-fc-mode="drill" class="px-4 py-1.5 rounded-lg tab-inactive cursor-pointer transition">🎲 Рандомний тест</button>
+          </div>
         </div>
 
         <div id="flashcard-container">
           <!-- Dynamically populated by app.js -->
+        </div>
+
+        <div id="definition-drill-container" class="hidden">
+          <!-- Dynamically populated by definition-drill.js -->
         </div>
       </div>
 
@@ -1087,6 +1095,7 @@
   <script src="js/gemini.js"></script>
   <script src="js/pomodoro.js"></script>
   <script src="js/quiz.js"></script>
+  <script src="js/definition-drill.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
