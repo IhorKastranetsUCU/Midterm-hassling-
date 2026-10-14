@@ -43,6 +43,9 @@ node --test tests/*.test.js
   * Definitions come in shuffled order: type (or say) the definition, reveal the reference, tick the key points you actually covered and grade yourself ✗ / ~ / ✓ (keys `1` `2` `3`, `Ctrl/⌘+Enter` to reveal).
   * "Didn't know" cards come back 3 cards later, "partially" ones go to the end of the queue; the round ends with a summary and a one-click re-run of the weak ones.
   * Scope: all 21 or only the ones not yet scored ≥6/10. Grades feed the same readiness score as the flashcards.
+* **🎟️ Colloquium Exam Ticket** — third mode of the same toggle:
+  * Draws 1 random oral question (never the same one twice in a row) + 2 random definitions and starts a stopwatch against the question's time hint.
+  * "Показати еталон" freezes the clock and shows the answer plan, board formulas, examiner follow-ups, the full model answer and both definitions with their must-know points; each of the 3 items gets its own ✗ / ~ / ✓ grade.
 * **The 12 Colloquium Oral Questions & Defense Guides**:
   * Structured 4-step oral answer templates (Definition -> Axioms -> Proof/Formulas -> Counterexample).
   * Key formulas to write down on the board immediately.
@@ -117,6 +120,7 @@ midterm2/
 │   ├── pomodoro.js       # Pomodoro timer with Web Audio synthesizer
 │   ├── quiz.js           # Interactive quiz manager & readiness engine
 │   ├── definition-drill.js # Random definition drill (shuffled recall + self-grading)
+│   ├── exam-ticket.js    # Colloquium ticket: random oral question + 2 definitions + stopwatch
 │   └── app.js            # UI controller, routing & event handling
 ├── tests/                # node --test unit tests for pure logic
 ├── vendor/
