@@ -263,24 +263,51 @@ class QuizManager {
   }
 
   // --- QUIZ EXECUTION ENGINE (600 Questions across 12 Topics) ---
-  startQuiz(topicId = 1) {
+  // topicId: 1..12 | 'all' | 'mistakes' (questions from the mistakes registry) | 'mix' (random questions from all topics)
+  // fresh: start with a clean slate instead of showing previously saved answers (used by retakes)
+  startQuiz(topicId = 1, { fresh = false } = {}) {
     this.activeTopicId = topicId;
-    let questions = window.PS_DATA?.QUIZ_QUESTIONS || [];
+    const questions = window.PS_DATA?.QUIZ_QUESTIONS || [];
+    // Saved answers lock a question forever; practice modes and retakes track answers per session instead
+    this.sessionAnswers = (fresh || this.isPracticeMode(topicId)) ? {} : null;
 
-    if (topicId === 'all') {
+    if (topicId === 'mistakes') {
+      this.currentQuiz = this.getMistakeQuestions();
+    } else if (topicId === 'mix') {
+      this.currentQuiz = DrillQueue.shuffle(questions).slice(0, QuizManager.MIX_SIZE);
+    } else if (topicId === 'all') {
       this.currentQuiz = [...questions];
     } else {
       const tid = parseInt(topicId, 10);
       this.currentQuiz = questions.filter(q => q.topicId === tid);
     }
 
-    if (this.currentQuiz.length === 0) {
+    // An empty mistakes list is a real (good) state, not a reason to fall back
+    if (this.currentQuiz.length === 0 && topicId !== 'mistakes') {
       this.currentQuiz = [...questions.slice(0, 50)];
     }
 
     this.currentIndex = 0;
     this.score = 0;
     this.renderQuizContainer();
+  }
+
+  isPracticeMode(topicId = this.activeTopicId) {
+    return topicId === 'mistakes' || topicId === 'mix';
+  }
+
+  getAnswer(qId) {
+    return this.sessionAnswers ? this.sessionAnswers[qId] : this.readinessState.questionsAnswered[qId];
+  }
+
+  // Quiz questions currently in the mistakes registry, most-missed first
+  getMistakeQuestions() {
+    const history = window.userProfile?.profile?.mistakesHistory || {};
+    const byId = new Map((window.PS_DATA?.QUIZ_QUESTIONS || []).map(q => [q.id, q]));
+    return Object.values(history)
+      .filter(m => m.type === 'quiz' && byId.has(m.id))
+      .sort((a, b) => b.count - a.count)
+      .map(m => byId.get(m.id));
   }
 
   jumpToQuestion(index) {
@@ -295,6 +322,14 @@ class QuizManager {
     if (!mainContainer) return;
 
     const topics = window.PS_DATA?.TOPICS_LIST || [];
+    const mistakesCount = this.getMistakeQuestions().length;
+    const modeButton = (mode, label) => `
+      <button class="quiz-mode-btn px-3 py-2 rounded-xl border text-xs font-semibold cursor-pointer transition ${
+        this.activeTopicId === mode
+          ? 'border-indigo-500 bg-indigo-950/60 text-white ring-1 ring-indigo-500/50'
+          : 'border-slate-800 bg-slate-950/50 text-slate-300 hover:border-slate-700 hover:text-white'
+      }" data-quiz-mode="${mode}">${label}</button>
+    `;
 
     mainContainer.innerHTML = `
       <!-- Topic Selector Bar -->
@@ -308,6 +343,11 @@ class QuizManager {
             <span class="text-xs text-slate-400">Total in Pool:</span>
             <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-indigo-950 text-indigo-300 border border-indigo-700">600 Questions</span>
           </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mb-3">
+          ${modeButton('mistakes', `🔁 Мої помилки (${mistakesCount})`)}
+          ${modeButton('mix', `🎲 Мікс: ${QuizManager.MIX_SIZE} випадкових з усіх тем`)}
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
@@ -341,6 +381,10 @@ class QuizManager {
       <div id="active-quiz-card-wrapper"></div>
     `;
 
+    mainContainer.querySelectorAll('.quiz-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => this.startQuiz(btn.getAttribute('data-quiz-mode')));
+    });
+
     // Attach click listeners to topic buttons
     mainContainer.querySelectorAll('.topic-select-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -368,7 +412,19 @@ class QuizManager {
     if (!host) return;
 
     if (this.currentQuiz.length === 0) {
-      host.innerHTML = `<div class="p-6 text-center text-slate-400">No questions found for this topic.</div>`;
+      if (this.activeTopicId === 'mistakes') {
+        host.innerHTML = `
+          <div class="p-8 rounded-2xl border border-emerald-700/60 bg-slate-900 text-center">
+            <div class="text-4xl mb-2">🎉</div>
+            <h3 class="text-lg font-bold text-slate-100 mb-1">Помилок у тестах немає</h3>
+            <p class="text-xs text-slate-400 mb-4">Сюди потрапляють питання, на які відповідь була неправильна. Правильна відповідь прибирає питання зі списку.</p>
+            <button class="quiz-mode-btn px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold cursor-pointer transition" data-quiz-mode="mix">🎲 Мікс: ${QuizManager.MIX_SIZE} випадкових питань</button>
+          </div>
+        `;
+        host.querySelector('.quiz-mode-btn')?.addEventListener('click', () => this.startQuiz('mix'));
+      } else {
+        host.innerHTML = `<div class="p-6 text-center text-slate-400">No questions found for this topic.</div>`;
+      }
       return;
     }
 
@@ -378,13 +434,13 @@ class QuizManager {
     }
 
     const q = this.currentQuiz[this.currentIndex];
-    const previousAnswer = this.readinessState.questionsAnswered[q.id];
+    const previousAnswer = this.getAnswer(q.id);
     this.isAnswered = !!previousAnswer;
 
     host.innerHTML = `
       <div class="quiz-card p-6 rounded-2xl shadow-xl border border-slate-800 bg-slate-900/90">
-        
-        ${this.activeTopicId !== 'all' && this.readinessState.topicTestsSolved[this.activeTopicId] ? `
+
+        ${typeof this.activeTopicId === 'number' && this.readinessState.topicTestsSolved[this.activeTopicId] ? `
           <div class="mb-4 p-3.5 rounded-xl bg-emerald-950/70 border border-emerald-600/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
             <div class="flex items-center gap-2 text-emerald-200">
               <span class="text-base">✅</span>
@@ -441,14 +497,14 @@ class QuizManager {
               Click any circle below to jump to a question
             </div>
             <button id="quiz-next-btn" class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition">
-              ${this.currentIndex === this.currentQuiz.length - 1 ? 'Finish Topic Test 🏁' : 'Next Question ▶'}
+              ${this.currentIndex === this.currentQuiz.length - 1 ? (this.isPracticeMode() ? 'Завершити 🏁' : 'Finish Topic Test 🏁') : 'Next Question ▶'}
             </button>
           </div>
 
           <!-- 50-Question Quick Jump Palette -->
           <div class="flex flex-wrap gap-1.5 p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 max-h-28 overflow-y-auto">
             ${this.currentQuiz.map((item, idx) => {
-              const state = this.readinessState.questionsAnswered[item.id];
+              const state = this.getAnswer(item.id);
               let color = 'bg-slate-800 text-slate-400 border-slate-700';
               if (state) {
                 color = state.correct ? 'bg-emerald-950 text-emerald-300 border-emerald-600' : 'bg-rose-950 text-rose-300 border-rose-600';
@@ -516,7 +572,7 @@ class QuizManager {
             <span class="px-2 py-0.5 rounded text-[10px] font-bold ${previousAnswer.correct ? 'bg-emerald-800 text-white' : 'bg-rose-800 text-white'}">
               ${previousAnswer.correct ? '✓ ВІДПОВІДЬ ПРАВИЛЬНА' : '✗ ВІДПОВІДЬ ПОМИЛКОВА'}
             </span>
-            <span class="text-xs text-slate-400">Питання вже розв'язано раніше</span>
+            <span class="text-xs text-slate-400">${this.sessionAnswers ? 'Відповідь у цій спробі вже є' : 'Питання вже розв\'язано раніше'}</span>
           </div>
           <div><strong>Пояснення:</strong> ${q.explanation}</div>
         `;
@@ -539,8 +595,9 @@ class QuizManager {
       window.userProfile?.recordMistake(q.id, q.question, q.topic, 'quiz');
     }
 
-    // Save question answer
+    // Save question answer (latest attempt), plus the per-session copy that drives locking in practice modes
     this.readinessState.questionsAnswered[q.id] = { correct: isCorrect, timestamp: Date.now() };
+    if (this.sessionAnswers) this.sessionAnswers[q.id] = { correct: isCorrect };
 
     const host = document.getElementById('active-quiz-card-wrapper');
     if (!host) return;
@@ -589,18 +646,36 @@ class QuizManager {
     const percentage = Math.round((this.score / this.currentQuiz.length) * 100);
     const passed = percentage >= 50;
 
-    // Record Topic Test Solved (+1% to readiness)
-    if (this.activeTopicId !== 'all') {
+    // Record Topic Test Solved (+1% to readiness) — only real topic tests count, not practice modes
+    const isTopicTest = typeof this.activeTopicId === 'number';
+    if (isTopicTest) {
       this.recordTopicTestSolved(this.activeTopicId, this.score, this.currentQuiz.length);
     }
+
+    // Answers may have cleared mistakes — keep the selector's counter in sync
+    const mistakesBtn = document.querySelector('.quiz-mode-btn[data-quiz-mode="mistakes"]');
+    if (mistakesBtn) mistakesBtn.textContent = `🔁 Мої помилки (${this.getMistakeQuestions().length})`;
+
+    const practice = {
+      mistakes: {
+        title: 'Робота над помилками завершена',
+        text: `Правильні відповіді прибрано з реєстру помилок. Залишилось: <strong>${this.getMistakeQuestions().length}</strong>.`,
+        retry: '🔁 Прорішати залишок'
+      },
+      mix: {
+        title: 'Мікс-тест завершено',
+        text: 'Випадкові питання з усіх 12 тем — хороший спосіб перевірити, що теми не переплутались.',
+        retry: '🎲 Новий мікс'
+      }
+    }[this.activeTopicId];
 
     host.innerHTML = `
       <div class="quiz-results p-8 rounded-2xl shadow-2xl border border-slate-700 bg-slate-900 text-center">
         <div class="text-5xl mb-3">${passed ? '🎉' : '📖'}</div>
-        <h2 class="text-2xl font-black text-slate-100 mb-2">Topic Test Completed!</h2>
+        <h2 class="text-2xl font-black text-slate-100 mb-2">${practice ? practice.title : 'Topic Test Completed!'}</h2>
         <p class="text-slate-400 mb-6 text-sm">
-          ${passed 
-            ? '🏆 Outstanding work! You have passed this topic test and earned <strong>+1% Readiness</strong>.' 
+          ${practice ? practice.text : passed
+            ? '🏆 Outstanding work! You have passed this topic test and earned <strong>+1% Readiness</strong>.'
             : 'Review the lecture notes and try this topic test again to secure your readiness %.'}
         </p>
 
@@ -611,17 +686,20 @@ class QuizManager {
 
         <div class="flex justify-center gap-4">
           <button id="retry-topic-quiz-btn" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition">
-            🔄 Retake Topic Test
+            ${practice ? practice.retry : '🔄 Retake Topic Test'}
           </button>
-          <button id="next-topic-quiz-btn" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition">
-            Next Topic ➔
-          </button>
+          ${isTopicTest ? `
+            <button id="next-topic-quiz-btn" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition">
+              Next Topic ➔
+            </button>
+          ` : ''}
         </div>
       </div>
     `;
 
+    // A retake starts a clean session — otherwise every saved answer stays locked and nothing can be re-answered
     host.querySelector('#retry-topic-quiz-btn')?.addEventListener('click', () => {
-      this.startQuiz(this.activeTopicId);
+      this.startQuiz(this.activeTopicId, { fresh: true });
     });
 
     host.querySelector('#next-topic-quiz-btn')?.addEventListener('click', () => {
@@ -651,5 +729,7 @@ class QuizManager {
     setTimeout(render, 50);
   }
 }
+
+QuizManager.MIX_SIZE = 20; // questions in a random mixed quiz
 
 window.quizManager = new QuizManager();

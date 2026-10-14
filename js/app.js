@@ -586,6 +586,12 @@ class AppController {
     `;
   }
 
+  // Quiz over the questions currently in the mistakes registry
+  openMistakesPractice() {
+    this.switchTab('quizzes');
+    window.quizManager?.startQuiz('mistakes');
+  }
+
   // Jump to a problem card from elsewhere (e.g. the dashboard mistakes panel)
   openProblem(probId) {
     this.switchTab('problems');

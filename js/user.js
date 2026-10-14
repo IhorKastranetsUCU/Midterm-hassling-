@@ -981,7 +981,12 @@ class UserProfileManager {
       return;
     }
 
-    container.innerHTML = mistakes.map(m => `
+    const quizMistakes = mistakes.filter(m => m.type === 'quiz').length;
+    container.innerHTML = (quizMistakes ? `
+      <button id="mistakes-practice-btn" class="w-full px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer transition">
+        🔁 Прорішати помилки з тестів (${quizMistakes})
+      </button>
+    ` : '') + mistakes.map(m => `
       <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between gap-3 text-xs">
         <div class="flex-1 truncate">
           <div class="font-bold text-slate-200 truncate">${m.title}</div>
@@ -999,6 +1004,7 @@ class UserProfileManager {
     container.querySelectorAll('.mistake-open-problem-btn').forEach(btn => {
       btn.addEventListener('click', () => window.app?.openProblem(btn.getAttribute('data-prob-id')));
     });
+    container.querySelector('#mistakes-practice-btn')?.addEventListener('click', () => window.app?.openMistakesPractice());
     window.app?.renderAllMath(container);
   }
 

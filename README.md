@@ -69,6 +69,8 @@ Tracks your real progress across 4 weighted pillars:
 
 ### 4. 🧠 Interactive Quizzes & Automated Problem Solver
 * High-yield multiple choice and calculation questions with KaTeX formula rendering.
+* **Practice modes** above the topic grid: "🔁 Мої помилки" re-asks only the questions you got wrong (a correct answer clears them from the dashboard's mistakes panel, which also has a one-click CTA), "🎲 Мікс" serves 20 random questions across all 12 topics. Neither counts as a topic test.
+* "Retake Topic Test" starts a clean attempt — previously every saved answer stayed locked, so a retake couldn't be answered.
 * Instant visual feedback (green/red) with complete step-by-step mathematical proofs.
 * **Hint ladder on every problem**: first a "🧭 Куди рухатись?" nudge (which approach makes it easy — no computations), then the step hints one at a time. The full solution stays collapsed until you open it, and answer prompts no longer show the answer as an "e.g." example.
 * Complete problem bank covering:
