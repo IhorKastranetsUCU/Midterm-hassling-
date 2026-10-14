@@ -357,12 +357,21 @@ class AppController {
             </div>
 
             <div id="flashcard-revealed-details" class="${this.isCardFlipped ? '' : 'hidden'} text-xs text-slate-300 space-y-3 mt-4 border-t border-slate-800 pt-4">
-              <p><strong>Formal Definition:</strong> ${def.definition}</p>
+              <p><strong>Formal Definition:</strong> ${this.formatMd(def.definition)}</p>
+              ${def.keyPoints?.length ? `
+                <div class="p-3 rounded-lg bg-indigo-950/40 border border-indigo-600/60">
+                  <div class="font-bold text-indigo-200 mb-1.5">📌 Обов'язково знати (${def.keyPoints.length})</div>
+                  <ul class="list-disc pl-4 space-y-1 text-slate-200">
+                    ${def.keyPoints.map(p => `<li>${this.formatMd(p)}</li>`).join('')}
+                  </ul>
+                </div>
+              ` : ''}
+              ${def.example ? `<p><strong>💡 Приклад:</strong> ${this.formatMd(def.example)}</p>` : ''}
               <div class="p-2.5 rounded bg-amber-950/30 border border-amber-800/50 text-amber-200">
-                <strong>🎯 Colloquium Oral Tip:</strong> ${def.colloquiumTip}
+                <strong>🎯 Colloquium Oral Tip:</strong> ${this.formatMd(def.colloquiumTip)}
               </div>
               <div class="p-2.5 rounded bg-rose-950/30 border border-rose-800/50 text-rose-200">
-                <strong>⚠️ Professor Trap:</strong> ${def.trap}
+                <strong>⚠️ Professor Trap:</strong> ${this.formatMd(def.trap)}
               </div>
             </div>
           </div>
@@ -440,9 +449,10 @@ class AppController {
           </div>
           <h4 class="font-bold text-slate-100 text-sm mb-1">${def.name}</h4>
           <div class="text-xs text-slate-400 font-mono mb-2">$${def.latex}$</div>
-          <p class="text-xs text-slate-300 line-clamp-3 mb-3">${def.definition}</p>
+          <p class="text-xs text-slate-300 line-clamp-3 mb-2">${this.formatMd(def.definition)}</p>
+          ${def.keyPoints?.length ? `<div class="text-[11px] font-semibold text-indigo-300 mb-3">📌 Обов'язково знати: ${def.keyPoints.length}</div>` : ''}
           <div class="flex justify-between items-center text-[11px] pt-2 border-t border-slate-800/80">
-            <span class="text-amber-400/90 font-medium truncate max-w-[160px]">⚠️ ${def.trap}</span>
+            <span class="text-amber-400/90 font-medium truncate max-w-[160px]">⚠️ ${this.formatMd(def.trap)}</span>
             <button class="def-jump-btn text-indigo-400 hover:text-indigo-300 font-semibold" data-def-index="${def.id - 1}">Test / Practice ➔</button>
           </div>
         </div>
@@ -1047,6 +1057,11 @@ class AppController {
       if (window.pomodoroTimer?.isRunning) window.pomodoroTimer.pause();
       else window.pomodoroTimer.start();
     });
+  }
+
+  // Dataset strings mark the must-know terms with **bold** markdown
+  formatMd(text = '') {
+    return String(text).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   }
 
   renderAllMath(targetElem = null) {
