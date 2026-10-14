@@ -778,8 +778,8 @@ class AppController {
             `}
           </div>
           <p class="text-xs text-slate-400 mb-4 italic">${t.summary}</p>
-          <div class="prose prose-invert max-w-none text-xs text-slate-300 leading-relaxed space-y-2 whitespace-pre-line border-t border-slate-800 pt-4">
-            ${t.content}
+          <div class="max-w-none text-xs text-slate-300 leading-relaxed space-y-2 border-t border-slate-800 pt-4">
+            ${this.formatNotes(t.content)}
           </div>
           <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
             <div class="text-xs text-slate-400">
@@ -1123,6 +1123,42 @@ class AppController {
   // Dataset strings mark the must-know terms with **bold** markdown
   formatMd(text = '') {
     return String(text).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  }
+
+  // Topic notes are light markdown: ### headings, -/* bullets, 1. lists, **bold**, one-line $$ formulas
+  formatNotes(md = '') {
+    const html = [];
+    let list = null; // currently open 'ul' | 'ol'
+    const closeList = () => {
+      if (list) html.push(`</${list}>`);
+      list = null;
+    };
+
+    String(md).split('\n').forEach(raw => {
+      const line = raw.trim();
+      const heading = line.match(/^#{1,6}\s+(.*)$/);
+      const item = line.match(/^(?:([-*])|\d+\.)\s+(.*)$/);
+
+      if (!line) {
+        closeList();
+      } else if (heading) {
+        closeList();
+        html.push(`<h4 class="text-sm font-bold text-slate-100 pt-2">${this.formatMd(heading[1])}</h4>`);
+      } else if (item) {
+        const tag = item[1] ? 'ul' : 'ol';
+        if (list !== tag) {
+          closeList();
+          html.push(`<${tag} class="${tag === 'ul' ? 'list-disc' : 'list-decimal'} pl-5 space-y-1">`);
+          list = tag;
+        }
+        html.push(`<li>${this.formatMd(item[2])}</li>`);
+      } else {
+        closeList();
+        html.push(`<p>${this.formatMd(line)}</p>`);
+      }
+    });
+    closeList();
+    return html.join('');
   }
 
   renderAllMath(targetElem = null) {
