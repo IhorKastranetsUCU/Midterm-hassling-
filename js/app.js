@@ -40,18 +40,23 @@ class AppController {
   }
 
   setupTheme() {
-    const savedTheme = localStorage.getItem('stathustle_theme') || 'dark';
-    if (savedTheme === 'light') {
-      document.documentElement.classList.remove('dark');
-    } else {
-      document.documentElement.classList.add('dark');
-    }
-
+    // The initial theme (saved choice or system preference) is applied by an inline script in <head>
+    const root = document.documentElement;
     const themeToggle = document.getElementById('theme-toggle-btn');
+    const syncToggle = () => {
+      if (!themeToggle) return;
+      const isDark = root.classList.contains('dark');
+      themeToggle.textContent = isDark ? '🌙' : '☀️';
+      themeToggle.title = isDark ? 'Увімкнути світлу тему' : 'Увімкнути темну тему';
+    };
+    syncToggle();
+
     themeToggle?.addEventListener('click', () => {
-      const isDark = document.documentElement.classList.toggle('dark');
-      localStorage.setItem('stathustle_theme', isDark ? 'dark' : 'light');
-      if (themeToggle) themeToggle.textContent = isDark ? '🌙' : '☀️';
+      const isDark = !root.classList.contains('dark');
+      root.classList.toggle('dark', isDark);
+      root.classList.toggle('light', !isDark);
+      try { localStorage.setItem('stathustle_theme', isDark ? 'dark' : 'light'); } catch (e) {}
+      syncToggle();
     });
   }
 

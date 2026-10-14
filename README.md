@@ -90,7 +90,11 @@ Tracks your real progress across 4 weighted pillars:
 * Synthesized Web Audio chime (works 100% offline, no external audio files required).
 * Persistent session tracking across days.
 
-### 7. 📐 Master Distribution & Formula Matrix
+### 7. 🌗 Light & Dark Themes
+* Follows the system theme on first visit; the 🌙/☀️ button in the header switches and remembers the choice.
+* Tailwind colors resolve through `--surface-*` / `--text-*` / `--line-*` CSS variables (config in `index.html`); the light remapping lives in `css/style.css`. Dark mode sets no overrides, so it renders exactly as Tailwind's palette.
+
+### 8. 📐 Master Distribution & Formula Matrix
 * Complete reference table for discrete ($B(1,p), B(n,p), G(p), P(\lambda)$) and continuous ($U(a,b), E(\lambda), N(\mu, \sigma^2), \text{Laplace}$) distributions.
 * Includes Supports, PMF/PDF, Means, Variances, PGFs, MGFs, and key exam pitfalls.
 
@@ -103,7 +107,7 @@ midterm2/
 ├── server.py             # One-click local Python server
 ├── README.md             # This guide
 ├── css/
-│   └── style.css         # Modern dark/light theme & layout styles
+│   └── style.css         # Layout styles + light-theme color remapping
 ├── js/
 │   ├── data.js           # 137KB verified course dataset (definitions, problems, schedule)
 │   ├── problem-directions.js # "Куди рухатись" direction hints, one per problem (kept out of generated data.js)
