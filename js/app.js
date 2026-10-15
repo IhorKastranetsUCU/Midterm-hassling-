@@ -10,6 +10,8 @@ class AppController {
     this.currentProbFilter = 'all';
     this.flashcardIndex = 0;
     this.isCardFlipped = false;
+    this.colloquiumMode = 'browse'; // 'browse' | 'drill' | 'ticket'
+    this.hintLevels = {};           // probId -> how many hint steps are open
   }
 
   init() {
@@ -25,6 +27,8 @@ class AppController {
     this.setupGeminiSettingsModal();
     this.setupEventListeners();
     this.setupProfileModal();
+    this.setupColloquiumModes();
+    window.definitionDrill?.init();
 
     // Trigger initial KaTeX rendering and readiness update
     window.quizManager?.updateReadinessUI();
@@ -36,18 +40,25 @@ class AppController {
   }
 
   setupTheme() {
-    const savedTheme = localStorage.getItem('stathustle_theme') || 'dark';
-    if (savedTheme === 'light') {
-      document.documentElement.classList.remove('dark');
-    } else {
-      document.documentElement.classList.add('dark');
-    }
-
+    // The initial theme (saved choice or system preference) is applied by an inline script in <head>
+    const root = document.documentElement;
     const themeToggle = document.getElementById('theme-toggle-btn');
+    const syncToggle = () => {
+      if (!themeToggle) return;
+      const isDark = root.classList.contains('dark');
+      const label = isDark ? 'Увімкнути світлу тему' : 'Увімкнути темну тему';
+      themeToggle.innerHTML = icon(isDark ? 'moon' : 'sun');
+      themeToggle.title = label;
+      themeToggle.setAttribute('aria-label', label);
+    };
+    syncToggle();
+
     themeToggle?.addEventListener('click', () => {
-      const isDark = document.documentElement.classList.toggle('dark');
-      localStorage.setItem('stathustle_theme', isDark ? 'dark' : 'light');
-      if (themeToggle) themeToggle.textContent = isDark ? '🌙' : '☀️';
+      const isDark = !root.classList.contains('dark');
+      root.classList.toggle('dark', isDark);
+      root.classList.toggle('light', !isDark);
+      try { localStorage.setItem('stathustle_theme', isDark ? 'dark' : 'light'); } catch (e) {}
+      syncToggle();
     });
   }
 
@@ -147,17 +158,17 @@ class AppController {
 
       if (colEl) {
         if (grades.colloquium?.grade) {
-          colEl.innerHTML = `<span class="px-2 py-0.5 rounded font-extrabold bg-amber-950 text-amber-300 border border-amber-700">🎯 Колоквіум: ${grades.colloquium.grade}</span>`;
+          colEl.innerHTML = `<span class="px-2 py-0.5 rounded font-extrabold bg-amber-950 text-amber-300 border border-amber-700">${icon('target')} Колоквіум: ${grades.colloquium.grade}</span>`;
         } else {
-          colEl.innerHTML = `⚡ <span class="font-bold text-amber-400 font-mono">${formatCountdown(colDiff)}</span> to Colloquium`;
+          colEl.innerHTML = `${icon('zap', 'text-amber-400')} <span class="font-bold text-amber-400 font-mono">${formatCountdown(colDiff)}</span> to Colloquium`;
         }
       }
 
       if (midEl) {
         if (grades.midterm?.grade) {
-          midEl.innerHTML = `<span class="px-2 py-0.5 rounded font-extrabold bg-emerald-950 text-emerald-300 border border-emerald-700">🏆 Мідтерм 2: ${grades.midterm.grade}</span>`;
+          midEl.innerHTML = `<span class="px-2 py-0.5 rounded font-extrabold bg-emerald-950 text-emerald-300 border border-emerald-700">${icon('trophy')} Мідтерм 2: ${grades.midterm.grade}</span>`;
         } else {
-          midEl.innerHTML = `🔥 <span class="font-bold text-rose-400 font-mono">${formatCountdown(midDiff)}</span> to Midterm 2 (Пт 08:30)`;
+          midEl.innerHTML = `${icon('flame', 'text-rose-400')} <span class="font-bold text-rose-400 font-mono">${formatCountdown(midDiff)}</span> to Midterm 2 (Пт 08:30)`;
         }
       }
 
@@ -167,7 +178,7 @@ class AppController {
 
       if (colCardTimer) {
         if (grades.colloquium?.grade) {
-          colCardTimer.innerHTML = `<span class="text-emerald-400 text-lg">🎉 Складено (${grades.colloquium.grade})</span>`;
+          colCardTimer.innerHTML = `<span class="text-emerald-400 text-lg">${icon('party-popper')} Складено (${grades.colloquium.grade})</span>`;
         } else {
           colCardTimer.textContent = formatCountdown(colDiff);
         }
@@ -175,7 +186,7 @@ class AppController {
 
       if (midCardTimer) {
         if (grades.midterm?.grade) {
-          midCardTimer.innerHTML = `<span class="text-emerald-400 text-lg">🏆 Складено (${grades.midterm.grade})</span>`;
+          midCardTimer.innerHTML = `<span class="text-emerald-400 text-lg">${icon('trophy')} Складено (${grades.midterm.grade})</span>`;
         } else {
           midCardTimer.textContent = formatCountdown(midDiff);
         }
@@ -222,17 +233,17 @@ class AppController {
                       ? 'bg-indigo-600 text-white' 
                       : 'bg-slate-800 text-slate-300'
                 }">
-                  ${isCompleted ? '✓ COMPLETED (+2%)' : isToday ? '⚡ TODAY' : `DAY ${day.day}`}
+                  ${isCompleted ? `${icon('check')} COMPLETED (+2%)` : isToday ? `${icon('zap')} TODAY` : `DAY ${day.day}`}
                 </span>
                 <span class="text-xs text-slate-400">${day.date}</span>
                 <span class="text-[10px] text-indigo-400 font-mono bg-indigo-950/80 px-2 py-0.5 rounded border border-indigo-800">
-                  ⚡ Auto-Verified
+                  ${icon('zap')} Auto-Verified
                 </span>
               </div>
               <h3 class="text-lg font-bold text-slate-100 mt-1">${day.title}</h3>
             </div>
             <div class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/80 text-indigo-300">
-              🎯 ${day.focus}
+              ${icon('target')} ${day.focus}
             </div>
           </div>
           <p class="text-xs text-slate-300 mb-4 leading-relaxed">${day.description}</p>
@@ -271,7 +282,7 @@ class AppController {
                     ${task.text}
                   </span>
                   <span class="text-[10px] font-mono ${isTaskDone ? 'text-emerald-400 font-bold' : 'text-slate-500'}">
-                    ${isTaskDone ? '✓ Achieved' : 'In Progress'}
+                    ${isTaskDone ? `${icon('check')} Achieved` : 'In Progress'}
                   </span>
                 </div>
               `;
@@ -279,9 +290,9 @@ class AppController {
           </div>
 
           <div class="p-3 rounded-lg bg-slate-950/60 border border-slate-800/80 text-xs text-amber-300/90 flex items-center justify-between">
-            <span>🏁 <strong>Milestone:</strong> ${day.colloquiumGoal}</span>
+            <span>${icon('flag')} <strong>Milestone:</strong> ${day.colloquiumGoal}</span>
             <span class="font-mono text-[11px] ${isCompleted ? 'text-emerald-400 font-bold' : 'text-slate-400'}">
-              ${isCompleted ? '✓ +2% Bonus Active' : '+2% Readiness Bonus when all tasks achieved'}
+              ${isCompleted ? `${icon('check')} +2% Bonus Active` : '+2% Readiness Bonus when all tasks achieved'}
             </span>
           </div>
         </div>
@@ -293,6 +304,38 @@ class AppController {
     this.renderFlashcard();
     this.renderDefinitionsList();
     this.renderOralQuestionsList();
+  }
+
+  setupColloquiumModes() {
+    document.querySelectorAll('[data-fc-mode]').forEach(btn => {
+      btn.addEventListener('click', () => this.setColloquiumMode(btn.getAttribute('data-fc-mode')));
+    });
+  }
+
+  // Flashcard hub has three modes: browse cards, random definition drill, exam ticket
+  setColloquiumMode(mode) {
+    this.colloquiumMode = mode;
+    document.querySelectorAll('[data-fc-mode]').forEach(btn => {
+      const active = btn.getAttribute('data-fc-mode') === mode;
+      btn.classList.toggle('tab-active', active);
+      btn.classList.toggle('tab-inactive', !active);
+    });
+
+    const panels = { browse: 'flashcard-container', drill: 'definition-drill-container', ticket: 'exam-ticket-container' };
+    Object.entries(panels).forEach(([m, id]) => {
+      document.getElementById(id)?.classList.toggle('hidden', m !== mode);
+    });
+
+    if (mode !== 'ticket') window.examTicket?.hide();
+
+    if (mode === 'drill') {
+      window.definitionDrill?.show();
+    } else if (mode === 'ticket') {
+      window.examTicket?.show();
+    } else {
+      this.renderFlashcard();
+      this.renderAllMath(document.getElementById('flashcard-container'));
+    }
   }
 
   renderFlashcard() {
@@ -311,7 +354,7 @@ class AppController {
             <div class="flex justify-between items-center text-xs text-slate-400 mb-2">
               <span class="px-2 py-0.5 rounded bg-indigo-900/60 text-indigo-300 font-bold">Definition ${def.id} of 21</span>
               <span class="font-bold ${isMastered ? 'text-emerald-400' : 'text-amber-400'}">
-                ${isMastered ? `⭐ Mastered (${score}/10) +1%` : score > 0 ? `Score: ${score}/10 (Need ≥6 for 1%)` : '⏳ Not Yet Tested'}
+                ${isMastered ? `${icon('star')} Mastered (${score}/10) +1%` : score > 0 ? `Score: ${score}/10 (Need ≥6 for 1%)` : `${icon('hourglass')} Not Yet Tested`}
               </span>
             </div>
             <h3 class="text-2xl font-extrabold text-slate-100 mb-1">${def.name}</h3>
@@ -322,20 +365,29 @@ class AppController {
             </div>
 
             <div id="flashcard-revealed-details" class="${this.isCardFlipped ? '' : 'hidden'} text-xs text-slate-300 space-y-3 mt-4 border-t border-slate-800 pt-4">
-              <p><strong>Formal Definition:</strong> ${def.definition}</p>
+              <p><strong>Formal Definition:</strong> ${this.formatMd(def.definition)}</p>
+              ${def.keyPoints?.length ? `
+                <div class="p-3 rounded-lg bg-indigo-950/40 border border-indigo-600/60">
+                  <div class="font-bold text-indigo-200 mb-1.5">${icon('pin')} Обов'язково знати (${def.keyPoints.length})</div>
+                  <ul class="list-disc pl-4 space-y-1 text-slate-200">
+                    ${def.keyPoints.map(p => `<li>${this.formatMd(p)}</li>`).join('')}
+                  </ul>
+                </div>
+              ` : ''}
+              ${def.example ? `<p><strong>${icon('lightbulb')} Приклад:</strong> ${this.formatMd(def.example)}</p>` : ''}
               <div class="p-2.5 rounded bg-amber-950/30 border border-amber-800/50 text-amber-200">
-                <strong>🎯 Colloquium Oral Tip:</strong> ${def.colloquiumTip}
+                <strong>${icon('target')} Colloquium Oral Tip:</strong> ${this.formatMd(def.colloquiumTip)}
               </div>
               <div class="p-2.5 rounded bg-rose-950/30 border border-rose-800/50 text-rose-200">
-                <strong>⚠️ Professor Trap:</strong> ${def.trap}
+                <strong>${icon('triangle-alert')} Professor Trap:</strong> ${this.formatMd(def.trap)}
               </div>
             </div>
           </div>
 
           <div class="pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-            <span>${this.isCardFlipped ? 'Click card to minimize' : '💡 Click card to reveal definition & traps'}</span>
+            <span>${this.isCardFlipped ? 'Click card to minimize' : `${icon('lightbulb')} Click card to reveal definition & traps`}</span>
             <button id="card-ai-test-btn" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition">
-              🤖 Test with Gemini (Grade ≥6 for 1%)
+              ${icon('bot')} Test with Gemini (Grade ≥6 for 1%)
             </button>
           </div>
         </div>
@@ -343,13 +395,13 @@ class AppController {
 
       <div class="flex justify-center items-center gap-4 mt-6">
         <button id="fc-prev-btn" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold transition">
-          ◀ Previous
+          ${icon('chevron-left')} Previous
         </button>
         <button id="fc-self-pass-btn" class="px-5 py-2 rounded-lg ${isMastered ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-emerald-400 border border-emerald-600'} text-sm font-semibold transition">
-          ${isMastered ? `✓ Scored ${score}/10 (+1% Readiness)` : 'Self-Check: Score 8/10 (+1%)'}
+          ${isMastered ? `${icon('check')} Scored ${score}/10 (+1% Readiness)` : 'Self-Check: Score 8/10 (+1%)'}
         </button>
         <button id="fc-next-btn" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold transition">
-          Next ▶
+          Next ${icon('chevron-right')}
         </button>
       </div>
     `;
@@ -400,15 +452,16 @@ class AppController {
           <div class="flex justify-between items-start mb-2">
             <span class="text-xs font-bold px-2 py-0.5 rounded ${isMastered ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-indigo-300'}">#${def.id}</span>
             <span class="text-xs font-bold ${isMastered ? 'text-emerald-400' : 'text-slate-400'}">
-              ${isMastered ? `✓ ${score}/10 (+1%)` : score > 0 ? `${score}/10` : 'Not Tested'}
+              ${isMastered ? `${icon('check')} ${score}/10 (+1%)` : score > 0 ? `${score}/10` : 'Not Tested'}
             </span>
           </div>
           <h4 class="font-bold text-slate-100 text-sm mb-1">${def.name}</h4>
           <div class="text-xs text-slate-400 font-mono mb-2">$${def.latex}$</div>
-          <p class="text-xs text-slate-300 line-clamp-3 mb-3">${def.definition}</p>
+          <p class="text-xs text-slate-300 line-clamp-3 mb-2">${this.formatMd(def.definition)}</p>
+          ${def.keyPoints?.length ? `<div class="text-[11px] font-semibold text-indigo-300 mb-3">${icon('pin')} Обов'язково знати: ${def.keyPoints.length}</div>` : ''}
           <div class="flex justify-between items-center text-[11px] pt-2 border-t border-slate-800/80">
-            <span class="text-amber-400/90 font-medium truncate max-w-[160px]">⚠️ ${def.trap}</span>
-            <button class="def-jump-btn text-indigo-400 hover:text-indigo-300 font-semibold" data-def-index="${def.id - 1}">Test / Practice ➔</button>
+            <span class="text-amber-400/90 font-medium truncate max-w-[160px]">${icon('triangle-alert')} ${this.formatMd(def.trap)}</span>
+            <button class="def-jump-btn text-indigo-400 hover:text-indigo-300 font-semibold" data-def-index="${def.id - 1}">Test / Practice ${icon('arrow-right')}</button>
           </div>
         </div>
       `;
@@ -418,6 +471,7 @@ class AppController {
       btn.addEventListener('click', () => {
         this.flashcardIndex = parseInt(btn.getAttribute('data-def-index'), 10);
         this.isCardFlipped = true;
+        if (this.colloquiumMode !== 'browse') this.setColloquiumMode('browse');
         this.renderFlashcard();
         this.renderAllMath();
         window.scrollTo({ top: 300, behavior: 'smooth' });
@@ -439,14 +493,14 @@ class AppController {
                 <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-950 text-amber-300 border border-amber-800">
                   Colloquium Question ${oq.id}
                 </span>
-                <span class="text-xs text-slate-400 font-mono">⏱️ ${oq.time} presentation</span>
+                <span class="text-xs text-slate-400 font-mono">${icon('timer')} ${oq.time} presentation</span>
               </div>
               <h3 class="text-base font-bold text-slate-100 mt-1">${oq.title}</h3>
             </div>
             <div class="flex items-center gap-3">
               ${score !== null ? `<span class="px-2.5 py-1 rounded bg-indigo-950 text-indigo-300 font-bold text-xs border border-indigo-800">Score: ${score}/10</span>` : ''}
               <button class="oral-simulate-btn px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition" data-oq-id="${oq.id}">
-                🎙️ Simulate Oral Defense
+                ${icon('mic')} Simulate Oral Defense
               </button>
             </div>
           </div>
@@ -459,7 +513,7 @@ class AppController {
           </div>
 
           <details class="text-xs bg-slate-950/60 p-3 rounded-lg border border-slate-800">
-            <summary class="font-semibold text-slate-300 cursor-pointer hover:text-indigo-400">📖 View Full Model Spoken Answer & Examiner Follow-Up Questions</summary>
+            <summary class="font-semibold text-slate-300 cursor-pointer hover:text-indigo-400">${icon('book-open')} View Full Model Spoken Answer & Examiner Follow-Up Questions</summary>
             <div class="mt-3 space-y-3 pt-3 border-t border-slate-800 text-slate-300 leading-relaxed">
               <p><strong>Spoken Model Answer:</strong><br>${oq.speech}</p>
               <div>
@@ -491,6 +545,66 @@ class AppController {
     });
   }
 
+  // Hint ladder: first a direction (which approach, no computations), then the dataset's step hints
+  getHintSteps(prob) {
+    const steps = [];
+    const direction = window.PS_DATA?.PROBLEM_DIRECTIONS?.[prob.id];
+    if (direction) {
+      steps.push({
+        label: `${icon('compass')} Куди рухатись?`,
+        html: `<strong>${icon('compass')} Напрямок:</strong> ${direction}`,
+        cls: 'p-2.5 rounded-lg bg-amber-950/30 border border-amber-800/50 text-amber-100'
+      });
+    }
+    const hints = prob.hints || [];
+    hints.forEach((h, i) => steps.push({
+      label: `${icon('lightbulb')} Підказка ${i + 1} з ${hints.length}`,
+      html: h,
+      cls: 'text-slate-300'
+    }));
+    return steps;
+  }
+
+  renderHintLadder(prob) {
+    const steps = this.getHintSteps(prob);
+    if (!steps.length) return '';
+    const shown = Math.min(this.hintLevels[prob.id] || 0, steps.length);
+    const next = steps[shown];
+
+    return `
+      <div class="text-xs bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <span class="font-semibold text-amber-300">${icon('lightbulb')} Підказки${shown ? ` · відкрито ${shown} з ${steps.length}` : ' — не розв\'язок, а поштовх'}</span>
+          ${next
+            ? `<button class="hint-next-btn px-3 py-1 rounded-lg bg-amber-950/60 hover:bg-amber-900 border border-amber-800 text-amber-200 font-semibold cursor-pointer transition" data-prob-id="${prob.id}">${next.label}</button>`
+            : '<span class="text-[11px] text-slate-500">Підказки закінчились — далі тільки повний розв\'язок нижче</span>'}
+        </div>
+        ${shown ? `
+          <div class="mt-2.5 pt-2.5 border-t border-slate-800 space-y-2">
+            ${steps.slice(0, shown).map(s => `<div class="${s.cls}">${s.html}</div>`).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // Quiz over the questions currently in the mistakes registry
+  openMistakesPractice() {
+    this.switchTab('quizzes');
+    window.quizManager?.startQuiz('mistakes');
+  }
+
+  // Jump to a problem card from elsewhere (e.g. the dashboard mistakes panel)
+  openProblem(probId) {
+    this.switchTab('problems');
+    if (!document.getElementById(`prob-card-${probId}`)) {
+      document.querySelector('[data-prob-filter="all"]')?.click(); // card is hidden by the active filter
+    }
+    requestAnimationFrame(() => {
+      document.getElementById(`prob-card-${probId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
   // --- PROBLEM BANK WITH INTERACTIVE FINAL ANSWER SUBMISSION ---
   renderProblemsSection() {
     const container = document.getElementById('problems-list-container');
@@ -515,14 +629,14 @@ class AppController {
                 <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-900/60 text-indigo-300">${prob.source}</span>
                 <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-800 text-slate-300">${prob.topic}</span>
                 <span class="text-xs font-semibold ${prob.difficulty === 'Easy' ? 'text-emerald-400' : prob.difficulty === 'Medium' ? 'text-amber-400' : 'text-rose-400'}">
-                  ● ${prob.difficulty}
+                  ${icon('circle-dot')} ${prob.difficulty}
                 </span>
               </div>
               <h3 class="text-lg font-bold text-slate-100 mt-1">${prob.title}</h3>
             </div>
             <div>
               <span class="px-3 py-1 rounded-full text-xs font-bold ${isSolved ? 'bg-emerald-950 text-emerald-300 border border-emerald-700' : 'bg-slate-800 text-slate-400 border border-slate-700'}">
-                ${isSolved ? '✓ Solved (+2.5% Readiness)' : 'Unsolved (+2.5% on Submit)'}
+                ${isSolved ? `${icon('check')} Solved (+2.5% Readiness)` : 'Unsolved (+2.5% on Submit)'}
               </span>
             </div>
           </div>
@@ -535,35 +649,30 @@ class AppController {
           <!-- Interactive Final Answer Submission Box -->
           <div class="mb-5 p-4 rounded-xl bg-slate-950/90 border border-slate-800">
             <div class="text-xs font-bold text-indigo-400 mb-1.5 flex items-center justify-between">
-              <span>✍️ Submit Final Answer for Readiness Credit:</span>
+              <span>${icon('pen-line')} Submit Final Answer for Readiness Credit:</span>
               <span class="text-[11px] font-mono text-emerald-400">+2.5% Readiness</span>
             </div>
             <p class="text-xs text-slate-300 mb-2">${prob.inputPrompt || 'Enter final answer:'}</p>
             <div class="flex flex-col sm:flex-row gap-2">
-              <input type="text" id="prob-input-${prob.id}" placeholder="Enter answer, e.g. ${prob.expectedAnswer}..." 
+              <input type="text" id="prob-input-${prob.id}" placeholder="Твоя відповідь…"
                      value="${isSolved ? prob.expectedAnswer : ''}" ${isSolved ? 'disabled' : ''}
                      class="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 font-mono focus:outline-none focus:border-indigo-500">
               <button class="prob-submit-btn px-5 py-2 rounded-lg ${isSolved ? 'bg-emerald-600' : 'bg-indigo-600 hover:bg-indigo-500'} text-white font-bold text-xs transition" 
                       data-prob-id="${prob.id}">
-                ${isSolved ? '✓ Verified Correct' : 'Submit & Check ➔'}
+                ${isSolved ? `${icon('check')} Verified Correct` : `Submit & Check ${icon('arrow-right')}`}
               </button>
             </div>
             <div id="prob-feedback-${prob.id}" class="${isSolved ? '' : 'hidden'} mt-2 text-xs font-semibold ${isSolved ? 'text-emerald-400' : ''}">
-              ${isSolved ? `✅ Verified! Correct Canonical Answer: ${prob.expectedAnswer}` : ''}
+              ${isSolved ? `${icon('circle-check')} Verified! Correct Canonical Answer: ${prob.expectedAnswer}` : ''}
             </div>
           </div>
 
-          <!-- Explanations & Step-by-Step Rigorous Derivation (Always Visible for Study) -->
+          <!-- Hints open one at a time; the full derivation stays collapsed until asked for -->
           <div class="space-y-3">
-            <details class="text-xs bg-slate-950/60 p-3 rounded-xl border border-slate-800">
-              <summary class="font-semibold text-amber-300 cursor-pointer hover:underline">💡 Progressive Hints</summary>
-              <div class="mt-2.5 pt-2.5 border-t border-slate-800 text-slate-300 space-y-1.5">
-                ${prob.hints.map(h => `<div>${h}</div>`).join('')}
-              </div>
-            </details>
+            <div id="hint-ladder-${prob.id}">${this.renderHintLadder(prob)}</div>
 
-            <details open class="text-xs bg-slate-950/80 p-4 rounded-xl border border-indigo-900/50">
-              <summary class="font-bold text-indigo-400 cursor-pointer hover:underline text-sm">📝 Complete Rigorous Step-by-Step Solution & Working</summary>
+            <details class="text-xs bg-slate-950/80 p-4 rounded-xl border border-indigo-900/50">
+              <summary class="font-bold text-indigo-400 cursor-pointer hover:underline text-sm">${icon('notebook-pen')} Complete Rigorous Step-by-Step Solution & Working</summary>
               <div class="mt-3 pt-3 border-t border-slate-800 text-slate-200 leading-relaxed space-y-2 whitespace-pre-line">
                 ${prob.solution}
               </div>
@@ -572,6 +681,23 @@ class AppController {
         </div>
       `;
     }).join('');
+
+    // One delegated listener survives the innerHTML re-renders of the problem list
+    if (!container.dataset.hintsBound) {
+      container.dataset.hintsBound = 'true';
+      container.addEventListener('click', (e) => {
+        const btn = e.target.closest('.hint-next-btn');
+        if (!btn) return;
+        const pid = parseInt(btn.getAttribute('data-prob-id'), 10);
+        this.hintLevels[pid] = (this.hintLevels[pid] || 0) + 1;
+        const ladder = document.getElementById(`hint-ladder-${pid}`);
+        const prob = window.PS_DATA.PROBLEMS_BANK.find(p => p.id === pid);
+        if (ladder && prob) {
+          ladder.innerHTML = this.renderHintLadder(prob);
+          this.renderAllMath(ladder);
+        }
+      });
+    }
 
     // Attach answer submission handlers
     container.querySelectorAll('.prob-submit-btn').forEach(btn => {
@@ -618,18 +744,18 @@ class AppController {
     feedbackEl.classList.remove('hidden');
     if (isCorrect) {
       feedbackEl.className = 'mt-2 text-xs font-semibold text-emerald-400';
-      feedbackEl.innerHTML = `✅ Correct! Canonical answer: <strong>${prob.expectedAnswer}</strong>. (+2.5% Readiness awarded!)`;
+      feedbackEl.innerHTML = `${icon('circle-check')} Correct! Canonical answer: <strong>${prob.expectedAnswer}</strong>. (+2.5% Readiness awarded!)`;
       inputEl.disabled = true;
       const submitBtn = document.querySelector(`.prob-submit-btn[data-prob-id="${probId}"]`);
       if (submitBtn) {
         submitBtn.className = 'prob-submit-btn px-5 py-2 rounded-lg bg-emerald-600 text-white font-bold text-xs';
-        submitBtn.textContent = '✓ Verified Correct';
+        submitBtn.innerHTML = `${icon('check')} Verified Correct`;
       }
       window.quizManager?.recordProblemSolved(probId, true);
       window.userProfile?.recordSuccess(`prob_${probId}`);
     } else {
       feedbackEl.className = 'mt-2 text-xs font-semibold text-rose-400';
-      feedbackEl.innerHTML = `❌ Not quite. Compare with the hint or step-by-step solution below and try again!`;
+      feedbackEl.innerHTML = `${icon('circle-x')} Not quite. Compare with the hint or step-by-step solution below and try again!`;
       window.userProfile?.recordMistake(`prob_${probId}`, prob.title, prob.topic, 'problem');
     }
   }
@@ -651,7 +777,7 @@ class AppController {
             <h3 class="text-xl font-extrabold text-slate-100">${t.title}</h3>
             ${isSolved ? `
               <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-950 text-emerald-300 border border-emerald-700 shrink-0 self-start sm:self-center">
-                <span>✓</span> Пройдено: ${score}/${total} (${pct}%)
+                ${icon('check')} Пройдено: ${score}/${total} (${pct}%)
               </span>
             ` : `
               <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 shrink-0 self-start sm:self-center">
@@ -660,15 +786,15 @@ class AppController {
             `}
           </div>
           <p class="text-xs text-slate-400 mb-4 italic">${t.summary}</p>
-          <div class="prose prose-invert max-w-none text-xs text-slate-300 leading-relaxed space-y-2 whitespace-pre-line border-t border-slate-800 pt-4">
-            ${t.content}
+          <div class="max-w-none text-xs text-slate-300 leading-relaxed space-y-2 border-t border-slate-800 pt-4">
+            ${this.formatNotes(t.content)}
           </div>
           <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
             <div class="text-xs text-slate-400">
-              ${isSolved ? `<span class="text-emerald-400 font-semibold">✓ Зараховано до прогресу підготовки (+1%)</span>` : 'Пройдіть тест для зарахування +1% до готовності'}
+              ${isSolved ? `<span class="text-emerald-400 font-semibold">${icon('check')} Зараховано до прогресу підготовки (+1%)</span>` : 'Пройдіть тест для зарахування +1% до готовності'}
             </div>
             <button class="topic-quiz-btn px-4 py-2 rounded-lg ${isSolved ? 'bg-indigo-700 hover:bg-indigo-600' : 'bg-indigo-600 hover:bg-indigo-500'} text-white font-semibold text-xs transition flex items-center gap-1.5" data-topic-id="${t.id}">
-              ${isSolved ? '<span>🔄</span> Пройти повторно (50 Q)' : '<span>🧠</span> Quiz on this Topic (50 Q)'}
+              ${isSolved ? `${icon('rotate-ccw')} Пройти повторно (50 Q)` : `${icon('brain')} Quiz on this Topic (50 Q)`}
             </button>
           </div>
         </div>
@@ -747,11 +873,11 @@ class AppController {
         botBubble.className = 'p-3.5 rounded-xl bg-amber-950/80 text-amber-200 self-start max-w-[90%] text-xs border border-amber-800 leading-relaxed';
         botBubble.innerHTML = `
           <div class="font-bold text-amber-300 mb-1 flex items-center gap-1.5">
-            <span>⚠️</span> <span>Потрібен Gemini API Key:</span>
+            ${icon('triangle-alert')} <span>Потрібен Gemini API Key:</span>
           </div>
           <div>Для спілкування з Gemini AI Ментором введіть ваш персональний ключ Google AI Studio. Це безкоштовно та займає 10 секунд!</div>
           <button id="chat-need-key-btn" class="mt-2.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow transition">
-            🔑 Налаштувати API Key
+            ${icon('key-round')} Налаштувати API Key
           </button>
         `;
         messages?.appendChild(botBubble);
@@ -834,22 +960,22 @@ class AppController {
         }
         return;
       }
-      testBtn.textContent = '⏳ Перевірка...';
+      testBtn.innerHTML = `${icon('hourglass')} Перевірка...`;
       const res = await window.geminiMentor?.testConnection(candidate);
-      testBtn.textContent = '⚡ Test Connection';
+      testBtn.innerHTML = `${icon('zap')} Test Connection`;
       if (statusBox) {
         statusBox.classList.remove('hidden');
         if (res.success) {
           if (res.warning) {
             statusBox.className = 'p-3 rounded-xl text-xs font-semibold bg-amber-950/80 border border-amber-800 text-amber-300 leading-relaxed';
-            statusBox.innerHTML = `⚠️ ${res.message}`;
+            statusBox.innerHTML = `${icon('triangle-alert')} ${res.message}`;
           } else {
             statusBox.className = 'p-3 rounded-xl text-xs font-semibold bg-emerald-950/80 border border-emerald-800 text-emerald-300 leading-relaxed';
-            statusBox.innerHTML = `✅ ${res.message}`;
+            statusBox.innerHTML = `${icon('circle-check')} ${res.message}`;
           }
         } else {
           statusBox.className = 'p-3 rounded-xl text-xs font-semibold bg-rose-950/80 border border-rose-800 text-rose-300 leading-relaxed';
-          statusBox.innerHTML = `❌ ${res.message}`;
+          statusBox.innerHTML = `${icon('circle-x')} ${res.message}`;
         }
       }
     });
@@ -861,7 +987,7 @@ class AppController {
       window.geminiMentor?.setApiKey(key);
       modal?.classList.add('hidden');
       window.geminiMentor?.updateKeyStatusUI();
-      alert('✅ Налаштування Gemini AI збережено!');
+      alert('Налаштування Gemini AI збережено!');
     });
 
     clearBtn?.addEventListener('click', () => {
@@ -952,7 +1078,7 @@ class AppController {
       const newName = nameInput?.value?.trim();
       if (newName && window.userProfile) {
         window.userProfile.updateProfileDetails(newName, null);
-        alert("✅ Profile name updated!");
+        alert("Profile name updated!");
       }
     });
 
@@ -962,7 +1088,7 @@ class AppController {
         const reader = new FileReader();
         reader.onload = (evt) => {
           window.userProfile.updateProfileDetails(null, evt.target.result);
-          alert("✅ Custom profile photo uploaded!");
+          alert("Custom profile photo uploaded!");
         };
         reader.readAsDataURL(file);
       }
@@ -1000,6 +1126,47 @@ class AppController {
       if (window.pomodoroTimer?.isRunning) window.pomodoroTimer.pause();
       else window.pomodoroTimer.start();
     });
+  }
+
+  // Dataset strings mark the must-know terms with **bold** markdown
+  formatMd(text = '') {
+    return String(text).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  }
+
+  // Topic notes are light markdown: ### headings, -/* bullets, 1. lists, **bold**, one-line $$ formulas
+  formatNotes(md = '') {
+    const html = [];
+    let list = null; // currently open 'ul' | 'ol'
+    const closeList = () => {
+      if (list) html.push(`</${list}>`);
+      list = null;
+    };
+
+    String(md).split('\n').forEach(raw => {
+      const line = raw.trim();
+      const heading = line.match(/^#{1,6}\s+(.*)$/);
+      const item = line.match(/^(?:([-*])|\d+\.)\s+(.*)$/);
+
+      if (!line) {
+        closeList();
+      } else if (heading) {
+        closeList();
+        html.push(`<h4 class="text-sm font-bold text-slate-100 pt-2">${this.formatMd(heading[1])}</h4>`);
+      } else if (item) {
+        const tag = item[1] ? 'ul' : 'ol';
+        if (list !== tag) {
+          closeList();
+          html.push(`<${tag} class="${tag === 'ul' ? 'list-disc' : 'list-decimal'} pl-5 space-y-1">`);
+          list = tag;
+        }
+        html.push(`<li>${this.formatMd(item[2])}</li>`);
+      } else {
+        closeList();
+        html.push(`<p>${this.formatMd(line)}</p>`);
+      }
+    });
+    closeList();
+    return html.join('');
   }
 
   renderAllMath(targetElem = null) {

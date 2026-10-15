@@ -23,6 +23,12 @@ python3 server.py
 ```
 Open **`http://localhost:8080`**.
 
+### Tests
+Pure logic (drill queue, ticket picker) is covered by Node's built-in test runner — no dependencies:
+```bash
+node --test tests/*.test.js
+```
+
 ---
 
 ## 🌟 Key Features Built From Scratch
@@ -33,6 +39,13 @@ Open **`http://localhost:8080`**.
   * Exact mathematical definitions with measurability and integrability conditions.
   * Colloquium tips and **Professor Traps** (the exact nuances examiners check).
   * Direct "Mark as Mastered" checkboxes that feed into your Readiness Meter.
+* **🎲 Random Definition Drill (Quizlet-style)** — toggle "Рандомний тест" above the flashcards:
+  * Definitions come in shuffled order: type (or say) the definition, reveal the reference, tick the key points you actually covered and grade yourself ✗ / ~ / ✓ (keys `1` `2` `3`, `Ctrl/⌘+Enter` to reveal).
+  * "Didn't know" cards come back 3 cards later, "partially" ones go to the end of the queue; the round ends with a summary and a one-click re-run of the weak ones.
+  * Scope: all 21 or only the ones not yet scored ≥6/10. Grades feed the same readiness score as the flashcards.
+* **🎟️ Colloquium Exam Ticket** — third mode of the same toggle:
+  * Draws 1 random oral question (never the same one twice in a row) + 2 random definitions and starts a stopwatch against the question's time hint.
+  * "Показати еталон" freezes the clock and shows the answer plan, board formulas, examiner follow-ups, the full model answer and both definitions with their must-know points; each of the 3 items gets its own ✗ / ~ / ✓ grade.
 * **The 12 Colloquium Oral Questions & Defense Guides**:
   * Structured 4-step oral answer templates (Definition -> Axioms -> Proof/Formulas -> Counterexample).
   * Key formulas to write down on the board immediately.
@@ -59,7 +72,10 @@ Tracks your real progress across 4 weighted pillars:
 
 ### 4. 🧠 Interactive Quizzes & Automated Problem Solver
 * High-yield multiple choice and calculation questions with KaTeX formula rendering.
+* **Practice modes** above the topic grid: "🔁 Мої помилки" re-asks only the questions you got wrong (a correct answer clears them from the dashboard's mistakes panel, which also has a one-click CTA), "🎲 Мікс" serves 20 random questions across all 12 topics. Neither counts as a topic test.
+* "Retake Topic Test" starts a clean attempt — previously every saved answer stayed locked, so a retake couldn't be answered.
 * Instant visual feedback (green/red) with complete step-by-step mathematical proofs.
+* **Hint ladder on every problem**: first a "🧭 Куди рухатись?" nudge (which approach makes it easy — no computations), then the step hints one at a time. The full solution stays collapsed until you open it, and answer prompts no longer show the answer as an "e.g." example.
 * Complete problem bank covering:
   * Seminar 4 (Discrete, Rankings, Dice, Redundancy Channel).
   * Seminar 5 (Expectation algebra, Waiting for HH, Geometric tail sum, Urn indicators).
@@ -79,7 +95,16 @@ Tracks your real progress across 4 weighted pillars:
 * Synthesized Web Audio chime (works 100% offline, no external audio files required).
 * Persistent session tracking across days.
 
-### 7. 📐 Master Distribution & Formula Matrix
+### 7. 🌗 Light & Dark Themes
+* Follows the system theme on first visit; the 🌙/☀️ button in the header switches and remembers the choice.
+* Tailwind colors resolve through `--surface-*` / `--text-*` / `--line-*` CSS variables (config in `index.html`); the light remapping lives in `css/style.css`. Dark mode sets no overrides, so it renders exactly as Tailwind's palette.
+
+### 8. 🧩 Icon System
+* UI icons are [Lucide](https://lucide.dev) (ISC license, v0.468.0 from jsDelivr) rendered as inline SVG — no emoji stickers in the interface.
+* In JS templates: `${icon('dices')}` or `${icon('trophy', 'text-amber-400')}`; in static `index.html` markup: `<i data-icon="dices"></i>` (always with a closing tag), hydrated on load by `js/icons.js`.
+* Icons are `1em` and use `currentColor`, so they follow the text size and both themes. If the CDN is unreachable, `icon()` returns an empty string and the UI keeps working without icons.
+
+### 9. 📐 Master Distribution & Formula Matrix
 * Complete reference table for discrete ($B(1,p), B(n,p), G(p), P(\lambda)$) and continuous ($U(a,b), E(\lambda), N(\mu, \sigma^2), \text{Laplace}$) distributions.
 * Includes Supports, PMF/PDF, Means, Variances, PGFs, MGFs, and key exam pitfalls.
 
@@ -92,13 +117,18 @@ midterm2/
 ├── server.py             # One-click local Python server
 ├── README.md             # This guide
 ├── css/
-│   └── style.css         # Modern dark/light theme & layout styles
+│   └── style.css         # Layout styles + light-theme color remapping
 ├── js/
 │   ├── data.js           # 137KB verified course dataset (definitions, problems, schedule)
+│   ├── problem-directions.js # "Куди рухатись" direction hints, one per problem (kept out of generated data.js)
 │   ├── gemini.js         # Gemini AI Mentor & oral evaluator
 │   ├── pomodoro.js       # Pomodoro timer with Web Audio synthesizer
 │   ├── quiz.js           # Interactive quiz manager & readiness engine
+│   ├── definition-drill.js # Random definition drill (shuffled recall + self-grading)
+│   ├── exam-ticket.js    # Colloquium ticket: random oral question + 2 definitions + stopwatch
+│   ├── icons.js          # icon('name') helper + <i data-icon> hydration (Lucide inline SVG)
 │   └── app.js            # UI controller, routing & event handling
+├── tests/                # node --test unit tests for pure logic
 ├── vendor/
 │   └── katex/            # Offline KaTeX assets (css, js, auto-render)
 └── extracted_text/       # Clean text extractions from course PDFs

@@ -12,7 +12,7 @@ const WARDROBE_ITEMS = [
     id: 'freshman_tee',
     name: 'Freshman Campus T-Shirt',
     minReadiness: 0,
-    icon: '👕',
+    icon: 'shirt',
     badge: '0% Required',
     color: '#3b82f6',
     description: 'Класична біло-синя футболка першокурсника УКУ для старту підготовки до колоквіуму та мідтерму.',
@@ -28,7 +28,7 @@ const WARDROBE_ITEMS = [
     id: 'focus_cap',
     name: 'Focus Cap & Smart Wire Glasses',
     minReadiness: 15,
-    icon: '🧢',
+    icon: 'graduation-cap',
     badge: '15% Required',
     color: '#10b981',
     description: 'Кепка фокусу та антивідблискові окуляри для тривалого вивчення формул і лекцій.',
@@ -47,7 +47,7 @@ const WARDROBE_ITEMS = [
     id: 'apps_cs_hoodie',
     name: 'Official CS@UCU APPS Hoodie',
     minReadiness: 25,
-    icon: '💻',
+    icon: 'laptop',
     badge: '25% APPS Merch',
     color: '#1e1b4b',
     description: 'Офіційне темне худі Факультету прикладних наук (APPS / CS@UCU) з емблемою факультету та кодом </>. store.ucu.edu.ua',
@@ -67,7 +67,7 @@ const WARDROBE_ITEMS = [
     id: 'ucu_hoodie',
     name: 'Official UCU Classic Hoodie',
     minReadiness: 35,
-    icon: '🧥',
+    icon: 'shirt',
     badge: '35% Required',
     color: '#4f46e5',
     description: 'Тепле університетське худі насиченого індиго-кольору з гербом УКУ. Зручне для занять у Колегіумі.',
@@ -85,7 +85,7 @@ const WARDROBE_ITEMS = [
     id: 'velykogo_raglan',
     name: 'Реглан «Великого бажайте!»',
     minReadiness: 45,
-    icon: '✨',
+    icon: 'sparkles',
     badge: '45% UCU Icon',
     color: '#18181b',
     description: 'Культовий чорний реглан з духовним гаслом патріарха Йосифа Сліпого «Великого бажайте!». store.ucu.edu.ua',
@@ -103,7 +103,7 @@ const WARDROBE_ITEMS = [
     id: 'colloquium_suit',
     name: 'Colloquium Formal Defense Suit',
     minReadiness: 55,
-    icon: '👔',
+    icon: 'briefcase',
     badge: '55% Required',
     color: '#1e293b',
     description: 'Діловий костюм з краваткою для урочистого захисту усних питань на середовому Колоквіумі 2.',
@@ -121,7 +121,7 @@ const WARDROBE_ITEMS = [
     id: 'ucu_shmot_sweatshirt',
     name: 'Світшот «Шмот» УКУ',
     minReadiness: 65,
-    icon: '🍷',
+    icon: 'wine',
     badge: '65% Campus Classic',
     color: '#881337',
     description: 'Фірмовий бордовий світшот «Шмот» з автентичної колекції одягу крамнички УКУ. store.ucu.edu.ua',
@@ -138,7 +138,7 @@ const WARDROBE_ITEMS = [
     id: 'sheptytsky_blanket_socks',
     name: 'Коцик і теплі шкарпетки Шептицького',
     minReadiness: 75,
-    icon: '🧣',
+    icon: 'snowflake',
     badge: '75% Study Gear',
     color: '#065f46',
     description: 'Набір витривалого студента з Центру Шептицького: затишний теплий коцик та в\'язані шкарпетки УКУ.',
@@ -157,7 +157,7 @@ const WARDROBE_ITEMS = [
     id: 'tech_lab_vest',
     name: 'Брендована жилетка інженера APPS Lab',
     minReadiness: 85,
-    icon: '🛠️',
+    icon: 'wrench',
     badge: '85% Sheptytsky Tech',
     color: '#0f172a',
     description: 'Жилетка розробника та інженера Sheptytsky Tech Lab / APPS з фірмовою нашивкою для лабораторій.',
@@ -175,7 +175,7 @@ const WARDROBE_ITEMS = [
     id: 'wizard_robe',
     name: 'Markov Master Wizard Robe',
     minReadiness: 95,
-    icon: '🧙‍♂️',
+    icon: 'wand-sparkles',
     badge: '95% Required',
     color: '#7e22ce',
     description: 'Магічна фіолетова мантія з рунами густини та математичного сподівання для володарів Марковських процесів.',
@@ -194,7 +194,7 @@ const WARDROBE_ITEMS = [
     id: 'champion_crown',
     name: 'Grand Champion Crown & Trophy',
     minReadiness: 100,
-    icon: '👑',
+    icon: 'crown',
     badge: '100% Master Grade',
     color: '#eab308',
     description: 'Золота корона та тріумфальний трофей студента, який підкорив 100% готовності до Мідтерму 2 та Колоквіуму 2!',
@@ -705,7 +705,7 @@ class UserProfileManager {
     this.loadExistingUser(newUser);
     await this.syncUserToCloud(newUser);
 
-    alert(`🎉 Вітаємо, ${newUser.name}! Ваш акаунт успішно створено. Усі ваші досягнення та час зберігатимуться в хмарі.`);
+    alert(`Вітаємо, ${newUser.name}! Ваш акаунт успішно створено. Усі ваші досягнення та час зберігатимуться в хмарі.`);
     return true;
   }
 
@@ -741,7 +741,7 @@ class UserProfileManager {
     this.loadExistingUser(user);
     await this.syncUserToCloud(user);
 
-    alert(`👋 З поверненням, ${user.name}! Ваш прогрес успішно синхронізовано з хмари.`);
+    alert(`З поверненням, ${user.name}! Ваш прогрес успішно синхронізовано з хмари.`);
     return true;
   }
 
@@ -777,7 +777,7 @@ class UserProfileManager {
     this.loadExistingUser(user);
     await this.syncUserToCloud(user);
 
-    alert(`🎉 Авторизація через Google успішна! Вітаємо, ${user.name}. Усі ваші дані синхронізовано між вашими пристроями!`);
+    alert(`Авторизація через Google успішна! Вітаємо, ${user.name}. Усі ваші дані синхронізовано між вашими пристроями!`);
   }
 
   loginAsGuest() {
@@ -934,12 +934,12 @@ class UserProfileManager {
     if (!container || !this.profile) return;
 
     const tabsMap = [
-      { key: 'dashboard', label: 'Dashboard & Countdown', icon: '📊' },
-      { key: 'colloquium', label: 'Colloquium 2 Questions', icon: '🗣️' },
-      { key: 'problems', label: 'Problems Bank', icon: '📝' },
-      { key: 'quizzes', label: '600 Practice Quizzes', icon: '🧠' },
-      { key: 'topics', label: '12 Theory Topics', icon: '📚' },
-      { key: 'formulas', label: 'Formulas & Distributions', icon: '📐' }
+      { key: 'dashboard', label: 'Dashboard & Countdown', icon: 'layout-dashboard' },
+      { key: 'colloquium', label: 'Colloquium 2 Questions', icon: 'target' },
+      { key: 'problems', label: 'Problems Bank', icon: 'notebook-pen' },
+      { key: 'quizzes', label: '600 Practice Quizzes', icon: 'brain' },
+      { key: 'topics', label: '12 Theory Topics', icon: 'book-open' },
+      { key: 'formulas', label: 'Formulas & Distributions', icon: 'ruler' }
     ];
 
     const total = Math.max(this.profile.totalSeconds || 1, 1);
@@ -951,7 +951,7 @@ class UserProfileManager {
       return `
         <div class="space-y-1">
           <div class="flex justify-between text-xs font-semibold text-slate-300">
-            <span class="flex items-center gap-1.5"><span>${t.icon}</span> ${t.label}</span>
+            <span class="flex items-center gap-1.5">${icon(t.icon)} ${t.label}</span>
             <span class="font-mono text-indigo-400">${this.formatDuration(sec)} (${pct}%)</span>
           </div>
           <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
@@ -963,35 +963,49 @@ class UserProfileManager {
   }
 
   renderMistakesAnalytics() {
-    const container = document.getElementById('user-mistakes-list');
+    const container = document.getElementById('mistakes-analytics-list');
     const badge = document.getElementById('user-mistakes-badge');
     if (!container || !this.profile) return;
 
-    const mistakes = Object.values(this.profile.mistakesHistory || {});
-    if (badge) badge.textContent = `${mistakes.length} mistakes`;
+    // Most frequent first, as the panel footer promises
+    const mistakes = Object.values(this.profile.mistakesHistory || {})
+      .sort((a, b) => (b.count - a.count) || ((b.lastErrorAt || 0) - (a.lastErrorAt || 0)));
+    if (badge) badge.textContent = `Помилок: ${mistakes.length}`;
 
     if (mistakes.length === 0) {
       container.innerHTML = `
         <div class="p-6 text-center rounded-xl bg-slate-950/60 border border-slate-800 text-slate-400 text-xs">
-          🎉 Жодної помилки в реєстрі! Ви розв'язали всі поточні завдання безпомилково.
+          ${icon('party-popper', 'text-emerald-400')} Жодної помилки в реєстрі! Ви розв'язали всі поточні завдання безпомилково.
         </div>
       `;
       return;
     }
 
-    container.innerHTML = mistakes.map(m => `
+    const quizMistakes = mistakes.filter(m => m.type === 'quiz').length;
+    container.innerHTML = (quizMistakes ? `
+      <button id="mistakes-practice-btn" class="w-full px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer transition">
+        ${icon('repeat')} Прорішати помилки з тестів (${quizMistakes})
+      </button>
+    ` : '') + mistakes.map(m => `
       <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between gap-3 text-xs">
         <div class="flex-1 truncate">
           <div class="font-bold text-slate-200 truncate">${m.title}</div>
           <div class="text-[11px] text-slate-400">${m.topic} • Тип: <span class="text-indigo-400 font-semibold">${m.type}</span></div>
         </div>
-        <div class="text-right shrink-0">
+        <div class="text-right shrink-0 flex items-center gap-2">
+          ${m.type === 'problem' ? `<button class="mistake-open-problem-btn text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 cursor-pointer transition" data-prob-id="${String(m.id).replace('prob_', '')}">До задачі ${icon('arrow-right')}</button>` : ''}
           <span class="px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800 text-[10px] font-bold">
             ${m.count} ${m.count === 1 ? 'error' : 'errors'}
           </span>
         </div>
       </div>
     `).join('');
+
+    container.querySelectorAll('.mistake-open-problem-btn').forEach(btn => {
+      btn.addEventListener('click', () => window.app?.openProblem(btn.getAttribute('data-prob-id')));
+    });
+    container.querySelector('#mistakes-practice-btn')?.addEventListener('click', () => window.app?.openMistakesPractice());
+    window.app?.renderAllMath(container);
   }
 
   // --- AVATAR & WARDROBE GAMIFICATION ---
@@ -1006,11 +1020,11 @@ class UserProfileManager {
       const isUnlocked = currentReadiness >= item.minReadiness;
       const isEquipped = equipped === item.id;
 
-      let btnLabel = '🔒 Заблоковано';
+      let btnLabel = `${icon('lock')} Заблоковано`;
       let btnClass = 'bg-slate-800 text-slate-500 cursor-not-allowed';
 
       if (isEquipped) {
-        btnLabel = '✓ Одягнено';
+        btnLabel = `${icon('check')} Одягнено`;
         btnClass = 'bg-emerald-600 text-white font-bold shadow-sm';
       } else if (isUnlocked) {
         btnLabel = 'Одягнути';
@@ -1021,7 +1035,7 @@ class UserProfileManager {
         <div class="p-4 rounded-2xl border ${isEquipped ? 'border-indigo-500 bg-indigo-950/30' : 'border-slate-800 bg-slate-950/60'} flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between mb-2">
-              <span class="text-2xl">${item.icon}</span>
+              <span class="text-2xl">${icon(item.icon)}</span>
               <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isUnlocked ? 'bg-indigo-950 text-indigo-300 border border-indigo-700' : 'bg-slate-800 text-slate-400'}">
                 ${item.badge}
               </span>
@@ -1054,7 +1068,7 @@ class UserProfileManager {
 
     const currentReadiness = window.quizManager?.readinessState?.overallPercent || 0;
     if (currentReadiness < outfit.minReadiness) {
-      alert(`🔒 Цей одяг вимагає ${outfit.minReadiness}% готовності! Ваш поточний рівень: ${currentReadiness}%.`);
+      alert(`Цей одяг вимагає ${outfit.minReadiness}% готовності! Ваш поточний рівень: ${currentReadiness}%.`);
       return false;
     }
 
@@ -1129,11 +1143,11 @@ class UserProfileManager {
         gStatusEl.innerHTML = `
           <div class="p-3 rounded-xl bg-emerald-950/70 border border-emerald-800 text-emerald-200 text-xs flex items-center justify-between">
             <div class="flex items-center gap-2 truncate">
-              <span class="text-emerald-400 font-bold">☁️</span>
+              ${icon('cloud', 'text-emerald-400')}
               <span class="truncate">Синхронізовано: <strong>${this.profile.email}</strong></span>
             </div>
             <div class="flex items-center gap-2 shrink-0 ml-2">
-              <button id="auth-manual-sync-btn" class="px-2 py-1 rounded bg-indigo-900/60 hover:bg-indigo-800 text-[10px] text-indigo-200 font-bold border border-indigo-700">🔄 Синхр</button>
+              <button id="auth-manual-sync-btn" class="px-2 py-1 rounded bg-indigo-900/60 hover:bg-indigo-800 text-[10px] text-indigo-200 font-bold border border-indigo-700">${icon('refresh-cw')} Синхр</button>
               <button id="auth-logout-btn-modal" class="text-[11px] text-rose-400 hover:text-rose-300 font-bold underline">Вийти</button>
             </div>
           </div>
@@ -1145,8 +1159,8 @@ class UserProfileManager {
           const btn = document.getElementById('auth-manual-sync-btn');
           if (btn) btn.textContent = '...';
           await this.syncUserToCloud(this.profile);
-          if (btn) btn.textContent = '✓ Збережено';
-          setTimeout(() => { if (btn) btn.textContent = '🔄 Синхр'; }, 2000);
+          if (btn) btn.innerHTML = `${icon('check')} Збережено`;
+          setTimeout(() => { if (btn) btn.innerHTML = `${icon('refresh-cw')} Синхр`; }, 2000);
         });
       } else {
         gStatusEl.innerHTML = '';
@@ -1371,7 +1385,8 @@ class UserProfileManager {
       }
       if (colStatusBadge) {
         colStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-700 shrink-0';
-        colStatusBadge.textContent = `✅ Складено: ${colG.grade}`;
+        colStatusBadge.innerHTML = `${icon('circle-check')} Складено: `;
+        colStatusBadge.append(colG.grade); // user input: added as text, never as HTML
       }
       if (colDateLabel && colG.updatedAt) {
         const d = new Date(colG.updatedAt);
@@ -1382,7 +1397,7 @@ class UserProfileManager {
       if (colGradeForm) colGradeForm.classList.remove('hidden');
       if (colStatusBadge) {
         colStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-950 text-amber-300 border border-amber-800 shrink-0';
-        colStatusBadge.textContent = '⚡ Очікується';
+        colStatusBadge.innerHTML = `${icon('zap')} Очікується`;
       }
       if (colDateLabel) colDateLabel.textContent = '';
     }
@@ -1405,7 +1420,8 @@ class UserProfileManager {
       }
       if (midStatusBadge) {
         midStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-700 shrink-0';
-        midStatusBadge.textContent = `🏆 Оцінка: ${midG.grade}`;
+        midStatusBadge.innerHTML = `${icon('trophy')} Оцінка: `;
+        midStatusBadge.append(midG.grade); // user input: added as text, never as HTML
       }
       if (midDateLabel && midG.updatedAt) {
         const d = new Date(midG.updatedAt);
@@ -1416,7 +1432,7 @@ class UserProfileManager {
       if (midGradeForm) midGradeForm.classList.remove('hidden');
       if (midStatusBadge) {
         midStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-950 text-indigo-300 border border-indigo-800 shrink-0';
-        midStatusBadge.textContent = '🔥 Пт, 08:30 Київ';
+        midStatusBadge.innerHTML = `${icon('flame')} Пт, 08:30 Київ`;
       }
       if (midDateLabel) midDateLabel.textContent = '';
     }
@@ -1434,7 +1450,7 @@ class UserProfileManager {
         return;
       }
       this.saveExamSchedule(input.value, null);
-      alert(`✅ Час колоквіуму успішно збережено: ${input.value.replace('T', ' ')}! Таймер оновлено.`);
+      alert(`Час колоквіуму успішно збережено: ${input.value.replace('T', ' ')}! Таймер оновлено.`);
     });
 
     // Midterm save time
@@ -1445,7 +1461,7 @@ class UserProfileManager {
         return;
       }
       this.saveExamSchedule(null, input.value);
-      alert(`✅ Час мідтерму успішно збережено: ${input.value.replace('T', ' ')}! Таймер оновлено.`);
+      alert(`Час мідтерму успішно збережено: ${input.value.replace('T', ' ')}! Таймер оновлено.`);
     });
 
     // Colloquium preset buttons
@@ -1482,7 +1498,7 @@ class UserProfileManager {
         return;
       }
       this.saveExamGrade('colloquium', val, notesInput?.value || '');
-      alert(`🎉 Оцінку за колоквіум збережено: ${val}! Вітаємо зі складанням!`);
+      alert(`Оцінку за колоквіум збережено: ${val}! Вітаємо зі складанням!`);
     });
 
     // Colloquium edit grade
@@ -1507,7 +1523,7 @@ class UserProfileManager {
         return;
       }
       this.saveExamGrade('midterm', val, notesInput?.value || '');
-      alert(`🏆 Оцінку за мідтерм збережено: ${val}! Чудовий результат!`);
+      alert(`Оцінку за мідтерм збережено: ${val}! Чудовий результат!`);
     });
 
     // Midterm edit grade

@@ -63,7 +63,8 @@ class GeminiMentor {
   updateKeyStatusUI() {
     const statusLabel = document.getElementById('gemini-key-status-label');
     if (statusLabel) {
-      statusLabel.textContent = this.hasValidApiKey() ? 'API Key ✓' : 'Set API Key 🔑';
+      // The parent button (#drawer-api-key-btn) already shows a key icon; the label only adds a check once a key is saved
+      statusLabel.innerHTML = this.hasValidApiKey() ? `API Key ${icon('check')}` : 'Set API Key';
       statusLabel.className = this.hasValidApiKey() ? 'text-emerald-300 font-bold' : 'text-amber-300 font-bold';
     }
   }
@@ -316,14 +317,14 @@ Include:
 
     score = Math.min(Math.max(score, 4), 9);
 
-    return `### 🧑‍🏫 Оцінка Gemini P&S Mentor (Офлайн-рубрика)
+    return `### ${icon('presentation')} Оцінка Gemini P&S Mentor (Офлайн-рубрика)
 
 **Score: ${score}/10**
 
-#### ✅ Сильні сторони:
+#### ${icon('circle-check')} Сильні сторони:
 ${strengths.map(s => `- ${s}`).join('\n')}
 
-#### ⚠️ Критичні умови для отримання 10/10:
+#### ${icon('triangle-alert')} Критичні умови для отримання 10/10:
 ${missing.length > 0 ? missing.map(m => `- ${m}`).join('\n') : '- Відразу пишіть ключові формули на папері, щоб екзаменатор бачив вашу структуру.'}
 - Завжди вказуйте область визначення та умови абсолютної збіжності: $\\sum |x|p_X(x) < \\infty$ або $\\int |x|f_X(x)dx < \\infty$.
 - Наводьте конкретний контрприклад (наприклад, $X \\sim U(-1, 1), Y = X^2$, де $\\text{Cov}(X,Y) = 0$, але змінні залежні!).
@@ -332,9 +333,9 @@ ${missing.length > 0 ? missing.map(m => `- ${m}`).join('\n') : '- Відразу
   }
 
   getLocalFallbackResponse(prompt, errorMsg = '') {
-    return `### 💡 Gemini P&S Mentor
+    return `### ${icon('lightbulb')} Gemini P&S Mentor
 
-${errorMsg ? `*(⚠️ ${errorMsg})*` : `*(Підключено)*`}
+${errorMsg ? `*(${icon('triangle-alert')} ${errorMsg})*` : `*(Підключено)*`}
 
 **Поради за матеріалами курсу УКУ (Колоквіум 2 та Мідтерм 2):**
 - **Колоквіум**: Розпочинайте із формального означення, вкажіть усі технічні умови (вимірність, зліченний або неперервний носій, інтегровність), наведіть 3-4 ключові властивості та завершіть контрприкладом або типовим розподілом.

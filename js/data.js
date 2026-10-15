@@ -906,7 +906,7 @@ window.PS_DATA = {
         "Hint 2: Total number of ways to choose 5 ranks for 5 women out of 10 positions is $\\binom{10}{5} = 252$."
       ],
       "solution": "**(a) PMF of $X$ (highest ranking achieved by a woman):**\nThe highest rank $X$ can be $k \\in \\{1, 2, 3, 4, 5, 6\\}$ (since there are 5 men, all 5 men could take ranks 1 to 5, so $X$ could be 6 at most).\nFor $X = k$, position $k$ is occupied by a woman, positions $1, \\dots, k-1$ must be occupied by men, and the remaining $4$ women can be placed in any of the remaining $10 - k$ positions.\nTotal ways to choose the 5 ranks for the 5 women is $\\binom{10}{5} = 252$.\nTherefore:\n$$p_X(k) = P(X = k) = \\frac{\\binom{10-k}{4}}{\\binom{10}{5}}, \\quad k \\in \\{1, 2, 3, 4, 5, 6\\}$$\nExplicit values:\n- $P(X = 1) = \\frac{\\binom{9}{4}}{252} = \\frac{126}{252} = \\frac{1}{2}$\n- $P(X = 2) = \\frac{\\binom{8}{4}}{252} = \\frac{70}{252} = \\frac{5}{18}$\n- $P(X = 3) = \\frac{\\binom{7}{4}}{252} = \\frac{35}{252} = \\frac{5}{36}$\n- $P(X = 4) = \\frac{\\binom{6}{4}}{252} = \\frac{15}{252} = \\frac{5}{84}$\n- $P(X = 5) = \\frac{\\binom{5}{4}}{252} = \\frac{5}{252}$\n- $P(X = 6) = \\frac{\\binom{4}{4}}{252} = \\frac{1}{252}$\n\n**(b) PMF of $Y$ (lowest ranking achieved by a woman):**\nBy symmetry from the bottom (ranks 10 down to 5):\n$$p_Y(j) = P(Y = j) = \\frac{\\binom{j-1}{4}}{\\binom{10}{5}}, \\quad j \\in \\{5, 6, 7, 8, 9, 10\\}$$\n\n**(c) Joint PMF of $(X, Y)$:**\nFor $X = x$ and $Y = y$, we must have $y - x \\ge 4$ (at least 3 other women between them). Rank $x$ is a woman, rank $y$ is a woman, and the remaining 3 women must be placed strictly between them among the $y - x - 1$ available spots:\n$$p_{X,Y}(x, y) = P(X = x, Y = y) = \\frac{\\binom{y - x - 1}{3}}{\\binom{10}{5}}, \\quad 1 \\le x < y \\le 10, \\; y - x \\ge 4$$\n\n**(d) Independence:**\nClearly $X$ and $Y$ are **not independent** because $P(X = 6, Y = 6) = 0 \\ne P(X = 6) P(Y = 6) > 0$.",
-      "inputPrompt": "Find $P(X = 2)$ (probability the top woman ranks 2nd). Enter as fraction (e.g. 5/18) or decimal (e.g. 0.278):",
+      "inputPrompt": "Find $P(X = 2)$ (probability the top woman ranks 2nd). Enter as a fraction a/b or a decimal (3 places):",
       "expectedAnswer": "5/18",
       "acceptableAnswers": [
         "5/18",
@@ -928,7 +928,7 @@ window.PS_DATA = {
         "Hint 2: Then $P(X = k) = P(X \\le k) - P(X \\le k-1) = \\frac{k^2 - (k-1)^2}{36} = \\frac{2k-1}{36}$."
       ],
       "solution": "**(a) Maximum $X = \\max(D_1, D_2)$:**\nUsing the CDF trick:\n$$P(X \\le k) = P(D_1 \\le k \\text{ and } D_2 \\le k) = \\left(\\frac{k}{6}\\right)^2 = \\frac{k^2}{36}$$\nThen:\n$$p_X(k) = P(X \\le k) - P(X \\le k-1) = \\frac{k^2 - (k-1)^2}{36} = \\frac{2k - 1}{36}, \\quad k \\in \\{1, 2, 3, 4, 5, 6\\}$$\nExplicitly: $1/36, 3/36, 5/36, 7/36, 9/36, 11/36$. Sum $= 36/36 = 1$.\n\n**(b) Minimum $Y = \\min(D_1, D_2)$:**\nTail CDF trick: $P(Y \\ge k) = P(D_1 \\ge k, D_2 \\ge k) = \\left(\\frac{7-k}{6}\\right)^2$.\nThen:\n$$p_Y(k) = P(Y \\ge k) - P(Y \\ge k+1) = \\frac{(7-k)^2 - (6-k)^2}{36} = \\frac{13 - 2k}{36}, \\quad k \\in \\{1, 2, 3, 4, 5, 6\\}$$\nExplicitly: $11/36, 9/36, 7/36, 5/36, 3/36, 1/36$.\n\n**(c) Sum $Z = D_1 + D_2$:**\n$k \\in \\{2, 3, \\dots, 12\\}$.\n$$p_Z(k) = \\frac{6 - |k - 7|}{36}$$\n\n**(d) Absolute Difference $W = |D_1 - D_2|$:**\n- $W = 0$: 6 outcomes $(i, i) \\implies 6/36$.\n- $W = k$ for $k \\in \\{1, 2, 3, 4, 5\\}$: $2(6 - k)/36$ outcomes.",
-      "inputPrompt": "Find $P(X = 6)$ where $X = \\max(D_1, D_2)$ is the maximum of two fair dice rolls (e.g. 11/36):",
+      "inputPrompt": "Find $P(X = 6)$ where $X = \\max(D_1, D_2)$ is the maximum of two fair dice rolls (fraction a/b or decimal):",
       "expectedAnswer": "11/36",
       "acceptableAnswers": [
         "11/36",
@@ -949,7 +949,7 @@ window.PS_DATA = {
         "Hint: Let X be the number of transmission errors. Then $X \\sim B(n, p)$."
       ],
       "solution": "**(a) 3 Transmissions:**\nLet $X \\sim B(3, 0.2)$ be the number of erroneous transmissions. Majority vote decides incorrectly if $X \\ge 2$:\n$$P(\\text{Error}) = P(X = 2) + P(X = 3) = \\binom{3}{2}(0.2)^2(0.8) + \\binom{3}{3}(0.2)^3$$\n$$= 3 \\cdot (0.04) \\cdot (0.8) + 1 \\cdot 0.008 = 0.096 + 0.008 = 0.104$$\nError rate dropped from $0.20$ to $0.104$!\n\n**(b) 5 Transmissions:**\nLet $Y \\sim B(5, 0.2)$. Majority vote fails if $Y \\ge 3$:\n$$P(Y \\ge 3) = \\binom{5}{3}(0.2)^3(0.8)^2 + \\binom{5}{4}(0.2)^4(0.8) + \\binom{5}{5}(0.2)^5$$\n$$= 10(0.008)(0.64) + 5(0.0016)(0.8) + 0.00032 = 0.0512 + 0.0064 + 0.00032 = 0.05792$$\nError rate drops further to $\\approx 5.8\\%$.",
-      "inputPrompt": "Enter the error probability for 3 transmissions with $p = 0.2$ majority rule (e.g. 0.104):",
+      "inputPrompt": "Enter the error probability for 3 transmissions with $p = 0.2$ majority rule (decimal, 3 places):",
       "expectedAnswer": "0.104",
       "acceptableAnswers": [
         "0.104",
@@ -969,7 +969,7 @@ window.PS_DATA = {
         "Hint 2: P(X >= 2) = 1 - P(X = 0) - P(X = 1)."
       ],
       "solution": "Let $X \\sim P(2)$ with $p_X(k) = \\frac{2^k e^{-2}}{k!}$.\n\n**(a) No cases:**\n$$P(X = 0) = \\frac{2^0 e^{-2}}{0!} = e^{-2} \\approx 0.1353$$\n\n**(b) At least 2 cases:**\n$$P(X \\ge 2) = 1 - P(X = 0) - P(X = 1) = 1 - e^{-2} - 2e^{-2} = 1 - 3e^{-2} \\approx 1 - 0.4060 = 0.5940$$\n\n**(c) Conditional probability:**\n$$P(X = 3 \\mid X \\ge 1) = \\frac{P(X = 3)}{P(X \\ge 1)} = \\frac{\\frac{2^3 e^{-2}}{3!}}{1 - e^{-2}} = \\frac{\\frac{8}{6}e^{-2}}{1 - e^{-2}} = \\frac{4 e^{-2}}{3(1 - e^{-2})} \\approx 0.2087$$",
-      "inputPrompt": "Enter $P(X = 0)$ for $\\lambda = 2$ as a decimal (e.g. 0.135) or e^-2:",
+      "inputPrompt": "Enter $P(X = 0)$ for $\\lambda = 2$ as a decimal (3 places) or in closed form:",
       "expectedAnswer": "0.135",
       "acceptableAnswers": [
         "0.135",
@@ -1052,7 +1052,7 @@ window.PS_DATA = {
         "Hint: Use sum of infinite geometric series sum_{j=0}^∞ q^j = 1/(1-q) where q = 1-p."
       ],
       "solution": "**(a) Tail probability:**\n$X \\ge k$ occurs if and only if the first $k-1$ trials were all failures (Tails). Since trials are independent with failure probability $1-p$:\n$$P(X \\ge k) = (1-p)^{k-1}, \\quad k \\in \\{1, 2, 3, \\dots\\}$$\n\n**(b) Tail Sum Formula:**\nFor non-negative integer RVs:\n$$E[X] = \\sum_{k=1}^\\infty P(X \\ge k) = \\sum_{k=1}^\\infty (1-p)^{k-1}$$\nLet $j = k-1$. As $k$ runs from $1$ to $\\infty$, $j$ runs from $0$ to $\\infty$:\n$$E[X] = \\sum_{j=0}^\\infty (1-p)^j = \\frac{1}{1 - (1-p)} = \\frac{1}{p}$$\nQ.E.D.\n\n**(c) Memoryless Property:**\n$$P(X > m + n \\mid X > m) = \\frac{P(X > m + n)}{P(X > m)}$$\nSince $P(X > t) = P(X \\ge t+1) = (1-p)^t$:\n$$= \\frac{(1-p)^{m+n}}{(1-p)^m} = (1-p)^n = P(X > n)$$\nQ.E.D.",
-      "inputPrompt": "Using the tail sum formula, what is $E[X]$ for $X \\sim G(p)$? (Enter formula in terms of p, e.g. 1/p):",
+      "inputPrompt": "Using the tail sum formula, what is $E[X]$ for $X \\sim G(p)$? (Enter a formula in terms of p):",
       "expectedAnswer": "1/p",
       "acceptableAnswers": [
         "1/p",
@@ -1110,7 +1110,7 @@ window.PS_DATA = {
         "Hint 2: P(N > x) = P(all X_i > x) = (1 - F(x))^n."
       ],
       "solution": "For each $X_i \\sim U(0, a)$, the CDF is $F(x) = \\frac{x}{a}$ for $x \\in [0, a]$.\n\n**(a) Maximum $M = \\max(X_1, \\dots, X_n)$:**\n$$F_M(x) = P(M \\le x) = P(X_1 \\le x, \\dots, X_n \\le x) = \\prod_{i=1}^n P(X_i \\le x) = \\left(\\frac{x}{a}\\right)^n, \\quad x \\in [0, a]$$\nTaking the derivative:\n$$f_M(x) = F_M'(x) = \\frac{n x^{n-1}}{a^n}, \\quad x \\in [0, a]$$\n(and 0 elsewhere).\n\n**(b) Minimum $N = \\min(X_1, \\dots, X_n)$:**\n$$P(N > x) = P(X_1 > x, \\dots, X_n > x) = \\prod_{i=1}^n (1 - F(x)) = \\left(1 - \\frac{x}{a}\\right)^n, \\quad x \\in [0, a]$$\nThus the CDF is:\n$$F_N(x) = 1 - P(N > x) = 1 - \\left(1 - \\frac{x}{a}\\right)^n, \\quad x \\in [0, a]$$\nTaking the derivative:\n$$f_N(x) = \\frac{n}{a} \\left(1 - \\frac{x}{a}\\right)^{n-1}, \\quad x \\in [0, a]$$",
-      "inputPrompt": "For $n=3, a=1$, calculate $F_M(0.5) = P(\\max(X_1, X_2, X_3) \\le 0.5)$ (e.g. 0.125 or 1/8):",
+      "inputPrompt": "For $n=3, a=1$, calculate $F_M(0.5) = P(\\max(X_1, X_2, X_3) \\le 0.5)$ (decimal or fraction):",
       "expectedAnswer": "0.125",
       "acceptableAnswers": [
         "0.125",
@@ -1131,7 +1131,7 @@ window.PS_DATA = {
         "Hint 3: Min M = min(X, Y) has rate λ_1 + λ_2."
       ],
       "solution": "Here $X \\sim E(\\lambda_1)$ with $\\lambda_1 = 1/10$, and $Y \\sim E(\\lambda_2)$ with $\\lambda_2 = 1/15$.\n\n**(a) $P(X < Y)$:**\n$$P(X < Y) = \\frac{\\lambda_1}{\\lambda_1 + \\lambda_2} = \\frac{1/10}{1/10 + 1/15} = \\frac{3/30}{3/30 + 2/30} = \\frac{3}{5} = 0.6$$\n\n**(b) Expected first departure $M = \\min(X, Y)$ and wait time $W = |X - Y|$:**\n- First person finishes at $M = \\min(X, Y) \\sim E(\\lambda_1 + \\lambda_2)$ with rate $\\frac{1}{10} + \\frac{1}{15} = \\frac{5}{30} = \\frac{1}{6}$.\n  $$E[M] = \\frac{1}{1/6} = 6 \\text{ minutes}$$\n- Notice that $\\max(X, Y) + \\min(X, Y) = X + Y$, and $\\max(X, Y) - \\min(X, Y) = W = |X - Y|$.\n  Therefore: $M + W = \\max(X, Y)$.\n  Also $E[X + Y] = E[M] + E[\\max(X, Y)] = 10 + 15 = 25$.\n  So $E[\\max(X, Y)] = 25 - 6 = 19$ minutes.\n  Then $E[W] = E[\\max(X, Y)] - E[M] = 19 - 6 = 13$ minutes.\n\n**(c) Check $E[M] + E[W] = 6 + 13 = 19 > 15$:**\nThere is no contradiction because $M + W = \\max(X, Y)$, and the maximum of two independent variables is always strictly greater than either individual expectation!\n\n**(d) Strong memorylessness:**\nIf Alice finishes second ($X > Y$), conditioned on $Y = y$, by the memoryless property of the exponential distribution $X$, the remaining duration $X - y$ is independent of $y$ and has distribution $E(\\lambda_1)$, the exact same distribution as $X$!",
-      "inputPrompt": "Enter the probability $P(X < Y)$ that Alice (mean 10) finishes before Bob (mean 15) (e.g. 0.6 or 3/5):",
+      "inputPrompt": "Enter the probability $P(X < Y)$ that Alice (mean 10) finishes before Bob (mean 15) (decimal or fraction):",
       "expectedAnswer": "0.6",
       "acceptableAnswers": [
         "0.6",
@@ -1171,7 +1171,7 @@ window.PS_DATA = {
         "Hint 3: For covariance, Var(X_j + X_k) = Var(X_j) + Var(X_k) + 2Cov(X_j, X_k), and X_j + X_k ~ B(n, 2/6 = 1/3)."
       ],
       "solution": "**(a) Marginal Mean & Variance:**\nEach roll shows face $k$ with probability $1/6$. Thus $X_k \\sim B(n, 1/6)$:\n$$E[X_k] = \\frac{n}{6}, \\quad \\text{Var}(X_k) = n \\cdot \\frac{1}{6} \\cdot \\frac{5}{6} = \\frac{5n}{36}$$\n\n**(b) Conditional Distribution:**\nGiven that $X_k = m$, exactly $m$ rolls were used up by face $k$. The remaining $n - m$ rolls can only land on the remaining 5 faces. Given that a roll is not $k$, the probability it lands on $j$ is $\\frac{1/6}{5/6} = 1/5$.\nHence:\n$$(X_j \\mid X_k = m) \\sim B\\left(n - m, \\frac{1}{5}\\right)$$\n\n**(c) Covariance $\\text{Cov}(X_j, X_k)$:**\n*Intuitive Sign*: Negative! Because a roll showing face $k$ cannot show face $j$; higher counts of $k$ compete with and restrict counts of $j$.\n*Rigorous Calculation*:\nNotice $X_j + X_k$ counts rolls showing either $j$ or $k$. Each roll has probability $2/6 = 1/3$ of being $j$ or $k$, so $X_j + X_k \\sim B(n, 1/3)$:\n$$\\text{Var}(X_j + X_k) = n \\cdot \\frac{1}{3} \\cdot \\frac{2}{3} = \\frac{2n}{9} = \\frac{8n}{36}$$\nUsing the sum of variances formula:\n$$\\text{Var}(X_j + X_k) = \\text{Var}(X_j) + \\text{Var}(X_k) + 2\\text{Cov}(X_j, X_k)$$\n$$\\frac{8n}{36} = \\frac{5n}{36} + \\frac{5n}{36} + 2\\text{Cov}(X_j, X_k) = \\frac{10n}{36} + 2\\text{Cov}(X_j, X_k)$$\n$$2\\text{Cov}(X_j, X_k) = \\frac{8n - 10n}{36} = -\\frac{2n}{36} \\implies \\text{Cov}(X_j, X_k) = -\\frac{n}{36}$$\nSince $\\text{Cov}(X_j, X_k) = -n/36 \\ne 0$, $X_j$ and $X_k$ are **dependent**.",
-      "inputPrompt": "For $n = 36$ rolls of a fair 6-sided die, what is $\\text{Cov}(X_1, X_2)$? (recall formula $-n/36$):",
+      "inputPrompt": "For $n = 36$ rolls of a fair 6-sided die, what is $\\text{Cov}(X_1, X_2)$?",
       "expectedAnswer": "-1",
       "acceptableAnswers": [
         "-1",
@@ -1213,7 +1213,7 @@ window.PS_DATA = {
         "Hint 2: Boundary conditions: p_0 = 0 and p_{a+b} = 1."
       ],
       "solution": "Let $N = a + b$ be the total coins in circulation. Let $p_k$ be Alice's probability of winning starting with $k$ coins ($0 \\le k \\le N$).\n\n**(a) Alice's Winning Probability:**\nConditioning on the first game:\n$$p_k = p \\cdot p_{k+1} + q \\cdot p_{k-1}$$\nRearranging using $p + q = 1$:\n$$p(p_{k+1} - p_k) = q(p_k - p_{k-1}) \\implies p_{k+1} - p_k = \\left(\\frac{q}{p}\\right) (p_k - p_{k-1})$$\nThis is a geometric progression. Summing telescopes:\n$$p_k = p_1 \\sum_{j=0}^{k-1} \\left(\\frac{q}{p}\\right)^j = p_1 \\frac{1 - (q/p)^k}{1 - (q/p)}$$\nUsing the boundary condition $p_N = 1$ at $N = a + b$:\n$$1 = p_1 \\frac{1 - (q/p)^N}{1 - (q/p)} \\implies p_1 = \\frac{1 - (q/p)}{1 - (q/p)^N}$$\nThus, starting with $a$ coins:\n$$p_a = \\frac{1 - (q/p)^a}{1 - (q/p)^{a+b}}$$\n\n**(b) Expected Duration $m_k$:**\nLet $m_k$ be the expected number of games starting from $k$ coins. Then:\n$$m_k = 1 + p m_{k+1} + q m_{k-1}, \\quad m_0 = 0, \\; m_N = 0$$\nFor $p \\ne 1/2$, the particular solution is $m_k = \\frac{k}{q - p}$. The homogeneous solution matches the ruin probabilities. Applying boundaries:\n$$m_a = \\frac{a}{q - p} - \\frac{a+b}{q - p} \\left( \\frac{1 - (q/p)^a}{1 - (q/p)^{a+b}} \\right)$$",
-      "inputPrompt": "If Alice starts with $a=1$, Bob with $b=1$, and Alice win rate $p=1/3$, what is her match win probability? (e.g. 1/3 or 0.333):",
+      "inputPrompt": "If Alice starts with $a=1$, Bob with $b=1$, and Alice win rate $p=1/3$, what is her match win probability? (fraction or decimal):",
       "expectedAnswer": "1/3",
       "acceptableAnswers": [
         "1/3",
@@ -1234,7 +1234,7 @@ window.PS_DATA = {
         "Hint 2: For abscissa X, integrate the constant joint density 1/(π R²) over the vertical chord at position x."
       ],
       "solution": "**(a) Distance $D$:**\nFor $r \\in [0, R]$:\n$$F_D(r) = P(D \\le r) = \\frac{\\text{Area}(\\text{Disk of radius } r)}{\\text{Area}(\\text{Disk of radius } R)} = \\frac{\\pi r^2}{\\pi R^2} = \\frac{r^2}{R^2}$$\nDifferentiating:\n$$f_D(r) = F_D'(r) = \\frac{2r}{R^2}, \\quad 0 \\le r \\le R$$\nExpectation:\n$$E[D] = \\int_0^R r \\cdot \\frac{2r}{R^2} dr = \\frac{2}{R^2} \\left[ \\frac{r^3}{3} \\right]_0^R = \\frac{2R}{3} = \\frac{200}{3} \\approx 66.67 \\text{ km}$$\nSecond moment:\n$$E[D^2] = \\int_0^R r^2 \\cdot \\frac{2r}{R^2} dr = \\frac{2}{R^2} \\left[ \\frac{r^4}{4} \\right]_0^R = \\frac{R^2}{2} = \\frac{10000}{2} = 5000$$\nVariance:\n$$\\text{Var}(D) = E[D^2] - (E[D])^2 = \\frac{R^2}{2} - \\frac{4R^2}{9} = \\frac{R^2}{18} = \\frac{10000}{18} \\approx 555.56 \\text{ km}^2$$\n\n**(b) Abscissa $X$:**\nJoint density is $f(x, y) = \\frac{1}{\\pi R^2}$ on the circle $x^2 + y^2 \\le R^2$.\nFor fixed $x \\in [-R, R]$, $y$ ranges from $-\\sqrt{R^2 - x^2}$ to $\\sqrt{R^2 - x^2}$:\n$$f_X(x) = \\int_{-\\sqrt{R^2-x^2}}^{\\sqrt{R^2-x^2}} \\frac{1}{\\pi R^2} dy = \\frac{2\\sqrt{R^2 - x^2}}{\\pi R^2}, \\quad -R \\le x \\le R$$\nBy symmetry around 0: $E[X] = 0$.\nVariance: by symmetry $E[X^2] = E[Y^2]$, and $E[X^2 + Y^2] = E[D^2] = R^2/2$, so:\n$$\\text{Var}(X) = E[X^2] = \\frac{R^2}{4} = \\frac{10000}{4} = 2500 \\text{ km}^2$$",
-      "inputPrompt": "For radius $R = 100$ km, calculate the expected rescue distance $E[D]$ (e.g. 200/3 or 66.67):",
+      "inputPrompt": "For radius $R = 100$ km, calculate the expected rescue distance $E[D]$ in km (fraction or decimal):",
       "expectedAnswer": "200/3",
       "acceptableAnswers": [
         "200/3",
@@ -1255,7 +1255,7 @@ window.PS_DATA = {
         "Hint 2: If the car arrives during red light with t minutes remaining (t in (0, 1)), the delay is t. This is uniformly distributed on (0, 1)."
       ],
       "solution": "**(a) C.D.F. $F_X(x)$:**\n- If car arrives during Green (interval of length 1 out of 2, prob $1/2$), delay $X = 0$.\n- If car arrives during Red at time $t$ before green (uniformly distributed on $(0, 1)$, prob $1/2$), delay $X = t$.\nThus:\n- For $x < 0$: $F_X(x) = 0$.\n- At $x = 0$: $P(X = 0) = 1/2$, so $F_X(0) = 1/2$.\n- For $0 < x < 1$: $F_X(x) = P(X = 0) + P(0 < X \\le x) = \\frac{1}{2} + \\frac{1}{2} x$.\n- For $x \\ge 1$: $F_X(x) = 1$.\n\n**(b) Nature of the Distribution:**\n$X$ is **NEITHER discrete NOR continuous**! It is a **mixed (hybrid) distribution**:\n- It has a discrete point mass (atom) of weight $1/2$ at $x = 0$ (so it is not continuous);\n- It takes a continuum of values on $(0, 1)$ with positive density $1/2$ (so it is not discrete).\n\n**(c) Expectation and Variance:**\nConditioning on arrival phase (Green vs Red):\n$$E[X] = \\frac{1}{2} \\cdot 0 + \\frac{1}{2} E[U(0, 1)] = \\frac{1}{2} \\cdot \\frac{1}{2} = \\frac{1}{4} \\text{ min}$$\nSecond moment:\n$$E[X^2] = \\frac{1}{2} \\cdot 0^2 + \\frac{1}{2} E[U^2] = \\frac{1}{2} \\cdot \\frac{1}{3} = \\frac{1}{6}$$\nVariance:\n$$\\text{Var}(X) = E[X^2] - (E[X])^2 = \\frac{1}{6} - \\left(\\frac{1}{4}\\right)^2 = \\frac{1}{6} - \\frac{1}{16} = \\frac{5}{48} \\approx 0.1042 \\text{ min}^2$$",
-      "inputPrompt": "Calculate the expected delay $E[X]$ at the traffic light in minutes (e.g. 0.25 or 1/4):",
+      "inputPrompt": "Calculate the expected delay $E[X]$ at the traffic light in minutes (decimal or fraction):",
       "expectedAnswer": "0.25",
       "acceptableAnswers": [
         "0.25",
@@ -1339,7 +1339,7 @@ window.PS_DATA = {
         "Hint 3: Conditional probability P(T > t + s | T > t) = P(T > t + s) / P(T > t)."
       ],
       "solution": "**(a) Reliability $P(T > t)$:**\nLet $I \\in \\{1, 2\\}$ denote the type of the chosen battery. By total probability:\n$$P(T > t) = p_1 P(T > t \\mid I = 1) + p_2 P(T > t \\mid I = 2) = p_1 e^{-\\lambda_1 t} + p_2 e^{-\\lambda_2 t}, \\quad t \\ge 0$$\n\n**(b) Expected Operating Time:**\n$$E[T] = p_1 E[T \\mid I = 1] + p_2 E[T \\mid I = 2] = \\frac{p_1}{\\lambda_1} + \\frac{p_2}{\\lambda_2}$$\n\n**(c) Conditional Survival $P(T > t + s \\mid T > t)$:**\n$$P(T > t + s \\mid T > t) = \\frac{P(T > t + s)}{P(T > t)} = \\frac{p_1 e^{-\\lambda_1(t+s)} + p_2 e^{-\\lambda_2(t+s)}}{p_1 e^{-\\lambda_1 t} + p_2 e^{-\\lambda_2 t}}$$\n*Note*: Notice that this mixture is **NOT** memoryless! Even though each component is memoryless, the mixture changes our belief about which battery type was picked as time passes (if it survives a long time, it is more likely to be the longer-lasting type).",
-      "inputPrompt": "If $p_1=0.5, \\lambda_1=1$ and $p_2=0.5, \\lambda_2=0.5$, enter the expected operating time $E[T]$ (e.g. 1.5):",
+      "inputPrompt": "If $p_1=0.5, \\lambda_1=1$ and $p_2=0.5, \\lambda_2=0.5$, enter the expected operating time $E[T]$ in hours:",
       "expectedAnswer": "1.5",
       "acceptableAnswers": [
         "1.5",
