@@ -403,8 +403,15 @@ class QuizManager {
               Question <strong>${this.currentIndex + 1}</strong> of ${this.currentQuiz.length}
             </span>
           </div>
-          <div class="text-xs font-mono text-slate-400">
-            Current Score: <strong class="text-indigo-400">${this.score}</strong> / ${this.currentIndex + (this.isAnswered ? 1 : 0)}
+          <div class="flex items-center gap-3">
+            <div class="text-xs font-mono text-slate-400">
+              Current Score: <strong class="text-indigo-400">${this.score}</strong> / ${this.currentIndex + (this.isAnswered ? 1 : 0)}
+            </div>
+            ${this.activeTopicId !== 'all' ? `
+              <button id="quiz-retake-topic-btn" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 text-[11px] font-bold border border-slate-700 transition flex items-center gap-1 shadow-sm" title="Скинути всі відповіді цієї теми та пройти тест заново">
+                <span>🔄</span> <span>Перездати тест теми</span>
+              </button>
+            ` : ''}
           </div>
         </div>
 
@@ -485,6 +492,10 @@ class QuizManager {
       this.renderCurrentQuestion();
     });
 
+    host.querySelector('#quiz-retake-topic-btn')?.addEventListener('click', () => {
+      this.retakeTopicTest(this.activeTopicId);
+    });
+
     host.querySelectorAll('.palette-q-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const qIdx = parseInt(btn.getAttribute('data-q-index'), 10);
@@ -509,19 +520,81 @@ class QuizManager {
           ? 'p-4 rounded-xl mb-5 text-xs sm:text-sm bg-emerald-950/50 border border-emerald-800 text-emerald-200'
           : 'p-4 rounded-xl mb-5 text-xs sm:text-sm bg-rose-950/50 border border-rose-800 text-rose-200';
         expBox.innerHTML = `
-          <div class="flex items-center gap-2 mb-2">
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${previousAnswer.correct ? 'bg-emerald-800 text-white' : 'bg-rose-800 text-white'}">
-              ${previousAnswer.correct ? '✓ ВІДПОВІДЬ ПРАВИЛЬНА' : '✗ ВІДПОВІДЬ ПОМИЛКОВА'}
-            </span>
-            <span class="text-xs text-slate-400">Питання вже розв'язано раніше</span>
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b ${previousAnswer.correct ? 'border-emerald-800/60' : 'border-rose-800/60'}">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${previousAnswer.correct ? 'bg-emerald-800 text-white' : 'bg-rose-800 text-white'}">
+                ${previousAnswer.correct ? '✓ ВІДПОВІДЬ ПРАВИЛЬНА' : '✗ ВІДПОВІДЬ ПОМИЛКОВА'}
+              </span>
+              <span class="text-xs text-slate-300">Питання вже розв'язано раніше</span>
+            </div>
+            <button id="quiz-retake-question-btn" class="px-3 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/50 text-xs font-bold transition flex items-center gap-1 shadow-sm">
+              <span>🔄</span> <span>Перездати це питання (Retake)</span>
+            </button>
           </div>
           <div><strong>Пояснення:</strong> ${q.explanation}</div>
         `;
+        expBox.querySelector('#quiz-retake-question-btn')?.addEventListener('click', () => {
+          this.retakeCurrentQuestion();
+        });
         this.renderMath(expBox);
       }
     }
 
     this.renderMath(host);
+  }
+
+  retakeCurrentQuestion() {
+    const q = this.currentQuiz[this.currentIndex];
+    if (!q) return;
+
+    if (this.readinessState.questionsAnswered[q.id]?.correct) {
+      this.score = Math.max(0, this.score - 1);
+    }
+    delete this.readinessState.questionsAnswered[q.id];
+    this.isAnswered = false;
+    this.saveReadiness();
+    this.renderCurrentQuestion();
+  }
+
+  retakeQuestionById(questionId) {
+    const allQ = window.PS_DATA?.QUIZ_QUESTIONS || [];
+    const targetQ = allQ.find(q => q.id === questionId);
+    if (!targetQ) return;
+
+    this.startQuiz(targetQ.topicId);
+    const qIdx = this.currentQuiz.findIndex(q => q.id === questionId);
+    if (qIdx >= 0) {
+      this.currentIndex = qIdx;
+    }
+    if (this.readinessState.questionsAnswered[questionId]?.correct) {
+      this.score = Math.max(0, this.score - 1);
+    }
+    delete this.readinessState.questionsAnswered[questionId];
+    this.isAnswered = false;
+    this.saveReadiness();
+    this.renderCurrentQuestion();
+
+    setTimeout(() => {
+      const card = document.getElementById('active-quiz-card-wrapper');
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 60);
+  }
+
+  retakeTopicTest(topicId) {
+    if (!confirm('Ви впевнені, що хочете скинути всі відповіді цього тесту та пройти його заново?')) return;
+
+    const topicQuestions = this.currentQuiz || [];
+    topicQuestions.forEach(q => {
+      delete this.readinessState.questionsAnswered[q.id];
+    });
+    if (this.readinessState.topicTestsSolved?.[topicId]) {
+      delete this.readinessState.topicTestsSolved[topicId];
+    }
+    this.score = 0;
+    this.currentIndex = 0;
+    this.isAnswered = false;
+    this.saveReadiness();
+    this.startQuiz(topicId);
   }
 
   submitAnswer(chosenIndex) {
@@ -562,9 +635,17 @@ class QuizManager {
         ? 'p-4 rounded-xl mb-5 text-xs sm:text-sm bg-emerald-950/50 border border-emerald-800 text-emerald-200' 
         : 'p-4 rounded-xl mb-5 text-xs sm:text-sm bg-rose-950/50 border border-rose-800 text-rose-200';
       expBox.innerHTML = `
-        <div class="font-bold mb-1">${isCorrect ? '✅ Correct!' : '❌ Incorrect. Rigorous Derivation:'}</div>
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b ${isCorrect ? 'border-emerald-800/60' : 'border-rose-800/60'}">
+          <div class="font-bold">${isCorrect ? '✅ Правильно! (+1 бал)' : '❌ Помилка. Детальний розв\'язок:'}</div>
+          <button id="quiz-retake-now-btn" class="px-3 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/50 text-xs font-bold transition flex items-center gap-1 shadow-sm">
+            <span>🔄</span> <span>Спробувати ще раз</span>
+          </button>
+        </div>
         <div>${q.explanation}</div>
       `;
+      expBox.querySelector('#quiz-retake-now-btn')?.addEventListener('click', () => {
+        this.retakeCurrentQuestion();
+      });
       this.renderMath(expBox);
     }
 
@@ -576,7 +657,6 @@ class QuizManager {
       }`;
     }
 
-    this.saveReadiness();
   }
 
   renderQuizResults() {

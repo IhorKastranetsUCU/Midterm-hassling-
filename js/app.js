@@ -543,10 +543,16 @@ class AppController {
               <input type="text" id="prob-input-${prob.id}" placeholder="Enter answer, e.g. ${prob.expectedAnswer}..." 
                      value="${isSolved ? prob.expectedAnswer : ''}" ${isSolved ? 'disabled' : ''}
                      class="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 font-mono focus:outline-none focus:border-indigo-500">
-              <button class="prob-submit-btn px-5 py-2 rounded-lg ${isSolved ? 'bg-emerald-600' : 'bg-indigo-600 hover:bg-indigo-500'} text-white font-bold text-xs transition" 
+              <button class="prob-submit-btn px-5 py-2 rounded-lg ${isSolved ? 'bg-emerald-600' : 'bg-indigo-600 hover:bg-indigo-500'} text-white font-bold text-xs transition shrink-0" 
                       data-prob-id="${prob.id}">
                 ${isSolved ? '✓ Verified Correct' : 'Submit & Check ➔'}
               </button>
+              ${isSolved ? `
+                <button class="prob-retake-btn px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 text-xs font-bold transition flex items-center gap-1.5 shrink-0"
+                        data-prob-id="${prob.id}" title="Скинути рішення та розв'язати це завдання знову">
+                  <span>🔄</span> <span>Retake</span>
+                </button>
+              ` : ''}
             </div>
             <div id="prob-feedback-${prob.id}" class="${isSolved ? '' : 'hidden'} mt-2 text-xs font-semibold ${isSolved ? 'text-emerald-400' : ''}">
               ${isSolved ? `✅ Verified! Correct Canonical Answer: ${prob.expectedAnswer}` : ''}
@@ -581,7 +587,35 @@ class AppController {
       });
     });
 
+    // Attach retake problem handlers
+    container.querySelectorAll('.prob-retake-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const pid = parseInt(btn.getAttribute('data-prob-id'), 10);
+        this.retakeProblem(pid);
+      });
+    });
+
     this.renderAllMath();
+  }
+
+  retakeProblem(probId) {
+    if (window.quizManager?.readinessState?.problemsMastered) {
+      delete window.quizManager.readinessState.problemsMastered[probId];
+      window.quizManager.saveReadiness();
+    }
+    this.renderProblems();
+    setTimeout(() => {
+      const card = document.getElementById(`prob-card-${probId}`);
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      const input = document.getElementById(`prob-input-${probId}`);
+      if (input) {
+        input.value = '';
+        input.disabled = false;
+        input.focus();
+      }
+    }, 60);
   }
 
   verifyProblemAnswer(probId) {
@@ -1029,5 +1063,6 @@ class AppController {
 
 document.addEventListener('DOMContentLoaded', () => {
   window.app = new AppController();
+  window.appController = window.app;
   window.app.init();
 });

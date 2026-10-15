@@ -10,12 +10,14 @@ const CLOUD_SYNC_ENDPOINT = 'https://vkzth64629.execute-api.us-east-1.amazonaws.
 const WARDROBE_ITEMS = [
   {
     id: 'freshman_tee',
-    name: 'Freshman Campus T-Shirt',
+    name: 'Футболка першокурсника УКУ',
+    category: 'clothes',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
     minReadiness: 0,
     icon: '👕',
-    badge: '0% Required',
+    badge: '0% Початковий рівень',
     color: '#3b82f6',
-    description: 'Класична біло-синя футболка першокурсника УКУ для старту підготовки до колоквіуму та мідтерму.',
+    description: 'Класична синьо-біла футболка студента УКУ для старту підготовки до колоквіуму та мідтерму. store.ucu.edu.ua',
     renderSvg: (color) => `
       <g id="outfit-freshman_tee">
         <path d="M30 65 L45 50 L55 58 L65 50 L80 65 L72 75 L65 70 L65 105 L45 105 L45 70 L38 75 Z" fill="${color}" stroke="#1e293b" stroke-width="2"/>
@@ -25,32 +27,59 @@ const WARDROBE_ITEMS = [
     `
   },
   {
+    id: 'dukatch_chervona_ruta',
+    name: 'Латунний Дукач «Червона Рута»',
+    category: 'prykrasy',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=prykrasy',
+    minReadiness: 10,
+    icon: '🌸',
+    badge: '10% Прикраси УКУ',
+    color: '#b45309',
+    description: 'Автентичний латунний дукач ручної роботи з гравірованим рослинним орнаментом із колекції прикрас УКУ. store.ucu.edu.ua',
+    renderSvg: (color) => `
+      <g id="accessory-dukatch_chervona_ruta">
+        <path d="M46 48 Q55 70 64 48" fill="none" stroke="#78350f" stroke-width="1.8"/>
+        <path d="M48 50 Q55 69 62 50" fill="none" stroke="#d97706" stroke-width="1"/>
+        <circle cx="55" cy="72" r="7.5" fill="url(#goldGrad)" stroke="#78350f" stroke-width="1.2"/>
+        <circle cx="55" cy="72" r="5.5" fill="#fef3c7" stroke="#92400e" stroke-width="0.8"/>
+        <circle cx="55" cy="72" r="3.2" fill="#dc2626" stroke="#991b1b" stroke-width="0.8"/>
+        <circle cx="54" cy="71" r="0.8" fill="#fca5a5"/>
+        <circle cx="49" cy="60" r="1.5" fill="#dc2626"/>
+        <circle cx="61" cy="60" r="1.5" fill="#dc2626"/>
+      </g>
+    `
+  },
+  {
     id: 'focus_cap',
-    name: 'Focus Cap & Smart Wire Glasses',
+    name: 'Кепка фокусу та Smart Glasses',
+    category: 'prykrasy',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
     minReadiness: 15,
     icon: '🧢',
-    badge: '15% Required',
+    badge: '15% Аксесуар',
     color: '#10b981',
-    description: 'Кепка фокусу та антивідблискові окуляри для тривалого вивчення формул і лекцій.',
+    description: 'Кепка фокусу та антивідблискові окуляри для продуктивного хаслінгу та вивчення розподілів й лекцій.',
     renderSvg: (color) => `
       <g id="outfit-focus_cap">
         <path d="M36 32 Q55 18 74 32 L83 34 Q55 24 32 34 Z" fill="${color}" stroke="#065f46" stroke-width="2"/>
         <path d="M36 32 Q55 20 74 32 Q55 35 36 32 Z" fill="${color}"/>
         <circle cx="55" cy="22" r="2" fill="#f59e0b"/>
-        <circle cx="46" cy="42" r="6" fill="none" stroke="#38bdf8" stroke-width="2"/>
-        <circle cx="64" cy="42" r="6" fill="none" stroke="#38bdf8" stroke-width="2"/>
-        <line x1="52" y1="42" x2="58" y2="42" stroke="#38bdf8" stroke-width="2"/>
+        <circle cx="46" cy="38" r="6" fill="none" stroke="#38bdf8" stroke-width="2"/>
+        <circle cx="64" cy="38" r="6" fill="none" stroke="#38bdf8" stroke-width="2"/>
+        <line x1="52" y1="38" x2="58" y2="38" stroke="#38bdf8" stroke-width="2"/>
       </g>
     `
   },
   {
     id: 'apps_cs_hoodie',
-    name: 'Official CS@UCU APPS Hoodie',
+    name: 'Офіційне худі CS@UCU APPS',
+    category: 'clothes',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
     minReadiness: 25,
     icon: '💻',
     badge: '25% APPS Merch',
     color: '#1e1b4b',
-    description: 'Офіційне темне худі Факультету прикладних наук (APPS / CS@UCU) з емблемою факультету та кодом </>. store.ucu.edu.ua',
+    description: 'Темне брендоване худі Факультету прикладних наук (APPS / CS@UCU) з символікою </> та емблемою факультету. store.ucu.edu.ua',
     renderSvg: (color) => `
       <g id="outfit-apps_cs_hoodie">
         <path d="M28 65 L44 48 L55 56 L66 48 L82 65 L74 76 L66 70 L66 108 L44 108 L44 70 L36 76 Z" fill="#1e1b4b" stroke="#0f172a" stroke-width="2"/>
@@ -64,11 +93,33 @@ const WARDROBE_ITEMS = [
     `
   },
   {
+    id: 'namysto_dukatch',
+    name: 'Намисто з дукачем УКУ',
+    category: 'prykrasy',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=prykrasy',
+    minReadiness: 30,
+    icon: '📿',
+    badge: '30% Прикраси УКУ',
+    color: '#dc2626',
+    description: 'Традиційне багаторядне коралове намисто з латунним медальйоном-дукачем та хрестиком УКУ. store.ucu.edu.ua',
+    renderSvg: (color) => `
+      <g id="accessory-namysto_dukatch">
+        <path d="M45 49 Q55 63 65 49" fill="none" stroke="#b91c1c" stroke-width="2" stroke-dasharray="2,1"/>
+        <path d="M43 51 Q55 71 67 51" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="2.5,1"/>
+        <path d="M41 53 Q55 79 69 53" fill="none" stroke="#991b1b" stroke-width="2.2" stroke-dasharray="2,1.2"/>
+        <circle cx="55" cy="80" r="6" fill="url(#goldGrad)" stroke="#78350f" stroke-width="1"/>
+        <text x="55" y="82.5" text-anchor="middle" font-size="5" font-weight="900" fill="#78350f">†</text>
+      </g>
+    `
+  },
+  {
     id: 'ucu_hoodie',
-    name: 'Official UCU Classic Hoodie',
+    name: 'Класичне худі УКУ',
+    category: 'clothes',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
     minReadiness: 35,
     icon: '🧥',
-    badge: '35% Required',
+    badge: '35% Classic Merch',
     color: '#4f46e5',
     description: 'Тепле університетське худі насиченого індиго-кольору з гербом УКУ. Зручне для занять у Колегіумі.',
     renderSvg: (color) => `
@@ -84,6 +135,8 @@ const WARDROBE_ITEMS = [
   {
     id: 'velykogo_raglan',
     name: 'Реглан «Великого бажайте!»',
+    category: 'clothes',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
     minReadiness: 45,
     icon: '✨',
     badge: '45% UCU Icon',
@@ -100,13 +153,34 @@ const WARDROBE_ITEMS = [
     `
   },
   {
+    id: 'sribna_zirka',
+    name: 'Срібна Зірка УКУ',
+    category: 'prykrasy',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=prykrasy',
+    minReadiness: 50,
+    icon: '⭐',
+    badge: '50% Прикраси УКУ',
+    color: '#94a3b8',
+    description: 'Витончена срібна восьмикутна Зірка УКУ на темному шнурку. Символ сяйва розуму та університетської гідності. store.ucu.edu.ua',
+    renderSvg: (color) => `
+      <g id="accessory-sribna_zirka">
+        <path d="M46 49 Q55 69 64 49" fill="none" stroke="#334155" stroke-width="1.6"/>
+        <rect x="54" y="68" width="2" height="3" fill="#94a3b8"/>
+        <path d="M55 70 L57.5 74 L62 74 L58.5 77 L60 82 L55 78.5 L50 82 L51.5 77 L48 74 L52.5 74 Z" fill="url(#silverGrad)" stroke="#475569" stroke-width="0.8"/>
+        <circle cx="55" cy="76" r="1.5" fill="#38bdf8"/>
+      </g>
+    `
+  },
+  {
     id: 'colloquium_suit',
     name: 'Colloquium Formal Defense Suit',
+    category: 'clothes',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
     minReadiness: 55,
     icon: '👔',
-    badge: '55% Required',
+    badge: '55% Colloquium Style',
     color: '#1e293b',
-    description: 'Діловий костюм з краваткою для урочистого захисту усних питань на середовому Колоквіумі 2.',
+    description: 'Діловий костюм з краваткою для урочистого усного захисту теоретичних питань перед комісією на Колоквіумі.',
     renderSvg: (color) => `
       <g id="outfit-colloquium_suit">
         <path d="M28 65 L45 48 L55 60 L65 48 L82 65 L74 76 L66 70 L66 108 L44 108 L44 70 L36 76 Z" fill="#0f172a" stroke="#020617" stroke-width="2"/>
@@ -120,6 +194,8 @@ const WARDROBE_ITEMS = [
   {
     id: 'ucu_shmot_sweatshirt',
     name: 'Світшот «Шмот» УКУ',
+    category: 'clothes',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
     minReadiness: 65,
     icon: '🍷',
     badge: '65% Campus Classic',
@@ -137,11 +213,13 @@ const WARDROBE_ITEMS = [
   {
     id: 'sheptytsky_blanket_socks',
     name: 'Коцик і теплі шкарпетки Шептицького',
+    category: 'clothes',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
     minReadiness: 75,
     icon: '🧣',
     badge: '75% Study Gear',
     color: '#065f46',
-    description: 'Набір витривалого студента з Центру Шептицького: затишний теплий коцик та в\'язані шкарпетки УКУ.',
+    description: 'Набір витривалого студента з Центру Шептицького: затишний теплий коцик та в\'язані шкарпетки УКУ. store.ucu.edu.ua',
     renderSvg: (color) => `
       <g id="outfit-sheptytsky_blanket_socks">
         <path d="M26 62 L44 46 L55 56 L66 46 L84 62 L80 90 L68 85 L68 108 L42 108 L42 85 L30 90 Z" fill="#047857" stroke="#064e3b" stroke-width="2"/>
@@ -155,12 +233,14 @@ const WARDROBE_ITEMS = [
   },
   {
     id: 'tech_lab_vest',
-    name: 'Брендована жилетка інженера APPS Lab',
+    name: 'Жилетка інженера Sheptytsky Tech Lab',
+    category: 'clothes',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
     minReadiness: 85,
     icon: '🛠️',
     badge: '85% Sheptytsky Tech',
     color: '#0f172a',
-    description: 'Жилетка розробника та інженера Sheptytsky Tech Lab / APPS з фірмовою нашивкою для лабораторій.',
+    description: 'Брендована жилетка інженера та розробника APPS / Sheptytsky Tech Lab із нашивкою для лабораторій. store.ucu.edu.ua',
     renderSvg: (color) => `
       <g id="outfit-tech_lab_vest">
         <path d="M28 65 L44 48 L55 58 L66 48 L82 65 L74 76 L66 70 L66 108 L44 108 L44 70 L36 76 Z" fill="#cbd5e1" stroke="#64748b" stroke-width="1.5"/>
@@ -174,9 +254,11 @@ const WARDROBE_ITEMS = [
   {
     id: 'wizard_robe',
     name: 'Markov Master Wizard Robe',
+    category: 'clothes',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
     minReadiness: 95,
     icon: '🧙‍♂️',
-    badge: '95% Required',
+    badge: '95% Markov Grandmaster',
     color: '#7e22ce',
     description: 'Магічна фіолетова мантія з рунами густини та математичного сподівання для володарів Марковських процесів.',
     renderSvg: (color) => `
@@ -193,18 +275,20 @@ const WARDROBE_ITEMS = [
   {
     id: 'champion_crown',
     name: 'Grand Champion Crown & Trophy',
+    category: 'prykrasy',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=prykrasy',
     minReadiness: 100,
     icon: '👑',
     badge: '100% Master Grade',
     color: '#eab308',
     description: 'Золота корона та тріумфальний трофей студента, який підкорив 100% готовності до Мідтерму 2 та Колоквіуму 2!',
     renderSvg: (color) => `
-      <g id="outfit-champion_crown">
-        <path d="M38 32 L40 18 L48 26 L55 14 L62 26 L70 18 L72 32 Z" fill="#eab308" stroke="#a16207" stroke-width="1.5"/>
-        <circle cx="40" cy="18" r="2" fill="#ef4444"/>
-        <circle cx="55" cy="14" r="2.5" fill="#3b82f6"/>
-        <circle cx="70" cy="18" r="2" fill="#10b981"/>
-        <ellipse cx="55" cy="32" rx="17" ry="3" fill="#ca8a04"/>
+      <g id="accessory-champion_crown">
+        <path d="M38 28 L40 14 L48 22 L55 10 L62 22 L70 14 L72 28 Z" fill="url(#goldGrad)" stroke="#a16207" stroke-width="1.5"/>
+        <circle cx="40" cy="14" r="2" fill="#ef4444"/>
+        <circle cx="55" cy="10" r="2.5" fill="#3b82f6"/>
+        <circle cx="70" cy="14" r="2" fill="#10b981"/>
+        <ellipse cx="55" cy="28" rx="17" ry="3" fill="#ca8a04"/>
         <circle cx="55" cy="55" r="48" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3,3"/>
       </g>
     `
@@ -963,35 +1047,80 @@ class UserProfileManager {
   }
 
   renderMistakesAnalytics() {
-    const container = document.getElementById('user-mistakes-list');
+    const container = document.getElementById('mistakes-analytics-list') || document.getElementById('user-mistakes-list');
     const badge = document.getElementById('user-mistakes-badge');
     if (!container || !this.profile) return;
 
     const mistakes = Object.values(this.profile.mistakesHistory || {});
-    if (badge) badge.textContent = `${mistakes.length} mistakes`;
+    mistakes.sort((a, b) => (b.count || 0) - (a.count || 0));
+
+    if (badge) {
+      badge.textContent = `${mistakes.length} ${mistakes.length === 1 ? 'помилка' : 'помилок'}`;
+      badge.className = mistakes.length > 0 
+        ? 'px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-rose-950/80 text-rose-300 border border-rose-800'
+        : 'px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-800';
+    }
 
     if (mistakes.length === 0) {
       container.innerHTML = `
-        <div class="p-6 text-center rounded-xl bg-slate-950/60 border border-slate-800 text-slate-400 text-xs">
-          🎉 Жодної помилки в реєстрі! Ви розв'язали всі поточні завдання безпомилково.
+        <div class="p-6 text-center rounded-xl bg-slate-950/60 border border-slate-800 text-slate-400 text-xs space-y-1.5">
+          <div class="text-2xl">🎉</div>
+          <div class="font-bold text-slate-200">Жодної помилки в реєстрі!</div>
+          <p class="text-[11px] text-slate-400">Ви розв'язали всі поточні завдання безпомилково. Помилкові відповіді з тестів чи завдань з'являться тут з кнопкою швидкого перездавання.</p>
         </div>
       `;
       return;
     }
 
     container.innerHTML = mistakes.map(m => `
-      <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between gap-3 text-xs">
-        <div class="flex-1 truncate">
-          <div class="font-bold text-slate-200 truncate">${m.title}</div>
-          <div class="text-[11px] text-slate-400">${m.topic} • Тип: <span class="text-indigo-400 font-semibold">${m.type}</span></div>
+      <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:border-slate-700 transition">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${m.type === 'problem' ? 'bg-indigo-950 text-indigo-300 border border-indigo-800' : 'bg-amber-950 text-amber-300 border border-amber-800'}">
+              ${m.type === 'problem' ? '📝 Задача' : '❓ Тест'}
+            </span>
+            <span class="text-[11px] text-slate-400 truncate">${m.topic || 'Загальна тема'}</span>
+          </div>
+          <div class="font-bold text-slate-200 truncate" title="${m.title}">${m.title}</div>
         </div>
-        <div class="text-right shrink-0">
-          <span class="px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800 text-[10px] font-bold">
-            ${m.count} ${m.count === 1 ? 'error' : 'errors'}
+        <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+          <span class="px-2 py-0.5 rounded bg-rose-950/80 text-rose-300 border border-rose-800 text-[10px] font-bold" title="Кількість помилкових спроб">
+            ${m.count} ${m.count === 1 ? 'спроба' : 'спроби'}
           </span>
+          <button onclick="window.userProfile?.retakeMistakeTask('${m.id}', '${m.type}')" 
+                  class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition flex items-center gap-1 shadow-sm"
+                  title="Перейти та розв'язати це завдання знову">
+            <span>🔄</span> <span>Розв'язати знову</span>
+          </button>
+          <button onclick="window.userProfile?.recordSuccess('${m.id}')" 
+                  class="p-1.5 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-slate-800 transition" 
+                  title="Видалити зі списку помилок">
+            ✕
+          </button>
         </div>
       </div>
     `).join('');
+  }
+
+  retakeMistakeTask(id, type) {
+    if (type === 'problem') {
+      const probId = parseInt(id.replace('prob_', ''), 10);
+      const probTabBtn = document.querySelector('[data-tab-target="problems"]');
+      if (probTabBtn) probTabBtn.click();
+      setTimeout(() => {
+        if (window.appController?.retakeProblem) {
+          window.appController.retakeProblem(probId);
+        }
+      }, 100);
+    } else if (type === 'quiz') {
+      const quizTabBtn = document.querySelector('[data-tab-target="quizzes"]');
+      if (quizTabBtn) quizTabBtn.click();
+      setTimeout(() => {
+        if (window.quizManager?.retakeQuestionById) {
+          window.quizManager.retakeQuestionById(id);
+        }
+      }, 100);
+    }
   }
 
   // --- AVATAR & WARDROBE GAMIFICATION ---
@@ -999,37 +1128,71 @@ class UserProfileManager {
     const container = document.getElementById('wardrobe-items-list') || document.getElementById('user-wardrobe-grid');
     if (!container) return;
 
-    const currentReadiness = window.quizManager?.readinessState?.overallPercent || 0;
-    const equipped = this.profile?.equippedOutfit || 'freshman_tee';
+    // Wardrobe filter tabs setup
+    const filterTabsContainer = document.getElementById('wardrobe-filter-tabs');
+    if (filterTabsContainer && !filterTabsContainer.dataset.initialized) {
+      filterTabsContainer.dataset.initialized = 'true';
+      filterTabsContainer.querySelectorAll('.wardrobe-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          this.activeWardrobeFilter = btn.getAttribute('data-wardrobe-filter') || 'all';
+          filterTabsContainer.querySelectorAll('.wardrobe-filter-btn').forEach(b => {
+            b.className = (b === btn)
+              ? 'wardrobe-filter-btn px-3 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white transition'
+              : 'wardrobe-filter-btn px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition';
+          });
+          this.renderWardrobeList();
+        });
+      });
+    }
 
-    container.innerHTML = WARDROBE_ITEMS.map(item => {
+    const currentFilter = this.activeWardrobeFilter || 'all';
+    const currentReadiness = window.quizManager?.readinessState?.overallPercent || 0;
+    const equippedOutfit = this.getEquippedOutfit()?.id || 'freshman_tee';
+    const equippedAccessory = this.profile?.equippedAccessory || null;
+
+    const filteredItems = WARDROBE_ITEMS.filter(item => {
+      if (currentFilter === 'all') return true;
+      return item.category === currentFilter;
+    });
+
+    container.innerHTML = filteredItems.map(item => {
       const isUnlocked = currentReadiness >= item.minReadiness;
-      const isEquipped = equipped === item.id;
+      const isPrykrasa = item.category === 'prykrasy';
+      const isEquipped = isPrykrasa ? (equippedAccessory === item.id) : (equippedOutfit === item.id);
 
       let btnLabel = '🔒 Заблоковано';
       let btnClass = 'bg-slate-800 text-slate-500 cursor-not-allowed';
 
       if (isEquipped) {
-        btnLabel = '✓ Одягнено';
-        btnClass = 'bg-emerald-600 text-white font-bold shadow-sm';
+        btnLabel = isPrykrasa ? '✓ Надіто (Зняти)' : '✓ Одягнено';
+        btnClass = 'bg-emerald-600 hover:bg-rose-600 text-white font-bold shadow-sm transition';
       } else if (isUnlocked) {
-        btnLabel = 'Одягнути';
+        btnLabel = isPrykrasa ? '✨ Надіти прикрасу' : '👕 Одягнути';
         btnClass = 'bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition';
       }
 
       return `
-        <div class="p-4 rounded-2xl border ${isEquipped ? 'border-indigo-500 bg-indigo-950/30' : 'border-slate-800 bg-slate-950/60'} flex flex-col justify-between">
+        <div class="p-4 rounded-2xl border ${isEquipped ? 'border-indigo-500 bg-indigo-950/40 ring-1 ring-indigo-500/50' : 'border-slate-800 bg-slate-950/70'} flex flex-col justify-between hover:border-slate-700 transition">
           <div>
             <div class="flex items-center justify-between mb-2">
-              <span class="text-2xl">${item.icon}</span>
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isUnlocked ? 'bg-indigo-950 text-indigo-300 border border-indigo-700' : 'bg-slate-800 text-slate-400'}">
-                ${item.badge}
-              </span>
+              <span class="text-3xl">${item.icon}</span>
+              <div class="flex flex-col items-end gap-1">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isUnlocked ? 'bg-indigo-950 text-indigo-300 border border-indigo-700' : 'bg-slate-800 text-slate-400'}">
+                  ${item.badge}
+                </span>
+                ${item.storeUrl ? `
+                  <a href="${item.storeUrl}" target="_blank" rel="noopener noreferrer" class="text-[10px] text-indigo-400 hover:text-indigo-300 underline font-semibold flex items-center gap-0.5">
+                    <span>store.ucu.edu.ua</span> <span>↗</span>
+                  </a>
+                ` : ''}
+              </div>
             </div>
-            <h4 class="font-bold text-slate-200 text-xs mb-1">${item.name}</h4>
+            <h4 class="font-bold text-slate-100 text-xs mb-1 flex items-center gap-1.5">
+              <span>${item.name}</span>
+            </h4>
             <p class="text-[11px] text-slate-400 leading-relaxed mb-3">${item.description}</p>
           </div>
-          <button class="wardrobe-equip-btn w-full py-1.5 rounded-lg text-xs font-semibold ${btnClass}" data-outfit-id="${item.id}" ${!isUnlocked || isEquipped ? 'disabled' : ''}>
+          <button class="wardrobe-equip-btn w-full py-2 rounded-xl text-xs font-semibold ${btnClass}" data-item-id="${item.id}" ${!isUnlocked ? 'disabled' : ''}>
             ${btnLabel}
           </button>
         </div>
@@ -1038,61 +1201,128 @@ class UserProfileManager {
 
     container.querySelectorAll('.wardrobe-equip-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-outfit-id');
+        const id = btn.getAttribute('data-item-id');
         this.equipOutfit(id);
       });
     });
   }
 
   getEquippedOutfit() {
-    return WARDROBE_ITEMS.find(w => w.id === this.profile.equippedOutfit) || WARDROBE_ITEMS[0];
+    const item = WARDROBE_ITEMS.find(w => w.id === this.profile?.equippedOutfit);
+    if (!item || item.category === 'prykrasy') {
+      return WARDROBE_ITEMS.find(w => w.id === 'freshman_tee') || WARDROBE_ITEMS[0];
+    }
+    return item;
   }
 
-  equipOutfit(outfitId) {
-    const outfit = WARDROBE_ITEMS.find(w => w.id === outfitId);
-    if (!outfit) return false;
+  getEquippedAccessory() {
+    if (this.profile?.equippedAccessory) {
+      return WARDROBE_ITEMS.find(w => w.id === this.profile.equippedAccessory) || null;
+    }
+    const currentOutfit = WARDROBE_ITEMS.find(w => w.id === this.profile?.equippedOutfit);
+    if (currentOutfit && currentOutfit.category === 'prykrasy') {
+      return currentOutfit;
+    }
+    return null;
+  }
+
+  equipOutfit(itemId) {
+    const item = WARDROBE_ITEMS.find(w => w.id === itemId);
+    if (!item) return false;
 
     const currentReadiness = window.quizManager?.readinessState?.overallPercent || 0;
-    if (currentReadiness < outfit.minReadiness) {
-      alert(`🔒 Цей одяг вимагає ${outfit.minReadiness}% готовності! Ваш поточний рівень: ${currentReadiness}%.`);
+    if (currentReadiness < item.minReadiness) {
+      alert(`🔒 Цей предмет вимагає ${item.minReadiness}% готовності! Ваш поточний рівень: ${currentReadiness}%.`);
       return false;
     }
 
-    this.profile.equippedOutfit = outfitId;
+    if (item.category === 'prykrasy') {
+      if (this.profile.equippedAccessory === itemId) {
+        this.profile.equippedAccessory = null;
+      } else {
+        this.profile.equippedAccessory = itemId;
+      }
+    } else {
+      this.profile.equippedOutfit = itemId;
+    }
+
     this.saveProfile();
     this.renderAvatar();
     this.renderWardrobeList();
     return true;
   }
 
-  renderAvatar(targetContainerId = 'user-avatar-display') {
-    const container = document.getElementById(targetContainerId);
-    if (!container) return;
+  renderAvatar() {
+    const containers = [
+      document.getElementById('user-avatar-display'),
+      document.getElementById('modal-avatar-preview')
+    ].filter(Boolean);
+
+    if (containers.length === 0) return;
 
     const outfit = this.getEquippedOutfit();
+    const accessory = this.getEquippedAccessory();
 
-    container.innerHTML = `
-      <svg viewBox="0 0 110 120" class="w-full h-full drop-shadow-lg transition-transform duration-300 hover:scale-105">
+    // Update mini header avatar icon
+    const headerIcon = document.getElementById('user-header-default-avatar');
+    if (headerIcon) {
+      headerIcon.textContent = accessory?.icon || outfit?.icon || '👕';
+    }
+
+    const svgContent = `
+      <svg viewBox="0 0 110 120" class="w-full h-full drop-shadow-lg transition-transform duration-300 hover:scale-105" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <radialGradient id="avatarGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.3"/>
+            <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.35"/>
             <stop offset="100%" stop-color="#0f172a" stop-opacity="0"/>
           </radialGradient>
+          <linearGradient id="skinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#fed7aa"/>
+            <stop offset="100%" stop-color="#fbd38d"/>
+          </linearGradient>
+          <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#fef08a"/>
+            <stop offset="50%" stop-color="#eab308"/>
+            <stop offset="100%" stop-color="#ca8a04"/>
+          </linearGradient>
+          <linearGradient id="silverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f8fafc"/>
+            <stop offset="50%" stop-color="#cbd5e1"/>
+            <stop offset="100%" stop-color="#94a3b8"/>
+          </linearGradient>
         </defs>
         <circle cx="55" cy="60" r="50" fill="url(#avatarGlow)" />
         
-        <!-- Base Body / Head -->
-        <rect x="50" y="50" width="10" height="12" fill="#fbd38d"/>
-        <circle cx="55" cy="42" r="16" fill="#fbd38d"/>
-        <path d="M40 38 Q55 22 70 38 Q55 30 40 38 Z" fill="#2d3748"/>
-        <circle cx="49" cy="42" r="2" fill="#1a202c"/>
-        <circle cx="61" cy="42" r="2" fill="#1a202c"/>
-        <path d="M52 48 Q55 52 58 48" fill="none" stroke="#e53e3e" stroke-width="1.5" stroke-linecap="round"/>
+        <!-- Base Student Body / Torso (Ensures avatar is never naked/broken) -->
+        <path d="M30 65 L45 50 L55 58 L65 50 L80 65 L72 75 L65 70 L65 106 L45 106 L45 70 L38 75 Z" fill="#3b82f6" stroke="#1e293b" stroke-width="1.5"/>
+        <path d="M50 58 Q55 64 60 58" fill="none" stroke="#1e293b" stroke-width="1.5"/>
+        <text x="55" y="80" text-anchor="middle" font-size="8" font-family="sans-serif" font-weight="bold" fill="#ffffff">UCU</text>
 
-        <!-- Render Equipped Outfit -->
-        ${outfit.renderSvg(outfit.color)}
+        <!-- Neck & Head -->
+        <rect x="50" y="47" width="10" height="13" fill="url(#skinGrad)"/>
+        <circle cx="55" cy="38" r="16" fill="url(#skinGrad)"/>
+        
+        <!-- Hair -->
+        <path d="M39 36 Q55 18 71 36 Q55 28 39 36 Z" fill="#1e293b"/>
+        
+        <!-- Eyes & Smile -->
+        <circle cx="49" cy="38" r="2" fill="#0f172a"/>
+        <circle cx="61" cy="38" r="2" fill="#0f172a"/>
+        <circle cx="50" cy="37" r="0.6" fill="#ffffff"/>
+        <circle cx="62" cy="37" r="0.6" fill="#ffffff"/>
+        <path d="M51 44 Q55 48 59 44" fill="none" stroke="#e11d48" stroke-width="1.5" stroke-linecap="round"/>
+
+        <!-- Layer 1: Equipped Clothing Outfit -->
+        ${outfit && outfit.id !== 'freshman_tee' ? outfit.renderSvg(outfit.color) : ''}
+
+        <!-- Layer 2: Equipped Prykrasa / Accessory -->
+        ${accessory ? accessory.renderSvg(accessory.color) : ''}
       </svg>
     `;
+
+    containers.forEach(c => {
+      c.innerHTML = svgContent;
+    });
   }
 
   updateUserUI() {
