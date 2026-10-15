@@ -113,7 +113,7 @@ class ExamTicket {
     const elapsed = this.elapsedFinal ?? (Date.now() - this.startedAt);
     const target = TicketPicker.targetMinutes(this.ticket.oral?.time);
     const over = target !== null && elapsed > target * 60 * 1000;
-    el.textContent = `⏱ ${this.formatElapsed(elapsed)}`;
+    el.innerHTML = `${icon('timer')} ${this.formatElapsed(elapsed)}`;
     el.className = `font-bold tabular-nums ${over ? 'text-amber-400' : 'text-slate-200'}`;
   }
 
@@ -124,9 +124,9 @@ class ExamTicket {
   renderGradeButtons(key) {
     const current = this.grades[key];
     const options = [
-      ['again', '✗ Не знаю', 'bg-rose-950/60 hover:bg-rose-900 border-rose-800 text-rose-200'],
-      ['hard', '~ Частково', 'bg-amber-950/60 hover:bg-amber-900 border-amber-800 text-amber-200'],
-      ['good', '✓ Знаю', 'bg-emerald-950/60 hover:bg-emerald-900 border-emerald-700 text-emerald-200']
+      ['again', `${icon('x')} Не знаю`, 'bg-rose-950/60 hover:bg-rose-900 border-rose-800 text-rose-200'],
+      ['hard', `${icon('minus')} Частково`, 'bg-amber-950/60 hover:bg-amber-900 border-amber-800 text-amber-200'],
+      ['good', `${icon('check')} Знаю`, 'bg-emerald-950/60 hover:bg-emerald-900 border-emerald-700 text-emerald-200']
     ];
     return `
       <div class="grid grid-cols-3 gap-2 mt-3">
@@ -185,7 +185,7 @@ class ExamTicket {
             <div class="text-center text-indigo-200 overflow-x-auto">$$${d.latexFull || d.latex}$$</div>
             <p class="text-xs">${this.md(d.definition)}</p>
             ${d.keyPoints?.length ? `
-              <div class="mt-2 text-xs font-bold text-slate-400">📌 Обов'язково згадати:</div>
+              <div class="mt-2 text-xs font-bold text-slate-400">${icon('pin')} Обов'язково згадати:</div>
               <ul class="list-disc pl-5 space-y-0.5 text-xs">${d.keyPoints.map(p => `<li>${this.md(p)}</li>`).join('')}</ul>
             ` : ''}
             ${this.renderGradeButtons(String(d.id))}
@@ -201,7 +201,7 @@ class ExamTicket {
         <div class="flex flex-wrap items-center justify-between gap-3 mt-5">
           <p class="text-xs text-slate-400 max-w-sm">Підготуй відповідь як на колоквіумі — вголос або на папері, — потім відкрий еталон.</p>
           <div class="flex flex-wrap gap-2 ml-auto">
-            <button id="ticket-gemini-btn" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold cursor-pointer transition">🎙️ Відповісти Gemini</button>
+            <button id="ticket-gemini-btn" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold cursor-pointer transition">${icon('mic')} Відповісти Gemini</button>
             <button id="ticket-reveal-btn" class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold cursor-pointer transition">Показати еталон</button>
           </div>
         </div>
@@ -215,10 +215,10 @@ class ExamTicket {
       <div class="flex flex-wrap items-center justify-between gap-3 mt-5 pt-4 border-t border-slate-800">
         <span class="text-xs ${graded.length === keys.length ? 'text-slate-200 font-semibold' : 'text-slate-400'}">
           ${graded.length === keys.length
-            ? `Білет оцінено: <span class="text-emerald-400">✓ ${count('good')}</span> · <span class="text-amber-400">~ ${count('hard')}</span> · <span class="text-rose-400">✗ ${count('again')}</span>`
+            ? `Білет оцінено: <span class="text-emerald-400">${icon('check')} ${count('good')}</span> · <span class="text-amber-400">${icon('minus')} ${count('hard')}</span> · <span class="text-rose-400">${icon('x')} ${count('again')}</span>`
             : `Оціни кожен пункт (${graded.length} з ${keys.length}) — оцінки йдуть у readiness`}
         </span>
-        <button id="ticket-next-btn" class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold cursor-pointer transition">🎟️ Наступний білет</button>
+        <button id="ticket-next-btn" class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold cursor-pointer transition">${icon('ticket')} Наступний білет</button>
       </div>
     `;
   }
@@ -231,11 +231,11 @@ class ExamTicket {
       <div class="w-full max-w-3xl mx-auto rounded-2xl border border-amber-500/40 bg-gradient-to-br from-slate-900 to-amber-950/20 p-6 shadow-2xl">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4 text-xs">
           <div class="flex items-center gap-3">
-            <span class="px-2.5 py-1 rounded-full font-extrabold bg-amber-900/60 text-amber-300 border border-amber-700">🎟️ Білет колоквіуму</span>
+            <span class="px-2.5 py-1 rounded-full font-extrabold bg-amber-900/60 text-amber-300 border border-amber-700">${icon('ticket')} Білет колоквіуму</span>
             <span id="ticket-timer" class="font-bold tabular-nums text-slate-200"></span>
             <span class="text-slate-500">орієнтир: ${this.ticket.oral.time}</span>
           </div>
-          <button id="ticket-redraw-btn" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition">↻ Інший білет</button>
+          <button id="ticket-redraw-btn" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition">${icon('rotate-cw')} Інший білет</button>
         </div>
         ${this.renderPrompt()}
         ${this.revealed ? this.renderReference() : ''}

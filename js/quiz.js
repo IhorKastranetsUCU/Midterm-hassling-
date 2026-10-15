@@ -346,8 +346,8 @@ class QuizManager {
         </div>
 
         <div class="flex flex-wrap gap-2 mb-3">
-          ${modeButton('mistakes', `🔁 Мої помилки (${mistakesCount})`)}
-          ${modeButton('mix', `🎲 Мікс: ${QuizManager.MIX_SIZE} випадкових з усіх тем`)}
+          ${modeButton('mistakes', `${icon('repeat')} Мої помилки (${mistakesCount})`)}
+          ${modeButton('mix', `${icon('dices')} Мікс: ${QuizManager.MIX_SIZE} випадкових з усіх тем`)}
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
@@ -355,7 +355,7 @@ class QuizManager {
             const testRecord = this.readinessState.topicTestsSolved[t.id];
             const isSolved = testRecord?.solved;
             const isSelected = this.activeTopicId === t.id;
-            const scoreLabel = testRecord ? `✓ ${testRecord.score}/${testRecord.total || 50} (${Math.round((testRecord.score / (testRecord.total || 50)) * 100)}%)` : '50 Q';
+            const scoreLabel = testRecord ? `${icon('check')} ${testRecord.score}/${testRecord.total || 50} (${Math.round((testRecord.score / (testRecord.total || 50)) * 100)}%)` : '50 Q';
             return `
               <button class="topic-select-btn p-2.5 rounded-xl border text-left text-xs font-semibold transition flex items-center justify-between gap-2 ${
                 isSelected 
@@ -365,7 +365,7 @@ class QuizManager {
                   : 'border-slate-800 bg-slate-950/50 text-slate-300 hover:border-slate-700 hover:text-white'
               }" data-topic-id="${t.id}">
                 <div class="truncate flex items-center gap-1.5">
-                  ${isSolved ? '<span class="text-emerald-400 font-bold">✓</span>' : '<span class="text-slate-500">•</span>'}
+                  ${isSolved ? `<span class="text-emerald-400 font-bold">${icon('check')}</span>` : '<span class="text-slate-500">•</span>'}
                   <span class="truncate">${t.title}</span>
                 </div>
                 <span class="shrink-0 text-[10px] px-2 py-0.5 rounded font-bold ${isSolved ? 'bg-emerald-950 text-emerald-300 border border-emerald-700' : 'bg-slate-800 text-slate-400'}">
@@ -415,10 +415,10 @@ class QuizManager {
       if (this.activeTopicId === 'mistakes') {
         host.innerHTML = `
           <div class="p-8 rounded-2xl border border-emerald-700/60 bg-slate-900 text-center">
-            <div class="text-4xl mb-2">🎉</div>
+            <div class="text-4xl mb-2">${icon('party-popper', 'text-amber-400')}</div>
             <h3 class="text-lg font-bold text-slate-100 mb-1">Помилок у тестах немає</h3>
             <p class="text-xs text-slate-400 mb-4">Сюди потрапляють питання, на які відповідь була неправильна. Правильна відповідь прибирає питання зі списку.</p>
-            <button class="quiz-mode-btn px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold cursor-pointer transition" data-quiz-mode="mix">🎲 Мікс: ${QuizManager.MIX_SIZE} випадкових питань</button>
+            <button class="quiz-mode-btn px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold cursor-pointer transition" data-quiz-mode="mix">${icon('dices')} Мікс: ${QuizManager.MIX_SIZE} випадкових питань</button>
           </div>
         `;
         host.querySelector('.quiz-mode-btn')?.addEventListener('click', () => this.startQuiz('mix'));
@@ -443,11 +443,11 @@ class QuizManager {
         ${typeof this.activeTopicId === 'number' && this.readinessState.topicTestsSolved[this.activeTopicId] ? `
           <div class="mb-4 p-3.5 rounded-xl bg-emerald-950/70 border border-emerald-600/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
             <div class="flex items-center gap-2 text-emerald-200">
-              <span class="text-base">✅</span>
+              <span class="text-base">${icon('circle-check')}</span>
               <span><strong>Тест з цієї теми вже пройдено!</strong> Результат: <strong>${this.readinessState.topicTestsSolved[this.activeTopicId].score}/${this.readinessState.topicTestsSolved[this.activeTopicId].total || 50} (${Math.round((this.readinessState.topicTestsSolved[this.activeTopicId].score / (this.readinessState.topicTestsSolved[this.activeTopicId].total || 50)) * 100)}%)</strong>. Зараховано до прогресу.</span>
             </div>
             <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-800 text-white shrink-0 self-start sm:self-center">
-              ПРОЙДЕНО ✓
+              ПРОЙДЕНО ${icon('check')}
             </span>
           </div>
         ` : ''}
@@ -491,13 +491,13 @@ class QuizManager {
         <div class="pt-4 border-t border-slate-800 space-y-4">
           <div class="flex items-center justify-between gap-3">
             <button id="quiz-prev-btn" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition ${this.currentIndex === 0 ? 'opacity-50 cursor-not-allowed' : ''}">
-              ◀ Previous
+              ${icon('chevron-left')} Previous
             </button>
             <div class="text-xs text-slate-400 font-medium">
               Click any circle below to jump to a question
             </div>
             <button id="quiz-next-btn" class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition">
-              ${this.currentIndex === this.currentQuiz.length - 1 ? (this.isPracticeMode() ? 'Завершити 🏁' : 'Finish Topic Test 🏁') : 'Next Question ▶'}
+              ${this.currentIndex === this.currentQuiz.length - 1 ? (this.isPracticeMode() ? `Завершити ${icon('flag')}` : `Finish Topic Test ${icon('flag')}`) : `Next Question ${icon('chevron-right')}`}
             </button>
           </div>
 
@@ -570,7 +570,7 @@ class QuizManager {
         expBox.innerHTML = `
           <div class="flex items-center gap-2 mb-2">
             <span class="px-2 py-0.5 rounded text-[10px] font-bold ${previousAnswer.correct ? 'bg-emerald-800 text-white' : 'bg-rose-800 text-white'}">
-              ${previousAnswer.correct ? '✓ ВІДПОВІДЬ ПРАВИЛЬНА' : '✗ ВІДПОВІДЬ ПОМИЛКОВА'}
+              ${previousAnswer.correct ? `${icon('check')} ВІДПОВІДЬ ПРАВИЛЬНА` : `${icon('x')} ВІДПОВІДЬ ПОМИЛКОВА`}
             </span>
             <span class="text-xs text-slate-400">${this.sessionAnswers ? 'Відповідь у цій спробі вже є' : 'Питання вже розв\'язано раніше'}</span>
           </div>
@@ -622,7 +622,7 @@ class QuizManager {
         ? 'p-4 rounded-xl mb-5 text-xs sm:text-sm bg-emerald-950/50 border border-emerald-800 text-emerald-200' 
         : 'p-4 rounded-xl mb-5 text-xs sm:text-sm bg-rose-950/50 border border-rose-800 text-rose-200';
       expBox.innerHTML = `
-        <div class="font-bold mb-1">${isCorrect ? '✅ Correct!' : '❌ Incorrect. Rigorous Derivation:'}</div>
+        <div class="font-bold mb-1">${isCorrect ? `${icon('circle-check')} Correct!` : `${icon('circle-x')} Incorrect. Rigorous Derivation:`}</div>
         <div>${q.explanation}</div>
       `;
       this.renderMath(expBox);
@@ -654,43 +654,43 @@ class QuizManager {
 
     // Answers may have cleared mistakes — keep the selector's counter in sync
     const mistakesBtn = document.querySelector('.quiz-mode-btn[data-quiz-mode="mistakes"]');
-    if (mistakesBtn) mistakesBtn.textContent = `🔁 Мої помилки (${this.getMistakeQuestions().length})`;
+    if (mistakesBtn) mistakesBtn.innerHTML = `${icon('repeat')} Мої помилки (${this.getMistakeQuestions().length})`;
 
     const practice = {
       mistakes: {
         title: 'Робота над помилками завершена',
         text: `Правильні відповіді прибрано з реєстру помилок. Залишилось: <strong>${this.getMistakeQuestions().length}</strong>.`,
-        retry: '🔁 Прорішати залишок'
+        retry: `${icon('repeat')} Прорішати залишок`
       },
       mix: {
         title: 'Мікс-тест завершено',
         text: 'Випадкові питання з усіх 12 тем — хороший спосіб перевірити, що теми не переплутались.',
-        retry: '🎲 Новий мікс'
+        retry: `${icon('dices')} Новий мікс`
       }
     }[this.activeTopicId];
 
     host.innerHTML = `
       <div class="quiz-results p-8 rounded-2xl shadow-2xl border border-slate-700 bg-slate-900 text-center">
-        <div class="text-5xl mb-3">${passed ? '🎉' : '📖'}</div>
+        <div class="text-5xl mb-3">${passed ? icon('party-popper', 'text-amber-400') : icon('book-open', 'text-indigo-400')}</div>
         <h2 class="text-2xl font-black text-slate-100 mb-2">${practice ? practice.title : 'Topic Test Completed!'}</h2>
         <p class="text-slate-400 mb-6 text-sm">
           ${practice ? practice.text : passed
-            ? '🏆 Outstanding work! You have passed this topic test and earned <strong>+1% Readiness</strong>.'
+            ? `${icon('trophy', 'text-amber-400')} Outstanding work! You have passed this topic test and earned <strong>+1% Readiness</strong>.`
             : 'Review the lecture notes and try this topic test again to secure your readiness %.'}
         </p>
 
         <div class="inline-block px-8 py-5 rounded-2xl bg-indigo-950/70 border border-indigo-700 mb-6">
           <div class="text-4xl font-black text-indigo-400">${this.score} / ${this.currentQuiz.length}</div>
-          <div class="text-xs uppercase font-extrabold text-slate-300 mt-1">${percentage}% Score ${passed ? '(PASSED ✓)' : '(NEEDS REVIEW)'}</div>
+          <div class="text-xs uppercase font-extrabold text-slate-300 mt-1">${percentage}% Score ${passed ? `(PASSED ${icon('check')})` : '(NEEDS REVIEW)'}</div>
         </div>
 
         <div class="flex justify-center gap-4">
           <button id="retry-topic-quiz-btn" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition">
-            ${practice ? practice.retry : '🔄 Retake Topic Test'}
+            ${practice ? practice.retry : `${icon('rotate-ccw')} Retake Topic Test`}
           </button>
           ${isTopicTest ? `
             <button id="next-topic-quiz-btn" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition">
-              Next Topic ➔
+              Next Topic ${icon('arrow-right')}
             </button>
           ` : ''}
         </div>

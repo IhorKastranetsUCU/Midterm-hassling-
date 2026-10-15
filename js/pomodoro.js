@@ -94,14 +94,14 @@ class PomodoroTimer {
       // Switch to break
       if (this.stats.sessionsCompleted % 4 === 0) {
         this.setMode('longBreak');
-        alert("🎉 Excellent focus hustle! 4 sessions completed. Time for a well-deserved 15-minute Long Break!");
+        alert("Excellent focus hustle! 4 sessions completed. Time for a well-deserved 15-minute Long Break!");
       } else {
         this.setMode('shortBreak');
-        alert("⏱️ Great work session! Time for a 5-minute Short Break.");
+        alert("Great work session! Time for a 5-minute Short Break.");
       }
     } else {
       this.setMode('work');
-      alert("⚡ Break is over! Ready for another high-yield study session?");
+      alert("Break is over! Ready for another high-yield study session?");
     }
   }
 
@@ -150,13 +150,13 @@ class PomodoroTimer {
     this.onTick();
     const btn = document.getElementById('pomodoro-toggle-btn');
     if (btn) {
-      btn.innerHTML = this.isRunning ? '⏸️ Pause' : '▶️ Focus';
+      btn.innerHTML = this.isRunning ? `${icon('pause')} Pause` : `${icon('play')} Focus`;
       btn.className = this.isRunning ? 'btn btn-warning' : 'btn btn-primary';
     }
 
     const mainBtn = document.getElementById('main-pomodoro-toggle');
     if (mainBtn) {
-      mainBtn.innerHTML = this.isRunning ? '⏸️ Pause' : '▶️ Start Focus';
+      mainBtn.innerHTML = this.isRunning ? `${icon('pause')} Pause` : `${icon('play')} Start Focus`;
       mainBtn.className = this.isRunning ? 'btn btn-warning' : 'btn btn-primary btn-lg';
     }
 

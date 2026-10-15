@@ -99,7 +99,12 @@ Tracks your real progress across 4 weighted pillars:
 * Follows the system theme on first visit; the 🌙/☀️ button in the header switches and remembers the choice.
 * Tailwind colors resolve through `--surface-*` / `--text-*` / `--line-*` CSS variables (config in `index.html`); the light remapping lives in `css/style.css`. Dark mode sets no overrides, so it renders exactly as Tailwind's palette.
 
-### 8. 📐 Master Distribution & Formula Matrix
+### 8. 🧩 Icon System
+* UI icons are [Lucide](https://lucide.dev) (ISC license, v0.468.0 from jsDelivr) rendered as inline SVG — no emoji stickers in the interface.
+* In JS templates: `${icon('dices')}` or `${icon('trophy', 'text-amber-400')}`; in static `index.html` markup: `<i data-icon="dices"></i>` (always with a closing tag), hydrated on load by `js/icons.js`.
+* Icons are `1em` and use `currentColor`, so they follow the text size and both themes. If the CDN is unreachable, `icon()` returns an empty string and the UI keeps working without icons.
+
+### 9. 📐 Master Distribution & Formula Matrix
 * Complete reference table for discrete ($B(1,p), B(n,p), G(p), P(\lambda)$) and continuous ($U(a,b), E(\lambda), N(\mu, \sigma^2), \text{Laplace}$) distributions.
 * Includes Supports, PMF/PDF, Means, Variances, PGFs, MGFs, and key exam pitfalls.
 
@@ -121,6 +126,7 @@ midterm2/
 │   ├── quiz.js           # Interactive quiz manager & readiness engine
 │   ├── definition-drill.js # Random definition drill (shuffled recall + self-grading)
 │   ├── exam-ticket.js    # Colloquium ticket: random oral question + 2 definitions + stopwatch
+│   ├── icons.js          # icon('name') helper + <i data-icon> hydration (Lucide inline SVG)
 │   └── app.js            # UI controller, routing & event handling
 ├── tests/                # node --test unit tests for pure logic
 ├── vendor/

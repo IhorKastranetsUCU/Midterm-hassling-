@@ -117,6 +117,7 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.375rem; /* icon + label */
   font-weight: 600;
   border-radius: 0.5rem;
   transition: all 0.15s ease-in-out;
@@ -277,3 +278,16 @@ html.light .glass {
 
 html.light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
 html.light ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Lucide icons (js/icons.js): 1em, current text color.
+   display/vertical-align need class specificity to beat Tailwind preflight's `svg { display: block }`;
+   size stays in :where() (specificity 0) so size classes passed to icon() always win. */
+.lucide-icon {
+  display: inline-block;
+  vertical-align: -0.125em;
+}
+:where(.lucide-icon) {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+}

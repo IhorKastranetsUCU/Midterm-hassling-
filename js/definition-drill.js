@@ -208,13 +208,13 @@ class DefinitionDrill {
             <option value="all" ${this.scope === 'all' ? 'selected' : ''}>Усі 21 визначення</option>
             <option value="weak" ${this.scope === 'weak' ? 'selected' : ''}>Тільки ще не здані (&lt;6/10)</option>
           </select>
-          <button id="drill-restart-btn" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition">↻ Перемішати заново</button>
+          <button id="drill-restart-btn" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition">${icon('rotate-cw')} Перемішати заново</button>
         </div>
         <div class="flex items-center gap-3 font-semibold">
           <span class="text-slate-300">Пройдено ${s.done} / ${s.total}</span>
-          <span class="text-emerald-400">✓ ${s.good}</span>
-          <span class="text-amber-400">~ ${s.hard}</span>
-          <span class="text-rose-400">✗ ${s.again}</span>
+          <span class="text-emerald-400">${icon('check')} ${s.good}</span>
+          <span class="text-amber-400">${icon('minus')} ${s.hard}</span>
+          <span class="text-rose-400">${icon('x')} ${s.again}</span>
         </div>
       </div>
       <div class="h-1.5 rounded-full bg-slate-800 overflow-hidden mb-4">
@@ -229,8 +229,8 @@ class DefinitionDrill {
 
     const prompt = `
       <div class="flex justify-between items-center text-xs text-slate-400 mb-2">
-        <span class="px-2 py-0.5 rounded bg-indigo-900/60 text-indigo-300 font-bold">🎲 Визначення #${def.id}</span>
-        ${seenBefore ? '<span class="text-amber-400 font-semibold">↺ Повтор — минулого разу не вдалося</span>' : ''}
+        <span class="px-2 py-0.5 rounded bg-indigo-900/60 text-indigo-300 font-bold">${icon('dices')} Визначення #${def.id}</span>
+        ${seenBefore ? `<span class="text-amber-400 font-semibold">${icon('rotate-ccw')} Повтор — минулого разу не вдалося</span>` : ''}
       </div>
       <h3 class="text-2xl font-extrabold text-slate-100 mb-1">${def.nameUa}</h3>
       <div class="text-sm font-semibold text-indigo-400 mb-4">${def.name}</div>
@@ -248,7 +248,7 @@ class DefinitionDrill {
             <label for="drill-answer-input" class="block text-xs font-bold text-slate-300 mb-1">Сформулюй визначення (можна й усно — тоді просто відкрий відповідь):</label>
             <textarea id="drill-answer-input" rows="5" placeholder="Напр.: Випадкова величина X: Ω → ℝ називається дискретною, якщо…" class="w-full p-3 rounded-xl bg-slate-800 border border-slate-700 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">${this.escapeHtml(this.lastAnswer)}</textarea>
             <div class="flex flex-wrap items-center justify-between gap-3 mt-4">
-              <button id="drill-hint-btn" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer transition ${this.hintShown ? 'hidden' : ''}">💡 Підказка: формула</button>
+              <button id="drill-hint-btn" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer transition ${this.hintShown ? 'hidden' : ''}">${icon('lightbulb', 'text-amber-400')} Підказка: формула</button>
               <div class="flex items-center gap-3 ml-auto">
                 <span class="text-[11px] text-slate-500 hidden sm:inline">Ctrl/⌘ + Enter</span>
                 <button id="drill-reveal-btn" class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold cursor-pointer transition">Показати відповідь</button>
@@ -289,20 +289,20 @@ class DefinitionDrill {
               </div>
             ` : ''}
             <div class="p-2.5 rounded bg-rose-950/30 border border-rose-800/50 text-rose-200 text-xs">
-              <strong>⚠️ Professor Trap:</strong> ${this.md(def.trap)}
+              <strong>${icon('triangle-alert')} Professor Trap:</strong> ${this.md(def.trap)}
             </div>
           </div>
 
           <div class="pt-4 mt-4 border-t border-slate-800">
             <div class="flex items-center justify-between mb-2">
               <span class="text-xs text-slate-400">Наскільки добре знаєш? <span class="text-slate-500">(клавіші 1 / 2 / 3)</span></span>
-              ${answer ? '<button id="drill-gemini-btn" class="text-xs font-semibold text-indigo-400 hover:text-indigo-300 cursor-pointer transition">🤖 Оцінити Gemini</button>' : ''}
+              ${answer ? `<button id="drill-gemini-btn" class="text-xs font-semibold text-indigo-400 hover:text-indigo-300 cursor-pointer transition">${icon('bot')} Оцінити Gemini</button>` : ''}
             </div>
             <div id="drill-suggestion" class="text-[11px] text-indigo-300 mb-2 hidden"></div>
             <div class="grid grid-cols-3 gap-2">
-              <button data-drill-grade="again" class="px-3 py-2.5 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-200 text-sm font-bold cursor-pointer transition">✗ Не знаю<span class="block text-[10px] font-normal opacity-75">повернеться за ${DrillQueue.AGAIN_OFFSET} картки</span></button>
-              <button data-drill-grade="hard" class="px-3 py-2.5 rounded-lg bg-amber-950/60 hover:bg-amber-900 border border-amber-800 text-amber-200 text-sm font-bold cursor-pointer transition">~ Частково<span class="block text-[10px] font-normal opacity-75">в кінець черги</span></button>
-              <button data-drill-grade="good" class="px-3 py-2.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-700 text-emerald-200 text-sm font-bold cursor-pointer transition">✓ Знаю<span class="block text-[10px] font-normal opacity-75">+8/10 у readiness</span></button>
+              <button data-drill-grade="again" class="px-3 py-2.5 rounded-lg bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-200 text-sm font-bold cursor-pointer transition">${icon('x')} Не знаю<span class="block text-[10px] font-normal opacity-75">повернеться за ${DrillQueue.AGAIN_OFFSET} картки</span></button>
+              <button data-drill-grade="hard" class="px-3 py-2.5 rounded-lg bg-amber-950/60 hover:bg-amber-900 border border-amber-800 text-amber-200 text-sm font-bold cursor-pointer transition">${icon('minus')} Частково<span class="block text-[10px] font-normal opacity-75">в кінець черги</span></button>
+              <button data-drill-grade="good" class="px-3 py-2.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-700 text-emerald-200 text-sm font-bold cursor-pointer transition">${icon('check')} Знаю<span class="block text-[10px] font-normal opacity-75">+8/10 у readiness</span></button>
             </div>
           </div>
         </div>
@@ -315,7 +315,7 @@ class DefinitionDrill {
     const def = this.getDef(DrillQueue.current(this.state));
     const total = def?.keyPoints?.length || 0;
     const suggested = DrillQueue.suggestGrade(this.checkedPoints.size, total);
-    const labels = { again: '✗ Не знаю', hard: '~ Частково', good: '✓ Знаю' };
+    const labels = { again: 'Не знаю', hard: 'Частково', good: 'Знаю' };
 
     container.querySelectorAll('[data-drill-grade]').forEach(btn => {
       const isSuggested = btn.getAttribute('data-drill-grade') === suggested;
@@ -337,10 +337,10 @@ class DefinitionDrill {
         <div class="w-full max-w-2xl mx-auto">
           ${this.renderHeader()}
           <div class="rounded-2xl border border-emerald-500/40 bg-slate-900 p-6 text-center">
-            <div class="text-3xl mb-2">🏆</div>
+            <div class="text-3xl mb-2">${icon('trophy', 'text-amber-400')}</div>
             <h3 class="text-lg font-bold text-slate-100 mb-1">Усі визначення вже здані на ≥6/10</h3>
             <p class="text-xs text-slate-400 mb-4">У цьому наборі нічого не лишилось. Прогони всі 21 для закріплення.</p>
-            <button id="drill-all-btn" class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold cursor-pointer transition">🎲 Усі 21 визначення</button>
+            <button id="drill-all-btn" class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold cursor-pointer transition">${icon('dices')} Усі 21 визначення</button>
           </div>
         </div>
       `;
@@ -351,7 +351,7 @@ class DefinitionDrill {
       <div class="w-full max-w-2xl mx-auto">
         ${this.renderHeader()}
         <div class="rounded-2xl border border-indigo-500/40 bg-gradient-to-br from-slate-900 to-indigo-950/40 p-6 shadow-2xl">
-          <h3 class="text-xl font-extrabold text-slate-100 mb-1">Раунд завершено 🎉</h3>
+          <h3 class="text-xl font-extrabold text-slate-100 mb-1">Раунд завершено ${icon('party-popper', 'text-amber-400')}</h3>
           <p class="text-xs text-slate-400 mb-4">${s.total} визначень, ${s.reviews} показів. З першої спроби:</p>
           <div class="grid grid-cols-3 gap-2 mb-5 text-center">
             <div class="p-3 rounded-xl bg-emerald-950/40 border border-emerald-800"><div class="text-2xl font-black text-emerald-300">${s.good}</div><div class="text-[11px] text-emerald-200/80">знаю</div></div>
@@ -367,8 +367,8 @@ class DefinitionDrill {
             </div>
           ` : '<p class="text-sm text-emerald-300 mb-5">Усе з першої спроби — чисто!</p>'}
           <div class="flex flex-wrap justify-end gap-2">
-            ${weakList.length ? `<button id="drill-weak-btn" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-700 text-sm font-semibold cursor-pointer transition">↺ Прогнати слабкі (${weakList.length})</button>` : ''}
-            <button id="drill-new-round-btn" class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold cursor-pointer transition">🎲 Новий раунд</button>
+            ${weakList.length ? `<button id="drill-weak-btn" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-700 text-sm font-semibold cursor-pointer transition">${icon('rotate-ccw')} Прогнати слабкі (${weakList.length})</button>` : ''}
+            <button id="drill-new-round-btn" class="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold cursor-pointer transition">${icon('dices')} Новий раунд</button>
           </div>
         </div>
       </div>
