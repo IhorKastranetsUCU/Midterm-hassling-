@@ -30,36 +30,65 @@ class QuizManager {
   }
 
   loadUserState(email = null, savedState = null) {
-    const defaultState = this.getDefaultState();
-    let stateToUse = null;
+    const activeTopic = window.currentActiveTopic || 'topic2';
+    this.readinessPerTopic = {
+      topic2: this.getDefaultState(),
+      topic3: this.getDefaultState()
+    };
 
-    if (savedState && typeof savedState === 'object' && Object.keys(savedState).length > 0) {
-      stateToUse = savedState;
-    } else if (email) {
+    const normalizeState = (st) => {
+      const def = this.getDefaultState();
+      if (!st || typeof st !== 'object') return def;
+      const merged = Object.assign(def, st);
+      if (!merged.definitionsScores) merged.definitionsScores = {};
+      if (!merged.topicTestsSolved) merged.topicTestsSolved = {};
+      if (!merged.questionsAnswered) merged.questionsAnswered = {};
+      if (!merged.problemsMastered) merged.problemsMastered = {};
+      if (!merged.daysCompleted) merged.daysCompleted = {};
+      return merged;
+    };
+
+    let perTopicRaw = window.userProfile?.profile?.readinessPerTopic;
+    if (!perTopicRaw && email) {
       const emailKey = email.toLowerCase().trim();
-      const fromLocal = localStorage.getItem('stathustle_readiness_' + emailKey);
+      const fromLocal = localStorage.getItem('stathustle_readiness_per_topic_' + emailKey);
       if (fromLocal) {
-        try { stateToUse = JSON.parse(fromLocal); } catch (e) {}
+        try { perTopicRaw = JSON.parse(fromLocal); } catch (e) {}
+      }
+    }
+    if (!perTopicRaw && !email) {
+      const guestPerTopic = localStorage.getItem('stathustle_readiness_per_topic_guest');
+      if (guestPerTopic) {
+        try { perTopicRaw = JSON.parse(guestPerTopic); } catch (e) {}
       }
     }
 
-    if (!stateToUse && !email) {
-      const guestState = localStorage.getItem('stathustle_readiness_guest');
-      if (guestState) {
-        try { stateToUse = JSON.parse(guestState); } catch (e) {}
-      }
-    }
-
-    if (stateToUse) {
-      this.readinessState = Object.assign(defaultState, stateToUse);
-      if (!this.readinessState.definitionsScores) this.readinessState.definitionsScores = {};
-      if (!this.readinessState.topicTestsSolved) this.readinessState.topicTestsSolved = {};
-      if (!this.readinessState.questionsAnswered) this.readinessState.questionsAnswered = {};
-      if (!this.readinessState.problemsMastered) this.readinessState.problemsMastered = {};
-      if (!this.readinessState.daysCompleted) this.readinessState.daysCompleted = {};
+    if (perTopicRaw && (perTopicRaw.topic2 || perTopicRaw.topic3)) {
+      this.readinessPerTopic.topic2 = normalizeState(perTopicRaw.topic2);
+      this.readinessPerTopic.topic3 = normalizeState(perTopicRaw.topic3);
     } else {
-      this.readinessState = defaultState;
+      // Legacy fallback: load into topic2
+      let stateToUse = null;
+      if (savedState && typeof savedState === 'object' && Object.keys(savedState).length > 0) {
+        stateToUse = savedState;
+      } else if (email) {
+        const emailKey = email.toLowerCase().trim();
+        const fromLocal = localStorage.getItem('stathustle_readiness_' + emailKey);
+        if (fromLocal) {
+          try { stateToUse = JSON.parse(fromLocal); } catch (e) {}
+        }
+      } else {
+        const guestState = localStorage.getItem('stathustle_readiness_guest');
+        if (guestState) {
+          try { stateToUse = JSON.parse(guestState); } catch (e) {}
+        }
+      }
+      if (stateToUse) {
+        this.readinessPerTopic.topic2 = normalizeState(stateToUse);
+      }
     }
+
+    this.readinessState = this.readinessPerTopic[activeTopic] || this.readinessPerTopic.topic2;
 
     this.calculateOverallReadiness();
     this.updateReadinessUI();
@@ -68,8 +97,26 @@ class QuizManager {
     }
   }
 
+  switchTopicState(topicId) {
+    if (!this.readinessPerTopic) {
+      this.loadUserState(window.userProfile?.profile?.email, window.userProfile?.profile?.readinessState);
+    }
+    if (!this.readinessPerTopic[topicId]) {
+      this.readinessPerTopic[topicId] = this.getDefaultState();
+    }
+    this.readinessState = this.readinessPerTopic[topicId];
+    const firstTopicId = window.PS_DATA?.TOPICS_LIST?.[0]?.id || (topicId === 'topic3' ? 7 : 1);
+    this.activeTopicId = firstTopicId;
+    this.calculateOverallReadiness();
+    this.updateReadinessUI();
+  }
+
   saveReadiness() {
     this.calculateOverallReadiness();
+    const activeTopic = window.currentActiveTopic || 'topic2';
+    if (this.readinessPerTopic) {
+      this.readinessPerTopic[activeTopic] = this.readinessState;
+    }
 
     const currentUser = window.userProfile?.profile;
     const email = currentUser?.email;
@@ -77,16 +124,17 @@ class QuizManager {
     if (email && window.userProfile?.isLoggedIn) {
       const emailKey = email.toLowerCase().trim();
       const stateCopy = JSON.parse(JSON.stringify(this.readinessState));
-      // Save directly to user-scoped key
+      const perTopicCopy = JSON.parse(JSON.stringify(this.readinessPerTopic));
       localStorage.setItem('stathustle_readiness_' + emailKey, JSON.stringify(stateCopy));
-      // Save into profile object and sync registry
+      localStorage.setItem('stathustle_readiness_per_topic_' + emailKey, JSON.stringify(perTopicCopy));
       currentUser.readinessState = stateCopy;
+      currentUser.readinessPerTopic = perTopicCopy;
       window.userProfile.saveProfile();
     } else {
       localStorage.setItem('stathustle_readiness_guest', JSON.stringify(this.readinessState));
+      localStorage.setItem('stathustle_readiness_per_topic_guest', JSON.stringify(this.readinessPerTopic));
     }
 
-    // Also update legacy key for compatibility
     localStorage.setItem('stathustle_readiness_state', JSON.stringify(this.readinessState));
     this.updateReadinessUI();
     if (window.userProfile) {
@@ -167,22 +215,23 @@ class QuizManager {
   calculateOverallReadiness() {
     this.evaluateDayMilestones();
 
-    const totalDefs = 21;
-    const passedDefs = this.getPassingDefinitionsCount(); // 1% each -> 21% max
+    const totalDefs = window.PS_DATA?.DEFINITIONS_21?.length || 21;
+    const passedDefs = this.getPassingDefinitionsCount();
     const defPercentContribution = passedDefs * 1; // 1% per definition scored >= 6/10
 
-    const totalTopicTests = 12;
-    const solvedTests = this.getSolvedTopicTestsCount(); // 1% each -> 12% max
-    const testPercentContribution = solvedTests * 1;
+    const totalTopicTests = window.PS_DATA?.TOPICS_LIST?.length || 12;
+    const solvedTests = this.getSolvedTopicTestsCount();
+    const testPercentContribution = solvedTests * (totalTopicTests <= 6 ? 2 : 1);
 
     // Day milestones: 5 days * 2% = 10% max
     const completedDaysCount = Object.values(this.readinessState.daysCompleted).filter(Boolean).length;
-    const dayPercentContribution = completedDaysCount * 2;
+    const dayPercentContribution = Math.min(completedDaysCount * 2, 10);
 
-    // Exam Problems: Rest of the percentage (57% max across 23 problems ~ 2.48% each)
+    // Exam Problems: Rest of the percentage
     const totalProblems = window.PS_DATA?.PROBLEMS_BANK?.length || 23;
     const solvedProblems = this.getSolvedProblemsCount();
-    const probPercentContribution = Math.min(Math.round((solvedProblems / totalProblems) * 57), 57);
+    const maxProbPct = 100 - totalDefs - (totalTopicTests * (totalTopicTests <= 6 ? 2 : 1)) - 10;
+    const probPercentContribution = Math.min(Math.round((solvedProblems / Math.max(totalProblems, 1)) * maxProbPct), maxProbPct);
 
     // Sum all components (Baseline is 0%)
     let overall = defPercentContribution + testPercentContribution + dayPercentContribution + probPercentContribution;
@@ -292,18 +341,20 @@ class QuizManager {
     if (!mainContainer) return;
 
     const topics = window.PS_DATA?.TOPICS_LIST || [];
+    const allQuestions = window.PS_DATA?.QUIZ_QUESTIONS || [];
+    const totalCount = allQuestions.length;
 
     mainContainer.innerHTML = `
       <!-- Topic Selector Bar -->
       <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl mb-6">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
-            <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">Select Exam Topic (50 Questions Each)</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">Select Exam Topic</span>
             <h3 class="text-lg font-bold text-slate-100">Topic Quiz Drill</h3>
           </div>
           <div class="flex items-center gap-2">
             <span class="text-xs text-slate-400">Total in Pool:</span>
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-indigo-950 text-indigo-300 border border-indigo-700">600 Questions</span>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-indigo-950 text-indigo-300 border border-indigo-700">${totalCount} Questions</span>
           </div>
         </div>
 
@@ -312,7 +363,8 @@ class QuizManager {
             const testRecord = this.readinessState.topicTestsSolved[t.id];
             const isSolved = testRecord?.solved;
             const isSelected = this.activeTopicId === t.id;
-            const scoreLabel = testRecord ? `✓ ${testRecord.score}/${testRecord.total || 50} (${Math.round((testRecord.score / (testRecord.total || 50)) * 100)}%)` : '50 Q';
+            const topicQCount = allQuestions.filter(q => q.topicId === t.id).length || 50;
+            const scoreLabel = testRecord ? `✓ ${testRecord.score}/${testRecord.total || topicQCount} (${Math.round((testRecord.score / (testRecord.total || topicQCount)) * 100)}%)` : `${topicQCount} Q`;
             return `
               <button class="topic-select-btn p-2.5 rounded-xl border text-left text-xs font-semibold transition flex items-center justify-between gap-2 ${
                 isSelected 

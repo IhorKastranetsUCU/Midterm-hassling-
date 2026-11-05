@@ -72,7 +72,7 @@
         <div>
           <div class="flex items-center gap-2">
             <span class="font-extrabold text-base tracking-tight text-white">UCU StatHustle</span>
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-950 text-indigo-300 border border-indigo-700">MIDTERM 2 & COL 2</span>
+            <span id="header-active-topic-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-950 text-indigo-300 border border-indigo-700">MIDTERM 2 & COL 2</span>
           </div>
           <div class="flex items-center gap-3 text-[11px] text-slate-400">
             <span id="colloquium-countdown-text">⚡ 3 days to Colloquium</span>
@@ -147,6 +147,28 @@
         </button>
       </div>
 
+    </div>
+
+    <!-- Topic Switcher Bar (Topic 2 vs Topic 3) -->
+    <div class="border-t border-slate-800/80 bg-slate-950/90">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">📚 Вибір Модуля (Теми):</span>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" data-topic-id="topic2" onclick="window.switchTopic('topic2')" class="topic-switcher-btn px-3.5 py-1.5 rounded-lg font-extrabold text-xs bg-indigo-600 text-white shadow-md shadow-indigo-600/30 transition flex items-center gap-1.5">
+              <span>⚡</span>
+              <span>Topic 2: Випадкові величини & Спільні розподіли (Midterm 2 & Col 2)</span>
+            </button>
+            <button type="button" data-topic-id="topic3" onclick="window.switchTopic('topic3')" class="topic-switcher-btn px-3.5 py-1.5 rounded-lg font-semibold text-xs bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1.5">
+              <span>🎯</span>
+              <span>Topic 3: Граничні теореми & Статистичне оцінювання (Midterm 3 & Col 3)</span>
+            </button>
+          </div>
+        </div>
+        <div class="text-[11px] text-slate-400 hidden xl:block">
+          ⏱️ Таймери та прогрес рахуються окремо для кожної теми
+        </div>
+      </div>
     </div>
 
     <!-- Sub-Nav Tab Bar -->
@@ -274,8 +296,11 @@
             </div>
             <div class="flex-1 space-y-1.5 text-xs">
               <div class="font-bold text-slate-100 flex items-center gap-2">
-                <span>⏱️ Real-time Studied:</span>
+                <span>⏱️ Активна тема:</span>
                 <span id="user-dash-study-time" class="font-mono text-amber-300 font-extrabold">0m 00s</span>
+              </div>
+              <div id="user-dash-topic-time-breakdown" class="text-[11px] font-mono text-slate-300">
+                ⚡ Тема 2: 0m 0s • 🎯 Тема 3: 0m 0s
               </div>
               <div class="text-slate-400 text-[11px]">
                 Total Focus Time: <strong id="user-dash-study-hours" class="text-slate-200">0.0 hrs</strong>
@@ -294,32 +319,52 @@
           </div>
         </div>
 
-        <!-- Card 3: Built-in Pomodoro Focus Station -->
+        <!-- Card 3: Built-in Prolonged Pomodoro Focus Station -->
         <div class="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 shadow-xl flex flex-col justify-between">
-          <div class="flex justify-between items-start mb-2">
-            <div>
-              <span class="text-xs uppercase font-extrabold tracking-wider text-amber-400">Focus Station</span>
-              <h2 class="text-xl font-bold text-slate-100">Pomodoro Timer</h2>
+          <div>
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <span class="text-xs uppercase font-extrabold tracking-wider text-amber-400">Подовжений Фокус (Prolonged Timer)</span>
+                <h2 class="text-xl font-bold text-slate-100">Pomodoro Station</h2>
+              </div>
+              <span id="pomodoro-mode-badge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-950 text-amber-300 border border-amber-800">45m Focus / 5m Rest</span>
             </div>
-            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-950 text-amber-300 border border-amber-800">25m Work / 5m Rest</span>
+
+            <!-- Prolonged Duration Presets -->
+            <div class="flex flex-wrap items-center gap-1.5 mt-2">
+              <button type="button" data-pomo-mode="work" onclick="window.pomodoroTimer?.setMode('work')" class="pomodoro-mode-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition">25m</button>
+              <button type="button" data-pomo-mode="work45" onclick="window.pomodoroTimer?.setMode('work45')" class="pomodoro-mode-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500 text-slate-950 shadow transition">45m Подовжений</button>
+              <button type="button" data-pomo-mode="work60" onclick="window.pomodoroTimer?.setMode('work60')" class="pomodoro-mode-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition">60m Deep</button>
+              <button type="button" data-pomo-mode="work90" onclick="window.pomodoroTimer?.setMode('work90')" class="pomodoro-mode-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition">90m Марафон</button>
+              <button type="button" data-pomo-mode="shortBreak" onclick="window.pomodoroTimer?.setMode('shortBreak')" class="pomodoro-mode-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition">5m Rest</button>
+            </div>
           </div>
 
           <div class="text-center my-3">
             <div id="main-pomodoro-time" class="text-5xl font-mono font-extrabold text-slate-100 tracking-wider">
-              25:00
+              45:00
             </div>
             <div id="pomodoro-stats-display" class="text-xs text-slate-400 mt-2 font-medium">
               0 sessions today (0 min total)
             </div>
           </div>
 
-          <div class="flex items-center justify-center gap-3 mt-2">
-            <button id="main-pomodoro-toggle" class="btn btn-primary px-6 py-2.5 text-sm font-bold shadow-lg shadow-indigo-600/20">
-              ▶️ Start Focus Session
-            </button>
-            <button id="main-pomodoro-reset" class="px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">
-              Reset
-            </button>
+          <div class="space-y-2">
+            <div class="flex items-center justify-center gap-2">
+              <button id="main-pomodoro-toggle" class="btn btn-primary px-5 py-2 text-xs font-bold shadow-lg shadow-indigo-600/20">
+                ▶️ Старт подовженого фокусу
+              </button>
+              <button id="main-pomodoro-reset" class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">
+                Скинути
+              </button>
+            </div>
+            <div class="flex items-center justify-center gap-1.5 pt-1">
+              <span class="text-[11px] text-slate-400">Свій час (хв):</span>
+              <input id="custom-pomo-mins" type="number" min="5" max="240" value="50" class="w-16 px-2 py-1 rounded bg-slate-950 border border-slate-700 text-xs text-center font-mono text-slate-200">
+              <button type="button" onclick="window.pomodoroTimer?.setCustomMinutes(document.getElementById('custom-pomo-mins').value)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] font-bold text-amber-300 border border-slate-700 transition">
+                Задати
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -391,8 +436,19 @@
           </div>
         </div>
 
+        <!-- Exam Schedule Topic Toggle Pills -->
+        <div class="flex items-center gap-2 mb-4 pb-3 border-b border-slate-800/60">
+          <span class="text-xs font-semibold text-slate-400">Налаштування дат для:</span>
+          <button type="button" data-sched-topic="topic2" onclick="window.switchTopic('topic2')" class="schedule-topic-pill px-3 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow transition">
+            ⚡ Тема 2 (Midterm 2 & Col 2)
+          </button>
+          <button type="button" data-sched-topic="topic3" onclick="window.switchTopic('topic3')" class="schedule-topic-pill px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+            🎯 Тема 3 (Midterm 3 & Col 3)
+          </button>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Card 1: Colloquium 2 -->
+          <!-- Card 1: Colloquium -->
           <div class="p-5 rounded-2xl border border-amber-900/40 bg-slate-950/70 shadow-lg flex flex-col justify-between">
             <div>
               <div class="flex items-start justify-between mb-4">
@@ -401,8 +457,8 @@
                     🎯
                   </div>
                   <div>
-                    <h3 class="text-lg font-bold text-slate-100 leading-tight">Колоквіум 2 (Colloquium 2)</h3>
-                    <p class="text-[11px] text-slate-400">Усна співбесіда (20 хв) • 21 означення + 12 усних запитань</p>
+                    <h3 id="colloquium-card-title" class="text-lg font-bold text-slate-100 leading-tight">Колоквіум (Colloquium)</h3>
+                    <p id="colloquium-card-subtitle" class="text-[11px] text-slate-400">Усна співбесіда (20 хв) • Означення + усні запитання</p>
                   </div>
                 </div>
                 <span id="colloquium-status-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-950 text-amber-300 border border-amber-800 shrink-0">
@@ -431,10 +487,10 @@
                 </div>
                 <div class="flex flex-wrap gap-1.5 pt-1">
                   <span class="text-[10px] text-slate-400 self-center mr-1">Швидкі слоти:</span>
-                  <button type="button" class="col-slot-preset-btn px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition" data-dt="2026-10-14T09:00">Ср 14.10, 09:00</button>
-                  <button type="button" class="col-slot-preset-btn px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition" data-dt="2026-10-14T11:20">Ср 14.10, 11:20</button>
-                  <button type="button" class="col-slot-preset-btn px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition" data-dt="2026-10-14T14:00">Ср 14.10, 14:00</button>
-                  <button type="button" class="col-slot-preset-btn px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition" data-dt="2026-10-14T16:30">Ср 14.10, 16:30</button>
+                  <button type="button" class="col-slot-preset-btn px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition" data-dt="2026-11-06T09:00">Пт 06.11, 09:00 (Т2)</button>
+                  <button type="button" class="col-slot-preset-btn px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition" data-dt="2026-11-11T09:00">Ср 11.11, 09:00 (Т3)</button>
+                  <button type="button" class="col-slot-preset-btn px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition" data-dt="2026-11-11T11:20">Ср 11.11, 11:20 (Т3)</button>
+                  <button type="button" class="col-slot-preset-btn px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition" data-dt="2026-11-11T14:00">Ср 11.11, 14:00 (Т3)</button>
                 </div>
               </div>
 
@@ -476,7 +532,7 @@
             </div>
           </div>
 
-          <!-- Card 2: Midterm 2 -->
+          <!-- Card 2: Midterm -->
           <div class="p-5 rounded-2xl border border-indigo-900/40 bg-slate-950/70 shadow-lg flex flex-col justify-between">
             <div>
               <div class="flex items-start justify-between mb-4">
@@ -485,8 +541,8 @@
                     🔥
                   </div>
                   <div>
-                    <h3 class="text-lg font-bold text-slate-100 leading-tight">Мідтерм 2 (Midterm 2)</h3>
-                    <p class="text-[11px] text-slate-400">Письмовий іспит (closed-book) • П'ятниця о 08:30 (Київ)</p>
+                    <h3 id="midterm-card-title" class="text-lg font-bold text-slate-100 leading-tight">Мідтерм (Midterm)</h3>
+                    <p id="midterm-card-subtitle" class="text-[11px] text-slate-400">Письмовий іспит (closed-book) • П'ятниця о 08:30 (Київ)</p>
                   </div>
                 </div>
                 <span id="midterm-status-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-950 text-indigo-300 border border-indigo-800 shrink-0">
@@ -496,7 +552,7 @@
 
               <!-- Live Countdown Display -->
               <div class="p-3.5 rounded-xl bg-slate-900/90 border border-indigo-900/40 mb-4 text-center">
-                <span class="text-[11px] uppercase tracking-wider text-slate-400 font-bold block mb-1">Зворотний відлік до Мідтерму 2:</span>
+                <span class="text-[11px] uppercase tracking-wider text-slate-400 font-bold block mb-1">Зворотний відлік до Мідтерму:</span>
                 <div id="midterm-card-countdown" class="text-2xl font-mono font-extrabold text-rose-400">
                   --:--:--
                 </div>
@@ -511,15 +567,16 @@
                   <span class="text-[10px] text-indigo-400 font-bold">Офіційно: Пт 08:30 (Київ)</span>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-2">
-                  <input type="datetime-local" id="midterm-datetime-input" value="2026-10-16T08:30" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 font-mono focus:border-indigo-500 focus:outline-none transition">
+                  <input type="datetime-local" id="midterm-datetime-input" value="2026-11-08T08:30" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 font-mono focus:border-indigo-500 focus:outline-none transition">
                   <button id="save-midterm-datetime-btn" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition whitespace-nowrap shadow-sm">
                     💾 Зберегти час
                   </button>
                 </div>
                 <div class="flex flex-wrap gap-1.5 pt-1">
                   <span class="text-[10px] text-slate-400 self-center mr-1">Швидкі пресети:</span>
-                  <button type="button" class="mid-slot-preset-btn px-2 py-0.5 rounded-lg bg-indigo-950 border border-indigo-800 text-indigo-300 text-[10px] font-bold transition" data-dt="2026-10-16T08:30">Пт 16.10, 08:30 (Київ - Офіційний)</button>
-                  <button type="button" class="mid-slot-preset-btn px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition" data-dt="2026-10-16T10:00">Пт 16.10, 10:00</button>
+                  <button type="button" class="mid-slot-preset-btn px-2 py-0.5 rounded-lg bg-indigo-950 border border-indigo-800 text-indigo-300 text-[10px] font-bold transition" data-dt="2026-11-08T08:30">Пт 08.11, 08:30 (Т2)</button>
+                  <button type="button" class="mid-slot-preset-btn px-2 py-0.5 rounded-lg bg-emerald-950 border border-emerald-800 text-emerald-300 text-[10px] font-bold transition" data-dt="2026-11-13T08:30">Пт 13.11, 08:30 (Т3)</button>
+                  <button type="button" class="mid-slot-preset-btn px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition" data-dt="2026-11-13T10:00">Пт 13.11, 10:00 (Т3)</button>
                 </div>
               </div>
 
@@ -1090,7 +1147,9 @@
     </div>
   </div>
 
-  <!-- Scripts -->
+  <!-- Scripts (Unified Data for Topic 2 & Topic 3) -->
+  <script src="js/data_topic2.js"></script>
+  <script src="js/data_topic3.js"></script>
   <script src="js/data.js"></script>
   <script src="js/user.js"></script>
   <script src="js/gemini.js"></script>

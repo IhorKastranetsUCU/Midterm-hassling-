@@ -15,6 +15,7 @@ class AppController {
   init() {
     this.setupTheme();
     this.setupNavigation();
+    this.updateTopicSwitcherUI();
     this.setupCountdowns();
     this.renderDashboard();
     this.renderColloquiumSection();
@@ -33,6 +34,75 @@ class AppController {
     window.userProfile?.renderExamScheduleAndGrades?.();
     window.geminiMentor?.updateKeyStatusUI();
     this.renderAllMath();
+  }
+
+  onTopicChanged(topicId) {
+    this.flashcardIndex = 0;
+    this.isCardFlipped = false;
+    this.currentDefFilter = 'all';
+    this.currentProbFilter = 'all';
+
+    if (window.quizManager) {
+      window.quizManager.currentQuiz = [];
+      window.quizManager.switchTopicState(topicId);
+    }
+
+    this.updateTopicSwitcherUI();
+    this.setupCountdowns();
+    this.renderDashboard();
+    this.renderColloquiumSection();
+    this.renderProblemsSection();
+    this.renderTopicsSection();
+    this.renderFormulasSection();
+
+    if (window.userProfile) {
+      window.userProfile.renderExamScheduleAndGrades?.();
+      window.userProfile.renderStudyTimeElements?.();
+    }
+    if (window.pomodoroTimer) {
+      window.pomodoroTimer.onStateChange?.();
+    }
+    if (this.currentTab === 'quizzes') {
+      const firstId = window.PS_DATA?.TOPICS_LIST?.[0]?.id || (topicId === 'topic3' ? 7 : 1);
+      window.quizManager?.startQuiz(firstId);
+    }
+    this.renderAllMath();
+  }
+
+  updateTopicSwitcherUI() {
+    const activeTopic = window.currentActiveTopic || 'topic2';
+    const isT3 = activeTopic === 'topic3';
+
+    // Update top topic switcher buttons
+    document.querySelectorAll('.topic-switcher-btn').forEach(btn => {
+      const t = btn.getAttribute('data-topic-id');
+      if (t === activeTopic) {
+        btn.className = 'topic-switcher-btn px-3.5 py-1.5 rounded-lg font-extrabold text-xs bg-indigo-600 text-white shadow-md shadow-indigo-600/30 transition flex items-center gap-1.5';
+      } else {
+        btn.className = 'topic-switcher-btn px-3.5 py-1.5 rounded-lg font-semibold text-xs bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1.5';
+      }
+    });
+
+    // Update header badge
+    const headerBadge = document.getElementById('header-active-topic-badge');
+    if (headerBadge) {
+      headerBadge.textContent = isT3 ? 'MIDTERM 3 & COL 3' : 'MIDTERM 2 & COL 2';
+      headerBadge.className = isT3
+        ? 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-700'
+        : 'px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-950 text-indigo-300 border border-indigo-700';
+    }
+
+    // Update tab labels dynamically
+    const defCount = window.PS_DATA?.DEFINITIONS_21?.length || (isT3 ? 22 : 21);
+    const colTabBtn = document.querySelector('[data-tab-target="colloquium"]');
+    if (colTabBtn) {
+      colTabBtn.innerHTML = `<span>🎯</span> Колоквіум (${defCount} Defs & Oral)`;
+    }
+    const qCount = window.PS_DATA?.QUIZ_QUESTIONS?.length || (isT3 ? 64 : 600);
+    const quizTabBtn = document.querySelector('[data-tab-target="quizzes"]');
+    if (quizTabBtn) {
+      quizTabBtn.innerHTML = `<span>🧠</span> Тести тем (${qCount} пит.)`;
+    }
   }
 
   setupTheme() {
@@ -86,7 +156,8 @@ class AppController {
 
     // If switching to quiz, start default quiz if empty
     if (tabId === 'quizzes' && (!window.quizManager?.currentQuiz || window.quizManager.currentQuiz.length === 0)) {
-      window.quizManager?.startQuiz(1);
+      const firstId = window.PS_DATA?.TOPICS_LIST?.[0]?.id || 1;
+      window.quizManager?.startQuiz(firstId);
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -124,17 +195,21 @@ class AppController {
     };
 
     const updateTimer = () => {
-      const schedule = window.userProfile?.getExamSchedule?.() || {
-        colloquiumDate: '2026-10-14T09:00',
-        midtermDate: '2026-10-16T08:30'
+      const activeTopic = window.currentActiveTopic || 'topic2';
+      const isT3 = activeTopic === 'topic3';
+      const colLabel = isT3 ? 'Colloquium 3' : 'Colloquium 2';
+      const midLabel = isT3 ? 'Midterm 3' : 'Midterm 2';
+
+      const schedule = window.userProfile?.getExamSchedule?.(activeTopic) || {
+        colloquiumDate: isT3 ? '2026-11-11T09:00' : '2026-11-06T09:00',
+        midtermDate: isT3 ? '2026-11-13T08:30' : '2026-11-08T08:30'
       };
-      const grades = window.userProfile?.getExamGrades?.() || {
+      const grades = window.userProfile?.getExamGrades?.(activeTopic) || {
         colloquium: { grade: '' },
         midterm: { grade: '' }
       };
 
       const colTarget = parseTargetDate(schedule.colloquiumDate, 3, 9, 0);
-      // Midterm 2 strictly at 08:30 Kyiv time on Friday
       const midTarget = parseTargetDate(schedule.midtermDate, 5, 8, 30);
 
       const now = new Date();
@@ -147,17 +222,17 @@ class AppController {
 
       if (colEl) {
         if (grades.colloquium?.grade) {
-          colEl.innerHTML = `<span class="px-2 py-0.5 rounded font-extrabold bg-amber-950 text-amber-300 border border-amber-700">🎯 Колоквіум: ${grades.colloquium.grade}</span>`;
+          colEl.innerHTML = `<span class="px-2 py-0.5 rounded font-extrabold bg-amber-950 text-amber-300 border border-amber-700">🎯 ${colLabel}: ${grades.colloquium.grade}</span>`;
         } else {
-          colEl.innerHTML = `⚡ <span class="font-bold text-amber-400 font-mono">${formatCountdown(colDiff)}</span> to Colloquium`;
+          colEl.innerHTML = `⚡ <span class="font-bold text-amber-400 font-mono">${formatCountdown(colDiff)}</span> to ${colLabel}`;
         }
       }
 
       if (midEl) {
         if (grades.midterm?.grade) {
-          midEl.innerHTML = `<span class="px-2 py-0.5 rounded font-extrabold bg-emerald-950 text-emerald-300 border border-emerald-700">🏆 Мідтерм 2: ${grades.midterm.grade}</span>`;
+          midEl.innerHTML = `<span class="px-2 py-0.5 rounded font-extrabold bg-emerald-950 text-emerald-300 border border-emerald-700">🏆 ${midLabel}: ${grades.midterm.grade}</span>`;
         } else {
-          midEl.innerHTML = `🔥 <span class="font-bold text-rose-400 font-mono">${formatCountdown(midDiff)}</span> to Midterm 2 (Пт 08:30)`;
+          midEl.innerHTML = `🔥 <span class="font-bold text-rose-400 font-mono">${formatCountdown(midDiff)}</span> to ${midLabel}`;
         }
       }
 
@@ -309,7 +384,7 @@ class AppController {
         <div class="flashcard-inner relative w-full min-h-[320px] rounded-2xl border ${isMastered ? 'border-emerald-500/50 bg-gradient-to-br from-slate-900 to-emerald-950/30' : 'border-indigo-500/40 bg-gradient-to-br from-slate-900 to-indigo-950/40'} p-6 shadow-2xl transition-all duration-300 flex flex-col justify-between">
           <div>
             <div class="flex justify-between items-center text-xs text-slate-400 mb-2">
-              <span class="px-2 py-0.5 rounded bg-indigo-900/60 text-indigo-300 font-bold">Definition ${def.id} of 21</span>
+              <span class="px-2 py-0.5 rounded bg-indigo-900/60 text-indigo-300 font-bold">Definition ${def.id} of ${defs.length}</span>
               <span class="font-bold ${isMastered ? 'text-emerald-400' : 'text-amber-400'}">
                 ${isMastered ? `⭐ Mastered (${score}/10) +1%` : score > 0 ? `Score: ${score}/10 (Need ≥6 for 1%)` : '⏳ Not Yet Tested'}
               </span>
@@ -506,6 +581,9 @@ class AppController {
 
     container.innerHTML = problems.map(prob => {
       const isSolved = window.quizManager?.readinessState?.problemsMastered?.[prob.id] || false;
+      const probText = prob.statement || prob.question || '';
+      const hintsList = prob.hints || (prob.hint ? [prob.hint] : ['Зверніть увагу на умови теореми, носій та властивості розподілу.']);
+      const diffLabel = prob.difficulty || 'Середня (Exam)';
 
       return `
         <div class="problem-card p-5 rounded-2xl border ${isSolved ? 'border-emerald-600/50 bg-emerald-950/15 shadow-emerald-900/10' : 'border-slate-800 bg-slate-900/70'} mb-6 shadow-xl" id="prob-card-${prob.id}">
@@ -514,8 +592,8 @@ class AppController {
               <div class="flex items-center gap-2">
                 <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-900/60 text-indigo-300">${prob.source}</span>
                 <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-800 text-slate-300">${prob.topic}</span>
-                <span class="text-xs font-semibold ${prob.difficulty === 'Easy' ? 'text-emerald-400' : prob.difficulty === 'Medium' ? 'text-amber-400' : 'text-rose-400'}">
-                  ● ${prob.difficulty}
+                <span class="text-xs font-semibold ${diffLabel === 'Easy' ? 'text-emerald-400' : diffLabel === 'Medium' ? 'text-amber-400' : 'text-indigo-400'}">
+                  ● ${diffLabel}
                 </span>
               </div>
               <h3 class="text-lg font-bold text-slate-100 mt-1">${prob.title}</h3>
@@ -529,7 +607,7 @@ class AppController {
 
           <!-- Problem Statement -->
           <div class="text-sm text-slate-200 mb-4 whitespace-pre-line leading-relaxed">
-            ${prob.statement}
+            ${probText}
           </div>
 
           <!-- Interactive Final Answer Submission Box -->
@@ -564,7 +642,7 @@ class AppController {
             <details class="text-xs bg-slate-950/60 p-3 rounded-xl border border-slate-800">
               <summary class="font-semibold text-amber-300 cursor-pointer hover:underline">💡 Progressive Hints</summary>
               <div class="mt-2.5 pt-2.5 border-t border-slate-800 text-slate-300 space-y-1.5">
-                ${prob.hints.map(h => `<div>${h}</div>`).join('')}
+                ${hintsList.map(h => `<div>${h}</div>`).join('')}
               </div>
             </details>
 
@@ -582,7 +660,8 @@ class AppController {
     // Attach answer submission handlers
     container.querySelectorAll('.prob-submit-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const pid = parseInt(btn.getAttribute('data-prob-id'), 10);
+        const rawPid = btn.getAttribute('data-prob-id');
+        const pid = isNaN(Number(rawPid)) ? rawPid : parseInt(rawPid, 10);
         this.verifyProblemAnswer(pid);
       });
     });
@@ -590,7 +669,8 @@ class AppController {
     // Attach retake problem handlers
     container.querySelectorAll('.prob-retake-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const pid = parseInt(btn.getAttribute('data-prob-id'), 10);
+        const rawPid = btn.getAttribute('data-prob-id');
+        const pid = isNaN(Number(rawPid)) ? rawPid : parseInt(rawPid, 10);
         this.retakeProblem(pid);
       });
     });
@@ -603,7 +683,7 @@ class AppController {
       delete window.quizManager.readinessState.problemsMastered[probId];
       window.quizManager.saveReadiness();
     }
-    this.renderProblems();
+    this.renderProblemsSection();
     setTimeout(() => {
       const card = document.getElementById(`prob-card-${probId}`);
       if (card) {
@@ -619,7 +699,7 @@ class AppController {
   }
 
   verifyProblemAnswer(probId) {
-    const prob = window.PS_DATA?.PROBLEMS_BANK?.find(p => p.id === probId);
+    const prob = window.PS_DATA?.PROBLEMS_BANK?.find(p => String(p.id) === String(probId));
     if (!prob) return;
 
     const inputEl = document.getElementById(`prob-input-${probId}`);

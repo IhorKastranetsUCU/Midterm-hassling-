@@ -705,7 +705,7 @@ class UserProfileManager {
     }
 
     // 2. Local backend fallback if running locally
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    if (window.location && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
       try {
         const res = await fetch('/api/users/list');
         if (res.ok) {
@@ -897,19 +897,24 @@ class UserProfileManager {
     }
   }
 
-  // --- TIME & TAB TRACKING (Per Account) ---
+  // --- TIME & TAB TRACKING (Per Account & Per Topic) ---
   initTabTimeTracker() {
     setInterval(() => {
       if (!this.profile) return;
 
       if (!document.hidden) {
         const activeTab = window.app?.currentTab || 'dashboard';
+        const activeTopic = window.currentActiveTopic || 'topic2';
 
         if (!this.profile.timePerTab) {
           this.profile.timePerTab = { dashboard: 0, colloquium: 0, problems: 0, quizzes: 0, topics: 0, formulas: 0 };
         }
+        if (!this.profile.timePerTopic) {
+          this.profile.timePerTopic = { topic2: 0, topic3: 0 };
+        }
 
         this.profile.timePerTab[activeTab] = (this.profile.timePerTab[activeTab] || 0) + 1;
+        this.profile.timePerTopic[activeTopic] = (this.profile.timePerTopic[activeTopic] || 0) + 1;
         this.profile.totalSeconds = (Number(this.profile.totalSeconds) || 0) + 1;
         this.profile.studySeconds = this.profile.totalSeconds;
 
@@ -937,6 +942,9 @@ class UserProfileManager {
 
     if (window.quizManager?.readinessState) {
       this.profile.readinessState = JSON.parse(JSON.stringify(window.quizManager.readinessState));
+    }
+    if (window.quizManager?.readinessPerTopic) {
+      this.profile.readinessPerTopic = JSON.parse(JSON.stringify(window.quizManager.readinessPerTopic));
     }
 
     this.saveUserToRegistry(this.profile);
@@ -990,27 +998,43 @@ class UserProfileManager {
       Number(this.profile?.totalSeconds) || 0,
       Number(this.profile?.studySeconds) || 0
     );
+    const activeTopic = window.currentActiveTopic || 'topic2';
+    const perTopic = this.profile?.timePerTopic || { topic2: 0, topic3: 0 };
+    const t2Sec = Number(perTopic.topic2) || 0;
+    const t3Sec = Number(perTopic.topic3) || 0;
+    const activeTopicSec = activeTopic === 'topic3' ? t3Sec : t2Sec;
+    const topicLabel = activeTopic === 'topic3' ? 'T3' : 'T2';
+
     const formatted = this.formatDuration(totalSec);
+    const activeFormatted = `${topicLabel}: ${this.formatDuration(activeTopicSec)}`;
 
     // Header badges
     const userHeaderBadge = document.getElementById('user-header-study-time');
-    if (userHeaderBadge) userHeaderBadge.textContent = formatted;
+    if (userHeaderBadge) {
+      userHeaderBadge.textContent = activeFormatted;
+      userHeaderBadge.setAttribute('title', `Тема 2: ${this.formatDuration(t2Sec)} | Тема 3: ${this.formatDuration(t3Sec)} | Загалом: ${formatted}`);
+    }
     const headerBadge = document.getElementById('header-study-time');
-    if (headerBadge) headerBadge.textContent = formatted;
+    if (headerBadge) headerBadge.textContent = activeFormatted;
 
     // Dashboard card timer & total focus hours
     const userDashTime = document.getElementById('user-dash-study-time');
-    if (userDashTime) userDashTime.textContent = formatted;
+    if (userDashTime) userDashTime.textContent = activeFormatted;
     const dashTime = document.getElementById('dashboard-study-time-val');
-    if (dashTime) dashTime.textContent = formatted;
+    if (dashTime) dashTime.textContent = activeFormatted;
+
+    const dashBreakdown = document.getElementById('user-dash-topic-time-breakdown');
+    if (dashBreakdown) {
+      dashBreakdown.innerHTML = `<span class="text-indigo-400">⚡ Тема 2: ${this.formatDuration(t2Sec)}</span> • <span class="text-emerald-400">🎯 Тема 3: ${this.formatDuration(t3Sec)}</span>`;
+    }
 
     const dashHours = document.getElementById('user-dash-study-hours');
     if (dashHours) {
-      dashHours.textContent = `${(totalSec / 3600).toFixed(1)} hrs`;
+      dashHours.textContent = `${(totalSec / 3600).toFixed(1)} hrs (T2: ${(t2Sec / 3600).toFixed(1)}h | T3: ${(t3Sec / 3600).toFixed(1)}h)`;
     }
 
     const modalTotal = document.getElementById('user-modal-total-time');
-    if (modalTotal) modalTotal.textContent = formatted;
+    if (modalTotal) modalTotal.textContent = `${formatted} (T2: ${this.formatDuration(t2Sec)} | T3: ${this.formatDuration(t3Sec)})`;
   }
 
   renderTabTimeAnalytics() {
@@ -1482,37 +1506,90 @@ class UserProfileManager {
     }
   }
 
-  // --- EXAM SCHEDULE & GRADES ENGINE ---
-  getExamSchedule() {
-    if (this.profile?.examSchedule?.colloquiumDate) {
-      return this.profile.examSchedule;
-    }
-    try {
-      const raw = localStorage.getItem('stathustle_exam_schedule');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && parsed.colloquiumDate) {
-          if (this.profile) this.profile.examSchedule = parsed;
-          return parsed;
-        }
+  // --- EXAM SCHEDULE & GRADES ENGINE (Per Topic: Topic 2 & Topic 3) ---
+  getExamSchedule(topicId = null) {
+    const activeTopic = topicId || window.currentActiveTopic || 'topic2';
+    const defaults = {
+      topic2: {
+        colloquiumDate: '2026-11-06T09:00',
+        midtermDate: '2026-11-08T08:30'
+      },
+      topic3: {
+        colloquiumDate: '2026-11-11T09:00',
+        midtermDate: '2026-11-13T08:30'
       }
-    } catch (e) {}
-    const def = {
-      colloquiumDate: '2026-10-14T09:00',
-      midtermDate: '2026-10-16T08:30'
     };
-    if (this.profile) this.profile.examSchedule = def;
-    return def;
+
+    let allSchedules = this.profile?.examSchedulePerTopic;
+    if (!allSchedules) {
+      try {
+        const raw = localStorage.getItem('stathustle_exam_schedule_per_topic');
+        if (raw) {
+          allSchedules = JSON.parse(raw);
+        } else {
+          const legacyRaw = localStorage.getItem('stathustle_exam_schedule');
+          if (legacyRaw) {
+            const legacy = JSON.parse(legacyRaw);
+            if (legacy && legacy.colloquiumDate) {
+              allSchedules = {
+                topic2: legacy,
+                topic3: defaults.topic3
+              };
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (!allSchedules || typeof allSchedules !== 'object') {
+      allSchedules = JSON.parse(JSON.stringify(defaults));
+    }
+    if (!allSchedules.topic2) allSchedules.topic2 = defaults.topic2;
+    if (!allSchedules.topic3) allSchedules.topic3 = defaults.topic3;
+
+    if (this.profile) {
+      this.profile.examSchedulePerTopic = allSchedules;
+    }
+
+    return allSchedules[activeTopic] || defaults[activeTopic];
   }
 
-  saveExamSchedule(colloquiumDate, midtermDate) {
+  saveExamSchedule(colloquiumDate, midtermDate = null, topicId = null) {
+    let col = colloquiumDate;
+    let mid = midtermDate;
+    let tid = topicId;
+
+    if (typeof colloquiumDate === 'string' && (colloquiumDate === 'topic2' || colloquiumDate === 'topic3')) {
+      // Called as (topicId, { colloquiumDate, midtermDate }) or (topicId, colDate, midDate)
+      tid = colloquiumDate;
+      if (typeof midtermDate === 'object' && midtermDate !== null) {
+        col = midtermDate.colloquiumDate || null;
+        mid = midtermDate.midtermDate || null;
+      } else {
+        col = midtermDate;
+        mid = topicId;
+      }
+    } else if (typeof colloquiumDate === 'object' && colloquiumDate !== null) {
+      col = colloquiumDate.colloquiumDate || null;
+      mid = colloquiumDate.midtermDate || null;
+      tid = midtermDate || topicId;
+    }
+
+    const activeTopic = tid || window.currentActiveTopic || 'topic2';
     if (!this.profile) this.profile = this.createDefaultProfile();
-    if (!this.profile.examSchedule) this.profile.examSchedule = {};
-    if (colloquiumDate) this.profile.examSchedule.colloquiumDate = colloquiumDate;
-    if (midtermDate) this.profile.examSchedule.midtermDate = midtermDate;
+
+    // Ensure initialized
+    this.getExamSchedule(activeTopic);
+
+    if (col) {
+      this.profile.examSchedulePerTopic[activeTopic].colloquiumDate = col;
+    }
+    if (mid) {
+      this.profile.examSchedulePerTopic[activeTopic].midtermDate = mid;
+    }
 
     try {
-      localStorage.setItem('stathustle_exam_schedule', JSON.stringify(this.profile.examSchedule));
+      localStorage.setItem('stathustle_exam_schedule_per_topic', JSON.stringify(this.profile.examSchedulePerTopic));
     } catch (e) {}
     this.saveProfile();
     this.renderExamScheduleAndGrades();
@@ -1521,44 +1598,64 @@ class UserProfileManager {
     }
   }
 
-  getExamGrades() {
-    if (this.profile?.examGrades) {
-      return this.profile.examGrades;
-    }
-    try {
-      const raw = localStorage.getItem('stathustle_exam_grades');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed) {
-          if (this.profile) this.profile.examGrades = parsed;
-          return parsed;
-        }
-      }
-    } catch (e) {}
-    const def = {
+  getExamGrades(topicId = null) {
+    const activeTopic = topicId || window.currentActiveTopic || 'topic2';
+    const emptyGrades = () => ({
       colloquium: { grade: '', notes: '', updatedAt: null },
       midterm: { grade: '', notes: '', updatedAt: null }
-    };
-    if (this.profile) this.profile.examGrades = def;
-    return def;
-  }
+    });
 
-  saveExamGrade(type, grade, notes = '') {
-    if (!this.profile) this.profile = this.createDefaultProfile();
-    if (!this.profile.examGrades) {
-      this.profile.examGrades = {
-        colloquium: { grade: '', notes: '', updatedAt: null },
-        midterm: { grade: '', notes: '', updatedAt: null }
+    let allGrades = this.profile?.examGradesPerTopic;
+    if (!allGrades) {
+      try {
+        const raw = localStorage.getItem('stathustle_exam_grades_per_topic');
+        if (raw) {
+          allGrades = JSON.parse(raw);
+        } else {
+          const legacyRaw = localStorage.getItem('stathustle_exam_grades');
+          if (legacyRaw) {
+            const legacy = JSON.parse(legacyRaw);
+            if (legacy && (legacy.colloquium || legacy.midterm)) {
+              allGrades = {
+                topic2: legacy,
+                topic3: emptyGrades()
+              };
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (!allGrades || typeof allGrades !== 'object') {
+      allGrades = {
+        topic2: emptyGrades(),
+        topic3: emptyGrades()
       };
     }
-    this.profile.examGrades[type] = {
+    if (!allGrades.topic2) allGrades.topic2 = emptyGrades();
+    if (!allGrades.topic3) allGrades.topic3 = emptyGrades();
+
+    if (this.profile) {
+      this.profile.examGradesPerTopic = allGrades;
+    }
+
+    return allGrades[activeTopic] || emptyGrades();
+  }
+
+  saveExamGrade(type, grade, notes = '', topicId = null) {
+    const activeTopic = topicId || window.currentActiveTopic || 'topic2';
+    if (!this.profile) this.profile = this.createDefaultProfile();
+
+    this.getExamGrades(activeTopic);
+
+    this.profile.examGradesPerTopic[activeTopic][type] = {
       grade: (grade || '').trim(),
       notes: (notes || '').trim(),
       updatedAt: Date.now()
     };
 
     try {
-      localStorage.setItem('stathustle_exam_grades', JSON.stringify(this.profile.examGrades));
+      localStorage.setItem('stathustle_exam_grades_per_topic', JSON.stringify(this.profile.examGradesPerTopic));
     } catch (e) {}
     this.saveProfile();
     this.renderExamScheduleAndGrades();
@@ -1568,8 +1665,35 @@ class UserProfileManager {
   }
 
   renderExamScheduleAndGrades() {
-    const schedule = this.getExamSchedule();
-    const grades = this.getExamGrades();
+    const activeTopic = window.currentActiveTopic || 'topic2';
+    const isT3 = activeTopic === 'topic3';
+    const schedule = this.getExamSchedule(activeTopic);
+    const grades = this.getExamGrades(activeTopic);
+
+    // Update Titles for Active Topic
+    const colTitleEl = document.getElementById('colloquium-card-title');
+    if (colTitleEl) colTitleEl.textContent = isT3 ? 'Колоквіум 3 (Colloquium 3)' : 'Колоквіум 2 (Colloquium 2)';
+    const colSubEl = document.getElementById('colloquium-card-subtitle');
+    if (colSubEl) colSubEl.textContent = isT3
+      ? 'Усна співбесіда (20 хв) • 22 означення + 12 усних запитань'
+      : 'Усна співбесіда (20 хв) • 21 означення + 12 усних запитань';
+
+    const midTitleEl = document.getElementById('midterm-card-title');
+    if (midTitleEl) midTitleEl.textContent = isT3 ? 'Мідтерм 3 (Midterm 3)' : 'Мідтерм 2 (Midterm 2)';
+    const midSubEl = document.getElementById('midterm-card-subtitle');
+    if (midSubEl) midSubEl.textContent = isT3
+      ? 'Письмовий іспит (LLN, CLT, MME, MLE, CI, Bayes)'
+      : 'Письмовий іспит (Discrete & Continuous RVs, Joint, PGF)';
+
+    // Update schedule topic switcher buttons if present
+    document.querySelectorAll('.schedule-topic-pill').forEach(btn => {
+      const t = btn.getAttribute('data-sched-topic');
+      if (t === activeTopic) {
+        btn.className = 'schedule-topic-pill px-3 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow transition';
+      } else {
+        btn.className = 'schedule-topic-pill px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition';
+      }
+    });
 
     // 1. Populate Colloquium Date Picker
     const colInput = document.getElementById('colloquium-datetime-input');
@@ -1610,6 +1734,10 @@ class UserProfileManager {
     } else {
       if (colGradeDisplay) colGradeDisplay.classList.add('hidden');
       if (colGradeForm) colGradeForm.classList.remove('hidden');
+      const gInput = document.getElementById('colloquium-grade-input');
+      const nInput = document.getElementById('colloquium-notes-input');
+      if (gInput) gInput.value = '';
+      if (nInput) nInput.value = '';
       if (colStatusBadge) {
         colStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-950 text-amber-300 border border-amber-800 shrink-0';
         colStatusBadge.textContent = '⚡ Очікується';
@@ -1644,9 +1772,13 @@ class UserProfileManager {
     } else {
       if (midGradeDisplay) midGradeDisplay.classList.add('hidden');
       if (midGradeForm) midGradeForm.classList.remove('hidden');
+      const gInput = document.getElementById('midterm-grade-input');
+      const nInput = document.getElementById('midterm-notes-input');
+      if (gInput) gInput.value = '';
+      if (nInput) nInput.value = '';
       if (midStatusBadge) {
         midStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-950 text-indigo-300 border border-indigo-800 shrink-0';
-        midStatusBadge.textContent = '🔥 Пт, 08:30 Київ';
+        midStatusBadge.textContent = '🔥 Очікується';
       }
       if (midDateLabel) midDateLabel.textContent = '';
     }
