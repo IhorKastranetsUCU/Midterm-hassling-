@@ -75,15 +75,29 @@ def test_auth_and_full_flow():
     sections = contents_res.json()
     assert len(sections) > 0
 
+    # 4b. Check single course detail endpoint
+    detail_res = client.get(f"/api/courses/{course_id}", cookies=login_res.cookies)
+    assert detail_res.status_code == 200
+    assert detail_res.json()["id"] == course_id
+
+    # 4c. Check dedicated course HTML page
+    html_res = client.get(f"/courses/{course_id}")
+    assert html_res.status_code == 200
+    assert "text/html" in html_res.headers["content-type"]
+
     # 5. Check assignments
     assign_res = client.get("/api/assignments", cookies=login_res.cookies)
     assert assign_res.status_code == 200
     assert assign_res.json()["total"] > 0
 
-    # 6. Check grades
+    # 6. Check grades (all and filtered by course_id)
     grades_res = client.get("/api/grades", cookies=login_res.cookies)
     assert grades_res.status_code == 200
     assert len(grades_res.json()["courses"]) > 0
+
+    single_grades_res = client.get(f"/api/grades?course_id={course_id}", cookies=login_res.cookies)
+    assert single_grades_res.status_code == 200
+    assert len(single_grades_res.json()["courses"]) == 1
 
     # 7. Logout
     logout_res = client.post("/api/auth/logout")

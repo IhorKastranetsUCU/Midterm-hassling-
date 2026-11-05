@@ -87,3 +87,17 @@ async def serve_dashboard(request: Request):
             "mock_mode": settings.MOODLE_MOCK_MODE,
         },
     )
+
+
+@app.get("/courses/{course_id}", response_class=HTMLResponse)
+async def serve_course_page(request: Request, course_id: int):
+    settings = get_settings()
+    return templates.TemplateResponse(
+        request=request,
+        name="course.html",
+        context={
+            "course_id": course_id,
+            "moodle_url": settings.clean_moodle_url,
+            "mock_mode": settings.MOODLE_MOCK_MODE,
+        },
+    )

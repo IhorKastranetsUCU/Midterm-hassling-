@@ -276,6 +276,10 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
     eventSource.close();
     eventSource = null;
   }
+  // Clear all device cache for security & privacy
+  if (window.LocalCache) {
+    await LocalCache.clearAll();
+  }
   try {
     await fetch('/api/auth/logout', { method: 'POST' });
   } catch (e) {}
@@ -583,12 +587,20 @@ function switchTab(tabId) {
   }
 }
 
-// 1. Fetch & Render Courses
+// 1. Fetch & Render Courses (with LocalCache support & Dedicated Subject Links)
 async function loadCourses() {
   const loading = document.getElementById('courses-loading');
   const grid = document.getElementById('courses-grid');
-  loading.classList.remove('hidden');
-  grid.classList.add('hidden');
+
+  // Try instant rendering from LocalCache in 0ms!
+  if (window.LocalCache) {
+    const cachedCourses = await LocalCache.getCourses();
+    if (cachedCourses && cachedCourses.length > 0) {
+      renderCoursesGrid(cachedCourses);
+      loading.classList.add('hidden');
+      grid.classList.remove('hidden');
+    }
+  }
 
   try {
     const res = await fetch('/api/courses');
@@ -596,60 +608,80 @@ async function loadCourses() {
     const courses = await res.json();
 
     document.getElementById('stat-courses-count').innerText = courses.length;
-    grid.innerHTML = '';
+    renderCoursesGrid(courses);
 
-    if (courses.length === 0) {
-      grid.innerHTML = '<div class="col-span-full py-8 text-center text-slate-400 text-sm">No active course enrollments found.</div>';
-    } else {
-      courses.forEach(c => {
-        const card = document.createElement('div');
-        card.className = 'glass-panel p-5 rounded-2xl flex flex-col justify-between hover:border-slate-600 transition-all group';
-        const progressVal = c.progress !== null ? Math.round(c.progress) : 0;
-        
-        card.innerHTML = `
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-800 text-blue-400 border border-slate-700">
-                ${escapeHtml(c.shortname || 'COURSE')}
-              </span>
-              ${c.completed ? '<span class="text-[10px] text-emerald-400 font-semibold">✓ Completed</span>' : ''}
-            </div>
-            <h3 class="text-sm font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-2 mb-2">
-              ${escapeHtml(c.fullname)}
-            </h3>
-            <p class="text-xs text-slate-400 line-clamp-3 mb-4">
-              ${c.summary ? escapeHtml(stripHtml(c.summary)) : 'No description provided.'}
-            </p>
-          </div>
-
-          <div>
-            ${c.progress !== null ? `
-              <div class="mb-4">
-                <div class="flex justify-between text-[11px] text-slate-400 mb-1">
-                  <span>Progress</span>
-                  <span class="font-mono">${progressVal}%</span>
-                </div>
-                <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                  <div class="bg-blue-600 h-1.5 rounded-full" style="width: ${progressVal}%"></div>
-                </div>
-              </div>
-            ` : ''}
-            <button onclick="openCourseDetails(${c.id}, '${escapeQuotes(c.fullname)}', '${escapeQuotes(c.shortname || '')}')"
-              class="w-full py-2 px-3 rounded-xl bg-slate-800/80 hover:bg-blue-600 hover:text-white border border-slate-700/80 text-xs font-semibold text-slate-200 transition-all flex items-center justify-center gap-1.5">
-              <span>View Course Syllabus & Modules</span>
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </button>
-          </div>
-        `;
-        grid.appendChild(card);
-      });
+    // Update LocalCache
+    if (window.LocalCache) {
+      await LocalCache.setCourses(courses);
     }
 
     loading.classList.add('hidden');
     grid.classList.remove('hidden');
   } catch (err) {
-    loading.innerText = `Error: ${err.message}`;
+    if (grid.children.length === 0) {
+      loading.innerText = `Error: ${err.message}`;
+    }
   }
+}
+
+function renderCoursesGrid(courses) {
+  const grid = document.getElementById('courses-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  if (courses.length === 0) {
+    grid.innerHTML = '<div class="col-span-full py-8 text-center text-slate-400 text-sm">No active course enrollments found.</div>';
+    return;
+  }
+
+  courses.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'glass-panel p-5 rounded-2xl flex flex-col justify-between hover:border-slate-600 transition-all group';
+    const progressVal = c.progress !== null ? Math.round(c.progress) : 0;
+    
+    card.innerHTML = `
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-800 text-blue-400 border border-slate-700">
+            ${escapeHtml(c.shortname || 'COURSE')}
+          </span>
+          ${c.completed ? '<span class="text-[10px] text-emerald-400 font-semibold">✓ Completed</span>' : ''}
+        </div>
+        <h3 class="text-sm font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-2 mb-2">
+          ${escapeHtml(c.fullname)}
+        </h3>
+        <p class="text-xs text-slate-400 line-clamp-3 mb-4">
+          ${c.summary ? escapeHtml(stripHtml(c.summary)) : 'No description provided.'}
+        </p>
+      </div>
+
+      <div>
+        ${c.progress !== null ? `
+          <div class="mb-4">
+            <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+              <span>Progress</span>
+              <span class="font-mono">${progressVal}%</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+              <div class="bg-blue-600 h-1.5 rounded-full" style="width: ${progressVal}%"></div>
+            </div>
+          </div>
+        ` : ''}
+        <div class="flex items-center gap-2">
+          <a href="/courses/${c.id}" target="_blank"
+            class="flex-1 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold text-center transition-all flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/20">
+            <span>Open Subject Workspace ↗</span>
+          </a>
+          <button onclick="openCourseDetails(${c.id}, '${escapeQuotes(c.fullname)}', '${escapeQuotes(c.shortname || '')}')"
+            title="Quick Preview Modal"
+            class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-all shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          </button>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
 }
 
 // 2. Fetch & Render Course Content Modal
@@ -720,58 +752,82 @@ async function loadAssignments() {
   const loading = document.getElementById('assignments-loading');
   const list = document.getElementById('assignments-list');
   const badge = document.getElementById('assignments-badge-count');
-  loading.classList.remove('hidden');
-  list.classList.add('hidden');
+
+  // Try instant rendering from LocalCache in 0ms!
+  if (window.LocalCache) {
+    const cached = await LocalCache.getAssignments('all');
+    if (cached) {
+      renderAssignmentsList(cached);
+      loading.classList.add('hidden');
+      list.classList.remove('hidden');
+    }
+  }
 
   try {
     const res = await fetch('/api/assignments');
     if (!res.ok) throw new Error('Failed to load assignments');
     const data = await res.json();
 
-    badge.innerText = `${data.total_count} tasks`;
-    document.getElementById('stat-assignments-count').innerText = data.total_count;
-    list.innerHTML = '';
+    renderAssignmentsList(data);
 
-    if (data.assignments.length === 0) {
-      list.innerHTML = '<div class="glass-panel p-8 text-center text-slate-400 text-sm rounded-2xl">No upcoming assignment deadlines found! 🎉</div>';
-    } else {
-      data.assignments.forEach(a => {
-        const item = document.createElement('div');
-        const isOverdue = a.is_overdue;
-        const borderClass = isOverdue ? 'border-red-900/50 hover:border-red-800' : 'border-slate-800 hover:border-slate-700';
-
-        item.className = `glass-panel p-4 rounded-xl border ${borderClass} flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all`;
-        item.innerHTML = `
-          <div>
-            <div class="flex items-center gap-2 mb-1">
-              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-800 text-slate-300">
-                ${escapeHtml(a.course_shortname)}
-              </span>
-              ${isOverdue ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-950 text-red-400 border border-red-800">OVERDUE</span>' : ''}
-            </div>
-            <h4 class="text-xs font-bold text-white">${escapeHtml(a.name)}</h4>
-            <p class="text-[11px] text-slate-400">Due: <span class="font-mono text-slate-200">${a.duedate_formatted || 'No deadline'}</span></p>
-          </div>
-
-          <div class="flex items-center gap-3">
-            <span class="text-xs px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
-              ${a.submitted ? '<span class="text-emerald-400 font-semibold">✓ Submitted</span>' : '<span class="text-amber-400 font-semibold">Pending</span>'}
-            </span>
-            ${a.url ? `
-              <a href="${a.url}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-all">
-                Submit ↗
-              </a>
-            ` : ''}
-          </div>
-        `;
-        list.appendChild(item);
-      });
+    // Save to LocalCache
+    if (window.LocalCache) {
+      await LocalCache.setAssignments('all', data);
     }
 
     loading.classList.add('hidden');
     list.classList.remove('hidden');
   } catch (err) {
-    loading.innerText = `Error: ${err.message}`;
+    if (list.children.length === 0) {
+      loading.innerText = `Error: ${err.message}`;
+    }
+  }
+}
+
+function renderAssignmentsList(data) {
+  const list = document.getElementById('assignments-list');
+  const badge = document.getElementById('assignments-badge-count');
+  if (!list) return;
+
+  if (badge) badge.innerText = `${data.total_count || 0} tasks`;
+  const statCount = document.getElementById('stat-assignments-count');
+  if (statCount) statCount.innerText = data.total_count || 0;
+  list.innerHTML = '';
+
+  if (!data.assignments || data.assignments.length === 0) {
+    list.innerHTML = '<div class="glass-panel p-8 text-center text-slate-400 text-sm rounded-2xl">No upcoming assignment deadlines found! 🎉</div>';
+  } else {
+    data.assignments.forEach(a => {
+      const item = document.createElement('div');
+      const isOverdue = a.is_overdue;
+      const borderClass = isOverdue ? 'border-red-900/50 hover:border-red-800' : 'border-slate-800 hover:border-slate-700';
+
+      item.className = `glass-panel p-4 rounded-xl border ${borderClass} flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all`;
+      item.innerHTML = `
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-800 text-slate-300">
+              ${escapeHtml(a.course_shortname)}
+            </span>
+            ${isOverdue ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-950 text-red-400 border border-red-800">OVERDUE</span>' : ''}
+          </div>
+          <h4 class="text-xs font-bold text-white">${escapeHtml(a.name)}</h4>
+          <p class="text-[11px] text-slate-400">Due: <span class="font-mono text-slate-200">${a.duedate_formatted || 'No deadline'}</span></p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span class="text-xs px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
+            ${a.submitted ? '<span class="text-emerald-400 font-semibold">✓ Submitted</span>' : '<span class="text-amber-400 font-semibold">Pending</span>'}
+          </span>
+          ${a.url ? `
+            <a href="${a.url}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-all">
+              Submit ↗
+            </a>
+          ` : ''}
+        </div>
+      `;
+      list.appendChild(item);
+    });
   }
 }
 
@@ -779,53 +835,86 @@ async function loadAssignments() {
 async function loadGrades() {
   const loading = document.getElementById('grades-loading');
   const container = document.getElementById('grades-container');
-  loading.classList.remove('hidden');
-  container.classList.add('hidden');
+
+  // Try instant rendering from LocalCache in 0ms!
+  if (window.LocalCache) {
+    const cached = await LocalCache.getGrades('all');
+    if (cached) {
+      renderGradesContainer(cached);
+      loading.classList.add('hidden');
+      container.classList.remove('hidden');
+    }
+  }
 
   try {
     const res = await fetch('/api/grades');
     if (!res.ok) throw new Error('Failed to load grades');
     const data = await res.json();
 
-    container.innerHTML = '';
+    renderGradesContainer(data);
 
-    if (data.courses.length === 0) {
-      container.innerHTML = '<div class="glass-panel p-8 text-center text-slate-400 text-sm rounded-2xl">No grade reports available.</div>';
-    } else {
-      data.courses.forEach(c => {
-        const block = document.createElement('div');
-        block.className = 'glass-panel p-6 rounded-2xl space-y-3';
+    // Save to LocalCache
+    if (window.LocalCache) {
+      await LocalCache.setGrades('all', data);
+    }
 
-        let rowsHtml = '';
-        if (c.grade_items && c.grade_items.length > 0) {
-          rowsHtml = c.grade_items.map(g => `
-            <tr class="border-b border-slate-800/80 hover:bg-slate-900/40">
-              <td class="py-3 px-4 font-medium text-slate-200">${escapeHtml(g.itemname || 'Item')}</td>
-              <td class="py-3 px-4 text-right font-mono font-semibold text-white">${escapeHtml(g.gradeformatted || '--')}</td>
-              <td class="py-3 px-4 text-right font-mono text-blue-400">${escapeHtml(g.percentageformatted || '--')}</td>
-              <td class="py-3 px-4 text-slate-400 italic">${g.feedback ? escapeHtml(g.feedback) : '--'}</td>
-            </tr>
-          `).join('');
-        } else {
-          rowsHtml = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">No evaluated items published yet.</td></tr>';
-        }
+    loading.classList.add('hidden');
+    container.classList.remove('hidden');
+  } catch (err) {
+    if (container.children.length === 0) {
+      loading.innerText = `Error: ${err.message}`;
+    }
+  }
+}
 
-        block.innerHTML = `
-          <h4 class="text-sm font-bold text-white border-b border-slate-800 pb-2">${escapeHtml(c.course_fullname)}</h4>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
-                <tr>
-                  <th class="py-2 px-4">Evaluation Item</th>
-                  <th class="py-2 px-4 text-right">Score</th>
-                  <th class="py-2 px-4 text-right">Percentage</th>
-                  <th class="py-2 px-4">Feedback</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${rowsHtml}
-              </tbody>
-            </table>
+function renderGradesContainer(data) {
+  const container = document.getElementById('grades-container');
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (!data.courses || data.courses.length === 0) {
+    container.innerHTML = '<div class="glass-panel p-8 text-center text-slate-400 text-sm rounded-2xl">No grade reports available.</div>';
+  } else {
+    data.courses.forEach(c => {
+      const block = document.createElement('div');
+      block.className = 'glass-panel p-6 rounded-2xl space-y-3';
+
+      let rowsHtml = '';
+      if (c.grade_items && c.grade_items.length > 0) {
+        rowsHtml = c.grade_items.map(g => `
+          <tr class="border-b border-slate-800/80 hover:bg-slate-900/40">
+            <td class="py-3 px-4 font-medium text-slate-200">${escapeHtml(g.itemname || 'Item')}</td>
+            <td class="py-3 px-4 text-right font-mono font-semibold text-white">${escapeHtml(g.gradeformatted || '--')}</td>
+            <td class="py-3 px-4 text-right font-mono text-blue-400">${escapeHtml(g.percentageformatted || '--')}</td>
+            <td class="py-3 px-4 text-slate-400 italic">${g.feedback ? escapeHtml(g.feedback) : '--'}</td>
+          </tr>
+        `).join('');
+      } else {
+        rowsHtml = '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">No evaluated items published yet.</td></tr>';
+      }
+
+      block.innerHTML = `
+        <h4 class="text-sm font-bold text-white border-b border-slate-800 pb-2">${escapeHtml(c.course_fullname)}</h4>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+              <tr>
+                <th class="py-2 px-4">Evaluation Item</th>
+                <th class="py-2 px-4 text-right">Score</th>
+                <th class="py-2 px-4 text-right">Percentage</th>
+                <th class="py-2 px-4">Feedback</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+        </div>
+      `;
+      container.appendChild(block);
+    });
+  }
+}
           </div>
         `;
         container.appendChild(block);

@@ -50,6 +50,50 @@ async def get_my_courses(session: Dict[str, Any] = Depends(get_current_user_sess
     return courses
 
 
+@router.get("/{course_id}", response_model=CourseSummary)
+async def get_course_detail(
+    course_id: int,
+    session: Dict[str, Any] = Depends(get_current_user_session),
+):
+    """
+    Fetch summary metadata for a specific course by ID.
+    """
+    client = MoodleClient(base_url=session.get("site_url"))
+    token = session["moodle_token"]
+    user_id = session["user_id"]
+    auth_type = session.get("auth_type", "token")
+    sesskey = session.get("sesskey")
+
+    try:
+        raw_courses = await client.get_user_courses(
+            token=token,
+            user_id=user_id,
+            auth_type=auth_type,
+            sesskey=sesskey,
+        )
+    except MoodleException as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Moodle error fetching course: {exc.message}",
+        )
+
+    for c in raw_courses:
+        if c["id"] == course_id:
+            return CourseSummary(
+                id=c["id"],
+                shortname=c.get("shortname", ""),
+                fullname=c.get("fullname", ""),
+                summary=c.get("summary", ""),
+                enrolledusercount=c.get("enrolledusercount"),
+                progress=c.get("progress"),
+                completed=c.get("completed"),
+                startdate=c.get("startdate"),
+                enddate=c.get("enddate"),
+            )
+
+    raise HTTPException(status_code=404, detail=f"Course with ID {course_id} not found in user enrollments.")
+
+
 @router.get("/{course_id}/contents", response_model=List[CourseSection])
 async def get_course_contents(
     course_id: int,

@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.core.exceptions import MoodleException
 from app.core.security import get_current_user_session
@@ -9,9 +9,13 @@ router = APIRouter(prefix="/api/grades", tags=["Grades"])
 
 
 @router.get("", response_model=GradeOverviewResponse)
-async def get_my_grades(session: Dict[str, Any] = Depends(get_current_user_session)):
+async def get_my_grades(
+    course_id: Optional[int] = None,
+    session: Dict[str, Any] = Depends(get_current_user_session),
+):
     """
     Fetch all grades, feedbacks, and course totals for the enrolled user.
+    Optionally filters by a specific course_id.
     """
     client = MoodleClient(base_url=session.get("site_url"))
     token = session["moodle_token"]
@@ -32,9 +36,17 @@ async def get_my_grades(session: Dict[str, Any] = Depends(get_current_user_sessi
             detail=f"Moodle error fetching user courses for grades: {exc.message}",
         )
 
+    # Filter by specific course_id if requested
+    if course_id:
+        target_courses = [c for c in courses if c["id"] == course_id]
+        if not target_courses:
+            target_courses = [{"id": course_id, "fullname": f"Course #{course_id}"}]
+    else:
+        target_courses = courses
+
     course_grades_list: List[CourseGrades] = []
 
-    for course in courses:
+    for course in target_courses:
         cid = course["id"]
         cname = course.get("fullname", f"Course #{cid}")
         try:

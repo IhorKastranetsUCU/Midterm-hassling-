@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Course Workspace | Moodle Portal</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #090d16; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans antialiased selection:bg-blue-600 selection:text-white" data-course-id="{{ course_id }}" data-moodle-url="{{ moodle_url }}">
+
+  <!-- TOP NAVIGATION BAR -->
+  <header class="sticky top-0 z-40 border-b border-slate-800/80 glass-panel">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="/" class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-all flex items-center gap-1.5 text-xs font-semibold">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          <span class="hidden sm:inline">All Courses</span>
+        </a>
+        <div class="h-5 w-px bg-slate-800"></div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span id="header-course-code" class="px-2 py-0.5 text-[10px] font-mono font-bold rounded-full bg-blue-950 text-blue-400 border border-blue-800">COURSE</span>
+            <span id="header-course-title" class="font-bold text-sm sm:text-base text-slate-100 truncate max-w-xs sm:max-w-md">Loading Course...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Cache indicator -->
+        <span id="cache-status-pill" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          Device Cache Ready
+        </span>
+
+        <!-- Copy Direct Link Button -->
+        <button onclick="copyCourseLink()" id="btn-copy-link" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition-all flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          <span>Share Link</span>
+        </button>
+
+        <!-- Open in Moodle LMS -->
+        <a id="link-course-moodle" href="#" target="_blank" rel="noopener noreferrer"
+          class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 transition-all flex items-center gap-1">
+          <span>Open on Moodle</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Course Banner & Progress -->
+    <section class="glass-panel rounded-2xl p-6 relative overflow-hidden">
+      <div class="absolute -top-24 -right-24 w-60 h-60 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <span id="banner-course-code" class="text-xs font-mono font-bold text-blue-400 uppercase tracking-wider">COURSE</span>
+          <h1 id="banner-course-title" class="text-2xl font-extrabold text-white tracking-tight mt-1">Course Title</h1>
+          <p id="banner-course-desc" class="text-xs text-slate-400 mt-2 max-w-3xl leading-relaxed">Loading syllabus overview...</p>
+        </div>
+
+        <div class="shrink-0 flex md:flex-col items-center md:items-end justify-between gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800">
+          <div class="text-right">
+            <span class="text-[10px] uppercase font-semibold text-slate-400 block">Course Progress</span>
+            <span id="banner-progress-text" class="text-2xl font-extrabold font-mono text-white">0%</span>
+          </div>
+          <div class="w-32 bg-slate-800 rounded-full h-2 overflow-hidden">
+            <div id="banner-progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Content Workspace: 2-Column Split -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- LEFT: Syllabus, Sections & Modules (2 Columns wide) -->
+      <div class="lg:col-span-2 space-y-4">
+        
+        <!-- Filter Bar -->
+        <div class="glass-panel p-3 rounded-xl flex items-center justify-between gap-3 overflow-x-auto">
+          <div class="flex items-center gap-1.5 text-xs">
+            <button onclick="filterModules('all')" id="filter-btn-all" class="filter-btn active px-3 py-1 rounded-lg bg-blue-600 text-white font-semibold transition-all">
+              All Items
+            </button>
+            <button onclick="filterModules('resource')" id="filter-btn-resource" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
+              📄 Files & PDFs
+            </button>
+            <button onclick="filterModules('assign')" id="filter-btn-assign" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
+              📝 Assignments
+            </button>
+            <button onclick="filterModules('quiz')" id="filter-btn-quiz" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
+              ❓ Quizzes
+            </button>
+            <button onclick="filterModules('url')" id="filter-btn-url" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
+              🔗 Links
+            </button>
+          </div>
+          <button onclick="reloadCourseData(true)" title="Force Refresh from Moodle" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          </button>
+        </div>
+
+        <!-- Sections Container -->
+        <div id="course-sections-loading" class="py-16 text-center text-slate-400 text-sm">
+          Loading course syllabus and sections...
+        </div>
+        <div id="course-sections-list" class="space-y-4 hidden"></div>
+
+      </div>
+
+      <!-- RIGHT: Subject Deadlines, Grades, & Student Notes (1 Column wide) -->
+      <div class="space-y-6">
+
+        <!-- Subject Deadlines Card -->
+        <div class="glass-panel p-5 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+              <span>⏰ Deadlines for this Subject</span>
+            </h3>
+            <span id="subject-deadline-count" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">0</span>
+          </div>
+          <div id="subject-deadlines-list" class="space-y-2 text-xs">
+            <p class="text-slate-500 py-4 text-center">Checking upcoming deadlines...</p>
+          </div>
+        </div>
+
+        <!-- Subject Evaluation / Grades Card -->
+        <div class="glass-panel p-5 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+              <span>📊 Subject Evaluation & Grades</span>
+            </h3>
+          </div>
+          <div id="subject-grades-list" class="space-y-2 text-xs">
+            <p class="text-slate-500 py-4 text-center">Retrieving grade evaluation...</p>
+          </div>
+        </div>
+
+        <!-- Student Personal Scratchpad (Local to Device) -->
+        <div class="glass-panel p-5 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+              <span>📝 My Subject Notes</span>
+            </h3>
+            <span class="text-[10px] text-emerald-400">Saved on your device</span>
+          </div>
+          <p class="text-[11px] text-slate-400">Personal scratchpad for homework notes or exam prep. Never sent to any server.</p>
+          <textarea id="subject-local-notes" rows="4" placeholder="Jot down homework ideas, formulas, or reminders..."
+            oninput="saveLocalNotes()"
+            class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-y"></textarea>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none"></div>
+
+  <!-- Scripts -->
+  <script src="/static/js/storage.js"></script>
+  <script src="/static/js/course.js"></script>
+</body>
+</html>
