@@ -20,4 +20,5 @@ services:
       - COOKIE_SECURE=false
       - COOKIE_SAMESITE=lax
     env_file:
-      - .env
+      - path: .env
+        required: false

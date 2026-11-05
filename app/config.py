@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     # Moodle Settings
-    MOODLE_BASE_URL: str = "https://school.moodledemo.net"
+    MOODLE_BASE_URL: str = "https://learn.ucu.edu.ua"
     MOODLE_SERVICE_SHORTNAME: str = "moodle_mobile_app"
     MOODLE_MOCK_MODE: bool = False
     MOODLE_REQUEST_TIMEOUT: float = 15.0

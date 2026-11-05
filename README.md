@@ -62,25 +62,68 @@ Moodle REST API Server
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Running Locally)
 
-### 1. Requirements
-- Python 3.10+ (Tested on Python 3.13)
+Anyone can clone and run this repository on **Windows**, **macOS**, or **Linux** in less than 2 minutes.
 
-### 2. Activate Virtual Environment
-In PowerShell:
+### 1. Clone Repository & Setup
+
+```bash
+git clone https://github.com/shkundapn/cms_obgortka.git
+cd cms_obgortka
+```
+
+### 2. Create & Activate Virtual Environment
+
+**On Windows (PowerShell):**
 ```powershell
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-### 3. Run the Web Server
-```powershell
+**On macOS / Linux (bash/zsh):**
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 3. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 4. (Optional) Setup Environment File
+Copy the example configuration (all variables have safe defaults, so this is optional for local development):
+```bash
+# Windows PowerShell:
+Copy-Item .env.example .env
+
+# macOS / Linux:
+cp .env.example .env
+```
+
+### 5. Start the Application
+```bash
 python run.py
-# or
-uvicorn app.main:app --reload --port 8000
+# or: uvicorn app.main:app --reload --port 8000
 ```
 
 Open your browser at: **[http://127.0.0.1:8000](http://127.0.0.1:8000)**
+
+> 💡 **No university account? No problem!**  
+> Click **"Use Instant Demo Sandbox Student Account"** on the login screen to test all features with rich mock courses, assignments, grades, and real-time SSE events immediately.
+
+---
+
+## 🐳 Quick Start with Docker (Zero Setup)
+
+If you have Docker installed, you don't even need Python:
+
+```bash
+docker compose up --build
+```
+
+Then visit **[http://127.0.0.1:8000](http://127.0.0.1:8000)**.
 
 ---
 
