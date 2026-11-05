@@ -49,14 +49,17 @@ class EventMonitorService:
                 return []
 
             # 2. Check Assignments & Deadlines
-            assignments_data = await client.get_assignments(
+            raw_assign_data = await client.get_assignments(
                 token=token,
                 course_ids=course_ids,
                 auth_type=auth_type,
                 sesskey=sesskey,
             )
+            assignments_courses = raw_assign_data.get("courses", []) if isinstance(raw_assign_data, dict) else (raw_assign_data if isinstance(raw_assign_data, list) else [])
 
-            for course_assign in assignments_data:
+            for course_assign in assignments_courses:
+                if not isinstance(course_assign, dict):
+                    continue
                 course_name = course_assign.get("shortname") or f"Course #{course_assign.get('id')}"
                 for assign in course_assign.get("assignments", []):
                     due_date = assign.get("duedate")
