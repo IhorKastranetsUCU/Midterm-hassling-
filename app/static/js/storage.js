@@ -14,34 +14,43 @@ class LocalCacheEngine {
   }
 
   async _init() {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
+    return new Promise((resolve) => {
+      if (typeof window === 'undefined' || !('indexedDB' in window)) {
+        return resolve(null);
+      }
 
-      request.onupgradeneeded = (e) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains('courses')) {
-          db.createObjectStore('courses', { keyPath: 'id' });
-        }
-        if (!db.objectStoreNames.contains('course_contents')) {
-          db.createObjectStore('course_contents', { keyPath: 'course_id' });
-        }
-        if (!db.objectStoreNames.contains('assignments')) {
-          db.createObjectStore('assignments', { keyPath: 'key' });
-        }
-        if (!db.objectStoreNames.contains('grades')) {
-          db.createObjectStore('grades', { keyPath: 'key' });
-        }
-      };
+      try {
+        const request = window.indexedDB.open(DB_NAME, DB_VERSION);
 
-      request.onsuccess = (e) => {
-        this.db = e.target.result;
-        resolve(this.db);
-      };
+        request.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('courses')) {
+            db.createObjectStore('courses', { keyPath: 'id' });
+          }
+          if (!db.objectStoreNames.contains('course_contents')) {
+            db.createObjectStore('course_contents', { keyPath: 'course_id' });
+          }
+          if (!db.objectStoreNames.contains('assignments')) {
+            db.createObjectStore('assignments', { keyPath: 'key' });
+          }
+          if (!db.objectStoreNames.contains('grades')) {
+            db.createObjectStore('grades', { keyPath: 'key' });
+          }
+        };
 
-      request.onerror = (e) => {
-        console.warn('IndexedDB not supported or blocked, falling back to in-memory cache:', e);
+        request.onsuccess = (e) => {
+          this.db = e.target.result;
+          resolve(this.db);
+        };
+
+        request.onerror = (e) => {
+          console.warn('IndexedDB blocked or unavailable, continuing without device cache:', e);
+          resolve(null);
+        };
+      } catch (err) {
+        console.warn('IndexedDB initialization error:', err);
         resolve(null);
-      };
+      }
     });
   }
 

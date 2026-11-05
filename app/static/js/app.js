@@ -81,17 +81,21 @@ function setAuthMode(mode) {
   const activeClass = 'py-2 px-2 rounded-lg bg-blue-600 text-white shadow-sm transition-all flex items-center justify-center gap-1';
   const inactiveClass = 'py-2 px-2 rounded-lg text-slate-400 hover:text-white transition-all flex items-center justify-center gap-1';
 
-  tabCookie.className = (mode === 'cookie') ? activeClass : inactiveClass;
-  tabToken.className = (mode === 'token') ? activeClass : inactiveClass;
-  tabCred.className = (mode === 'credentials') ? activeClass : inactiveClass;
+  if (tabCookie) tabCookie.className = (mode === 'cookie') ? activeClass : inactiveClass;
+  if (tabToken) tabToken.className = (mode === 'token') ? activeClass : inactiveClass;
+  if (tabCred) tabCred.className = (mode === 'credentials') ? activeClass : inactiveClass;
 
-  formCookie.classList.toggle('hidden', mode !== 'cookie');
-  formToken.classList.toggle('hidden', mode !== 'token');
-  formCred.classList.toggle('hidden', mode !== 'credentials');
+  if (formCookie) formCookie.classList.toggle('hidden', mode !== 'cookie');
+  if (formToken) formToken.classList.toggle('hidden', mode !== 'token');
+  if (formCred) formCred.classList.toggle('hidden', mode !== 'credentials');
 
-  if (mode === 'cookie') document.getElementById('input-cookie').focus();
-  else if (mode === 'token') document.getElementById('input-token').focus();
-  else if (mode === 'credentials') document.getElementById('input-username').focus();
+  const inputCookie = document.getElementById('input-cookie');
+  const inputToken = document.getElementById('input-token');
+  const inputUsername = document.getElementById('input-username');
+
+  if (mode === 'cookie' && inputCookie) inputCookie.focus();
+  else if (mode === 'token' && inputToken) inputToken.focus();
+  else if (mode === 'credentials' && inputUsername) inputUsername.focus();
 }
 
 // 1. Submit MoodleSession Cookie
@@ -278,8 +282,18 @@ function clearLoginError() {
 
 function fillDemoAndLogin() {
   setAuthMode('cookie');
-  document.getElementById('input-cookie').value = 'mock_moodle_session_cookie_demo';
-  document.getElementById('form-cookie-login').dispatchEvent(new Event('submit', { cancelable: true }));
+  const cookieInput = document.getElementById('input-cookie');
+  if (cookieInput) {
+    cookieInput.value = 'mock_moodle_session_cookie_demo';
+  }
+  const form = document.getElementById('form-cookie-login');
+  if (form) {
+    if (typeof form.requestSubmit === 'function') {
+      form.requestSubmit();
+    } else {
+      handleCookieSubmit(new Event('submit'));
+    }
+  }
 }
 
 function togglePasswordVisibility(inputId) {
@@ -931,18 +945,6 @@ function renderGradesContainer(data) {
       `;
       container.appendChild(block);
     });
-  }
-}
-          </div>
-        `;
-        container.appendChild(block);
-      });
-    }
-
-    loading.classList.add('hidden');
-    container.classList.remove('hidden');
-  } catch (err) {
-    loading.innerText = `Error: ${err.message}`;
   }
 }
 
