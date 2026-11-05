@@ -131,3 +131,15 @@ def test_authorities_routing_and_api():
     assert res_course.status_code == 200
     assert "text/html" in res_course.headers["content-type"]
 
+
+def test_system_inspect_endpoint():
+    # Test with invalid / dummy URL to check schema response
+    res = client.get("/api/system/inspect?url=https://invalid-non-existent-domain-12345.edu.ua")
+    assert res.status_code == 200
+    data = res.json()
+    assert "is_moodle" in data
+    assert "target_url" in data
+    assert "engine_detected" in data
+    assert data["is_moodle"] is False
+
+

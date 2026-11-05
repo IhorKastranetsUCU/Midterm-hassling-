@@ -116,7 +116,13 @@
 
           <!-- Moodle Instance Selector / Custom URL -->
           <div class="mb-5 p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
-            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">Target Moodle LMS URL</label>
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">Target LMS URL</label>
+              <button type="button" onclick="testUrlCompatibility()" id="btn-quick-inspect" class="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1 transition-all">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>Check Moodle Compatibility</span>
+              </button>
+            </div>
             <div class="flex items-center gap-2">
               <input type="url" id="input-target-moodle-url" value="{{ moodle_url }}" oninput="onTargetUrlChanged()"
                 placeholder="https://moodle.your-university.edu"
@@ -125,8 +131,9 @@
                 UCU Default
               </button>
             </div>
+            <div id="url-inspect-result" class="hidden text-xs rounded-xl p-3 border transition-all"></div>
             <p class="text-[10px] text-slate-400">
-              Works with UCU, your school, university, or any standard Moodle 3.x/4.x/5.x installation.
+              Works with UCU, LNU, Lviv Polytech, KhNURE, or any standard Moodle 3.x/4.x/5.x installation.
             </p>
           </div>
 
@@ -457,6 +464,53 @@
               Run Real-time Ping Diagnostic
             </button>
           </div>
+        </div>
+
+        <!-- Universal LMS Compatibility Scanner Card -->
+        <div class="glass-panel p-6 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <span>🔍 Universal University LMS Compatibility Scanner</span>
+              <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-indigo-900/60 text-indigo-300 border border-indigo-700">Live Probe</span>
+            </h3>
+          </div>
+          <p class="text-xs text-slate-400">
+            Probe any university or high-school portal to determine whether it is running Moodle or a custom platform (like Carpathian University's D-Learn), and inspect which API/cookie hooks are open.
+          </p>
+
+          <!-- Quick Presets -->
+          <div class="flex flex-wrap items-center gap-2 text-[11px]">
+            <span class="text-slate-400 text-xs">Quick Test:</span>
+            <button onclick="probePreset('https://e-learning.lnu.edu.ua')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-blue-300 border border-slate-800">
+              LNU Lviv (e-learning.lnu.edu.ua)
+            </button>
+            <button onclick="probePreset('https://vns.lpnu.ua')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-emerald-300 border border-slate-800">
+              Lviv Polytech (vns.lpnu.ua)
+            </button>
+            <button onclick="probePreset('https://dl.nure.ua')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-slate-800">
+              KhNURE (dl.nure.ua)
+            </button>
+            <button onclick="probePreset('https://d-learn.pnu.edu.ua')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-rose-300 border border-slate-800">
+              Carpathian Uni (d-learn.pnu.edu.ua)
+            </button>
+            <button onclick="probePreset('https://learn.ucu.edu.ua')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-indigo-300 border border-slate-800">
+              UCU (learn.ucu.edu.ua)
+            </button>
+          </div>
+
+          <!-- URL Probe Input -->
+          <div class="flex items-center gap-2">
+            <input type="url" id="input-probe-url" placeholder="https://your-university-portal.edu.ua"
+              class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/50">
+            <button onclick="runLmsProbe()" id="btn-run-probe"
+              class="px-5 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all flex items-center gap-1.5 whitespace-nowrap">
+              <span>Probe URL</span>
+              <svg id="probe-spinner" class="hidden animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+            </button>
+          </div>
+
+          <!-- Probe Output -->
+          <div id="probe-results" class="hidden rounded-xl p-4 bg-slate-900/90 border border-slate-800 space-y-3 text-xs"></div>
         </div>
       </div>
 

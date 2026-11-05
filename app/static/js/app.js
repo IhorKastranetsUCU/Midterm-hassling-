@@ -983,3 +983,156 @@ function stripHtml(html) {
   tmp.innerHTML = html;
   return tmp.textContent || tmp.innerText || '';
 }
+
+// Universal Moodle Compatibility Prober
+async function testUrlCompatibility() {
+  const url = getTargetMoodleUrl();
+  const resultBox = document.getElementById('url-inspect-result');
+  const btn = document.getElementById('btn-quick-inspect');
+
+  if (!url) {
+    if (resultBox) {
+      resultBox.classList.remove('hidden');
+      resultBox.className = 'text-xs rounded-xl p-3 border border-amber-800 bg-amber-950/40 text-amber-300';
+      resultBox.innerHTML = '⚠️ Please enter a URL first.';
+    }
+    return;
+  }
+
+  if (btn) btn.disabled = true;
+  if (resultBox) {
+    resultBox.classList.remove('hidden');
+    resultBox.className = 'text-xs rounded-xl p-3 border border-blue-800 bg-blue-950/40 text-blue-300 flex items-center gap-2';
+    resultBox.innerHTML = '<span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full"></span> Probing ' + escapeHtml(url) + '...';
+  }
+
+  try {
+    const res = await fetch(`/api/system/inspect?url=${encodeURIComponent(url)}`);
+    const data = await res.json();
+
+    if (data.is_moodle) {
+      resultBox.className = 'text-xs rounded-xl p-3 border border-emerald-800 bg-emerald-950/40 text-emerald-200 space-y-1.5';
+      resultBox.innerHTML = `
+        <div class="flex items-center justify-between font-semibold">
+          <span class="flex items-center gap-1.5">✅ Moodle LMS Verified (${escapeHtml(data.engine_detected)})</span>
+          <span class="font-mono text-[11px] text-emerald-400">${data.latency_ms} ms</span>
+        </div>
+        <p class="text-[11px] text-emerald-300/90">${escapeHtml(data.recommendation)}</p>
+        <div class="flex flex-wrap gap-2 pt-1 text-[10px]">
+          <span class="px-1.5 py-0.5 rounded bg-emerald-900/60 border border-emerald-700">Cookie Login: ${data.has_moodle_session_cookie || data.has_login_php ? 'Supported ✓' : 'Partial'}</span>
+          <span class="px-1.5 py-0.5 rounded bg-emerald-900/60 border border-emerald-700">REST API: ${data.has_rest_webservice ? 'Ready ✓' : 'Standard'}</span>
+          <span class="px-1.5 py-0.5 rounded bg-emerald-900/60 border border-emerald-700">Mobile Token: ${data.has_token_service ? 'Active ✓' : 'Protected'}</span>
+        </div>
+      `;
+    } else {
+      resultBox.className = 'text-xs rounded-xl p-3 border border-rose-800 bg-rose-950/40 text-rose-200 space-y-1';
+      resultBox.innerHTML = `
+        <div class="flex items-center justify-between font-semibold">
+          <span>❌ Non-Moodle System Detected</span>
+          <span class="font-mono text-[11px] text-rose-400">${data.latency_ms} ms</span>
+        </div>
+        <p class="text-[11px] text-rose-300/90">${escapeHtml(data.recommendation)}</p>
+        <p class="text-[10px] text-slate-400 pt-1">
+          Detected: <strong class="text-white">${escapeHtml(data.engine_detected)}</strong>.
+          This portal does not provide Moodle REST APIs or MoodleSession cookies.
+        </p>
+      `;
+    }
+  } catch (err) {
+    if (resultBox) {
+      resultBox.className = 'text-xs rounded-xl p-3 border border-rose-800 bg-rose-950/40 text-rose-300';
+      resultBox.innerHTML = `❌ Inspection error: ${escapeHtml(err.message)}`;
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function probePreset(url) {
+  const input = document.getElementById('input-probe-url');
+  if (input) {
+    input.value = url;
+    runLmsProbe();
+  }
+}
+
+async function runLmsProbe() {
+  const input = document.getElementById('input-probe-url');
+  const resultsDiv = document.getElementById('probe-results');
+  const spinner = document.getElementById('probe-spinner');
+  const btn = document.getElementById('btn-run-probe');
+
+  if (!input || !resultsDiv) return;
+  const url = input.value.trim();
+  if (!url) {
+    alert('Please enter or select a university URL to probe.');
+    return;
+  }
+
+  if (spinner) spinner.classList.remove('hidden');
+  if (btn) btn.disabled = true;
+  resultsDiv.classList.remove('hidden');
+  resultsDiv.innerHTML = `<div class="text-slate-400 text-xs py-2 flex items-center gap-2"><span class="animate-spin inline-block w-3.5 h-3.5 border-2 border-blue-400 border-t-transparent rounded-full"></span> Probing ${escapeHtml(url)} across 4 endpoints...</div>`;
+
+  try {
+    const res = await fetch(`/api/system/inspect?url=${encodeURIComponent(url)}`);
+    const data = await res.json();
+
+    const isSuccess = data.is_moodle;
+    const badgeColor = isSuccess ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border-rose-500/30';
+    const statusText = isSuccess ? 'MOODLE LMS DETECTED' : 'NON-MOODLE / PROPRIETARY';
+
+    resultsDiv.innerHTML = `
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-800 pb-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeColor}">${statusText}</span>
+            <span class="font-bold text-white text-sm">${escapeHtml(data.engine_detected)}</span>
+          </div>
+          <span class="text-[11px] font-mono text-slate-400 break-all">${escapeHtml(data.target_url)}</span>
+        </div>
+        <div class="text-right">
+          <span class="text-slate-500 text-[10px] block uppercase font-mono">Latency</span>
+          <span class="font-mono font-semibold text-emerald-400 text-xs">${data.latency_ms} ms</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 font-mono text-[11px]">
+        <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+          <span class="block text-[10px] text-slate-500 uppercase">MoodleSession</span>
+          <span class="${data.has_moodle_session_cookie ? 'text-emerald-400 font-semibold' : 'text-slate-400'}">
+            ${data.has_moodle_session_cookie ? '✓ Detected' : 'Not Set in Root'}
+          </span>
+        </div>
+        <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+          <span class="block text-[10px] text-slate-500 uppercase">/login/index.php</span>
+          <span class="${data.has_login_php ? 'text-emerald-400 font-semibold' : 'text-rose-400'}">
+            ${data.has_login_php ? '✓ 200 OK' : '✗ 404 / Missing'}
+          </span>
+        </div>
+        <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+          <span class="block text-[10px] text-slate-500 uppercase">/login/token.php</span>
+          <span class="${data.has_token_service ? 'text-emerald-400 font-semibold' : 'text-amber-400'}">
+            ${data.has_token_service ? '✓ Active' : 'Restricted'}
+          </span>
+        </div>
+        <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800">
+          <span class="block text-[10px] text-slate-500 uppercase">Webservice REST</span>
+          <span class="${data.has_rest_webservice ? 'text-emerald-400 font-semibold' : 'text-amber-400'}">
+            ${data.has_rest_webservice ? '✓ Available' : 'Disabled'}
+          </span>
+        </div>
+      </div>
+
+      <div class="p-3 rounded-lg ${isSuccess ? 'bg-emerald-950/30 border border-emerald-900/40 text-emerald-300' : 'bg-rose-950/30 border border-rose-900/40 text-rose-300'} text-xs">
+        ${escapeHtml(data.recommendation)}
+      </div>
+    `;
+  } catch (err) {
+    resultsDiv.innerHTML = `<div class="text-rose-400 text-xs">Probe failed: ${escapeHtml(err.message)}</div>`;
+  } finally {
+    if (spinner) spinner.classList.add('hidden');
+    if (btn) btn.disabled = false;
+  }
+}
+
