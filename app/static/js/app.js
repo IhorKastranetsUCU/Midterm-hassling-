@@ -49,6 +49,22 @@ function resetToUcuUrl() {
   }
 }
 
+// Authority Switcher dropdown toggle
+function toggleAuthorityMenu() {
+  const menu = document.getElementById('authority-menu');
+  if (menu) {
+    menu.classList.toggle('hidden');
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('authority-menu');
+  const btn = document.getElementById('btn-authority-dropdown');
+  if (menu && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+    menu.classList.add('hidden');
+  }
+});
+
 // Mode toggle: Cookie vs Token vs Credentials
 function setAuthMode(mode) {
   currentAuthMode = mode;
@@ -634,6 +650,8 @@ function renderCoursesGrid(courses) {
     return;
   }
 
+  const authSlug = document.body.dataset.authoritySlug || 'ucu';
+
   courses.forEach(c => {
     const card = document.createElement('div');
     card.className = 'glass-panel p-5 rounded-2xl flex flex-col justify-between hover:border-slate-600 transition-all group';
@@ -668,7 +686,7 @@ function renderCoursesGrid(courses) {
           </div>
         ` : ''}
         <div class="flex items-center gap-2">
-          <a href="/courses/${c.id}" target="_blank"
+          <a href="/${authSlug}/courses/${c.id}" target="_blank"
             class="flex-1 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold text-center transition-all flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/20">
             <span>Open Subject Workspace ↗</span>
           </a>

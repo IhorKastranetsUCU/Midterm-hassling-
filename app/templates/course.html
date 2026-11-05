@@ -33,15 +33,15 @@
     }
   </style>
 </head>
-<body class="h-full flex flex-col font-sans antialiased selection:bg-blue-600 selection:text-white" data-course-id="{{ course_id }}" data-moodle-url="{{ moodle_url }}">
+<body class="h-full flex flex-col font-sans antialiased selection:bg-blue-600 selection:text-white" data-course-id="{{ course_id }}" data-moodle-url="{{ moodle_url }}" data-authority-slug="{{ authority.slug if authority else 'ucu' }}">
 
   <!-- TOP NAVIGATION BAR -->
   <header class="sticky top-0 z-40 border-b border-slate-800/80 glass-panel">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <a href="/" class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-all flex items-center gap-1.5 text-xs font-semibold">
+        <a href="/{{ authority.slug if authority else '' }}" class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-all flex items-center gap-1.5 text-xs font-semibold">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-          <span class="hidden sm:inline">All Courses</span>
+          <span class="hidden sm:inline">{{ authority.short_name if authority else 'All Courses' }}</span>
         </a>
         <div class="h-5 w-px bg-slate-800"></div>
         <div>

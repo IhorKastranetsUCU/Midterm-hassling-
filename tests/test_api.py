@@ -102,3 +102,32 @@ def test_auth_and_full_flow():
     # 7. Logout
     logout_res = client.post("/api/auth/logout")
     assert logout_res.status_code == 200
+
+
+def test_authorities_routing_and_api():
+    # 1. API List authorities
+    res = client.get("/api/authorities")
+    assert res.status_code == 200
+    slugs = [a["slug"] for a in res.json()]
+    assert "ucu" in slugs
+    assert "kpi" in slugs
+    assert "lnu" in slugs
+
+    # 2. API Single authority
+    res_ucu = client.get("/api/authorities/ucu")
+    assert res_ucu.status_code == 200
+    assert res_ucu.json()["base_url"] == "https://learn.ucu.edu.ua"
+
+    # 3. HTML Authority Pages
+    res_page_ucu = client.get("/ucu")
+    assert res_page_ucu.status_code == 200
+    assert "text/html" in res_page_ucu.headers["content-type"]
+
+    res_page_kpi = client.get("/kpi")
+    assert res_page_kpi.status_code == 200
+
+    # 4. Authority Course Page
+    res_course = client.get("/ucu/courses/1022")
+    assert res_course.status_code == 200
+    assert "text/html" in res_course.headers["content-type"]
+

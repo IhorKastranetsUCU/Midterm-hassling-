@@ -8,7 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.core.exceptions import MoodleException, UnauthorizedError
-from app.routers import auth, courses, assignments, grades, system, events
+from app.core.authorities import get_authority, list_authorities
+from app.routers import auth, courses, assignments, grades, system, events, authorities
 
 
 @asynccontextmanager
@@ -63,6 +64,7 @@ app.include_router(assignments.router)
 app.include_router(grades.router)
 app.include_router(system.router)
 app.include_router(events.router)
+app.include_router(authorities.router)
 
 # Mount Static & Templates
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -78,12 +80,15 @@ templates = Jinja2Templates(directory=templates_dir)
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_dashboard(request: Request):
+    default_auth = get_authority("ucu")
     settings = get_settings()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
         context={
-            "moodle_url": settings.clean_moodle_url,
+            "authority": default_auth,
+            "authorities": list_authorities(),
+            "moodle_url": default_auth.base_url if default_auth else settings.clean_moodle_url,
             "mock_mode": settings.MOODLE_MOCK_MODE,
         },
     )
@@ -91,13 +96,57 @@ async def serve_dashboard(request: Request):
 
 @app.get("/courses/{course_id}", response_class=HTMLResponse)
 async def serve_course_page(request: Request, course_id: int):
+    default_auth = get_authority("ucu")
     settings = get_settings()
     return templates.TemplateResponse(
         request=request,
         name="course.html",
         context={
+            "authority": default_auth,
             "course_id": course_id,
-            "moodle_url": settings.clean_moodle_url,
+            "moodle_url": default_auth.base_url if default_auth else settings.clean_moodle_url,
             "mock_mode": settings.MOODLE_MOCK_MODE,
+        },
+    )
+
+
+# Authority-specific routes: /{authority} and /{authority}/courses
+@app.get("/{authority_slug}", response_class=HTMLResponse)
+async def serve_authority_dashboard(request: Request, authority_slug: str):
+    auth_data = get_authority(authority_slug)
+    if not auth_data:
+        raise HTTPException(status_code=404, detail=f"Authority '{authority_slug}' not found.")
+    settings = get_settings()
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={
+            "authority": auth_data,
+            "authorities": list_authorities(),
+            "moodle_url": auth_data.base_url,
+            "mock_mode": auth_data.is_mock or settings.MOODLE_MOCK_MODE,
+        },
+    )
+
+
+@app.get("/{authority_slug}/courses", response_class=HTMLResponse)
+async def serve_authority_courses_tab(request: Request, authority_slug: str):
+    return await serve_authority_dashboard(request, authority_slug)
+
+
+@app.get("/{authority_slug}/courses/{course_id}", response_class=HTMLResponse)
+async def serve_authority_course_page(request: Request, authority_slug: str, course_id: int):
+    auth_data = get_authority(authority_slug)
+    if not auth_data:
+        raise HTTPException(status_code=404, detail=f"Authority '{authority_slug}' not found.")
+    settings = get_settings()
+    return templates.TemplateResponse(
+        request=request,
+        name="course.html",
+        context={
+            "authority": auth_data,
+            "course_id": course_id,
+            "moodle_url": auth_data.base_url,
+            "mock_mode": auth_data.is_mock or settings.MOODLE_MOCK_MODE,
         },
     )
