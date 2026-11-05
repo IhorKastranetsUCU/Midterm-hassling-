@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Moodle Connector | UCU Learning Platform</title>
+  <title>Universal Moodle Connector & Event Portal</title>
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -44,8 +44,8 @@
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <span class="font-bold text-base text-slate-100 tracking-tight">UCU Moodle Connector</span>
-            <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-950/80 text-blue-400 border border-blue-800/60">FastAPI</span>
+            <span class="font-bold text-base text-slate-100 tracking-tight">Universal Moodle Portal</span>
+            <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-blue-950/80 text-blue-400 border border-blue-800/60">Event-Driven</span>
           </div>
           <p class="text-xs text-slate-400">Target: <span id="nav-target-url" class="font-mono text-slate-300">{{ moodle_url }}</span></p>
         </div>
@@ -88,17 +88,33 @@
         <div class="text-center mb-6">
           <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-medium mb-3">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-            UCU Moodle (learn.ucu.edu.ua)
+            Universal Moodle Connector
           </div>
-          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-2">Connect to your UCU Moodle</h1>
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-2">Connect to Any Moodle Site</h1>
           <p class="text-slate-400 text-xs sm:text-sm">
-            Sign in via your active MoodleSession cookie or token to load your real courses, deadlines, and gradebook.
+            Sign in to any Moodle-based LMS instance to stream real-time academic events, track deadlines, and monitor grades.
           </p>
         </div>
 
-        <!-- Login Card with 3 Tabs -->
+        <!-- Login Card with URL Selector + 3 Tabs -->
         <div class="glass-panel p-6 sm:p-8 rounded-2xl shadow-2xl relative overflow-hidden">
           <div class="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+          <!-- Moodle Instance Selector / Custom URL -->
+          <div class="mb-5 p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
+            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">Target Moodle LMS URL</label>
+            <div class="flex items-center gap-2">
+              <input type="url" id="input-target-moodle-url" value="{{ moodle_url }}" oninput="onTargetUrlChanged()"
+                placeholder="https://moodle.your-university.edu"
+                class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-blue-300 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono">
+              <button type="button" onclick="resetToUcuUrl()" class="px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300 whitespace-nowrap">
+                UCU Default
+              </button>
+            </div>
+            <p class="text-[10px] text-slate-400">
+              Works with UCU, your school, university, or any standard Moodle 3.x/4.x/5.x installation.
+            </p>
+          </div>
 
           <!-- Auth Mode Tabs -->
           <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-900/90 border border-slate-800 rounded-xl mb-5 text-[11px] font-semibold">
@@ -125,16 +141,16 @@
             </div>
           </div>
 
-          <!-- 1. FORM: BROWSER COOKIE (Recommended for UCU Google SSO) -->
+          <!-- 1. FORM: BROWSER COOKIE -->
           <form id="form-cookie-login" onsubmit="handleCookieSubmit(event)" class="space-y-4">
             <div>
               <div class="flex items-center justify-between mb-1.5">
                 <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">MoodleSession Cookie Value</label>
-                <a href="https://learn.ucu.edu.ua/" target="_blank" rel="noopener noreferrer" class="text-[11px] text-blue-400 hover:text-blue-300 underline underline-offset-2">
-                  Open learn.ucu.edu.ua ↗
+                <a id="link-open-moodle" href="{{ moodle_url }}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-blue-400 hover:text-blue-300 underline underline-offset-2">
+                  Open Target Moodle ↗
                 </a>
               </div>
-              <input type="text" id="input-cookie" placeholder="Paste your MoodleSession cookie value (e.g. alp3l5h8m4todvs1onndnrcvnu)" required
+              <input type="text" id="input-cookie" placeholder="Paste your MoodleSession cookie value" required
                 class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-mono">
             </div>
 
@@ -142,11 +158,11 @@
             <div class="p-4 rounded-xl bg-blue-950/30 border border-blue-900/50 text-xs text-slate-300 space-y-3">
               <span class="font-semibold text-blue-300 flex items-center gap-1.5">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                How to copy your cookie in 5 seconds:
+                How to copy your session cookie in 5 seconds:
               </span>
               
               <div class="space-y-2 text-[11px] text-slate-400">
-                <p>1. Open <a href="https://learn.ucu.edu.ua/" target="_blank" class="text-blue-400 underline font-medium">learn.ucu.edu.ua</a> in Chrome/Edge/Firefox where you are signed in.</p>
+                <p>1. Open your target Moodle in Chrome/Edge/Firefox where you are signed in.</p>
                 <p>2. Press <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700 font-mono">F12</kbd> (or Right Click → Inspect) and click the <strong class="text-slate-300">Console</strong> tab.</p>
                 <p>3. Paste this command and hit Enter:</p>
                 
@@ -156,11 +172,7 @@
                     Copy Code
                   </button>
                 </div>
-                <p class="text-emerald-400/90 text-[10px]">✨ It automatically copies your exact session cookie to your clipboard! Just paste it above.</p>
-              </div>
-
-              <div class="pt-2 border-t border-slate-800/80 text-[10px] text-slate-500">
-                Alternative: Press <kbd class="px-1 py-0.5 rounded bg-slate-800 border border-slate-700 font-mono">F12</kbd> → <strong>Application</strong> → <strong>Cookies</strong> → <strong>learn.ucu.edu.ua</strong> → double-click <strong>MoodleSession</strong> value.
+                <p class="text-emerald-400/90 text-[10px]">✨ Copies your session cookie to clipboard! Paste it above.</p>
               </div>
             </div>
 
@@ -176,8 +188,8 @@
             <div>
               <div class="flex items-center justify-between mb-1.5">
                 <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">Moodle Security Token</label>
-                <a href="https://learn.ucu.edu.ua/user/managetoken.php" target="_blank" rel="noopener noreferrer" class="text-[11px] text-blue-400 hover:text-blue-300 underline underline-offset-2">
-                  Open UCU Security Keys ↗
+                <a id="link-open-token" href="{{ moodle_url }}/user/managetoken.php" target="_blank" rel="noopener noreferrer" class="text-[11px] text-blue-400 hover:text-blue-300 underline underline-offset-2">
+                  Open Security Keys ↗
                 </a>
               </div>
               <input type="password" id="input-token" placeholder="Paste your 32-character Moodle token"
@@ -185,7 +197,7 @@
             </div>
 
             <div class="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-400 space-y-1">
-              <p>Note: If your UCU Moodle token page shows empty, your university administrator has restricted manual token creation for student roles. <strong>Please use the "Browser Cookie" tab above instead.</strong></p>
+              <p>Note: If your Moodle token page is restricted by your institution's administrator, use the <strong>"Browser Cookie"</strong> tab above.</p>
             </div>
 
             <button type="submit" id="btn-token-submit"
@@ -197,13 +209,13 @@
 
           <!-- 3. FORM: USERNAME & PASSWORD MODE -->
           <form id="form-cred-login" onsubmit="handleCredSubmit(event)" class="hidden space-y-4">
-            <div class="p-3 rounded-xl bg-amber-950/30 border border-amber-900/40 text-[11px] text-amber-300">
-              Note: Because UCU uses <strong>Sign in with Google</strong>, Moodle does not store your Google password directly. Please use the <strong>Browser Cookie</strong> tab.
+            <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-[11px] text-slate-400">
+              Enter your Moodle credentials. If your institution uses Google Workspace or Microsoft Single Sign-On, use the <strong>Browser Cookie</strong> tab instead.
             </div>
 
             <div>
               <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Moodle Username</label>
-              <input type="text" id="input-username" placeholder="e.g. your_ucu_username"
+              <input type="text" id="input-username" placeholder="e.g. your_username"
                 class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50">
             </div>
 
@@ -236,15 +248,15 @@
         <div class="mt-6 grid grid-cols-3 gap-2 text-center text-[11px] text-slate-500">
           <div class="p-2 rounded-lg bg-slate-900/50 border border-slate-800/80">
             <span class="block text-emerald-400 font-semibold mb-0.5">TLS / HTTPS</span>
-            learn.ucu.edu.ua
+            Direct to LMS
           </div>
           <div class="p-2 rounded-lg bg-slate-900/50 border border-slate-800/80">
             <span class="block text-blue-400 font-semibold mb-0.5">HttpOnly</span>
             Zero Token Leakage
           </div>
           <div class="p-2 rounded-lg bg-slate-900/50 border border-slate-800/80">
-            <span class="block text-indigo-400 font-semibold mb-0.5">FastAPI</span>
-            REST Connector
+            <span class="block text-indigo-400 font-semibold mb-0.5">SSE Stream</span>
+            Zero-Cost Pub/Sub
           </div>
         </div>
 
@@ -266,7 +278,7 @@
               <h2 id="dash-user-fullname" class="text-xl font-bold text-white">Student</h2>
               <span id="dash-badge-role" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">AUTHENTICATED</span>
             </div>
-            <p id="dash-user-site" class="text-xs text-slate-400">learn.ucu.edu.ua • User ID: <span id="dash-user-id" class="font-mono text-slate-300">--</span></p>
+            <p id="dash-user-site" class="text-xs text-slate-400"><span id="dash-site-name">Moodle</span> • User ID: <span id="dash-user-id" class="font-mono text-slate-300">--</span></p>
           </div>
         </div>
 
@@ -280,6 +292,10 @@
             <span id="stat-assignments-count" class="block text-lg font-bold text-amber-400">0</span>
             <span class="text-[10px] uppercase font-semibold text-slate-400">Assignments</span>
           </div>
+          <div class="px-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
+            <span id="stat-events-count" class="block text-lg font-bold text-emerald-400">0</span>
+            <span class="text-[10px] uppercase font-semibold text-slate-400">Live Events</span>
+          </div>
           <button onclick="refreshDashboardData()" title="Reload Data" class="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-all">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
           </button>
@@ -287,25 +303,29 @@
       </div>
 
       <!-- Navigation Tabs -->
-      <div class="flex items-center gap-2 border-b border-slate-800 pb-3">
-        <button onclick="switchTab('tab-courses')" id="tab-btn-courses" class="tab-btn active px-4 py-2 rounded-xl text-xs font-semibold text-white bg-blue-600 transition-all">
+      <div class="flex items-center gap-2 border-b border-slate-800 pb-3 overflow-x-auto">
+        <button onclick="switchTab('tab-courses')" id="tab-btn-courses" class="tab-btn active px-4 py-2 rounded-xl text-xs font-semibold text-white bg-blue-600 transition-all whitespace-nowrap">
           My Enrolled Courses
         </button>
-        <button onclick="switchTab('tab-assignments')" id="tab-btn-assignments" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition-all">
+        <button onclick="switchTab('tab-assignments')" id="tab-btn-assignments" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition-all whitespace-nowrap">
           Assignments & Deadlines
         </button>
-        <button onclick="switchTab('tab-grades')" id="tab-btn-grades" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition-all">
+        <button onclick="switchTab('tab-grades')" id="tab-btn-grades" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition-all whitespace-nowrap">
           Grades & Feedback
         </button>
-        <button onclick="switchTab('tab-diagnostics')" id="tab-btn-diagnostics" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition-all flex items-center gap-1.5">
-          <span>⚡ Connector Diagnostics</span>
+        <button onclick="switchTab('tab-events')" id="tab-btn-events" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition-all flex items-center gap-1.5 whitespace-nowrap">
+          <span>⚡ Live Events & Webhooks</span>
+          <span id="badge-events-unread" class="hidden px-1.5 py-0.2 rounded-full text-[10px] bg-red-500 text-white font-bold">0</span>
+        </button>
+        <button onclick="switchTab('tab-diagnostics')" id="tab-btn-diagnostics" class="tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition-all flex items-center gap-1.5 whitespace-nowrap">
+          <span>🛠️ Diagnostics</span>
         </button>
       </div>
 
       <!-- TAB 1: COURSES -->
       <div id="tab-courses" class="tab-content">
         <div id="courses-loading" class="py-12 text-center text-slate-400 text-sm">
-          Loading enrolled courses from UCU Moodle...
+          Loading enrolled courses from Moodle...
         </div>
         <div id="courses-grid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
       </div>
@@ -333,13 +353,75 @@
         <div id="grades-container" class="hidden space-y-6"></div>
       </div>
 
-      <!-- TAB 4: CONNECTOR DIAGNOSTICS & RAW TESTER -->
+      <!-- TAB 4: LIVE EVENTS & WEBHOOKS (Event-Driven) -->
+      <div id="tab-events" class="tab-content hidden space-y-6">
+        <div class="glass-panel p-6 rounded-2xl space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <span>⚡ Event-Driven Academic Stream</span>
+                <span id="sse-status-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800">
+                  ● SSE Stream Connected
+                </span>
+              </h3>
+              <p class="text-xs text-slate-400 mt-1">
+                Real-time Server-Sent Events push notifications when deadlines approach or grades are posted. Zero polling, zero resource cost.
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="scanForEvents()" id="btn-scan-events" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white transition-all flex items-center gap-1.5">
+                <span>Scan Deadlines Now</span>
+              </button>
+              <button onclick="triggerTestEvent()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all">
+                Test Event
+              </button>
+            </div>
+          </div>
+
+          <!-- Real-time Event Feed -->
+          <div class="pt-2">
+            <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Live Activity Feed</h4>
+            <div id="events-empty-state" class="py-8 text-center text-slate-500 text-xs">
+              No new events detected yet. Click "Scan Deadlines Now" or wait for real-time alerts.
+            </div>
+            <div id="events-feed-list" class="space-y-2.5 max-h-80 overflow-y-auto pr-1"></div>
+          </div>
+        </div>
+
+        <!-- Webhook Integration Card -->
+        <div class="glass-panel p-6 rounded-2xl space-y-4">
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <span>🔗 Outgoing Webhook Dispatcher</span>
+            <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300">Telegram / Discord / AWS SNS</span>
+          </h3>
+          <p class="text-xs text-slate-400">
+            Forward academic events automatically to an external endpoint (e.g. your personal Telegram bot, Discord channel, or an AWS Lambda/SNS webhook).
+          </p>
+
+          <form onsubmit="handleWebhookSubmit(event)" class="space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="sm:col-span-2">
+                <input type="url" id="input-webhook-url" required placeholder="https://api.telegram.org/bot... or Discord/AWS Webhook URL"
+                  class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/50">
+              </div>
+              <div>
+                <button type="submit" id="btn-save-webhook" class="w-full py-2.5 px-4 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all">
+                  Register Webhook
+                </button>
+              </div>
+            </div>
+            <span id="webhook-status-msg" class="block text-[11px] text-emerald-400 hidden"></span>
+          </form>
+        </div>
+      </div>
+
+      <!-- TAB 5: CONNECTOR DIAGNOSTICS & RAW TESTER -->
       <div id="tab-diagnostics" class="tab-content hidden space-y-6">
         <div class="glass-panel p-6 rounded-2xl space-y-4">
           <h3 class="text-base font-bold text-white flex items-center gap-2">
-            <span>UCU Moodle Connection Health</span>
+            <span>Moodle Connection Health</span>
           </h3>
-          <p class="text-xs text-slate-400">Real-time health check communicating with learn.ucu.edu.ua.</p>
+          <p class="text-xs text-slate-400">Real-time latency check communicating with the target Moodle instance.</p>
           
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-mono">
             <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
@@ -385,6 +467,9 @@
       </div>
     </div>
   </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none"></div>
 
   <script src="/static/js/app.js"></script>
 </body>

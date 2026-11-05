@@ -8,15 +8,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.core.exceptions import MoodleException, UnauthorizedError
-from app.routers import auth, courses, assignments, grades, system
+from app.routers import auth, courses, assignments, grades, system, events
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
     print("=" * 60)
-    print("[*] MOODLE CONNECTOR & PORTAL STARTED")
-    print(f"[*] Target Moodle LMS: {settings.clean_moodle_url}")
+    print("[*] UNIVERSAL MOODLE CONNECTOR & EVENT BUS STARTED")
+    print(f"[*] Default Moodle URL: {settings.clean_moodle_url}")
     print(f"[*] Service: {settings.MOODLE_SERVICE_SHORTNAME}")
     print(f"[*] Mock Mode: {settings.MOODLE_MOCK_MODE}")
     print("=" * 60)
@@ -24,9 +24,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Moodle LMS Connector & Portal",
-    description="Secure FastAPI connector and web interface for Moodle LMS (UCU)",
-    version="1.0.0",
+    title="Universal Moodle Connector & Event Portal",
+    description="High-performance, event-driven connector and dashboard for any Moodle LMS instance",
+    version="1.1.0",
     lifespan=lifespan,
 )
 
@@ -62,6 +62,7 @@ app.include_router(courses.router)
 app.include_router(assignments.router)
 app.include_router(grades.router)
 app.include_router(system.router)
+app.include_router(events.router)
 
 # Mount Static & Templates
 current_dir = os.path.dirname(os.path.abspath(__file__))

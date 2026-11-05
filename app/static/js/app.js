@@ -1,7 +1,10 @@
-// Moodle Connector Client-Side Application (UCU Edition)
+// Universal Moodle Connector & Event-Driven Client
 
 let currentUser = null;
-let currentAuthMode = 'cookie'; // 'cookie' (default for Google SSO), 'token', 'credentials'
+let currentAuthMode = 'cookie'; // 'cookie', 'token', 'credentials'
+let eventSource = null;
+let totalEventCount = 0;
+let unreadEventCount = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
   initApp();
@@ -19,6 +22,30 @@ async function initApp() {
     }
   } catch (err) {
     showGuestView();
+  }
+}
+
+// Target URL handling
+function getTargetMoodleUrl() {
+  const el = document.getElementById('input-target-moodle-url');
+  return el ? el.value.trim() : '';
+}
+
+function onTargetUrlChanged() {
+  const url = getTargetMoodleUrl();
+  const linkMoodle = document.getElementById('link-open-moodle');
+  const linkToken = document.getElementById('link-open-token');
+  const navTarget = document.getElementById('nav-target-url');
+  if (linkMoodle) linkMoodle.href = url || '#';
+  if (linkToken) linkToken.href = url ? `${url.replace(/\/+$/, '')}/user/managetoken.php` : '#';
+  if (navTarget) navTarget.innerText = url || 'Universal';
+}
+
+function resetToUcuUrl() {
+  const el = document.getElementById('input-target-moodle-url');
+  if (el) {
+    el.value = 'https://learn.ucu.edu.ua';
+    onTargetUrlChanged();
   }
 }
 
@@ -57,6 +84,7 @@ async function handleCookieSubmit(event) {
   clearLoginError();
 
   const cookieVal = document.getElementById('input-cookie').value.trim();
+  const moodleUrl = getTargetMoodleUrl();
   const btnText = document.getElementById('btn-cookie-text');
   const spinner = document.getElementById('btn-cookie-spinner');
   const submitBtn = document.getElementById('btn-cookie-submit');
@@ -66,7 +94,7 @@ async function handleCookieSubmit(event) {
     return;
   }
 
-  btnText.innerText = 'Connecting to UCU with Cookie...';
+  btnText.innerText = 'Connecting to Moodle with Cookie...';
   spinner.classList.remove('hidden');
   submitBtn.disabled = true;
 
@@ -74,7 +102,7 @@ async function handleCookieSubmit(event) {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cookie: cookieVal })
+      body: JSON.stringify({ cookie: cookieVal, moodle_url: moodleUrl })
     });
 
     let data;
@@ -87,7 +115,7 @@ async function handleCookieSubmit(event) {
     if (!res.ok) {
       showLoginError(
         data.detail || 'Invalid or expired MoodleSession cookie.',
-        'Please make sure you are currently signed into learn.ucu.edu.ua in your browser, then re-copy the cookie.'
+        'Please verify that you are currently signed into your Moodle site in your browser, then re-copy the cookie.'
       );
       return;
     }
@@ -123,6 +151,7 @@ async function handleTokenSubmit(event) {
   clearLoginError();
 
   const token = document.getElementById('input-token').value.trim();
+  const moodleUrl = getTargetMoodleUrl();
   const btnText = document.getElementById('btn-token-text');
   const spinner = document.getElementById('btn-token-spinner');
   const submitBtn = document.getElementById('btn-token-submit');
@@ -132,7 +161,7 @@ async function handleTokenSubmit(event) {
     return;
   }
 
-  btnText.innerText = 'Verifying Token with UCU...';
+  btnText.innerText = 'Verifying Token with Moodle...';
   spinner.classList.remove('hidden');
   submitBtn.disabled = true;
 
@@ -140,7 +169,7 @@ async function handleTokenSubmit(event) {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: token })
+      body: JSON.stringify({ token: token, moodle_url: moodleUrl })
     });
 
     let data;
@@ -153,7 +182,7 @@ async function handleTokenSubmit(event) {
     if (!res.ok) {
       showLoginError(
         data.detail || 'Invalid Moodle Security Token.',
-        'If the UCU token page is empty in your account, please use the "Browser Cookie" tab above.'
+        'If the Moodle security token page is disabled by your school, please use the "Browser Cookie" tab above.'
       );
       return;
     }
@@ -175,6 +204,7 @@ async function handleCredSubmit(event) {
 
   const username = document.getElementById('input-username').value.trim();
   const password = document.getElementById('input-password').value;
+  const moodleUrl = getTargetMoodleUrl();
 
   const btnText = document.getElementById('btn-cred-text');
   const spinner = document.getElementById('btn-cred-spinner');
@@ -188,7 +218,7 @@ async function handleCredSubmit(event) {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username, password: password })
+      body: JSON.stringify({ username: username, password: password, moodle_url: moodleUrl })
     });
 
     let data;
@@ -201,7 +231,7 @@ async function handleCredSubmit(event) {
     if (!res.ok) {
       showLoginError(
         data.detail || 'Authentication failed. Please verify your credentials.',
-        '💡 Tip: Switch to the "Browser Cookie" tab above to connect in seconds via your browser session.'
+        '💡 Tip: Switch to the "Browser Cookie" tab to connect in seconds via your existing browser session.'
       );
       return;
     }
@@ -242,6 +272,10 @@ function togglePasswordVisibility(inputId) {
 }
 
 document.getElementById('btn-logout').addEventListener('click', async () => {
+  if (eventSource) {
+    eventSource.close();
+    eventSource = null;
+  }
   try {
     await fetch('/api/auth/logout', { method: 'POST' });
   } catch (e) {}
@@ -264,7 +298,9 @@ function onLoginSuccess(user) {
   // Dashboard header
   document.getElementById('dash-user-fullname').innerText = user.fullname || user.username;
   document.getElementById('dash-user-id').innerText = user.user_id;
-  document.getElementById('dash-user-site').innerText = `${user.site_url || 'learn.ucu.edu.ua'} • User ID: ${user.user_id}`;
+  const siteLabel = user.site_name || user.site_url || 'Moodle LMS';
+  document.getElementById('dash-site-name').innerText = siteLabel;
+  document.getElementById('dash-user-site').innerText = `${siteLabel} • User ID: ${user.user_id}`;
 
   const avatarImg = document.getElementById('dash-user-avatar');
   const avatarLetter = document.getElementById('dash-avatar-letter');
@@ -278,10 +314,15 @@ function onLoginSuccess(user) {
     avatarLetter.innerText = (user.fullname || user.username || 'U')[0].toUpperCase();
   }
 
-  // Load Data
+  // Load Initial Academic Data
   loadCourses();
   loadAssignments();
   loadGrades();
+
+  // Initialize Real-time Event-Driven Stream & Scan
+  initEventStream();
+  loadRecentEvents();
+  setTimeout(() => scanForEvents(), 1500);
 }
 
 function showGuestView() {
@@ -295,6 +336,204 @@ function openLoginModal() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// ==========================================
+// ⚡ EVENT-DRIVEN SSE & NOTIFICATIONS SYSTEM
+// ==========================================
+
+function initEventStream() {
+  if (eventSource) {
+    eventSource.close();
+  }
+
+  const sseBadge = document.getElementById('sse-status-badge');
+  if (sseBadge) {
+    sseBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800';
+    sseBadge.innerText = '● SSE Stream Connected';
+  }
+
+  eventSource = new EventSource('/api/events/stream');
+
+  eventSource.onopen = () => {
+    if (sseBadge) {
+      sseBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800';
+      sseBadge.innerText = '● SSE Stream Active';
+    }
+  };
+
+  eventSource.onerror = () => {
+    if (sseBadge) {
+      sseBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-950 text-amber-400 border border-amber-800';
+      sseBadge.innerText = '● Reconnecting Stream...';
+    }
+  };
+
+  // Generic message listener
+  eventSource.onmessage = (e) => {
+    try {
+      const eventData = JSON.parse(e.data);
+      handleIncomingEvent(eventData);
+    } catch (err) {}
+  };
+
+  // Specific event types
+  ['assignment.due_soon', 'assignment.urgent', 'grade.new', 'system.connected'].forEach(type => {
+    eventSource.addEventListener(type, (e) => {
+      try {
+        const eventData = JSON.parse(e.data);
+        handleIncomingEvent(eventData);
+      } catch (err) {}
+    });
+  });
+}
+
+function handleIncomingEvent(event) {
+  totalEventCount++;
+  document.getElementById('stat-events-count').innerText = totalEventCount;
+
+  // Add event to feed list
+  prependEventToFeed(event);
+
+  // Show floating toast notification
+  showToast(event.title, event.message, event.severity);
+
+  // If tab-events is not active, increment unread badge
+  const eventsTab = document.getElementById('tab-events');
+  if (eventsTab && eventsTab.classList.contains('hidden')) {
+    unreadEventCount++;
+    const badge = document.getElementById('badge-events-unread');
+    if (badge) {
+      badge.innerText = unreadEventCount;
+      badge.classList.remove('hidden');
+    }
+  }
+}
+
+function prependEventToFeed(event) {
+  const feedList = document.getElementById('events-feed-list');
+  const emptyState = document.getElementById('events-empty-state');
+  if (emptyState) emptyState.classList.add('hidden');
+  if (!feedList) return;
+
+  const card = document.createElement('div');
+  const severityColors = {
+    danger: 'border-red-800/80 bg-red-950/30 text-red-300',
+    warning: 'border-amber-800/80 bg-amber-950/30 text-amber-300',
+    success: 'border-emerald-800/80 bg-emerald-950/30 text-emerald-300',
+    info: 'border-blue-800/80 bg-blue-950/30 text-blue-300'
+  };
+  const colorClass = severityColors[event.severity] || severityColors.info;
+
+  const timeStr = event.timestamp ? new Date(event.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
+
+  card.className = `p-3.5 rounded-xl border ${colorClass} flex items-start justify-between gap-3 text-xs transition-all animate-fadeIn`;
+  card.innerHTML = `
+    <div>
+      <span class="font-bold block text-white text-xs mb-0.5">${escapeHtml(event.title)}</span>
+      <p class="text-slate-300 text-[11px]">${escapeHtml(event.message)}</p>
+    </div>
+    <span class="text-[10px] font-mono text-slate-400 shrink-0">${timeStr}</span>
+  `;
+  feedList.insertBefore(card, feedList.firstChild);
+}
+
+async function loadRecentEvents() {
+  try {
+    const res = await fetch('/api/events');
+    if (!res.ok) return;
+    const events = await res.json();
+    totalEventCount = events.length;
+    document.getElementById('stat-events-count').innerText = totalEventCount;
+    events.forEach(e => prependEventToFeed(e));
+  } catch (err) {}
+}
+
+async function scanForEvents() {
+  const btn = document.getElementById('btn-scan-events');
+  const orig = btn ? btn.innerHTML : '';
+  if (btn) btn.innerHTML = '<span class="animate-spin mr-1">↻</span> Scanning...';
+
+  try {
+    const res = await fetch('/api/events/scan', { method: 'POST' });
+    if (res.ok) {
+      const newEvents = await res.json();
+      if (newEvents.length === 0) {
+        showToast('All Caught Up! 🎯', 'No approaching deadlines or new unread grades found.', 'info');
+      }
+    }
+  } catch (err) {
+    showToast('Scan Error', err.message, 'danger');
+  } finally {
+    if (btn) btn.innerHTML = orig;
+  }
+}
+
+async function triggerTestEvent() {
+  try {
+    const res = await fetch('/api/events/test', { method: 'POST' });
+    if (!res.ok) throw new Error('Failed to dispatch test event');
+  } catch (err) {
+    showToast('Error', err.message, 'danger');
+  }
+}
+
+async function handleWebhookSubmit(event) {
+  event.preventDefault();
+  const url = document.getElementById('input-webhook-url').value.trim();
+  const statusEl = document.getElementById('webhook-status-msg');
+  if (!url) return;
+
+  try {
+    const res = await fetch('/api/events/webhooks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: url })
+    });
+    if (res.ok) {
+      statusEl.innerText = `✓ Webhook successfully connected to: ${url}`;
+      statusEl.classList.remove('hidden');
+      setTimeout(() => statusEl.classList.add('hidden'), 5000);
+      document.getElementById('input-webhook-url').value = '';
+    }
+  } catch (err) {
+    alert(`Failed to save webhook: ${err.message}`);
+  }
+}
+
+function showToast(title, message, severity = 'info') {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  const severityColors = {
+    danger: 'bg-red-950/90 border-red-700 text-red-200',
+    warning: 'bg-amber-950/90 border-amber-700 text-amber-200',
+    success: 'bg-emerald-950/90 border-emerald-700 text-emerald-200',
+    info: 'bg-slate-900/95 border-blue-600 text-slate-100'
+  };
+  const color = severityColors[severity] || severityColors.info;
+
+  toast.className = `p-4 rounded-xl border ${color} shadow-2xl backdrop-blur-md text-xs flex items-start gap-3 pointer-events-auto transform transition-all duration-300 translate-y-2 opacity-0`;
+  toast.innerHTML = `
+    <div class="flex-1">
+      <strong class="block font-bold text-white mb-0.5 text-xs">${escapeHtml(title)}</strong>
+      <p class="text-[11px] opacity-90">${escapeHtml(message)}</p>
+    </div>
+    <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-white text-sm leading-none">&times;</button>
+  `;
+  container.appendChild(toast);
+
+  // Trigger animation
+  setTimeout(() => {
+    toast.classList.remove('translate-y-2', 'opacity-0');
+  }, 10);
+
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    toast.classList.add('opacity-0', 'translate-y-2');
+    setTimeout(() => toast.remove(), 300);
+  }, 5000);
+}
+
 // System Health & Latency
 async function initSystemHealth() {
   const dot = document.getElementById('conn-status-dot');
@@ -306,7 +545,7 @@ async function initSystemHealth() {
 
     if (data.status === 'healthy') {
       dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
-      text.innerText = `UCU Connected (${data.latency_ms}ms)`;
+      text.innerText = `Connected (${data.latency_ms}ms)`;
     } else if (data.status === 'degraded') {
       dot.className = 'w-2 h-2 rounded-full bg-amber-400';
       text.innerText = `Degraded (${data.latency_ms}ms)`;
@@ -327,13 +566,20 @@ async function initSystemHealth() {
 function switchTab(tabId) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
   document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.className = 'tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition-all';
+    btn.className = 'tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition-all whitespace-nowrap';
   });
 
   document.getElementById(tabId).classList.remove('hidden');
   const activeBtn = document.getElementById(`tab-btn-${tabId.replace('tab-', '')}`);
   if (activeBtn) {
-    activeBtn.className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-semibold text-white bg-blue-600 transition-all';
+    activeBtn.className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-semibold text-white bg-blue-600 transition-all whitespace-nowrap';
+  }
+
+  // Clear unread event count if switching to events tab
+  if (tabId === 'tab-events') {
+    unreadEventCount = 0;
+    const badge = document.getElementById('badge-events-unread');
+    if (badge) badge.classList.add('hidden');
   }
 }
 
@@ -347,42 +593,50 @@ async function loadCourses() {
   try {
     const res = await fetch('/api/courses');
     if (!res.ok) throw new Error('Failed to load courses');
-
     const courses = await res.json();
-    document.getElementById('stat-courses-count').innerText = courses.length;
 
+    document.getElementById('stat-courses-count').innerText = courses.length;
     grid.innerHTML = '';
+
     if (courses.length === 0) {
-      grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-400 text-sm">No courses enrolled currently.</div>';
+      grid.innerHTML = '<div class="col-span-full py-8 text-center text-slate-400 text-sm">No active course enrollments found.</div>';
     } else {
       courses.forEach(c => {
-        const progressVal = Math.round(c.progress || 0);
         const card = document.createElement('div');
-        card.className = 'glass-panel p-5 rounded-2xl flex flex-col justify-between hover:border-blue-500/50 transition-all group';
+        card.className = 'glass-panel p-5 rounded-2xl flex flex-col justify-between hover:border-slate-600 transition-all group';
+        const progressVal = c.progress !== null ? Math.round(c.progress) : 0;
+        
         card.innerHTML = `
           <div>
-            <div class="flex items-center justify-between mb-3">
-              <span class="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider">${escapeHtml(c.shortname || 'COURSE')}</span>
-              ${c.completed ? '<span class="text-emerald-400 text-[10px] font-semibold flex items-center gap-1">✓ Completed</span>' : ''}
+            <div class="flex items-center justify-between mb-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-800 text-blue-400 border border-slate-700">
+                ${escapeHtml(c.shortname || 'COURSE')}
+              </span>
+              ${c.completed ? '<span class="text-[10px] text-emerald-400 font-semibold">✓ Completed</span>' : ''}
             </div>
-            <h4 class="text-sm font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-2 mb-2">${escapeHtml(c.fullname)}</h4>
-            <div class="text-xs text-slate-400 line-clamp-3 mb-4">${c.summary ? stripHtml(c.summary) : 'No summary provided.'}</div>
+            <h3 class="text-sm font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-2 mb-2">
+              ${escapeHtml(c.fullname)}
+            </h3>
+            <p class="text-xs text-slate-400 line-clamp-3 mb-4">
+              ${c.summary ? escapeHtml(stripHtml(c.summary)) : 'No description provided.'}
+            </p>
           </div>
+
           <div>
-            ${c.progress !== null && c.progress !== undefined ? `
+            ${c.progress !== null ? `
               <div class="mb-4">
-                <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                <div class="flex justify-between text-[11px] text-slate-400 mb-1">
                   <span>Progress</span>
-                  <span class="font-bold text-slate-200">${progressVal}%</span>
+                  <span class="font-mono">${progressVal}%</span>
                 </div>
                 <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                  <div class="bg-blue-500 h-1.5 rounded-full transition-all" style="width: ${progressVal}%"></div>
+                  <div class="bg-blue-600 h-1.5 rounded-full" style="width: ${progressVal}%"></div>
                 </div>
               </div>
             ` : ''}
-            <button onclick="openCourseDetails(${c.id}, '${escapeQuotes(c.fullname)}', '${escapeQuotes(c.shortname)}')"
-              class="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-blue-600/20 text-slate-300 hover:text-blue-400 border border-slate-800 hover:border-blue-500/30 text-xs font-semibold transition-all flex items-center justify-center gap-1.5">
-              <span>View Syllabus & Modules</span>
+            <button onclick="openCourseDetails(${c.id}, '${escapeQuotes(c.fullname)}', '${escapeQuotes(c.shortname || '')}')"
+              class="w-full py-2 px-3 rounded-xl bg-slate-800/80 hover:bg-blue-600 hover:text-white border border-slate-700/80 text-xs font-semibold text-slate-200 transition-all flex items-center justify-center gap-1.5">
+              <span>View Course Syllabus & Modules</span>
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </button>
           </div>
@@ -398,81 +652,62 @@ async function loadCourses() {
   }
 }
 
-// 2. Fetch Course Details Modal
+// 2. Fetch & Render Course Content Modal
 async function openCourseDetails(courseId, courseTitle, courseCode) {
   const modal = document.getElementById('course-modal');
-  const titleEl = document.getElementById('modal-course-title');
-  const codeEl = document.getElementById('modal-course-code');
-  const bodyEl = document.getElementById('modal-course-body');
+  const title = document.getElementById('modal-course-title');
+  const code = document.getElementById('modal-course-code');
+  const body = document.getElementById('modal-course-body');
 
-  titleEl.innerText = courseTitle;
-  codeEl.innerText = courseCode;
-  bodyEl.innerHTML = '<div class="py-12 text-center text-slate-400 text-sm">Fetching sections and syllabus from Moodle...</div>';
+  title.innerText = courseTitle;
+  code.innerText = courseCode;
+  body.innerHTML = '<div class="py-12 text-center text-slate-400">Loading course materials and sections...</div>';
   modal.classList.remove('hidden');
 
   try {
     const res = await fetch(`/api/courses/${courseId}/contents`);
-    if (!res.ok) throw new Error('Could not load course contents');
+    if (!res.ok) throw new Error('Failed to load course contents');
     const sections = await res.json();
 
-    if (!sections || sections.length === 0) {
-      bodyEl.innerHTML = '<div class="py-12 text-center text-slate-400 text-sm">No course contents found.</div>';
-      return;
-    }
-
-    bodyEl.innerHTML = '';
-    sections.forEach((sec, idx) => {
-      const secDiv = document.createElement('div');
-      secDiv.className = 'p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3';
-
-      let modulesHtml = '';
-      if (sec.modules && sec.modules.length > 0) {
-        modulesHtml = sec.modules.map(mod => {
-          let badgeColor = 'bg-slate-800 text-slate-300';
-          let icon = '📄';
-          if (mod.modname === 'assign') { badgeColor = 'bg-amber-500/20 text-amber-300 border border-amber-500/30'; icon = '📝'; }
-          else if (mod.modname === 'quiz') { badgeColor = 'bg-purple-500/20 text-purple-300 border border-purple-500/30'; icon = '❓'; }
-          else if (mod.modname === 'forum') { badgeColor = 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'; icon = '💬'; }
-          else if (mod.modname === 'resource') { badgeColor = 'bg-blue-500/20 text-blue-300 border border-blue-500/30'; icon = '📁'; }
-
-          return `
-            <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-colors">
-              <div class="flex items-center gap-2.5">
-                <span class="text-base">${icon}</span>
-                <div>
-                  <span class="font-medium text-slate-200 block">${escapeHtml(mod.name)}</span>
-                  ${mod.description ? `<p class="text-[11px] text-slate-400">${stripHtml(mod.description)}</p>` : ''}
-                </div>
+    body.innerHTML = '';
+    if (sections.length === 0) {
+      body.innerHTML = '<div class="py-8 text-center text-slate-400">No content or sections in this course.</div>';
+    } else {
+      sections.forEach(s => {
+        const secDiv = document.createElement('div');
+        secDiv.className = 'border border-slate-800 rounded-xl p-4 bg-slate-900/50 space-y-3';
+        
+        let modulesHtml = '';
+        if (s.modules && s.modules.length > 0) {
+          modulesHtml = s.modules.map(m => `
+            <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-900 border border-slate-800/80 hover:border-slate-700 transition-all">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-800 text-blue-300">
+                  ${m.modname}
+                </span>
+                <span class="text-xs text-slate-200 truncate">${escapeHtml(m.name)}</span>
               </div>
-              <div class="flex items-center gap-2">
-                <span class="text-[10px] font-mono px-2 py-0.5 rounded ${badgeColor} uppercase">${mod.modname}</span>
-                ${mod.url ? `
-                  <a href="${mod.url}" target="_blank" rel="noopener noreferrer" class="p-1 rounded text-slate-400 hover:text-white" title="Open in Moodle">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke_linecap="round" stroke_linejoin="round" stroke_width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                  </a>
-                ` : ''}
-              </div>
+              ${m.url ? `
+                <a href="${m.url}" target="_blank" rel="noopener noreferrer" class="text-xs text-blue-400 hover:text-blue-300 shrink-0 ml-2">
+                  Open ↗
+                </a>
+              ` : ''}
             </div>
-          `;
-        }).join('');
-      } else {
-        modulesHtml = '<p class="text-xs text-slate-500 italic">No resources or activities in this section.</p>';
-      }
+          `).join('');
+        } else {
+          modulesHtml = '<p class="text-[11px] text-slate-500 italic">No resources or activities in this section.</p>';
+        }
 
-      secDiv.innerHTML = `
-        <div class="border-b border-slate-800 pb-2">
-          <h4 class="font-bold text-sm text-white">${escapeHtml(sec.name || `Section ${idx + 1}`)}</h4>
-          ${sec.summary ? `<div class="text-xs text-slate-400 mt-1">${stripHtml(sec.summary)}</div>` : ''}
-        </div>
-        <div class="space-y-2 mt-2">
-          ${modulesHtml}
-        </div>
-      `;
-      bodyEl.appendChild(secDiv);
-    });
-
+        secDiv.innerHTML = `
+          <h4 class="text-xs font-bold text-white uppercase tracking-wider">${escapeHtml(s.name)}</h4>
+          ${s.summary ? `<p class="text-[11px] text-slate-400">${escapeHtml(stripHtml(s.summary))}</p>` : ''}
+          <div class="space-y-1.5 pt-1">${modulesHtml}</div>
+        `;
+        body.appendChild(secDiv);
+      });
+    }
   } catch (err) {
-    bodyEl.innerHTML = `<div class="py-12 text-center text-red-400 text-sm">Error: ${err.message}</div>`;
+    body.innerHTML = `<div class="py-8 text-center text-red-400">Failed to load syllabus: ${err.message}</div>`;
   }
 }
 
@@ -484,43 +719,49 @@ function closeCourseModal() {
 async function loadAssignments() {
   const loading = document.getElementById('assignments-loading');
   const list = document.getElementById('assignments-list');
+  const badge = document.getElementById('assignments-badge-count');
   loading.classList.remove('hidden');
   list.classList.add('hidden');
 
   try {
     const res = await fetch('/api/assignments');
     if (!res.ok) throw new Error('Failed to load assignments');
-
     const data = await res.json();
-    document.getElementById('stat-assignments-count').innerText = data.total;
-    document.getElementById('assignments-badge-count').innerText = `${data.total} tasks`;
 
+    badge.innerText = `${data.total_count} tasks`;
+    document.getElementById('stat-assignments-count').innerText = data.total_count;
     list.innerHTML = '';
+
     if (data.assignments.length === 0) {
-      list.innerHTML = '<div class="glass-panel p-8 text-center text-slate-400 text-sm rounded-2xl">No upcoming assignments due. Great job!</div>';
+      list.innerHTML = '<div class="glass-panel p-8 text-center text-slate-400 text-sm rounded-2xl">No upcoming assignment deadlines found! 🎉</div>';
     } else {
       data.assignments.forEach(a => {
         const item = document.createElement('div');
-        item.className = 'glass-panel p-4 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:border-slate-700 transition-all';
-        
-        const dueTag = a.is_overdue
-          ? '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">OVERDUE</span>'
-          : '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">UPCOMING</span>';
+        const isOverdue = a.is_overdue;
+        const borderClass = isOverdue ? 'border-red-900/50 hover:border-red-800' : 'border-slate-800 hover:border-slate-700';
 
+        item.className = `glass-panel p-4 rounded-xl border ${borderClass} flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all`;
         item.innerHTML = `
           <div>
             <div class="flex items-center gap-2 mb-1">
-              <span class="text-xs font-semibold text-blue-400">${escapeHtml(a.course_name || 'Course')}</span>
-              ${dueTag}
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-800 text-slate-300">
+                ${escapeHtml(a.course_shortname)}
+              </span>
+              ${isOverdue ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-950 text-red-400 border border-red-800">OVERDUE</span>' : ''}
             </div>
-            <h4 class="text-sm font-bold text-white">${escapeHtml(a.name)}</h4>
-            ${a.intro ? `<div class="text-xs text-slate-400 mt-1 line-clamp-1">${stripHtml(a.intro)}</div>` : ''}
+            <h4 class="text-xs font-bold text-white">${escapeHtml(a.name)}</h4>
+            <p class="text-[11px] text-slate-400">Due: <span class="font-mono text-slate-200">${a.duedate_formatted || 'No deadline'}</span></p>
           </div>
-          <div class="flex items-center gap-4 text-xs shrink-0">
-            <div class="text-right">
-              <span class="block text-slate-400 text-[11px]">Due Date</span>
-              <span class="font-mono text-slate-200 font-semibold">${a.duedate_formatted || 'No deadline'}</span>
-            </div>
+
+          <div class="flex items-center gap-3">
+            <span class="text-xs px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
+              ${a.submitted ? '<span class="text-emerald-400 font-semibold">✓ Submitted</span>' : '<span class="text-amber-400 font-semibold">Pending</span>'}
+            </span>
+            ${a.url ? `
+              <a href="${a.url}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-all">
+                Submit ↗
+              </a>
+            ` : ''}
           </div>
         `;
         list.appendChild(item);
@@ -544,8 +785,8 @@ async function loadGrades() {
   try {
     const res = await fetch('/api/grades');
     if (!res.ok) throw new Error('Failed to load grades');
-
     const data = await res.json();
+
     container.innerHTML = '';
 
     if (data.courses.length === 0) {
@@ -603,6 +844,7 @@ function refreshDashboardData() {
   loadAssignments();
   loadGrades();
   initSystemHealth();
+  scanForEvents();
 }
 
 async function runDiagnosticsCheck() {

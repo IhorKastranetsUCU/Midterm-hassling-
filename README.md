@@ -1,21 +1,27 @@
-# 🎓 Moodle LMS Connector & Portal (Python + FastAPI)
+# 🎓 Universal Moodle LMS Connector & Event Portal (Python + FastAPI)
 
-A secure, high-performance web connector and modern dashboard that interfaces with Moodle LMS (configured for **Ukrainian Catholic University** at `https://learn.ucu.edu.ua/`).
+A secure, high-performance, **event-driven** web connector and modern dashboard that interfaces with **any Moodle LMS installation** (UCU, other universities, or self-hosted Moodle 3.x/4.x/5.x).
 
 ---
 
 ## ✨ Features
 
-- **🔐 Individual User Login**:
-  - Direct individual authentication against Moodle's native `/login/token.php` service.
-  - Zero raw token exposure to the client browser.
-  - Session tokens are encrypted inside an `HttpOnly`, `SameSite=Lax` signed JWT cookie.
-  - Supports both live UCU Moodle credentials and an instant sandbox demo mode (`demo`/`demo`).
+- **🌐 Universal Moodle Compatibility**:
+  - Connects to **any Moodle instance** on the web (e.g., `learn.ucu.edu.ua`, `moodle.your-university.edu`, etc.).
+  - Works with active MoodleSession cookies (ideal for Single Sign-On / Google Workspace / Microsoft), official Web Service Security Tokens, or direct credentials.
+- **⚡ Event-Driven Academic Monitoring**:
+  - **Zero-Cost In-Memory Event Bus**: Built on Python `asyncio.Queue` with zero external dependencies (no Kafka or Redis required).
+  - **Live Server-Sent Events (SSE)**: Pushes real-time alerts directly into the browser (`assignment.urgent`, `assignment.due_soon`, `grade.new`).
+  - **Outgoing Webhooks**: Dispatches events to Telegram bots, Discord webhooks, or AWS SNS topics.
+- **🔐 Privacy & Security First**:
+  - Zero server-side persistence: No database, no file caches, no credential logs.
+  - HttpOnly, SameSite=Lax signed JWT session cookies protect tokens against XSS.
 - **📚 Real-time Academic Data Retrieval**:
   - **Enrolled Courses**: Course listing, shortnames, categories, and progress tracking.
   - **Course Syllabus & Modules**: Sections, PDF resources, discussion forums, quizzes, and assignment links.
   - **Assignments & Deadlines**: Formatted due dates, submission status, and overdue flags.
   - **Grades & Feedback**: Course totals, evaluation breakdown, and teacher feedback comments.
+
 - **⚡ Built-in Diagnostics & Health Monitoring**:
   - Live round-trip latency measurement to `https://learn.ucu.edu.ua/`.
   - Protocol status checks for Moodle REST API and Mobile Authentication endpoints.
