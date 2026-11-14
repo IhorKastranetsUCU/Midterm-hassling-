@@ -94,30 +94,86 @@
   <!-- MAIN CONTAINER -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col">
 
-    <!-- HERO / LOGIN CARD (Shown when user is NOT logged in) -->
-    <section id="guest-view" class="my-auto py-6 flex flex-col items-center">
-      <div class="w-full max-w-xl">
+    <!-- HERO / PORTAL WORKSPACE + LMS LOGIN (Shown when user is NOT logged into Moodle) -->
+    <section id="guest-view" class="my-auto py-4 flex flex-col items-center">
+      <div class="w-full max-w-6xl">
         
         <!-- Welcome banner -->
-        <div class="text-center mb-6">
+        <div class="text-center mb-8">
           <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-medium mb-3">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-            Universal Moodle Connector
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            AI Course Workspace & Universal LMS Bridge
           </div>
-          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-2">Connect to Any Moodle Site</h1>
-          <p class="text-slate-400 text-xs sm:text-sm">
-            Sign in to any Moodle-based LMS instance to stream real-time academic events, track deadlines, and monitor grades.
+          <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-2">Study Smarter Without Giving Away Passwords</h1>
+          <p class="text-slate-400 text-xs sm:text-sm max-w-2xl mx-auto">
+            Sync courses in 1 click via Chrome Extension or upload lecture files directly to build Interactive Books, Mermaid Diagrams, Practice Quizzes, and Exam Prep Mixes.
           </p>
         </div>
 
-        <!-- Login Card with URL Selector + 3 Tabs -->
-        <div class="glass-panel p-6 sm:p-8 rounded-2xl shadow-2xl relative overflow-hidden">
-          <div class="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-          <!-- Moodle Instance Selector / Custom URL -->
-          <div class="mb-5 p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
-            <div class="flex items-center justify-between">
-              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">Target LMS URL</label>
+          <!-- LEFT 7 COLS: WORKSPACE HUB & EXTENSION BRIDGE -->
+          <div class="lg:col-span-7 space-y-5">
+
+            <!-- Synced & Uploaded Courses Hub -->
+            <div class="glass-panel p-6 rounded-2xl shadow-2xl space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                <div>
+                  <h2 class="text-base font-bold text-white flex items-center gap-2">
+                    <span>📚 Your Study Workspaces</span>
+                    <span id="guest-workspace-count" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-blue-950 text-blue-300 border border-blue-800">0</span>
+                  </h2>
+                  <p class="text-xs text-slate-400 mt-0.5">Synced from Chrome Extension or created from PDF/PPTX/Markdown files.</p>
+                </div>
+                <button type="button" onclick="openCreateCourseModal()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-lg shadow-blue-500/20 transition-all shrink-0 flex items-center gap-1.5">
+                  <span>+ Import / Create Course</span>
+                </button>
+              </div>
+
+              <div id="guest-workspace-courses" class="space-y-3">
+                <div class="py-8 text-center text-xs text-slate-400">Loading study workspaces...</div>
+              </div>
+            </div>
+
+            <!-- Chrome Extension 30-Second Setup Card -->
+            <div class="glass-panel p-5 rounded-2xl border border-indigo-900/40 bg-indigo-950/10 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-8 h-8 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-base">🧩</span>
+                  <div>
+                    <h3 class="text-xs font-bold text-white">Chrome / Edge Extension Bridge (Zero F12, Zero Passwords)</h3>
+                    <p class="text-[11px] text-slate-400">Syncs directly from your logged-in Moodle tab and shields graded exams automatically.</p>
+                  </div>
+                </div>
+                <button type="button" onclick="toggleExtensionGuide()" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-[11px] font-semibold text-indigo-300 transition-all shrink-0">
+                  How to Install
+                </button>
+              </div>
+
+              <div id="extension-install-guide" class="hidden pt-3 border-t border-slate-800/80 text-[11px] text-slate-300 space-y-2">
+                <p>1. Open <code class="px-1.5 py-0.5 rounded bg-slate-900 text-blue-300 font-mono">chrome://extensions</code> (or <code class="px-1.5 py-0.5 rounded bg-slate-900 text-blue-300 font-mono">edge://extensions</code>) and enable <strong>Developer mode</strong>.</p>
+                <p>2. Click <strong>Load unpacked</strong> and choose the <code class="px-1.5 py-0.5 rounded bg-slate-900 text-emerald-300 font-mono">extension/</code> folder inside this repository.</p>
+                <p>3. Open any course on UCU / LNU / LPNU / Moodle and click <strong>⚡ Sync & Open Workspace</strong> — this portal updates automatically.</p>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RIGHT 5 COLS: MOODLE DIRECT CONNECTOR CARD -->
+          <div class="lg:col-span-5">
+            <div class="mb-3 flex items-center justify-between px-1">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Direct Moodle Connector (Optional)</span>
+              <span class="text-[10px] text-slate-500">Live Deadlines & Grades</span>
+            </div>
+
+            <!-- Login Card with URL Selector + 3 Tabs -->
+            <div class="glass-panel p-6 rounded-2xl shadow-2xl relative overflow-hidden">
+              <div class="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+              <!-- Moodle Instance Selector / Custom URL -->
+              <div class="mb-5 p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
+                <div class="flex items-center justify-between">
+                  <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">Target LMS URL</label>
               <button type="button" onclick="testUrlCompatibility()" id="btn-quick-inspect" class="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1 transition-all">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <span>Check Moodle Compatibility</span>
@@ -281,6 +337,9 @@
           </div>
         </div>
 
+          </div>
+        </div>
+
       </div>
     </section>
 
@@ -344,11 +403,30 @@
       </div>
 
       <!-- TAB 1: COURSES -->
-      <div id="tab-courses" class="tab-content">
-        <div id="courses-loading" class="py-12 text-center text-slate-400 text-sm">
-          Loading enrolled courses from Moodle...
+      <div id="tab-courses" class="tab-content space-y-6">
+        <div class="glass-panel p-5 rounded-2xl border border-indigo-900/40 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <span>📚 AI Study Workspaces (Extension & Uploads)</span>
+                <span id="auth-workspace-count" class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-indigo-950 text-indigo-300 border border-indigo-800">0</span>
+              </h3>
+              <p class="text-[11px] text-slate-400">Courses synced via Chrome Extension or imported from your files.</p>
+            </div>
+            <button type="button" onclick="openCreateCourseModal()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shrink-0">
+              + Import / Create Course
+            </button>
+          </div>
+          <div id="auth-workspace-courses" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
-        <div id="courses-grid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+
+        <div>
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Enrolled Moodle Courses</h3>
+          <div id="courses-loading" class="py-12 text-center text-slate-400 text-sm">
+            Loading enrolled courses from Moodle...
+          </div>
+          <div id="courses-grid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+        </div>
       </div>
 
       <!-- TAB 2: ASSIGNMENTS -->
@@ -533,6 +611,101 @@
       <div id="modal-course-body" class="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
         <div class="text-center py-8 text-slate-400">Loading course syllabus and modules...</div>
       </div>
+    </div>
+  </div>
+
+  <!-- CREATE / IMPORT COURSE MODAL (Drag&Drop + Tool Checkboxes) -->
+  <div id="create-course-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-panel w-full max-w-xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col border border-slate-700 overflow-hidden">
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-mono font-bold text-indigo-400 uppercase tracking-wider">Course Builder</span>
+          <h3 class="text-base font-bold text-white">Create AI Study Workspace</h3>
+        </div>
+        <button type="button" onclick="closeCreateCourseModal()" class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form onsubmit="handleCreateCourseSubmit(event)" class="p-6 overflow-y-auto space-y-5 text-xs">
+        <div class="grid grid-cols-3 gap-3">
+          <div class="col-span-2">
+            <label class="block text-[11px] font-semibold text-slate-300 uppercase mb-1">Course Title</label>
+            <input type="text" id="create-course-title" required placeholder="e.g. Discrete Mathematics"
+              class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 uppercase mb-1">Code</label>
+            <input type="text" id="create-course-short" placeholder="MATH101" value="STUDY"
+              class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-100 font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50">
+          </div>
+        </div>
+
+        <!-- Source Mode Switch -->
+        <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-900 border border-slate-800 rounded-xl text-[11px] font-semibold">
+          <button type="button" id="btn-import-file" onclick="setCreateMode('file')" class="py-2 rounded-lg bg-blue-600 text-white transition-all">
+            📁 Drag & Drop File
+          </button>
+          <button type="button" id="btn-import-text" onclick="setCreateMode('text')" class="py-2 rounded-lg text-slate-400 hover:text-white transition-all">
+            📝 Paste Notes / Text
+          </button>
+        </div>
+
+        <!-- Upload Zone -->
+        <div id="create-mode-file" class="space-y-2">
+          <div id="upload-dropzone" onclick="document.getElementById('input-course-file').click()"
+            class="border-2 border-dashed border-slate-700 hover:border-blue-500/60 bg-slate-900/60 rounded-xl p-6 text-center cursor-pointer transition-all">
+            <input type="file" id="input-course-file" class="hidden" accept=".pdf,.txt,.md,.docx,.pptx,.html,.csv" onchange="onCourseFileSelected(this)">
+            <p class="text-slate-200 font-semibold mb-1" id="upload-file-label">Drop PDF, PPTX, DOCX, MD, or TXT here</p>
+            <p class="text-[11px] text-slate-500">or click to browse files from your device</p>
+          </div>
+        </div>
+
+        <!-- Text Paste Zone -->
+        <div id="create-mode-text" class="hidden space-y-2">
+          <textarea id="input-course-notes-text" rows="5" placeholder="Paste lecture slides, markdown notes, or syllabus topics here..."
+            class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"></textarea>
+        </div>
+
+        <!-- Tool Checkboxes before course creation -->
+        <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-300">Select Course Tools (Checkboxes)</span>
+            <span class="text-[10px] text-emerald-400">Private Workspace</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2.5 text-xs text-slate-200">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="tool-interactive_book" checked class="rounded border-slate-600 bg-slate-800 text-blue-600">
+              <span>📚 Interactive Book</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="tool-mermaid_diagrams" checked class="rounded border-slate-600 bg-slate-800 text-blue-600">
+              <span>🔀 Mermaid Diagrams</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="tool-visual_cards" checked class="rounded border-slate-600 bg-slate-800 text-blue-600">
+              <span>🖼️ Visual Cards</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="tool-practice_quizzes" checked class="rounded border-slate-600 bg-slate-800 text-blue-600">
+              <span>❓ Practice Quizzes</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="tool-flashcards" class="rounded border-slate-600 bg-slate-800 text-blue-600">
+              <span>🃏 Flashcards</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="tool-exam_mix" checked class="rounded border-slate-600 bg-slate-800 text-blue-600">
+              <span>🎯 Exam Mix (Мікс міксів)</span>
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" id="btn-create-course-submit"
+          class="w-full py-3 px-4 rounded-xl font-semibold text-xs bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-lg shadow-blue-500/20 transition-all">
+          Build Study Workspace
+        </button>
+      </form>
     </div>
   </div>
 

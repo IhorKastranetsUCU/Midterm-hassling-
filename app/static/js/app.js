@@ -9,6 +9,12 @@ let unreadEventCount = 0;
 document.addEventListener('DOMContentLoaded', () => {
   initApp();
   initSystemHealth();
+  loadWorkspaceCourses();
+  initDropzoneHandlers();
+});
+
+window.addEventListener('focus', () => {
+  loadWorkspaceCourses();
 });
 
 async function initApp() {
@@ -410,11 +416,14 @@ function initEventStream() {
   };
 
   // Specific event types
-  ['assignment.due_soon', 'assignment.urgent', 'grade.new', 'system.connected'].forEach(type => {
+  ['assignment.due_soon', 'assignment.urgent', 'grade.new', 'system.connected', 'workspace.synced', 'topic.update_available'].forEach(type => {
     eventSource.addEventListener(type, (e) => {
       try {
         const eventData = JSON.parse(e.data);
         handleIncomingEvent(eventData);
+        if (type === 'workspace.synced' || type === 'topic.update_available') {
+          loadWorkspaceCourses();
+        }
       } catch (err) {}
     });
   });
@@ -1135,4 +1144,253 @@ async function runLmsProbe() {
     if (btn) btn.disabled = false;
   }
 }
+
+// ==========================================
+// 📚 AI STUDY WORKSPACES & COURSE CREATOR
+// ==========================================
+
+let createCourseMode = 'file';
+let selectedUploadFile = null;
+
+async function loadWorkspaceCourses() {
+  const guestContainer = document.getElementById('guest-workspace-courses');
+  const authContainer = document.getElementById('auth-workspace-courses');
+  const guestBadge = document.getElementById('guest-workspace-count');
+  const authBadge = document.getElementById('auth-workspace-count');
+
+  try {
+    const res = await fetch('/api/workspace/courses');
+    if (!res.ok) return;
+    const courses = await res.json();
+
+    if (guestBadge) guestBadge.innerText = courses.length;
+    if (authBadge) authBadge.innerText = courses.length;
+
+    renderWorkspaceCards(guestContainer, courses, false);
+    renderWorkspaceCards(authContainer, courses, true);
+  } catch (err) {
+    if (guestContainer) {
+      guestContainer.innerHTML = `<div class="text-xs text-slate-500 py-4 text-center">Unable to reach workspace store right now.</div>`;
+    }
+  }
+}
+
+function renderWorkspaceCards(container, courses, compactGrid) {
+  if (!container) return;
+  if (!courses || courses.length === 0) {
+    container.innerHTML = `
+      <div class="col-span-full py-8 px-4 rounded-xl border border-dashed border-slate-800 bg-slate-900/40 text-center space-y-2">
+        <p class="text-xs font-semibold text-slate-300">No courses in your workspace yet</p>
+        <p class="text-[11px] text-slate-500">Sync a course using the Chrome Extension from Moodle, or click <strong>+ Import / Create Course</strong> above to upload PDFs/slides/notes.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = '';
+  courses.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'p-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-indigo-500/50 transition-all flex flex-col justify-between gap-3';
+
+    const sourceBadge = c.source_type === 'moodle_extension'
+      ? '<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-indigo-950 text-indigo-300 border border-indigo-800">EXTENSION SYNC</span>'
+      : '<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-950 text-emerald-300 border border-emerald-800">FILE IMPORT</span>';
+
+    const updateBadge = c.updates_pending > 0
+      ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800">${c.updates_pending} update(s)</span>`
+      : '';
+
+    const shieldBadge = c.blocked_quizzes_count > 0
+      ? `<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-purple-950/70 text-purple-300 border border-purple-800/60" title="Restricted exams shielded">🛡️ ${c.blocked_quizzes_count} shielded</span>`
+      : '';
+
+    card.innerHTML = `
+      <div class="${compactGrid ? '' : 'flex flex-col sm:flex-row sm:items-center justify-between gap-3'}">
+        <div class="min-w-0 space-y-1">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-800 text-blue-300">${escapeHtml(c.shortname || 'COURSE')}</span>
+            ${sourceBadge}
+            ${updateBadge}
+            ${shieldBadge}
+          </div>
+          <h4 class="text-sm font-bold text-white truncate">${escapeHtml(c.title)}</h4>
+          <p class="text-[11px] text-slate-400">
+            ${c.topic_count} topics • ${c.has_exam_mix ? '🎯 Exam Mix Ready' : 'Study Pack'} • 🔒 ${escapeHtml(c.visibility)}
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0 ${compactGrid ? 'pt-2' : ''}">
+          <a href="/${encodeURIComponent(c.authority || 'custom')}/courses/${c.course_id}"
+            class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-all shadow-md shadow-blue-600/20 whitespace-nowrap">
+            Open Study Workspace ↗
+          </a>
+          <button type="button" onclick="deleteWorkspaceCourse(${c.course_id})" title="Delete Workspace"
+            class="p-2 rounded-xl bg-slate-800 hover:bg-red-950/60 text-slate-400 hover:text-red-300 border border-slate-700 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function toggleExtensionGuide() {
+  const el = document.getElementById('extension-install-guide');
+  if (el) el.classList.toggle('hidden');
+}
+
+function openCreateCourseModal() {
+  const modal = document.getElementById('create-course-modal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeCreateCourseModal() {
+  const modal = document.getElementById('create-course-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function setCreateMode(mode) {
+  createCourseMode = mode;
+  const fileBtn = document.getElementById('btn-import-file');
+  const textBtn = document.getElementById('btn-import-text');
+  const fileZone = document.getElementById('create-mode-file');
+  const textZone = document.getElementById('create-mode-text');
+
+  if (fileBtn) fileBtn.className = mode === 'file' ? 'py-2 rounded-lg bg-blue-600 text-white transition-all' : 'py-2 rounded-lg text-slate-400 hover:text-white transition-all';
+  if (textBtn) textBtn.className = mode === 'text' ? 'py-2 rounded-lg bg-blue-600 text-white transition-all' : 'py-2 rounded-lg text-slate-400 hover:text-white transition-all';
+  if (fileZone) fileZone.classList.toggle('hidden', mode !== 'file');
+  if (textZone) textZone.classList.toggle('hidden', mode !== 'text');
+}
+
+function initDropzoneHandlers() {
+  const dropzone = document.getElementById('upload-dropzone');
+  if (!dropzone) return;
+
+  ['dragenter', 'dragover'].forEach(evName => {
+    dropzone.addEventListener(evName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.add('border-blue-500', 'bg-blue-950/20');
+    });
+  });
+
+  ['dragleave', 'drop'].forEach(evName => {
+    dropzone.addEventListener(evName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.remove('border-blue-500', 'bg-blue-950/20');
+    });
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    const files = e.dataTransfer && e.dataTransfer.files;
+    if (files && files.length > 0) {
+      selectedUploadFile = files[0];
+      const lbl = document.getElementById('upload-file-label');
+      if (lbl) lbl.innerText = `Selected: ${selectedUploadFile.name} (${Math.round(selectedUploadFile.size / 1024)} KB)`;
+    }
+  });
+}
+
+function onCourseFileSelected(input) {
+  if (input.files && input.files.length > 0) {
+    selectedUploadFile = input.files[0];
+    const lbl = document.getElementById('upload-file-label');
+    if (lbl) lbl.innerText = `Selected: ${selectedUploadFile.name} (${Math.round(selectedUploadFile.size / 1024)} KB)`;
+  }
+}
+
+function readCourseToolCheckboxes() {
+  const readBool = (id, fallback) => {
+    const el = document.getElementById(id);
+    return el ? el.checked : fallback;
+  };
+  return {
+    interactive_book: readBool('tool-interactive_book', true),
+    mermaid_diagrams: readBool('tool-mermaid_diagrams', true),
+    visual_cards: readBool('tool-visual_cards', true),
+    practice_quizzes: readBool('tool-practice_quizzes', true),
+    flashcards: readBool('tool-flashcards', false),
+    exam_mix: readBool('tool-exam_mix', true),
+    deadline_tracker: true,
+  };
+}
+
+async function handleCreateCourseSubmit(event) {
+  event.preventDefault();
+  const title = (document.getElementById('create-course-title')?.value || '').trim();
+  const shortname = (document.getElementById('create-course-short')?.value || 'STUDY').trim();
+  const authSlug = document.body.dataset.authoritySlug || 'custom';
+  const tools = readCourseToolCheckboxes();
+  const btn = document.getElementById('btn-create-course-submit');
+
+  if (!title) return;
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = 'Building Study Workspace...';
+  }
+
+  try {
+    let res;
+    if (createCourseMode === 'file') {
+      if (!selectedUploadFile) {
+        alert('Please drop or select a file (or switch to Paste Notes).');
+        return;
+      }
+      const formData = new FormData();
+      formData.append('file', selectedUploadFile);
+      formData.append('course_title', title);
+      formData.append('shortname', shortname);
+      formData.append('authority', authSlug);
+      formData.append('tools_json', JSON.stringify(tools));
+      res = await fetch('/api/workspace/courses/upload', { method: 'POST', body: formData });
+    } else {
+      const contentText = (document.getElementById('input-course-notes-text')?.value || '').trim();
+      if (!contentText) {
+        alert('Please paste some study notes or syllabus text.');
+        return;
+      }
+      res = await fetch('/api/workspace/courses/create-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          shortname,
+          authority: authSlug,
+          content_text: contentText,
+          tools_config: tools,
+        }),
+      });
+    }
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Failed to create workspace');
+
+    closeCreateCourseModal();
+    selectedUploadFile = null;
+    await loadWorkspaceCourses();
+    if (data.workspace_url) {
+      window.location.href = data.workspace_url;
+    }
+  } catch (err) {
+    alert(`Error: ${err.message}`);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = 'Build Study Workspace';
+    }
+  }
+}
+
+async function deleteWorkspaceCourse(courseId) {
+  if (!confirm('Delete this private workspace and its generated mixes?')) return;
+  try {
+    const res = await fetch(`/api/workspace/courses/${courseId}`, { method: 'DELETE' });
+    if (res.ok) {
+      await loadWorkspaceCourses();
+    }
+  } catch (err) {}
+}
+
 

@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Course Workspace | Moodle Portal</title>
+  <title>Course Study Workspace | LMS Portal</title>
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Mermaid.js for declarative diagrams (flowchart/mindmap) -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -19,6 +21,9 @@
           },
         }
       }
+    };
+    if (window.mermaid) {
+      mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'strict' });
     }
   </script>
   <style>
@@ -33,42 +38,47 @@
     }
   </style>
 </head>
-<body class="h-full flex flex-col font-sans antialiased selection:bg-blue-600 selection:text-white" data-course-id="{{ course_id }}" data-moodle-url="{{ moodle_url }}" data-authority-slug="{{ authority.slug if authority else 'ucu' }}">
+<body class="h-full flex flex-col font-sans antialiased selection:bg-blue-600 selection:text-white"
+  data-course-id="{{ course_id }}"
+  data-moodle-url="{{ moodle_url }}"
+  data-authority-slug="{{ authority.slug if authority else 'custom' }}">
 
   <!-- TOP NAVIGATION BAR -->
   <header class="sticky top-0 z-40 border-b border-slate-800/80 glass-panel">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <a href="/{{ authority.slug if authority else '' }}" class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-all flex items-center gap-1.5 text-xs font-semibold">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <a href="/{{ authority.slug if authority and authority.slug != 'custom' else '' }}"
+          class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-all flex items-center gap-1.5 text-xs font-semibold shrink-0">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
           <span class="hidden sm:inline">{{ authority.short_name if authority else 'All Courses' }}</span>
         </a>
-        <div class="h-5 w-px bg-slate-800"></div>
-        <div>
+        <div class="h-5 w-px bg-slate-800 shrink-0"></div>
+        <div class="min-w-0">
           <div class="flex items-center gap-2">
-            <span id="header-course-code" class="px-2 py-0.5 text-[10px] font-mono font-bold rounded-full bg-blue-950 text-blue-400 border border-blue-800">COURSE</span>
-            <span id="header-course-title" class="font-bold text-sm sm:text-base text-slate-100 truncate max-w-xs sm:max-w-md">Loading Course...</span>
+            <span id="header-course-code" class="px-2 py-0.5 text-[10px] font-mono font-bold rounded-full bg-blue-950 text-blue-400 border border-blue-800 shrink-0">COURSE</span>
+            <span id="header-course-title" class="font-bold text-sm sm:text-base text-slate-100 truncate">Loading Course...</span>
           </div>
         </div>
       </div>
 
-      <div class="flex items-center gap-3">
-        <!-- Cache indicator -->
-        <span id="cache-status-pill" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          Device Cache Ready
+      <div class="flex items-center gap-2.5 shrink-0">
+        <span id="privacy-scope-pill" class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold bg-slate-900 text-slate-300 border border-slate-700">
+          🔒 Private Workspace
         </span>
 
-        <!-- Copy Direct Link Button -->
+        <span id="cache-status-pill" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          Ready
+        </span>
+
         <button onclick="copyCourseLink()" id="btn-copy-link" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition-all flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-          <span>Share Link</span>
+          <span class="hidden sm:inline">Share</span>
         </button>
 
-        <!-- Open in Moodle LMS -->
         <a id="link-course-moodle" href="#" target="_blank" rel="noopener noreferrer"
-          class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 transition-all flex items-center gap-1">
-          <span>Open on Moodle</span>
+          class="hidden px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 transition-all flex items-center gap-1">
+          <span>Moodle</span>
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
         </a>
       </div>
@@ -78,107 +88,233 @@
   <!-- MAIN CONTAINER -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-    <!-- Course Banner & Progress -->
-    <section class="glass-panel rounded-2xl p-6 relative overflow-hidden">
-      <div class="absolute -top-24 -right-24 w-60 h-60 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-      
+    <!-- Course Banner & Mode Tabs -->
+    <section class="glass-panel rounded-2xl p-6 relative overflow-hidden space-y-5">
+      <div class="absolute -top-24 -right-24 w-60 h-60 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <span id="banner-course-code" class="text-xs font-mono font-bold text-blue-400 uppercase tracking-wider">COURSE</span>
           <h1 id="banner-course-title" class="text-2xl font-extrabold text-white tracking-tight mt-1">Course Title</h1>
-          <p id="banner-course-desc" class="text-xs text-slate-400 mt-2 max-w-3xl leading-relaxed">Loading syllabus overview...</p>
+          <p id="banner-course-desc" class="text-xs text-slate-400 mt-1.5 max-w-3xl leading-relaxed">Preparing study workspace...</p>
         </div>
 
         <div class="shrink-0 flex md:flex-col items-center md:items-end justify-between gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800">
           <div class="text-right">
-            <span class="text-[10px] uppercase font-semibold text-slate-400 block">Course Progress</span>
-            <span id="banner-progress-text" class="text-2xl font-extrabold font-mono text-white">0%</span>
+            <span class="text-[10px] uppercase font-semibold text-slate-400 block">Topics Indexed</span>
+            <span id="banner-progress-text" class="text-2xl font-extrabold font-mono text-white">0</span>
           </div>
           <div class="w-32 bg-slate-800 rounded-full h-2 overflow-hidden">
-            <div id="banner-progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+            <div id="banner-progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-500" style="width: 100%"></div>
           </div>
         </div>
+      </div>
+
+      <!-- 4 Workspace Mode Tabs -->
+      <div class="flex items-center gap-2 pt-3 border-t border-slate-800/80 overflow-x-auto text-xs font-semibold">
+        <button type="button" onclick="switchWorkspaceTab('book')" id="ws-tab-book"
+          class="ws-tab-btn px-4 py-2 rounded-xl bg-blue-600 text-white transition-all whitespace-nowrap flex items-center gap-1.5">
+          <span>📚 Interactive Book</span>
+          <span id="badge-topics-count" class="px-1.5 py-0.5 rounded bg-blue-950/60 text-[10px] font-mono">0</span>
+        </button>
+        <button type="button" onclick="switchWorkspaceTab('practice')" id="ws-tab-practice"
+          class="ws-tab-btn px-4 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition-all whitespace-nowrap">
+          ❓ Practice & Flashcards
+        </button>
+        <button type="button" onclick="switchWorkspaceTab('exam')" id="ws-tab-exam"
+          class="ws-tab-btn px-4 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition-all whitespace-nowrap">
+          🎯 Exam Mode (Мікс міксів)
+        </button>
+        <button type="button" onclick="switchWorkspaceTab('syllabus')" id="ws-tab-syllabus"
+          class="ws-tab-btn px-4 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition-all whitespace-nowrap flex items-center gap-1.5">
+          <span>📋 Syllabus & Privacy Guard</span>
+          <span id="badge-blocked-count" class="hidden px-1.5 py-0.5 rounded bg-purple-950 text-purple-300 text-[10px] font-mono">0</span>
+        </button>
       </div>
     </section>
 
     <!-- Content Workspace: 2-Column Split -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-      <!-- LEFT: Syllabus, Sections & Modules (2 Columns wide) -->
-      <div class="lg:col-span-2 space-y-4">
-        
-        <!-- Filter Bar -->
-        <div class="glass-panel p-3 rounded-xl flex items-center justify-between gap-3 overflow-x-auto">
-          <div class="flex items-center gap-1.5 text-xs">
-            <button onclick="filterModules('all')" id="filter-btn-all" class="filter-btn active px-3 py-1 rounded-lg bg-blue-600 text-white font-semibold transition-all">
-              All Items
-            </button>
-            <button onclick="filterModules('resource')" id="filter-btn-resource" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
-              📄 Files & PDFs
-            </button>
-            <button onclick="filterModules('assign')" id="filter-btn-assign" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
-              📝 Assignments
-            </button>
-            <button onclick="filterModules('quiz')" id="filter-btn-quiz" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
-              ❓ Quizzes
-            </button>
-            <button onclick="filterModules('url')" id="filter-btn-url" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
-              🔗 Links
+      <!-- LEFT 2 COLUMNS: MAIN STUDY SURFACE -->
+      <div class="lg:col-span-2 space-y-5">
+
+        <!-- VIEW 1: INTERACTIVE BOOK (TopicMix) -->
+        <div id="ws-view-book" class="ws-view space-y-4">
+          <div id="topics-pill-bar" class="flex items-center gap-2 overflow-x-auto pb-1"></div>
+
+          <div id="topic-update-banner" class="hidden p-4 rounded-2xl bg-amber-950/40 border border-amber-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="text-xs">
+              <span class="font-bold text-amber-300 block">Upstream update detected on Moodle</span>
+              <span class="text-amber-200/80 text-[11px]">New material changed this topic's hash. Refresh without losing your personal notes.</span>
+            </div>
+            <button type="button" onclick="applyUpstreamTopicUpdate()" id="btn-apply-topic-update"
+              class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shrink-0 transition-all">
+              Apply Update (Keep Notes)
             </button>
           </div>
-          <button onclick="reloadCourseData(true)" title="Force Refresh from Moodle" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-          </button>
+
+          <div id="book-content-panel" class="space-y-4">
+            <div class="glass-panel p-10 rounded-2xl text-center text-slate-400 text-xs">
+              Loading Interactive Book topics...
+            </div>
+          </div>
         </div>
 
-        <!-- Sections Container -->
-        <div id="course-sections-loading" class="py-16 text-center text-slate-400 text-sm">
-          Loading course syllabus and sections...
+        <!-- VIEW 2: PRACTICE QUIZZES & FLASHCARDS -->
+        <div id="ws-view-practice" class="ws-view hidden space-y-6">
+          <div class="glass-panel p-6 rounded-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <h2 class="text-sm font-bold text-white">Synthetic Practice Quiz</h2>
+                <p class="text-[11px] text-slate-400">Generated from safe lecture content — never scraped graded exams.</p>
+              </div>
+              <span id="practice-topic-label" class="text-[11px] font-mono text-blue-400">Topic</span>
+            </div>
+            <div id="practice-quiz-container" class="space-y-4 text-xs"></div>
+          </div>
+
+          <div class="glass-panel p-6 rounded-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h2 class="text-sm font-bold text-white">Topic Flashcards</h2>
+              <span class="text-[10px] text-slate-400">Click card to flip</span>
+            </div>
+            <div id="flashcards-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs"></div>
+          </div>
         </div>
-        <div id="course-sections-list" class="space-y-4 hidden"></div>
+
+        <!-- VIEW 3: EXAM MODE (Мікс міксів) -->
+        <div id="ws-view-exam" class="ws-view hidden space-y-5">
+          <div class="glass-panel p-6 rounded-2xl space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+              <div>
+                <h2 class="text-base font-bold text-white">🎯 Exam Prep — Мікс міксів</h2>
+                <p class="text-xs text-slate-400">Cross-topic synthesis combining your TopicMix packs, concept map, and mock exam questions.</p>
+              </div>
+              <button type="button" onclick="rebuildExamMix()" id="btn-rebuild-exam-mix"
+                class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shrink-0 transition-all">
+                Generate / Refresh Exam Mix
+              </button>
+            </div>
+
+            <div id="exam-mix-container" class="space-y-5 text-xs">
+              <p class="text-slate-400 py-6 text-center">Click "Generate / Refresh Exam Mix" to combine all topics into a unified prep sheet.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 4: RAW SYLLABUS & EXAM SAFETY POLICY -->
+        <div id="ws-view-syllabus" class="ws-view hidden space-y-4">
+
+          <!-- Exam Privacy Filter Audit -->
+          <div id="blocked-quizzes-card" class="hidden glass-panel p-5 rounded-2xl border border-purple-800/50 bg-purple-950/15 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold text-purple-300 uppercase tracking-wider">🛡️ Exam Privacy Filter Audit</h3>
+              <span class="text-[10px] font-mono text-purple-400">Fail-Closed Academic Integrity</span>
+            </div>
+            <p class="text-[11px] text-slate-300">
+              Timed/restricted quizzes below were intentionally excluded from AI ingestion and storage to protect academic integrity:
+            </p>
+            <div id="blocked-quizzes-list" class="space-y-1.5 text-xs"></div>
+          </div>
+
+          <!-- Filter Bar -->
+          <div class="glass-panel p-3 rounded-xl flex items-center justify-between gap-3 overflow-x-auto">
+            <div class="flex items-center gap-1.5 text-xs">
+              <button onclick="filterModules('all')" id="filter-btn-all" class="filter-btn active px-3 py-1 rounded-lg bg-blue-600 text-white font-semibold transition-all">
+                All Items
+              </button>
+              <button onclick="filterModules('resource')" id="filter-btn-resource" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
+                📄 Files & PDFs
+              </button>
+              <button onclick="filterModules('assign')" id="filter-btn-assign" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
+                📝 Assignments
+              </button>
+              <button onclick="filterModules('quiz')" id="filter-btn-quiz" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
+                ❓ Quizzes
+              </button>
+              <button onclick="filterModules('url')" id="filter-btn-url" class="filter-btn px-3 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all">
+                🔗 Links
+              </button>
+            </div>
+            <button onclick="reloadCourseData(true)" title="Force Refresh" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white shrink-0 transition-all">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            </button>
+          </div>
+
+          <div id="course-sections-loading" class="py-12 text-center text-slate-400 text-sm">
+            Loading course syllabus and sections...
+          </div>
+          <div id="course-sections-list" class="space-y-4 hidden"></div>
+        </div>
 
       </div>
 
-      <!-- RIGHT: Subject Deadlines, Grades, & Student Notes (1 Column wide) -->
-      <div class="space-y-6">
+      <!-- RIGHT SIDEBAR: NOTES, TOOLS, UPLOAD, DEADLINES, GRADES -->
+      <div class="space-y-5">
+
+        <!-- Personal Topic Notes (Preserved Across Upstream Updates) -->
+        <div class="glass-panel p-5 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">📝 Personal Topic Notes</h3>
+            <span id="notes-save-status" class="text-[10px] text-emerald-400">Protected from updates</span>
+          </div>
+          <p class="text-[11px] text-slate-400">Your personal notes on the active topic stay safe even when Moodle lectures update.</p>
+          <textarea id="subject-local-notes" rows="4" placeholder="Write key formulas, exam reminders, or questions..."
+            oninput="scheduleNotesSave()"
+            class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-y"></textarea>
+        </div>
+
+        <!-- Course Tools Configurator (Checkboxes) -->
+        <div id="sidebar-tools-card" class="hidden glass-panel p-5 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">⚙️ Enabled Course Tools</h3>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-200">
+            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="cfg-interactive_book" class="rounded bg-slate-800 border-slate-600"> Book</label>
+            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="cfg-mermaid_diagrams" class="rounded bg-slate-800 border-slate-600"> Diagrams</label>
+            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="cfg-visual_cards" class="rounded bg-slate-800 border-slate-600"> Visual Cards</label>
+            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="cfg-practice_quizzes" class="rounded bg-slate-800 border-slate-600"> Quizzes</label>
+            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="cfg-flashcards" class="rounded bg-slate-800 border-slate-600"> Flashcards</label>
+            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="cfg-exam_mix" class="rounded bg-slate-800 border-slate-600"> Exam Mix</label>
+          </div>
+          <button type="button" onclick="saveCourseTools()" id="btn-save-tools"
+            class="w-full py-2 rounded-xl bg-slate-800 hover:bg-blue-600 text-white text-xs font-semibold transition-all">
+            Apply & Rebuild Mixes
+          </button>
+        </div>
+
+        <!-- Quick Add File to This Course -->
+        <div class="glass-panel p-5 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">📎 Add Lecture Material</h3>
+          </div>
+          <input type="file" id="course-add-file-input" class="hidden" accept=".pdf,.txt,.md,.docx,.pptx,.html,.csv" onchange="uploadFileToCurrentCourse(this)">
+          <button type="button" onclick="document.getElementById('course-add-file-input').click()" id="btn-upload-topic-file"
+            class="w-full py-2.5 px-3 rounded-xl border border-dashed border-slate-700 hover:border-blue-500 bg-slate-900/60 text-xs text-slate-300 hover:text-white transition-all">
+            + Upload PDF / PPTX / DOCX / MD Topic
+          </button>
+        </div>
 
         <!-- Subject Deadlines Card -->
         <div class="glass-panel p-5 rounded-2xl space-y-3">
           <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-              <span>⏰ Deadlines for this Subject</span>
-            </h3>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">⏰ Deadlines</h3>
             <span id="subject-deadline-count" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">0</span>
           </div>
           <div id="subject-deadlines-list" class="space-y-2 text-xs">
-            <p class="text-slate-500 py-4 text-center">Checking upcoming deadlines...</p>
+            <p class="text-slate-500 py-3 text-center">Connect Moodle to pull live deadlines.</p>
           </div>
         </div>
 
-        <!-- Subject Evaluation / Grades Card -->
+        <!-- Subject Grades Card -->
         <div class="glass-panel p-5 rounded-2xl space-y-3">
           <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-              <span>📊 Subject Evaluation & Grades</span>
-            </h3>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">📊 Evaluation & Grades</h3>
           </div>
           <div id="subject-grades-list" class="space-y-2 text-xs">
-            <p class="text-slate-500 py-4 text-center">Retrieving grade evaluation...</p>
+            <p class="text-slate-500 py-3 text-center">Connect Moodle to pull gradebook items.</p>
           </div>
-        </div>
-
-        <!-- Student Personal Scratchpad (Local to Device) -->
-        <div class="glass-panel p-5 rounded-2xl space-y-3">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-              <span>📝 My Subject Notes</span>
-            </h3>
-            <span class="text-[10px] text-emerald-400">Saved on your device</span>
-          </div>
-          <p class="text-[11px] text-slate-400">Personal scratchpad for homework notes or exam prep. Never sent to any server.</p>
-          <textarea id="subject-local-notes" rows="4" placeholder="Jot down homework ideas, formulas, or reminders..."
-            oninput="saveLocalNotes()"
-            class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-y"></textarea>
         </div>
 
       </div>
@@ -190,7 +326,6 @@
   <!-- TOAST NOTIFICATION CONTAINER -->
   <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none"></div>
 
-  <!-- Scripts -->
   <script src="/static/js/storage.js"></script>
   <script src="/static/js/course.js"></script>
 </body>

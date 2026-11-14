@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "Universal LMS AI Workspace Sync",
+  "version": "1.0.0",
+  "description": "Sync Moodle courses in 1 click without passwords or F12 cookies, with fail-closed exam privacy protection.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:8000/*",
+    "http://localhost:8000/*",
+    "https://learn.ucu.edu.ua/*",
+    "https://e-learning.lnu.edu.ua/*",
+    "https://vns.lpnu.ua/*",
+    "https://dl.nure.ua/*",
+    "https://do.ipo.kpi.ua/*",
+    "https://moodle.vntu.edu.ua/*",
+    "https://school.moodledemo.net/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Sync Course to AI Workspace"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://learn.ucu.edu.ua/*",
+        "https://e-learning.lnu.edu.ua/*",
+        "https://vns.lpnu.ua/*",
+        "https://dl.nure.ua/*",
+        "https://do.ipo.kpi.ua/*",
+        "https://moodle.vntu.edu.ua/*",
+        "https://school.moodledemo.net/*"
+      ],
+      "include_globs": [
+        "*/course/view.php*"
+      ],
+      "js": [
+        "extractor.js",
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

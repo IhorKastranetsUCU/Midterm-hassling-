@@ -96,40 +96,64 @@ class EventMonitorService:
                         emitted_events.append(event)
                         await event_bus.publish(event)
 
-            # 3. Check Grades
-            grades_data = await client.get_user_grades(
-                token=token,
-                user_id=user_id,
-                course_ids=course_ids,
-                auth_type=auth_type,
-                sesskey=sesskey,
-            )
-
-            # Store / compare against prior snapshot if exists
+            # 3. Check Grades per course
             prev_grades = self._user_state.get(user_id, {}).get("grades", {})
             current_grades = {}
 
-            for table in grades_data.get("tables", []):
-                course_id = table.get("courseid")
-                for item in table.get("tabledata", []):
-                    itemname = item.get("itemname", {}).get("content", "")
-                    grade_val = item.get("grade", {}).get("content", "")
-                    if itemname and grade_val and grade_val != "-":
-                        key = f"{course_id}_{itemname}"
-                        current_grades[key] = grade_val
+            for cid in course_ids:
+                try:
+                    grades_data = await client.get_user_grades(
+                        token=token,
+                        course_id=cid,
+                        user_id=user_id,
+                        auth_type=auth_type,
+                        sesskey=sesskey,
+                    )
+                except Exception:
+                    continue
 
-                        # If grade is new compared to previous snapshot
-                        if prev_grades and key not in prev_grades:
-                            event = AcademicEvent(
-                                type="grade.new",
-                                title=f"🎓 New Grade Posted: {itemname}",
-                                message=f"Result: {grade_val}",
-                                severity="success",
-                                user_id=user_id,
-                                data={"item": itemname, "grade": grade_val},
-                            )
-                            emitted_events.append(event)
-                            await event_bus.publish(event)
+                if not isinstance(grades_data, dict):
+                    continue
+
+                for ug in grades_data.get("usergrades", []):
+                    for item in ug.get("gradeitems", []):
+                        itemname = item.get("itemname") or ""
+                        grade_val = item.get("gradeformatted") or item.get("graderaw")
+                        if itemname and grade_val is not None and str(grade_val).strip() not in ("", "-", "None"):
+                            grade_str = str(grade_val)
+                            key = f"{cid}_{itemname}"
+                            current_grades[key] = grade_str
+                            if prev_grades and key not in prev_grades:
+                                event = AcademicEvent(
+                                    type="grade.new",
+                                    title=f"🎓 New Grade Posted: {itemname}",
+                                    message=f"Result: {grade_str}",
+                                    severity="success",
+                                    user_id=user_id,
+                                    data={"course_id": cid, "item": itemname, "grade": grade_str},
+                                )
+                                emitted_events.append(event)
+                                await event_bus.publish(event)
+
+                for table in grades_data.get("tables", []):
+                    t_cid = table.get("courseid", cid)
+                    for item in table.get("tabledata", []):
+                        itemname = item.get("itemname", {}).get("content", "") if isinstance(item.get("itemname"), dict) else ""
+                        grade_val = item.get("grade", {}).get("content", "") if isinstance(item.get("grade"), dict) else ""
+                        if itemname and grade_val and grade_val != "-":
+                            key = f"{t_cid}_{itemname}"
+                            current_grades[key] = grade_val
+                            if prev_grades and key not in prev_grades:
+                                event = AcademicEvent(
+                                    type="grade.new",
+                                    title=f"🎓 New Grade Posted: {itemname}",
+                                    message=f"Result: {grade_val}",
+                                    severity="success",
+                                    user_id=user_id,
+                                    data={"course_id": t_cid, "item": itemname, "grade": grade_val},
+                                )
+                                emitted_events.append(event)
+                                await event_bus.publish(event)
 
             # Update cache snapshot
             if user_id not in self._user_state:

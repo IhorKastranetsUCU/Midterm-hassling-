@@ -1,6 +1,6 @@
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.core.exceptions import MoodleException, UnauthorizedError
 from app.core.authorities import get_authority, list_authorities
-from app.routers import auth, courses, assignments, grades, system, events, authorities
+from app.routers import auth, courses, assignments, grades, system, events, authorities, workspace
 
 
 @asynccontextmanager
@@ -65,6 +65,7 @@ app.include_router(grades.router)
 app.include_router(system.router)
 app.include_router(events.router)
 app.include_router(authorities.router)
+app.include_router(workspace.router)
 
 # Mount Static & Templates
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -108,6 +109,11 @@ async def serve_course_page(request: Request, course_id: int):
             "mock_mode": settings.MOODLE_MOCK_MODE,
         },
     )
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return Response(status_code=204)
 
 
 # Authority-specific routes: /{authority} and /{authority}/courses

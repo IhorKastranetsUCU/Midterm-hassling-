@@ -93,6 +93,17 @@ AUTHORITIES_REGISTRY: Dict[str, Authority] = {
         sso_hint="Instant demo environment. Pre-filled with mock student courses.",
         is_mock=True,
     ),
+    "custom": Authority(
+        slug="custom",
+        name="Personal / Custom Workspace",
+        short_name="Workspace",
+        base_url="https://learn.ucu.edu.ua",
+        logo_letter="W",
+        badge_color="indigo",
+        sso_type="cookie",
+        sso_hint="Custom LMS course or uploaded study materials workspace.",
+        is_mock=False,
+    ),
 }
 
 
@@ -101,6 +112,18 @@ def get_authority(slug: str) -> Optional[Authority]:
     return AUTHORITIES_REGISTRY.get(slug.lower().strip())
 
 
+def resolve_authority_slug(url: str, fallback: str = "custom") -> str:
+    """Resolve an institution slug from an LMS URL host, falling back cleanly."""
+    clean = (url or "").lower().strip()
+    for slug, auth in AUTHORITIES_REGISTRY.items():
+        if slug == "custom":
+            continue
+        host = auth.base_url.replace("https://", "").replace("http://", "").rstrip("/")
+        if host and host in clean:
+            return slug
+    return fallback
+
+
 def list_authorities() -> List[Authority]:
     """List all configured university authorities."""
-    return list(AUTHORITIES_REGISTRY.values())
+    return [a for a in AUTHORITIES_REGISTRY.values() if a.slug != "custom"]

@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     COOKIE_SECURE: bool = False
     COOKIE_SAMESITE: str = "lax"
 
+    # Workspace Persistence (Zero Moodle passwords/cookies stored; only mixes & hashes)
+    WORKSPACE_DB_PATH: str = "data/workspace.db"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

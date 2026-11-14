@@ -181,6 +181,7 @@ class ExtensionSectionPayload(BaseModel):
 
     section_index: int
     title: str
+    summary: Optional[str] = None
     modules: List[ExtensionModuleItem] = Field(default_factory=list)
 
 
@@ -191,5 +192,33 @@ class ExtensionSyncPayload(BaseModel):
     moodle_url: str
     course_id: int
     course_name: str
+    course_shortname: Optional[str] = None
     sections: List[ExtensionSectionPayload] = Field(default_factory=list)
     known_hashes: List[str] = Field(default_factory=list)
+    tools_config: Optional[CourseToolsConfig] = None
+
+
+class BlockedQuizNotice(BaseModel):
+    """Transparent audit record for exams blocked from AI/content storage by safety policy."""
+
+    name: str
+    reason: str = "Restricted exam/graded quiz excluded by Academic Integrity Policy"
+    classification: ExamSafetyClassification = "restricted_exam"
+
+
+class WorkspaceCourseSummary(BaseModel):
+    """Metadata summary for a synced or uploaded course workspace."""
+
+    course_id: int
+    authority: str = "ucu"
+    title: str
+    shortname: str = "COURSE"
+    moodle_url: str = ""
+    source_type: IngestionSourceType = "moodle_extension"
+    visibility: VisibilityScope = "private"
+    tools_config: CourseToolsConfig = Field(default_factory=CourseToolsConfig)
+    topic_count: int = 0
+    has_exam_mix: bool = False
+    updates_pending: int = 0
+    blocked_quizzes_count: int = 0
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

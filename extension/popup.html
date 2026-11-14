@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LMS AI Workspace Sync</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      width: 340px;
+      background: #090d16;
+      color: #f1f5f9;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 12px;
+      padding: 14px;
+    }
+    .card {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .title { font-weight: 700; font-size: 13px; color: #ffffff; }
+    .badge {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      font-weight: 600;
+    }
+    label.field-label {
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    input[type="url"] {
+      width: 100%;
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 7px 9px;
+      color: #93c5fd;
+      font-family: monospace;
+      font-size: 11px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .stat-box {
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 6px;
+      text-align: center;
+    }
+    .stat-val { font-weight: 700; font-size: 14px; color: #fff; display: block; }
+    .stat-lbl { font-size: 10px; color: #64748b; }
+    .tools-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      font-size: 11px;
+      color: #cbd5e1;
+      margin-top: 6px;
+    }
+    .tools-grid label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+    .btn-primary {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-secondary {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: #cbd5e1;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .status-msg {
+      margin-top: 8px;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 11px;
+      display: none;
+    }
+    .status-ok { display: block; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; }
+    .status-err { display: block; background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.4); color: #fda4af; }
+    .shield-note { font-size: 10px; color: #c4b5fd; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="title">⚡ LMS AI Workspace</span>
+    <span class="badge">Zero Passwords</span>
+  </div>
+
+  <div class="card">
+    <label class="field-label" for="portal-url">Web Portal Endpoint</label>
+    <input type="url" id="portal-url" value="http://127.0.0.1:8000" placeholder="http://127.0.0.1:8000">
+  </div>
+
+  <div class="card" id="course-preview-card">
+    <label class="field-label">Active Tab Course Scan</label>
+    <div id="course-name" style="font-weight:700; color:#fff;">Inspecting active tab...</div>
+    <div id="course-meta" style="font-size:11px; color:#94a3b8; margin-top:2px;"></div>
+
+    <div class="stats-grid" id="stats-grid" style="display:none;">
+      <div class="stat-box"><span class="stat-val" id="stat-sections">0</span><span class="stat-lbl">Topics</span></div>
+      <div class="stat-box"><span class="stat-val" id="stat-modules">0</span><span class="stat-lbl">Materials</span></div>
+      <div class="stat-box"><span class="stat-val" id="stat-quizzes" style="color:#c4b5fd;">0</span><span class="stat-lbl">Shielded Quizzes</span></div>
+    </div>
+    <div class="shield-note" id="shield-note" style="display:none;">
+      🛡️ Timed/graded quizzes are excluded automatically by Academic Integrity Policy.
+    </div>
+  </div>
+
+  <div class="card" id="tools-card" style="display:none;">
+    <label class="field-label">Select Course Tools (Checkboxes)</label>
+    <div class="tools-grid">
+      <label><input type="checkbox" id="ext-book" checked> 📚 Interactive Book</label>
+      <label><input type="checkbox" id="ext-mermaid" checked> 🔀 Mermaid</label>
+      <label><input type="checkbox" id="ext-visuals" checked> 🖼️ Visual Cards</label>
+      <label><input type="checkbox" id="ext-quizzes" checked> ❓ Practice Quiz</label>
+      <label><input type="checkbox" id="ext-flashcards"> 🃏 Flashcards</label>
+      <label><input type="checkbox" id="ext-exam" checked> 🎯 Exam Mix</label>
+    </div>
+  </div>
+
+  <button type="button" id="btn-sync" class="btn-primary" disabled>⚡ Sync & Open Workspace</button>
+  <button type="button" id="btn-open-portal" class="btn-secondary">Open Web Portal Home ↗</button>
+
+  <div id="status-box" class="status-msg"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
