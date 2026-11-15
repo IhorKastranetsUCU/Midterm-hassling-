@@ -42,7 +42,26 @@ data/
 # Logs
 *.log
 
-# IDE
+# IDE & Editors
 .idea/
 .vscode/
 *.swp
+*.swo
+*~
+*.bak
+*.tmp
+.directory
+
+# OS generated / Weird files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+# Documents & Presentations
+pitch.pdf
+*.pdf
