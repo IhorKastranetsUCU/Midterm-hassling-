@@ -1,6 +1,6 @@
 import hashlib
 from datetime import datetime, timezone
-from typing import List, Literal, Optional
+from typing import Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -16,6 +16,13 @@ _SHORT_WINDOW_SECONDS = 4 * 3600  # 4 hours
 def compute_content_hash(content: str) -> str:
     """Return a deterministic SHA-256 hex digest for source deduplication and diff detection."""
     return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+
+def compute_artifact_cache_key(
+    content_hash: str, artifact_type: str, prompt_version: str = "v1"
+) -> str:
+    """Return a shared cache key sha256(content_hash:artifact_type:prompt_version)."""
+    return compute_content_hash(f"{content_hash}:{artifact_type}:{prompt_version}")
 
 
 class CourseToolsConfig(BaseModel):
@@ -94,6 +101,8 @@ class RawTopicSnapshot(BaseModel):
 class InteractiveBookSection(BaseModel):
     """Structured interactive textbook unit with optional Mermaid diagram and visual card."""
 
+    chunk_id: Optional[str] = None
+    source_hash: Optional[str] = None
     heading: str
     explanation_markdown: str
     key_takeaways: List[str] = Field(default_factory=list)
@@ -144,8 +153,22 @@ class TopicMix(BaseModel):
     flashcards: List[Flashcard] = Field(default_factory=list)
     user_notes: Optional[str] = None
     has_upstream_update: bool = False
+    dirty_chunk_ids: List[str] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class TopicDigest(BaseModel):
+    """Compact (~200-400 token) topic summary used as input to incremental ExamMix builds."""
+
+    mix_id: str
+    topic_index: int = 0
+    title: str
+    source_hash: str
+    summary_bullets: List[str] = Field(default_factory=list)
+    mermaid_node: Optional[str] = None
+    sample_question_prompts: List[str] = Field(default_factory=list)
+    user_note_highlight: Optional[str] = None
 
 
 class ExamMix(BaseModel):
@@ -156,12 +179,24 @@ class ExamMix(BaseModel):
     authority: str = "ucu"
     title: str
     included_mix_ids: List[str] = Field(default_factory=list)
+    topic_digests: List[TopicDigest] = Field(default_factory=list)
     master_cheatsheet_markdown: str = ""
     concept_map_mermaid: Optional[str] = None
     mock_exam_questions: List[PracticeQuestion] = Field(default_factory=list)
     weak_spots_focus: List[str] = Field(default_factory=list)
+    incremental_updates: int = 0
+    cached_topics_reused: int = 0
     visibility: VisibilityScope = "private"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class QuizAttemptRequest(BaseModel):
+    """Per-user quiz practice telemetry used to feed weak spots into ExamMix."""
+
+    question: str
+    chosen_index: int
+    correct_index: int
+    topic_ref: str = ""
 
 
 class ExtensionModuleItem(BaseModel):
@@ -172,8 +207,30 @@ class ExtensionModuleItem(BaseModel):
     modname: str
     url: Optional[str] = None
     text_excerpt: Optional[str] = None
+    attachment_filename: Optional[str] = None
+    attachment_base64: Optional[str] = None
+    due_at: Optional[str] = None
+    module_hash: Optional[str] = None
     file_hashes: List[str] = Field(default_factory=list)
     quiz_meta: Optional[QuizSafetyMetadata] = None
+
+    def effective_hash(self) -> str:
+        """Return explicit module_hash if supplied, otherwise deterministic SHA-256 over content."""
+        if self.module_hash:
+            return self.module_hash
+        canonical = "|".join(
+            [
+                str(self.module_id),
+                self.modname.strip(),
+                self.name.strip(),
+                self.url or "",
+                self.text_excerpt or "",
+                self.attachment_filename or "",
+                self.due_at or "",
+                ",".join(self.file_hashes),
+            ]
+        )
+        return compute_content_hash(canonical)
 
 
 class ExtensionSectionPayload(BaseModel):
@@ -195,7 +252,39 @@ class ExtensionSyncPayload(BaseModel):
     course_shortname: Optional[str] = None
     sections: List[ExtensionSectionPayload] = Field(default_factory=list)
     known_hashes: List[str] = Field(default_factory=list)
+    module_hashes: Dict[int, str] = Field(default_factory=dict)
     tools_config: Optional[CourseToolsConfig] = None
+
+
+class ModuleHashProbe(BaseModel):
+    """Lightweight (~50B) hash probe sent before uploading full section/module content."""
+
+    module_id: int
+    section_index: int = 0
+    module_hash: str
+    modname: str = "resource"
+    name: str = ""
+
+
+class SyncDiffRequest(BaseModel):
+    """Pre-flight diff request carrying only module_id -> hash probes (~1 KB)."""
+
+    authority: str = "ucu"
+    course_id: int
+    modules: List[ModuleHashProbe] = Field(default_factory=list)
+    known_hashes: Dict[str, str] = Field(default_factory=dict)
+
+
+class SyncDiffResponse(BaseModel):
+    """Server diff instructions telling the client which modules need full upload."""
+
+    course_id: int
+    new_module_ids: List[int] = Field(default_factory=list)
+    changed_module_ids: List[int] = Field(default_factory=list)
+    unchanged_module_ids: List[int] = Field(default_factory=list)
+    removed_module_ids: List[int] = Field(default_factory=list)
+    dirty_section_indices: List[int] = Field(default_factory=list)
+    known_server_hashes: Dict[int, str] = Field(default_factory=dict)
 
 
 class BlockedQuizNotice(BaseModel):
@@ -210,6 +299,7 @@ class WorkspaceCourseSummary(BaseModel):
     """Metadata summary for a synced or uploaded course workspace."""
 
     course_id: int
+    owner_id: Optional[str] = None
     authority: str = "ucu"
     title: str
     shortname: str = "COURSE"
@@ -219,6 +309,7 @@ class WorkspaceCourseSummary(BaseModel):
     tools_config: CourseToolsConfig = Field(default_factory=CourseToolsConfig)
     topic_count: int = 0
     has_exam_mix: bool = False
+    exam_mix_stale: bool = False
     updates_pending: int = 0
     blocked_quizzes_count: int = 0
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

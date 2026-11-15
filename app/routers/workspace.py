@@ -1,15 +1,27 @@
+import asyncio
 import json
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from app.core.events import AcademicEvent, event_bus
+from app.core.security import (
+    WorkspaceOwner,
+    create_workspace_jwt,
+    get_workspace_owner,
+    get_workspace_session_owner,
+)
 from app.models.mix import (
     CourseToolsConfig,
     ExtensionSyncPayload,
+    QuizAttemptRequest,
+    SyncDiffRequest,
+    SyncDiffResponse,
     WorkspaceCourseSummary,
 )
+from app.services.build_queue import get_build_queue
 from app.services.mix_generator import extract_text_from_upload
 from app.services.workspace_store import get_workspace_store
 
@@ -30,14 +42,93 @@ class ManualCourseTextRequest(BaseModel):
     course_id: Optional[int] = None
 
 
+@router.get("/api/workspace/session")
+async def get_workspace_session_info(
+    owner: WorkspaceOwner = Depends(get_workspace_session_owner),
+) -> Dict[str, Any]:
+    """Resolve current isolated owner identity and issue a workspace token for extension sync."""
+    return {
+        "owner_id": owner.owner_id,
+        "auth_mode": owner.auth_mode,
+        "workspace_token": create_workspace_jwt(owner.owner_id),
+    }
+
+
+@router.get("/api/workspace/events/stream")
+async def stream_workspace_events(
+    request: Request,
+    max_events: Optional[int] = Query(default=None, ge=1),
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+):
+    """Owner-scoped SSE stream delivering workspace.synced, topic.update_available, and mix.ready."""
+    queue = event_bus.subscribe(user_id=owner.owner_id)
+
+    async def event_generator():
+        sent = 0
+        try:
+            init_evt = AcademicEvent(
+                type="system.connected",
+                title="Workspace Live Stream Connected",
+                message="Listening for background build & sync updates.",
+                severity="info",
+                owner_id=owner.owner_id,
+                data={"owner_id": owner.owner_id},
+            )
+            yield init_evt.to_sse_format()
+            sent += 1
+
+            while max_events is None or sent < max_events:
+                if await request.is_disconnected():
+                    break
+                try:
+                    evt = await asyncio.wait_for(queue.get(), timeout=15.0)
+                    yield evt.to_sse_format()
+                    sent += 1
+                except asyncio.TimeoutError:
+                    yield ": heartbeat\n\n"
+        finally:
+            event_bus.unsubscribe(queue, user_id=owner.owner_id)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@router.get("/api/workspace/events")
+async def list_workspace_events(
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+) -> List[AcademicEvent]:
+    """Return recent workspace events isolated strictly to the current owner."""
+    return event_bus.get_recent_events(owner_id=owner.owner_id)
+
+
+@router.post("/api/sync/diff", response_model=SyncDiffResponse)
+async def diff_extension_modules(
+    req: SyncDiffRequest,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+) -> SyncDiffResponse:
+    """Pre-flight module/chunk hash diff (~1 KB) so the client uploads only changed modules."""
+    store = get_workspace_store()
+    return store.compute_sync_diff(req, owner_id=owner.owner_id)
+
+
 @router.post("/api/sync/extension")
-async def sync_from_extension(payload: ExtensionSyncPayload) -> Dict[str, Any]:
+async def sync_from_extension(
+    payload: ExtensionSyncPayload,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+) -> Dict[str, Any]:
     """
     Ingest Moodle course sections & diffs pushed from the Chrome/Edge Extension.
     Runs the fail-closed exam safety policy filter before persisting or indexing anything.
     """
     store = get_workspace_store()
-    result = await store.sync_extension_payload(payload)
+    result = await store.sync_extension_payload(payload, owner_id=owner.owner_id)
 
     event_type = "topic.update_available" if result["updated_topics"] > 0 else "workspace.synced"
     await event_bus.publish(
@@ -50,6 +141,8 @@ async def sync_from_extension(payload: ExtensionSyncPayload) -> Dict[str, Any]:
                 + (f" ({result['blocked_exams']} restricted quizzes shielded)" if result["blocked_exams"] else "")
             ),
             severity="warning" if result["updated_topics"] > 0 else "success",
+            user_id=owner.moodle_user_id,
+            owner_id=owner.owner_id,
             data={
                 "course_id": result["course_id"],
                 "authority": result["authority"],
@@ -61,19 +154,25 @@ async def sync_from_extension(payload: ExtensionSyncPayload) -> Dict[str, Any]:
     return {
         "success": True,
         "workspace_url": f"/{result['authority']}/courses/{result['course_id']}",
+        "owner_id": owner.owner_id,
         "summary": result,
     }
 
 
 @router.get("/api/workspace/courses", response_model=List[WorkspaceCourseSummary])
-async def list_workspace_courses() -> List[WorkspaceCourseSummary]:
-    """List all courses synced from the Chrome Extension or imported manually via files."""
+async def list_workspace_courses(
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+) -> List[WorkspaceCourseSummary]:
+    """List courses synced or uploaded by the current isolated user only."""
     store = get_workspace_store()
-    return store.list_courses()
+    return store.list_courses(owner_id=owner.owner_id)
 
 
 @router.post("/api/workspace/courses/create-text")
-async def create_or_append_text_course(req: ManualCourseTextRequest) -> Dict[str, Any]:
+async def create_or_append_text_course(
+    req: ManualCourseTextRequest,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+) -> Dict[str, Any]:
     """Create a standalone course workspace (or add a topic) from pasted notes/text + tool checkboxes."""
     if not req.content_text.strip():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Study material text cannot be empty.")
@@ -81,6 +180,7 @@ async def create_or_append_text_course(req: ManualCourseTextRequest) -> Dict[str
     store = get_workspace_store()
     tools = req.tools_config or CourseToolsConfig()
     result = await store.create_or_ingest_upload(
+        owner_id=owner.owner_id,
         title=req.topic_title or req.title,
         authority=req.authority,
         content_text=req.content_text.strip(),
@@ -96,6 +196,8 @@ async def create_or_append_text_course(req: ManualCourseTextRequest) -> Dict[str
             title=f"Workspace Ready: {req.title}",
             message="Structured TopicMix generated with selected tool checkboxes.",
             severity="success",
+            user_id=owner.moodle_user_id,
+            owner_id=owner.owner_id,
             data={"course_id": result["course_id"], "authority": result["authority"]},
         )
     )
@@ -103,6 +205,7 @@ async def create_or_append_text_course(req: ManualCourseTextRequest) -> Dict[str
     return {
         "success": True,
         "workspace_url": f"/{result['authority']}/courses/{result['course_id']}",
+        "owner_id": owner.owner_id,
         **result,
     }
 
@@ -115,6 +218,7 @@ async def upload_course_material(
     authority: str = Form("custom"),
     course_id: Optional[int] = Form(None),
     tools_json: Optional[str] = Form(None),
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
 ) -> Dict[str, Any]:
     """
     Drag & Drop file upload (.pdf, .txt, .md, .docx, .pptx, .html) to create or enrich a course workspace
@@ -134,6 +238,7 @@ async def upload_course_material(
     extracted_text = extract_text_from_upload(file.filename or "document.txt", raw_bytes)
     store = get_workspace_store()
     result = await store.create_or_ingest_upload(
+        owner_id=owner.owner_id,
         title=course_title.strip() or (file.filename or "Study Course"),
         authority=authority.strip() or "custom",
         content_text=extracted_text,
@@ -149,6 +254,8 @@ async def upload_course_material(
             title=f"Material Imported: {file.filename}",
             message=f"Added topic pack into '{course_title}'.",
             severity="success",
+            user_id=owner.moodle_user_id,
+            owner_id=owner.owner_id,
             data={"course_id": result["course_id"], "authority": result["authority"]},
         )
     )
@@ -156,16 +263,20 @@ async def upload_course_material(
     return {
         "success": True,
         "workspace_url": f"/{result['authority']}/courses/{result['course_id']}",
+        "owner_id": owner.owner_id,
         "extracted_chars": len(extracted_text),
         **result,
     }
 
 
 @router.get("/api/workspace/courses/{course_id}")
-async def get_workspace_course(course_id: int) -> Dict[str, Any]:
-    """Retrieve complete study workspace bundle (TopicMixes, ExamMix, tool config, exam audit)."""
+async def get_workspace_course(
+    course_id: int,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+) -> Dict[str, Any]:
+    """Retrieve complete study workspace bundle owned by the current user."""
     store = get_workspace_store()
-    bundle = store.get_course_bundle(course_id)
+    bundle = store.get_course_bundle(course_id, owner_id=owner.owner_id)
     if not bundle:
         raise HTTPException(status_code=404, detail=f"Workspace course {course_id} not found.")
     return {
@@ -178,40 +289,84 @@ async def get_workspace_course(course_id: int) -> Dict[str, Any]:
     }
 
 
-@router.put("/api/workspace/courses/{course_id}/tools")
-async def update_course_tools(course_id: int, tools: CourseToolsConfig) -> Dict[str, Any]:
-    """Update enabled study tools checkboxes for a course and refresh generated mixes."""
+@router.get("/api/workspace/courses/{course_id}/jobs")
+async def get_course_build_jobs(
+    course_id: int,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+) -> Dict[str, Any]:
+    """Inspect debounced background build queue status for an isolated user's course."""
     store = get_workspace_store()
-    if not store.update_tools_config(course_id, tools):
+    bundle = store.get_course_bundle(course_id, owner_id=owner.owner_id)
+    if not bundle:
         raise HTTPException(status_code=404, detail=f"Workspace course {course_id} not found.")
-    mixes = await store.regenerate_course_mixes(course_id) or []
-    exam_mix = await store.build_exam_mix(course_id) if tools.exam_mix else None
+    return {
+        "course_id": course_id,
+        "exam_mix_stale": bundle["course"].exam_mix_stale,
+        "jobs": get_build_queue().get_jobs(owner.owner_id, course_id),
+    }
+
+
+@router.put("/api/workspace/courses/{course_id}/tools")
+async def update_course_tools(
+    course_id: int,
+    tools: CourseToolsConfig,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+) -> Dict[str, Any]:
+    """Update enabled study tools checkboxes incrementally (computes only newly enabled artifacts)."""
+    store = get_workspace_store()
+    if not store.update_tools_config(course_id, tools, owner_id=owner.owner_id):
+        raise HTTPException(status_code=404, detail=f"Workspace course {course_id} not found.")
+    res = await store.regenerate_course_mixes_detailed(course_id, owner_id=owner.owner_id) or {
+        "topic_mixes": [],
+        "recomputed_artifacts": [],
+        "reused_artifacts": [],
+        "cache_hits": 0,
+        "exam_mix_stale": False,
+    }
+    bundle = store.get_course_bundle(course_id, owner_id=owner.owner_id)
     return {
         "success": True,
         "tools_config": tools.model_dump(),
-        "topic_count": len(mixes),
-        "has_exam_mix": exam_mix is not None,
+        "topic_count": len(res["topic_mixes"]),
+        "has_exam_mix": bool(bundle and bundle["exam_mix"]),
+        "exam_mix_stale": res["exam_mix_stale"],
+        "recomputed_artifacts": res["recomputed_artifacts"],
+        "reused_artifacts": res["reused_artifacts"],
+        "cache_hits": res["cache_hits"],
     }
 
 
 @router.post("/api/workspace/courses/{course_id}/generate")
-async def regenerate_course_mixes(course_id: int) -> Dict[str, Any]:
-    """Re-run MixGenerator across all safe topic snapshots in this course."""
+async def regenerate_course_mixes(
+    course_id: int,
+    force: bool = False,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+) -> Dict[str, Any]:
+    """Re-run MixGenerator incrementally (or force full rebuild with ?force=true)."""
     store = get_workspace_store()
-    mixes = await store.regenerate_course_mixes(course_id)
-    if mixes is None:
+    res = await store.regenerate_course_mixes_detailed(
+        course_id, owner_id=owner.owner_id, force_full=force
+    )
+    if res is None:
         raise HTTPException(status_code=404, detail=f"Workspace course {course_id} not found.")
     return {
         "success": True,
-        "topic_mixes": [m.model_dump(mode="json") for m in mixes],
+        "topic_mixes": [m.model_dump(mode="json") for m in res["topic_mixes"]],
+        "recomputed_artifacts": res["recomputed_artifacts"],
+        "reused_artifacts": res["reused_artifacts"],
+        "cache_hits": res["cache_hits"],
+        "exam_mix_stale": res["exam_mix_stale"],
     }
 
 
 @router.post("/api/workspace/courses/{course_id}/exam-mix")
-async def build_course_exam_mix(course_id: int) -> Dict[str, Any]:
-    """Synthesize Level 2 ExamMix ('Mix of Mixes') from TopicMix summaries."""
+async def build_course_exam_mix(
+    course_id: int,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+) -> Dict[str, Any]:
+    """Synthesize Level 2 ExamMix ('Mix of Mixes') incrementally from compact TopicDigests."""
     store = get_workspace_store()
-    exam_mix = await store.build_exam_mix(course_id)
+    exam_mix = await store.build_exam_mix(course_id, owner_id=owner.owner_id)
     if not exam_mix:
         raise HTTPException(
             status_code=404,
@@ -219,34 +374,61 @@ async def build_course_exam_mix(course_id: int) -> Dict[str, Any]:
         )
     return {
         "success": True,
+        "exam_mix_stale": False,
+        "incremental_updates": exam_mix.incremental_updates,
+        "cached_topics_reused": exam_mix.cached_topics_reused,
         "exam_mix": exam_mix.model_dump(mode="json"),
     }
 
 
 @router.patch("/api/workspace/mixes/{mix_id}/notes")
-async def save_mix_notes(mix_id: str, req: NotesUpdateRequest) -> Dict[str, Any]:
-    """Persist student's personal notes on a TopicMix without touching upstream source."""
+async def save_mix_notes(
+    mix_id: str,
+    req: NotesUpdateRequest,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+) -> Dict[str, Any]:
+    """Persist student's personal notes on their own TopicMix without touching upstream source."""
     store = get_workspace_store()
-    updated = store.save_mix_notes(mix_id, req.notes)
+    updated = store.save_mix_notes(mix_id, req.notes, owner_id=owner.owner_id)
     if not updated:
         raise HTTPException(status_code=404, detail=f"TopicMix '{mix_id}' not found.")
     return {"success": True, "mix_id": updated.mix_id, "user_notes": updated.user_notes}
 
 
 @router.post("/api/workspace/mixes/{mix_id}/ack-update")
-async def apply_upstream_mix_update(mix_id: str) -> Dict[str, Any]:
-    """Refresh TopicMix from newly synced Moodle snapshot while preserving personal user_notes."""
+async def apply_upstream_mix_update(
+    mix_id: str,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+) -> Dict[str, Any]:
+    """Refresh user's TopicMix from newly synced Moodle snapshot while preserving personal user_notes."""
     store = get_workspace_store()
-    updated = await store.acknowledge_mix_update(mix_id)
+    updated = await store.acknowledge_mix_update(mix_id, owner_id=owner.owner_id)
     if not updated:
         raise HTTPException(status_code=404, detail=f"TopicMix '{mix_id}' not found.")
     return {"success": True, "mix": updated.model_dump(mode="json")}
 
 
-@router.delete("/api/workspace/courses/{course_id}")
-async def delete_workspace_course(course_id: int) -> Dict[str, Any]:
-    """Delete a private course workspace and all associated snapshots/mixes."""
+@router.post("/api/workspace/mixes/{mix_id}/quiz-attempt")
+async def submit_mix_quiz_attempt(
+    mix_id: str,
+    req: QuizAttemptRequest,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+) -> Dict[str, Any]:
+    """Record student's practice answer to guide per-user weak_spots_focus in ExamMix."""
     store = get_workspace_store()
-    if not store.delete_course(course_id):
+    res = store.record_quiz_attempt(mix_id, req, owner_id=owner.owner_id)
+    if not res:
+        raise HTTPException(status_code=404, detail=f"TopicMix '{mix_id}' not found.")
+    return {"success": True, **res}
+
+
+@router.delete("/api/workspace/courses/{course_id}")
+async def delete_workspace_course(
+    course_id: int,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+) -> Dict[str, Any]:
+    """Delete this user's private course workspace and all associated snapshots/mixes."""
+    store = get_workspace_store()
+    if not store.delete_course(course_id, owner_id=owner.owner_id):
         raise HTTPException(status_code=404, detail=f"Workspace course {course_id} not found.")
     return {"success": True, "deleted_course_id": course_id}

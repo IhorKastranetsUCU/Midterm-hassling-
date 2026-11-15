@@ -70,3 +70,21 @@
 * **Backend + UI**: Докрутити Chrome Extension для збору секцій курсу в 1 клік без F12 і тестування `diff`-оновлень (`has_upstream_update`).
 * **AI**: Реалізувати генерацію `ExamMix` ("Мікс міксів") + кешування за `source_hash` + обережне часткове оновлення.
 * **Усі разом**: Наскрізний прогін на реальному курсі (наприклад, Матан або Дискретка) + фіналізація демо-сценарію для презентації.
+
+---
+
+## 5. Поточний статус та план наступного етапу (AI-інтеграція)
+
+### Реалізовано (Pre-AI ядро, Extension і UI)
+* **Ізоляція користувачів (`owner_id`)**: жорсткий multi-tenant поділ на `moodle:<site>:<user_id>` та підписані гостьові сесії `ws:<uuid>` ([`app/core/security.py`](app/core/security.py)).
+* **Інкрементальний білд-пайплайн**: `POST /api/sync/diff` pre-flight хешування модулів, спільний `artifact_cache` (з fail-closed виключенням `restricted_exam`), атомарне перемикання артефактів, `DebouncedBuildQueue` з `BUILD_MAX_CONCURRENCY`, та лінивий синтез `TopicDigest` → `ExamMix` ([`app/services/workspace_store.py`](app/services/workspace_store.py), [`app/services/build_queue.py`](app/services/build_queue.py)).
+* **Глибока інгестія та телеметрія**: in-tab витягування контенту й вкладень у Chrome Extension (`extension/extractor.js`, `extension/background.js`), парсинг PDF через `pypdf`, витягування дедлайнів `due_at`, owner-scoped SSE (`/api/workspace/events/stream`) та приватна телеметрія помилок у квізах (`quiz_telemetry` → `ExamMix.weak_spots_focus`).
+* **Заглушка генератора**: детермінований `StructuredPlaceholderMixGenerator` за інтерфейсом `BaseMixGenerator` ([`app/services/mix_generator.py`](app/services/mix_generator.py)).
+
+### План підключення LLM (AI Engineer — наступний крок)
+1. **Конфігурація провайдера ([`app/config.py`](app/config.py))**: додати налаштування LLM API-ключа/моделі через `.env` із безпечним fallback на `StructuredPlaceholderMixGenerator`, якщо ключ не задано.
+2. **Реалізація `BaseMixGenerator` ([`app/services/mix_generator.py`](app/services/mix_generator.py))**:
+   * Структурований JSON-вивід для атомарних методів (`InteractiveBookSection`, `mermaid_diagram`, `PracticeQuestion`, `Flashcard`) із дотриманням `CourseToolsConfig`.
+   * Дешева маршрутизація: мала модель для чернеток/тез (`TopicDigest`), потужніша — для `ExamMix` (*"Мікс міксів"*) з урахуванням `weak_spots`.
+3. **Розширення парсингу (опційно)**: додати локальні екстрактори для `PPTX`/`DOCX` поруч із `pypdf`.
+4. **Верифікація**: інтеграційні тести з мокованим і живим LLM-провайдером + перевірка fail-closed політики для `restricted_exam`.

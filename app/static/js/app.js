@@ -3,6 +3,7 @@
 let currentUser = null;
 let currentAuthMode = 'cookie'; // 'cookie', 'token', 'credentials'
 let eventSource = null;
+let workspaceEventSource = null;
 let totalEventCount = 0;
 let unreadEventCount = 0;
 
@@ -10,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initApp();
   initSystemHealth();
   loadWorkspaceCourses();
+  initWorkspaceEventStream();
   initDropzoneHandlers();
 });
 
@@ -321,6 +323,7 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
   } catch (e) {}
   currentUser = null;
   showGuestView();
+  loadWorkspaceCourses();
 });
 
 function onLoginSuccess(user) {
@@ -355,6 +358,7 @@ function onLoginSuccess(user) {
   }
 
   // Load Initial Academic Data
+  loadWorkspaceCourses();
   loadCourses();
   loadAssignments();
   loadGrades();
@@ -416,17 +420,37 @@ function initEventStream() {
   };
 
   // Specific event types
-  ['assignment.due_soon', 'assignment.urgent', 'grade.new', 'system.connected', 'workspace.synced', 'topic.update_available'].forEach(type => {
+  ['assignment.due_soon', 'assignment.urgent', 'grade.new', 'system.connected', 'workspace.synced', 'topic.update_available', 'mix.ready'].forEach(type => {
     eventSource.addEventListener(type, (e) => {
       try {
         const eventData = JSON.parse(e.data);
         handleIncomingEvent(eventData);
-        if (type === 'workspace.synced' || type === 'topic.update_available') {
+        if (type === 'workspace.synced' || type === 'topic.update_available' || type === 'mix.ready') {
           loadWorkspaceCourses();
         }
       } catch (err) {}
     });
   });
+}
+
+function initWorkspaceEventStream() {
+  if (workspaceEventSource) {
+    workspaceEventSource.close();
+  }
+  try {
+    workspaceEventSource = new EventSource('/api/workspace/events/stream');
+    ['workspace.synced', 'topic.update_available', 'mix.ready'].forEach(type => {
+      workspaceEventSource.addEventListener(type, (e) => {
+        try {
+          const eventData = JSON.parse(e.data);
+          loadWorkspaceCourses();
+          if (typeof showToast === 'function' && eventData.title) {
+            showToast(eventData.title, eventData.message || '', eventData.severity || 'success');
+          }
+        } catch (err) {}
+      });
+    });
+  } catch (e) {}
 }
 
 function handleIncomingEvent(event) {

@@ -8,14 +8,25 @@ let activeTopicIndex = 0;
 let activeFilter = 'all';
 let activeWsTab = 'book';
 let notesSaveTimer = null;
+let courseEventSource = null;
+let quizTelemetryLookup = {};
 
 document.addEventListener('DOMContentLoaded', () => {
   currentCourseId = Number(document.body.dataset.courseId);
   initCourseWorkspace();
 });
 
+window.addEventListener('beforeunload', () => {
+  if (courseEventSource) {
+    courseEventSource.close();
+    courseEventSource = null;
+  }
+});
+
 async function initCourseWorkspace() {
   if (!currentCourseId) return;
+
+  initCourseEventStream();
 
   // Try loading instant local cache for syllabus while fresh data loads
   if (window.LocalCache) {
@@ -89,9 +100,10 @@ async function reloadCourseData(force = false) {
   }
 
   // Load live deadlines & grades asynchronously when Moodle course session is accessible
+  let usedMoodleDeadlines = false;
   if ((courseResult.status === 'fulfilled' && courseResult.value.ok) ||
       (contentsResult.status === 'fulfilled' && contentsResult.value.ok)) {
-    loadSubjectAssignments();
+    usedMoodleDeadlines = await loadSubjectAssignments();
     loadSubjectGrades();
   }
 
@@ -101,10 +113,69 @@ async function reloadCourseData(force = false) {
     renderSections(currentSectionsData);
   }
 
+  if (hasWorkspace && !usedMoodleDeadlines && workspaceBundle?.tools_config?.deadline_tracker !== false) {
+    renderExtensionDeadlines(workspaceBundle.sections || []);
+  }
+
   // Ensure Interactive Book, Practice, Exam, and Header never stay stuck on "Loading..." when no workspace exists yet
   if (!hasWorkspace) {
     renderEmptyWorkspaceState(contentsErrorMsg);
   }
+}
+
+function initCourseEventStream() {
+  if (courseEventSource) courseEventSource.close();
+  try {
+    courseEventSource = new EventSource('/api/workspace/events/stream');
+    ['mix.ready', 'workspace.synced', 'topic.update_available'].forEach(evtName => {
+      courseEventSource.addEventListener(evtName, (e) => {
+        try {
+          const parsed = JSON.parse(e.data);
+          if (Number(parsed?.data?.course_id) === currentCourseId) {
+            const pill = document.getElementById('cache-status-pill');
+            if (pill) {
+              pill.classList.remove('hidden');
+              pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> ${escapeHtml(evtName === 'mix.ready' ? 'Mix Ready' : 'Live Sync')}`;
+            }
+            reloadCourseData();
+          }
+        } catch (err) {}
+      });
+    });
+  } catch (e) {}
+}
+
+function renderExtensionDeadlines(sections) {
+  const container = document.getElementById('subject-deadlines-list');
+  const countBadge = document.getElementById('subject-deadline-count');
+  if (!container) return;
+
+  const extracted = [];
+  (sections || []).forEach((sec) => {
+    (sec.modules || []).forEach((m) => {
+      if ((m.modname || '').toLowerCase() === 'assign' && m.due_at) {
+        extracted.push({ name: m.name, due_at: m.due_at, url: m.url, section: sec.name });
+      }
+    });
+  });
+  if (countBadge) countBadge.innerText = extracted.length;
+  if (extracted.length === 0) return;
+
+  container.innerHTML = '';
+  extracted.forEach((a) => {
+    const item = document.createElement('div');
+    item.className = 'p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-start justify-between gap-2';
+    item.innerHTML = `
+      <div>
+        <strong class="text-xs text-white block">${escapeHtml(a.name)}</strong>
+        <span class="text-[10px] text-slate-400 font-mono">${escapeHtml(a.due_at)}</span>
+      </div>
+      <div class="shrink-0 text-right">
+        ${a.url ? `<a href="${a.url}" target="_blank" class="text-[11px] text-blue-400 hover:text-blue-300">Open ↗</a>` : ''}
+      </div>
+    `;
+    container.appendChild(item);
+  });
 }
 
 function renderEmptyWorkspaceState(errorMsg = '') {
@@ -265,6 +336,16 @@ function renderWorkspaceBundle(bundle) {
   }
   renderActiveTopic();
   renderExamMix(bundle.exam_mix);
+  updateExamTabBadge();
+}
+
+function updateExamTabBadge() {
+  const tabBtn = document.getElementById('ws-tab-exam');
+  if (!tabBtn) return;
+  const stale = Boolean(workspaceBundle?.course?.exam_mix_stale);
+  tabBtn.innerHTML = stale
+    ? 'Exam Prep <span class="ml-1 w-2 h-2 rounded-full bg-amber-400 inline-block" title="New topic changes ready to merge"></span>'
+    : 'Exam Prep';
 }
 
 function renderCourseHeader(course, allowUrlUpdate) {
@@ -473,6 +554,11 @@ function renderPracticeAndFlashcards(mix) {
     } else {
       qContainer.innerHTML = '';
       mix.quizzes.forEach((q, qIdx) => {
+        quizTelemetryLookup[qIdx] = {
+          mixId: mix.mix_id,
+          question: q.question,
+          topicRef: q.topic_ref || mix.title,
+        };
         const card = document.createElement('div');
         card.className = 'p-4 rounded-xl bg-slate-900/70 border border-slate-800 space-y-3';
         const optionsHtml = q.options.map((opt, oIdx) => `
@@ -533,22 +619,57 @@ function checkQuizOption(btn, qIdx, chosenIdx, correctIdx) {
   });
   const exp = document.getElementById(`quiz-exp-${qIdx}`);
   if (exp) exp.classList.remove('hidden');
+
+  const meta = quizTelemetryLookup[qIdx];
+  if (meta && meta.mixId) {
+    fetch(`/api/workspace/mixes/${encodeURIComponent(meta.mixId)}/quiz-attempt`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        question: meta.question,
+        chosen_index: chosenIdx,
+        correct_index: correctIdx,
+        topic_ref: meta.topicRef || '',
+      }),
+    }).then((res) => {
+      if (res.ok && chosenIdx !== correctIdx && workspaceBundle?.exam_mix && workspaceBundle.course) {
+        workspaceBundle.course.exam_mix_stale = true;
+        updateExamTabBadge();
+      }
+    }).catch(() => {});
+  }
 }
 
 function renderExamMix(examMix) {
   const container = document.getElementById('exam-mix-container');
   if (!container) return;
 
+  const isStale = Boolean(workspaceBundle?.course?.exam_mix_stale);
+
   if (!examMix) {
-    container.innerHTML = '<p class="text-slate-400 py-6 text-center">No Exam Mix generated yet. Click <strong>Generate / Refresh Exam Mix</strong> above once topics are loaded.</p>';
+    container.innerHTML = isStale
+      ? '<p class="text-amber-300 py-6 text-center">Topics synced! Building incremental Exam Mix on demand — click <strong>Generate / Refresh Exam Mix</strong> or wait a moment.</p>'
+      : '<p class="text-slate-400 py-6 text-center">No Exam Mix generated yet. Click <strong>Generate / Refresh Exam Mix</strong> above once topics are loaded.</p>';
     return;
   }
+
+  const staleNotice = isStale
+    ? `<div class="p-3 rounded-xl bg-amber-950/50 border border-amber-800/70 text-xs text-amber-200 flex items-center justify-between gap-3">
+         <span><strong>Stale Exam Mix:</strong> One or more topics changed. Only dirty topic digests will rebuild on refresh.</span>
+         <button type="button" onclick="rebuildExamMix()" class="px-3 py-1 rounded-lg bg-amber-500 text-slate-950 font-bold hover:bg-amber-400">Merge Updates</button>
+       </div>`
+    : '';
+  const incrementalMeta = (examMix.cached_topics_reused || examMix.incremental_updates)
+    ? `<div class="text-[11px] font-mono text-slate-400">Incremental Mix-of-Mixes: reused ${examMix.cached_topics_reused || 0} cached topic digest(s), updated ${examMix.incremental_updates || 0} topic(s).</div>`
+    : '';
 
   const focusChips = (examMix.weak_spots_focus || []).map(f =>
     `<span class="px-2.5 py-1 rounded-full bg-indigo-950/60 border border-indigo-800/60 text-indigo-300 text-[11px]">${escapeHtml(f)}</span>`
   ).join('');
 
   container.innerHTML = `
+    ${staleNotice}
+    ${incrementalMeta}
     <div class="flex flex-wrap gap-2">${focusChips}</div>
     <div id="exam-mermaid-slot"></div>
     <div class="p-4 rounded-xl bg-slate-900/70 border border-slate-800 space-y-2">
@@ -567,7 +688,14 @@ function renderExamMix(examMix) {
 
   const qSlot = document.getElementById('exam-questions-slot');
   if (qSlot) {
+    const fallbackMixId = workspaceBundle?.topic_mixes?.[0]?.mix_id || '';
     (examMix.mock_exam_questions || []).forEach((q, idx) => {
+      const matchedMix = (workspaceBundle?.topic_mixes || []).find((m) => m.title === q.topic_ref);
+      quizTelemetryLookup[1000 + idx] = {
+        mixId: matchedMix?.mix_id || fallbackMixId,
+        question: q.question,
+        topicRef: q.topic_ref || 'Exam Mock',
+      };
       const card = document.createElement('div');
       card.className = 'p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2';
       card.innerHTML = `
@@ -587,18 +715,26 @@ function renderExamMix(examMix) {
   }
 }
 
+let isBuildingExamMix = false;
 async function rebuildExamMix() {
+  if (isBuildingExamMix) return;
+  isBuildingExamMix = true;
   const btn = document.getElementById('btn-rebuild-exam-mix');
   if (btn) { btn.disabled = true; btn.innerText = 'Synthesizing Exam Mix...'; }
   try {
     const res = await fetch(`/api/workspace/courses/${currentCourseId}/exam-mix`, { method: 'POST' });
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || 'Could not build Exam Mix');
-    if (workspaceBundle) workspaceBundle.exam_mix = data.exam_mix;
+    if (workspaceBundle) {
+      workspaceBundle.exam_mix = data.exam_mix;
+      if (workspaceBundle.course) workspaceBundle.course.exam_mix_stale = false;
+    }
+    updateExamTabBadge();
     renderExamMix(data.exam_mix);
   } catch (err) {
     alert(err.message);
   } finally {
+    isBuildingExamMix = false;
     if (btn) { btn.disabled = false; btn.innerText = 'Generate / Refresh Exam Mix'; }
   }
 }
@@ -708,6 +844,14 @@ function switchWorkspaceTab(tabName) {
   if (activeBtn) {
     activeBtn.className = 'ws-tab-btn px-4 py-2 rounded-xl bg-blue-600 text-white transition-all whitespace-nowrap flex items-center gap-1.5';
   }
+  if (
+    tabName === 'exam' &&
+    workspaceBundle &&
+    workspaceBundle.tools_config?.exam_mix !== false &&
+    (!workspaceBundle.exam_mix || workspaceBundle.course?.exam_mix_stale)
+  ) {
+    rebuildExamMix();
+  }
 }
 
 function renderSections(sections) {
@@ -812,13 +956,13 @@ async function loadSubjectAssignments() {
   const countBadge = document.getElementById('subject-deadline-count');
   try {
     const res = await fetch(`/api/assignments?course_id=${currentCourseId}`);
-    if (!res.ok) return;
+    if (!res.ok) return false;
     const data = await res.json();
     countBadge.innerText = data.total_count || 0;
     container.innerHTML = '';
     if (!data.assignments || data.assignments.length === 0) {
       container.innerHTML = '<p class="text-slate-500 py-4 text-center">No pending assignments for this course.</p>';
-      return;
+      return false;
     }
     data.assignments.forEach(a => {
       const item = document.createElement('div');
@@ -835,7 +979,10 @@ async function loadSubjectAssignments() {
       `;
       container.appendChild(item);
     });
-  } catch (e) {}
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 async function loadSubjectGrades() {

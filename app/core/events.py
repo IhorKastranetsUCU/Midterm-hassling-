@@ -18,6 +18,7 @@ class AcademicEvent(BaseModel):
     severity: str = "info"  # info, success, warning, danger
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     user_id: Optional[int] = None
+    owner_id: Optional[str] = None
     data: Optional[Dict[str, Any]] = None
 
     def to_sse_format(self) -> str:
@@ -80,10 +81,15 @@ class EventBus:
         if len(self._recent_events) > self._max_recent:
             self._recent_events.pop()
 
-        # 1. Distribute to specific user queue
-        targets = ["global"]
-        if event.user_id is not None:
-            targets.append(str(event.user_id))
+        # 1. Distribute strictly to matching owner/user queues unless truly global
+        if event.user_id is None and event.owner_id is None:
+            targets = ["global"]
+        else:
+            targets = []
+            if event.user_id is not None:
+                targets.append(str(event.user_id))
+            if event.owner_id is not None:
+                targets.append(event.owner_id)
 
         for target_key in targets:
             subscribers = self._subscribers.get(target_key, set())
@@ -117,11 +123,21 @@ class EventBus:
         """Register an external webhook URL (e.g. Telegram/Discord bridge)."""
         self._webhooks.append({"url": url, "secret": secret})
 
-    def get_recent_events(self, user_id: Optional[int] = None, limit: int = 15) -> List[AcademicEvent]:
-        """Return recently fired events for this user."""
-        if user_id is None:
-            return self._recent_events[:limit]
-        return [e for e in self._recent_events if e.user_id is None or e.user_id == user_id][:limit]
+    def get_recent_events(
+        self,
+        user_id: Optional[int] = None,
+        owner_id: Optional[str] = None,
+        limit: int = 15,
+    ) -> List[AcademicEvent]:
+        """Return recently fired events visible to this user/owner."""
+        if user_id is None and owner_id is None:
+            return [e for e in self._recent_events if e.user_id is None and e.owner_id is None][:limit]
+        return [
+            e for e in self._recent_events
+            if (e.user_id is None and e.owner_id is None)
+            or (user_id is not None and e.user_id == user_id)
+            or (owner_id is not None and e.owner_id == owner_id)
+        ][:limit]
 
 
 # Global EventBus singleton instance

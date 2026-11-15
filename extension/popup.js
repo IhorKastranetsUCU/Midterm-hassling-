@@ -92,15 +92,34 @@ async function handleSyncClick() {
   await chrome.storage.local.set({ portalUrl });
 
   btn.disabled = true;
-  btn.textContent = 'Syncing course & running safety filter...';
+  btn.textContent = 'Extracting safe pages & files...';
 
-  const payload = {
-    ...lastExtraction.payload,
-    tools_config: readToolsSelection(),
-  };
+  const tools = readToolsSelection();
+  let syncPayload = { ...lastExtraction.payload, tools_config: tools };
+  let deepStats = { deepFetchedCount: 0, attachmentsCount: 0 };
+
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab && tab.id) {
+      const [{ result: deepResult }] = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: (cfg) =>
+          typeof window.__moodleWorkspaceExtract === 'function'
+            ? window.__moodleWorkspaceExtract(cfg, { deepFetch: true })
+            : null,
+        args: [tools],
+      });
+      if (deepResult && deepResult.ok && deepResult.payload) {
+        syncPayload = deepResult.payload;
+        deepStats = deepResult.stats || deepStats;
+      }
+    }
+  } catch (e) {}
+
+  btn.textContent = 'Diffing hashes & syncing workspace...';
 
   chrome.runtime.sendMessage(
-    { type: 'SYNC_COURSE', portalUrl, payload, openWorkspace: true },
+    { type: 'SYNC_COURSE', portalUrl, payload: syncPayload, openWorkspace: true },
     (resp) => {
       btn.disabled = false;
       btn.textContent = '⚡ Sync & Open Workspace';
@@ -111,8 +130,13 @@ async function handleSyncClick() {
       }
 
       const s = resp.data?.summary || {};
+      const cacheNote = s.cache_hits ? ` • ${s.cache_hits} cache hit(s)` : '';
+      const diffNote = resp.diffSkipped ? ` • ${resp.diffSkipped} skipped by diff` : '';
+      const deepNote = (deepStats.deepFetchedCount || deepStats.attachmentsCount)
+        ? ` • ${deepStats.deepFetchedCount || 0} pages, ${deepStats.attachmentsCount || 0} files extracted`
+        : '';
       showStatus(
-        `Synced! ${s.new_topics || 0} new, ${s.updated_topics || 0} updated, ${s.unchanged_topics || 0} unchanged, ${s.blocked_exams || 0} quizzes shielded.`
+        `Synced! ${s.new_topics || 0} new, ${s.updated_topics || 0} updated, ${s.unchanged_topics || 0} unchanged, ${s.blocked_exams || 0} quizzes shielded${deepNote}${diffNote}${cacheNote}.`
       );
     }
   );

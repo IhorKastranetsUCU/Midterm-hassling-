@@ -10,6 +10,7 @@ from app.config import get_settings
 from app.core.exceptions import MoodleException, UnauthorizedError
 from app.core.authorities import get_authority, list_authorities
 from app.routers import auth, courses, assignments, grades, system, events, authorities, workspace
+from app.services.build_queue import get_build_queue
 
 
 @asynccontextmanager
@@ -21,7 +22,10 @@ async def lifespan(app: FastAPI):
     print(f"[*] Service: {settings.MOODLE_SERVICE_SHORTNAME}")
     print(f"[*] Mock Mode: {settings.MOODLE_MOCK_MODE}")
     print("=" * 60)
-    yield
+    try:
+        yield
+    finally:
+        get_build_queue().cancel_all()
 
 
 app = FastAPI(
@@ -31,10 +35,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS setup
+# CORS setup (explicit origin echoing for browser + extension credentials)
+_cors_settings = get_settings()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origin_regex=_cors_settings.CORS_ALLOW_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

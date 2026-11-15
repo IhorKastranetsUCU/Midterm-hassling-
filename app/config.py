@@ -20,8 +20,16 @@ class Settings(BaseSettings):
     COOKIE_SECURE: bool = False
     COOKIE_SAMESITE: str = "lax"
 
-    # Workspace Persistence (Zero Moodle passwords/cookies stored; only mixes & hashes)
+    # Workspace Persistence & Isolation (Zero Moodle passwords/cookies stored; only mixes & hashes)
     WORKSPACE_DB_PATH: str = "data/workspace.db"
+    WORKSPACE_COOKIE_NAME: str = "workspace_session"
+    WORKSPACE_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 30
+    BUILD_DEBOUNCE_SECONDS: float = 30.0
+    BUILD_MAX_CONCURRENCY: int = 3
+    CORS_ALLOW_ORIGIN_REGEX: str = (
+        r"^https?://(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$"
+        r"|^(chrome|edge|moz)-extension://.*$"
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",

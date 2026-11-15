@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from app.models.mix import (
     CourseToolsConfig,
@@ -15,7 +15,9 @@ from app.models.mix import (
     InteractiveBookSection,
     PracticeQuestion,
     RawTopicSnapshot,
+    TopicDigest,
     TopicMix,
+    compute_content_hash,
 )
 
 logger = logging.getLogger("mix_generator")
@@ -102,12 +104,151 @@ def extract_text_from_upload(filename: str, raw_bytes: bytes) -> str:
     return raw_bytes.decode("utf-8", errors="ignore").strip() or f"[Uploaded file: {filename}]"
 
 
+def _extract_key_points(text: str, title: str, limit: int = 6) -> Tuple[List[str], int]:
+    """Extract clean bullet takeaways and total indexed point count from raw content."""
+    lines = [ln.strip() for ln in (text or "").splitlines() if ln.strip()]
+    bullets = [re.sub(r"^[\-\*\d\.\)]+\s*", "", ln) for ln in lines if len(ln) > 4]
+    key_points = bullets[:limit] or [f"Core concepts covered in {title}"]
+    return key_points, len(bullets)
+
+
+def split_text_into_semantic_chunks(
+    title: str,
+    content_text: str,
+    max_chunk_chars: int = 1800,
+) -> List[Dict[str, str]]:
+    """
+    Split large documents/slides/notes into semantic chunks so edits invalidate only dirty chunks.
+    Returns deterministic chunk dicts with chunk_id, heading, content_text, and content_hash.
+    """
+    text = (content_text or "").strip()
+    if not text:
+        empty_hash = compute_content_hash(f"{title}\n")
+        return [
+            {
+                "chunk_id": "chunk-0",
+                "heading": title,
+                "content_text": "",
+                "content_hash": empty_hash,
+            }
+        ]
+
+    # Split on markdown headers (#, ##, ###) or slide markers while keeping heading attached
+    raw_sections = re.split(r"(?m)(?=^#{1,3}\s+\S|^##\s+Slide\s+\d+)", text)
+    sections = [s.strip() for s in raw_sections if s.strip()]
+    if len(sections) <= 1 and len(text) > max_chunk_chars:
+        sections = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
+
+    grouped: List[Tuple[str, str]] = []
+    buf_heading = title
+    buf_parts: List[str] = []
+    buf_len = 0
+
+    for part in sections:
+        first_line = part.splitlines()[0].strip()
+        part_heading = (
+            re.sub(r"^#{1,3}\s*", "", first_line).strip()
+            if first_line.startswith("#")
+            else buf_heading
+        )
+        if buf_parts and (buf_len + len(part) > max_chunk_chars or first_line.startswith("#")):
+            grouped.append((buf_heading, "\n\n".join(buf_parts)))
+            buf_parts = [part]
+            buf_heading = part_heading or title
+            buf_len = len(part)
+        else:
+            if not buf_parts and first_line.startswith("#"):
+                buf_heading = part_heading or title
+            buf_parts.append(part)
+            buf_len += len(part)
+
+    if buf_parts:
+        grouped.append((buf_heading, "\n\n".join(buf_parts)))
+
+    chunks: List[Dict[str, str]] = []
+    for idx, (heading, body) in enumerate(grouped):
+        chunk_heading = heading if len(grouped) == 1 else f"{title} — {heading}" if heading != title else f"{title} (Part {idx + 1})"
+        chunk_hash = compute_content_hash(f"{chunk_heading}\n{body}")
+        chunks.append(
+            {
+                "chunk_id": f"chunk-{idx}",
+                "heading": chunk_heading,
+                "content_text": body,
+                "content_hash": chunk_hash,
+            }
+        )
+    return chunks
+
+
 class BaseMixGenerator(ABC):
     """
     Extension seam for the AI Engineer.
     Swap StructuredPlaceholderMixGenerator with an LLM provider (Gemini/OpenAI Structured Output)
     without modifying backend routers or frontend components.
     """
+
+    prompt_version: str = "v1"
+
+    @abstractmethod
+    async def generate_book_section(
+        self,
+        title: str,
+        content_text: str,
+        source_type: str = "manual_upload",
+        source_id: str = "",
+        include_mermaid: bool = True,
+        include_visual_cards: bool = True,
+        chunk_id: Optional[str] = None,
+        source_hash: Optional[str] = None,
+    ) -> InteractiveBookSection:
+        """Build a single InteractiveBookSection atomically."""
+
+    @abstractmethod
+    async def generate_mermaid_diagram(self, title: str, key_points: List[str]) -> str:
+        """Build a Mermaid diagram string independently of prose/quizzes."""
+
+    @abstractmethod
+    async def generate_visual_card(self, title: str) -> Tuple[str, str]:
+        """Build (visual_card_caption, visual_card_prompt) independently."""
+
+    @abstractmethod
+    async def generate_practice_quizzes(
+        self,
+        title: str,
+        key_points: List[str],
+        total_points: Optional[int] = None,
+    ) -> List[PracticeQuestion]:
+        """Build practice questions independently."""
+
+    @abstractmethod
+    async def generate_flashcards(
+        self,
+        title: str,
+        key_takeaways: List[str],
+    ) -> List[Flashcard]:
+        """Build flashcards solely from already-extracted key_takeaways (zero raw-file recompute)."""
+
+    @abstractmethod
+    async def build_topic_digest(
+        self,
+        mix: TopicMix,
+        include_user_notes: bool = True,
+    ) -> TopicDigest:
+        """Extract a compact ~200-400 token TopicDigest for incremental ExamMix synthesis."""
+
+    @abstractmethod
+    async def merge_exam_mix(
+        self,
+        course_id: int,
+        authority: str,
+        course_title: str,
+        topic_digests: List[TopicDigest],
+        topic_mixes: Optional[List[TopicMix]] = None,
+        incremental_updates: int = 0,
+        cached_topics_reused: int = 0,
+        weak_spots: Optional[List[str]] = None,
+    ) -> ExamMix:
+        """Synthesize Level 2 ExamMix strictly from compact per-topic digests."""
 
     @abstractmethod
     async def generate_topic_mix(
@@ -134,9 +275,145 @@ class BaseMixGenerator(ABC):
 class StructuredPlaceholderMixGenerator(BaseMixGenerator):
     """
     Deterministic, zero-cost mix builder used before plugging in live AI models.
-    Parses extracted headings/lines into structured interactive book sections, Mermaid diagrams,
-    visual concept cards, practice quizzes, flashcards, and combined exam packs.
+    Supports atomic per-artifact generation so edits and tool toggles only recompute dirty artifacts.
     """
+
+    prompt_version: str = "v1"
+
+    async def generate_mermaid_diagram(self, title: str, key_points: List[str]) -> str:
+        root_lbl = _safe_mermaid_label(title, 36)
+        node_lines = [f'  T["{root_lbl}"]']
+        for i, pt in enumerate((key_points or [title])[:4], start=1):
+            node_lines.append(f'  T --> N{i}["{_safe_mermaid_label(pt, 32)}"]')
+        return "flowchart TD\n" + "\n".join(node_lines)
+
+    async def generate_visual_card(self, title: str) -> Tuple[str, str]:
+        return (
+            f"Concept Card: {title}",
+            f"Clean educational infographic illustrating: {title}",
+        )
+
+    async def generate_book_section(
+        self,
+        title: str,
+        content_text: str,
+        source_type: str = "manual_upload",
+        source_id: str = "",
+        include_mermaid: bool = True,
+        include_visual_cards: bool = True,
+        chunk_id: Optional[str] = None,
+        source_hash: Optional[str] = None,
+    ) -> InteractiveBookSection:
+        key_points, _ = _extract_key_points(content_text, title, limit=6)
+        mermaid_code = await self.generate_mermaid_diagram(title, key_points) if include_mermaid else None
+        card_caption, card_prompt = (
+            await self.generate_visual_card(title) if include_visual_cards else (None, None)
+        )
+        summary_body = "\n".join(f"- {pt}" for pt in key_points[:6])
+        explanation = (
+            f"### Overview of {title}\n\n"
+            f"This interactive unit organizes material from **{source_type}** "
+            f"(`{source_id}`) without modifying or storing restricted exam items.\n\n"
+            f"{summary_body}"
+        )
+        return InteractiveBookSection(
+            chunk_id=chunk_id,
+            source_hash=source_hash or compute_content_hash(content_text or title),
+            heading=title,
+            explanation_markdown=explanation,
+            key_takeaways=key_points[:4],
+            mermaid_diagram=mermaid_code,
+            visual_card_caption=card_caption,
+            visual_card_prompt=card_prompt,
+        )
+
+    async def generate_practice_quizzes(
+        self,
+        title: str,
+        key_points: List[str],
+        total_points: Optional[int] = None,
+    ) -> List[PracticeQuestion]:
+        pts = key_points or [f"Core concepts covered in {title}"]
+        primary_concept = pts[0]
+        distractors = [pt for pt in pts[1:4] if pt != primary_concept]
+        while len(distractors) < 3:
+            distractors.append(f"Unrelated topic outside {title}")
+
+        options = [primary_concept] + distractors[:3]
+        quizzes = [
+            PracticeQuestion(
+                question=f"Which key concept is explicitly introduced in '{title}'?",
+                options=options,
+                correct_index=0,
+                explanation=f"Grounded in ingested source material for '{title}'. (AI Engineer will enrich with deep LLM questions.)",
+                topic_ref=title,
+            )
+        ]
+        if len(pts) > 1:
+            count_val = total_points if total_points is not None else len(pts)
+            quizzes.append(
+                PracticeQuestion(
+                    question=f"How many core study items were indexed for '{title}'?",
+                    options=[
+                        f"{count_val} extracted points/modules",
+                        "Zero public materials",
+                        "Restricted final exam keys only",
+                        "External unverified syllabus",
+                    ],
+                    correct_index=0,
+                    explanation="Computed deterministically during pre-AI topic ingestion.",
+                    topic_ref=title,
+                )
+            )
+        return quizzes
+
+    async def generate_flashcards(
+        self,
+        title: str,
+        key_takeaways: List[str],
+    ) -> List[Flashcard]:
+        pts = key_takeaways or [f"Core concepts covered in {title}"]
+        return [
+            Flashcard(
+                front=f"{title} — Key Concept #{idx}",
+                back=pt,
+                tag=title,
+            )
+            for idx, pt in enumerate(pts[:4], start=1)
+        ]
+
+    async def build_topic_digest(
+        self,
+        mix: TopicMix,
+        include_user_notes: bool = True,
+    ) -> TopicDigest:
+        bullets: List[str] = []
+        for sec in mix.book_sections:
+            for tk in sec.key_takeaways:
+                if tk and tk not in bullets:
+                    bullets.append(tk[:180])
+                if len(bullets) >= 6:
+                    break
+            if len(bullets) >= 6:
+                break
+        if not bullets:
+            bullets = [f"Core syllabus focus for {mix.title}"]
+
+        note_highlight = (
+            mix.user_notes.strip()[:240]
+            if (include_user_notes and mix.user_notes and mix.user_notes.strip())
+            else None
+        )
+        return TopicDigest(
+            mix_id=mix.mix_id,
+            topic_index=mix.topic_index,
+            title=mix.title,
+            source_hash=mix.source_hash,
+            summary_bullets=bullets,
+            mermaid_node=_safe_mermaid_label(mix.title, 30),
+            sample_question_prompts=[q.question[:160] for q in mix.quizzes[:3]],
+            user_note_highlight=note_highlight,
+        )
 
     async def generate_topic_mix(
         self,
@@ -146,88 +423,34 @@ class StructuredPlaceholderMixGenerator(BaseMixGenerator):
         existing_notes: Optional[str] = None,
         version: int = 1,
     ) -> TopicMix:
-        lines = [ln.strip() for ln in snapshot.content_text.splitlines() if ln.strip()]
-        bullets = [re.sub(r"^[\-\*\d\.\)]+\s*", "", ln) for ln in lines if len(ln) > 4]
-        key_points = bullets[:5] or [f"Core concepts covered in {snapshot.title}"]
+        key_points, total_bullets = _extract_key_points(snapshot.content_text, snapshot.title, limit=5)
 
         book_sections: List[InteractiveBookSection] = []
         if tools.interactive_book:
-            mermaid_code = None
-            if tools.mermaid_diagrams:
-                root_lbl = _safe_mermaid_label(snapshot.title, 36)
-                node_lines = [f'  T["{root_lbl}"]']
-                for i, pt in enumerate(key_points[:4], start=1):
-                    node_lines.append(f'  T --> N{i}["{_safe_mermaid_label(pt, 32)}"]')
-                mermaid_code = "flowchart TD\n" + "\n".join(node_lines)
-
-            summary_body = "\n".join(f"- {pt}" for pt in key_points[:6])
-            explanation = (
-                f"### Overview of {snapshot.title}\n\n"
-                f"This interactive unit organizes material from **{snapshot.source_type}** "
-                f"(`{snapshot.source_id}`) without modifying or storing restricted exam items.\n\n"
-                f"{summary_body}"
-            )
-
-            book_sections.append(
-                InteractiveBookSection(
-                    heading=snapshot.title,
-                    explanation_markdown=explanation,
-                    key_takeaways=key_points[:4],
-                    mermaid_diagram=mermaid_code,
-                    visual_card_caption=f"Concept Card: {snapshot.title}" if tools.visual_cards else None,
-                    visual_card_prompt=(
-                        f"Clean educational infographic illustrating: {snapshot.title}"
-                        if tools.visual_cards
-                        else None
-                    ),
+            chunks = split_text_into_semantic_chunks(snapshot.title, snapshot.content_text)
+            for chunk in chunks:
+                sec = await self.generate_book_section(
+                    title=chunk["heading"],
+                    content_text=chunk["content_text"] or snapshot.content_text,
+                    source_type=snapshot.source_type,
+                    source_id=snapshot.source_id,
+                    include_mermaid=tools.mermaid_diagrams,
+                    include_visual_cards=tools.visual_cards,
+                    chunk_id=chunk["chunk_id"],
+                    source_hash=chunk["content_hash"],
                 )
-            )
+                book_sections.append(sec)
 
         quizzes: List[PracticeQuestion] = []
         if tools.practice_quizzes:
-            primary_concept = key_points[0] if key_points else snapshot.title
-            distractors = [
-                pt for pt in key_points[1:4] if pt != primary_concept
-            ]
-            while len(distractors) < 3:
-                distractors.append(f"Unrelated topic outside {snapshot.title}")
-
-            options = [primary_concept] + distractors[:3]
-            quizzes.append(
-                PracticeQuestion(
-                    question=f"Which key concept is explicitly introduced in '{snapshot.title}'?",
-                    options=options,
-                    correct_index=0,
-                    explanation=f"Grounded in ingested source material for '{snapshot.title}'. (AI Engineer will enrich with deep LLM questions.)",
-                    topic_ref=snapshot.title,
-                )
+            quizzes = await self.generate_practice_quizzes(
+                snapshot.title, key_points, total_points=total_bullets
             )
-            if len(key_points) > 1:
-                quizzes.append(
-                    PracticeQuestion(
-                        question=f"How many core study items were indexed for '{snapshot.title}'?",
-                        options=[
-                            f"{len(bullets)} extracted points/modules",
-                            "Zero public materials",
-                            "Restricted final exam keys only",
-                            "External unverified syllabus",
-                        ],
-                        correct_index=0,
-                        explanation="Computed deterministically during pre-AI topic ingestion.",
-                        topic_ref=snapshot.title,
-                    )
-                )
 
         flashcards: List[Flashcard] = []
         if tools.flashcards:
-            for idx, pt in enumerate(key_points[:4], start=1):
-                flashcards.append(
-                    Flashcard(
-                        front=f"{snapshot.title} — Key Concept #{idx}",
-                        back=pt,
-                        tag=snapshot.title,
-                    )
-                )
+            takeaways = [tk for sec in book_sections for tk in sec.key_takeaways] or key_points[:4]
+            flashcards = await self.generate_flashcards(snapshot.title, takeaways)
 
         mix_id = f"mix-{snapshot.course_id}-{topic_index}-{snapshot.source_hash[:8]}"
         now = datetime.now(timezone.utc)
@@ -250,46 +473,53 @@ class StructuredPlaceholderMixGenerator(BaseMixGenerator):
             updated_at=now,
         )
 
-    async def generate_exam_mix(
+    async def merge_exam_mix(
         self,
         course_id: int,
         authority: str,
         course_title: str,
-        topic_mixes: List[TopicMix],
+        topic_digests: List[TopicDigest],
+        topic_mixes: Optional[List[TopicMix]] = None,
+        incremental_updates: int = 0,
+        cached_topics_reused: int = 0,
+        weak_spots: Optional[List[str]] = None,
     ) -> ExamMix:
-        included_ids = [m.mix_id for m in topic_mixes]
+        included_ids = [d.mix_id for d in topic_digests]
         cheatsheet_lines = [f"# {course_title} — Exam Prep Master Mix", ""]
         mermaid_lines = ["flowchart LR", f'  E["Exam: {_safe_mermaid_label(course_title, 30)}"]']
         combined_questions: List[PracticeQuestion] = []
-        focus_areas: List[str] = []
+        focus_areas: List[str] = list(dict.fromkeys(weak_spots or []))
 
-        for idx, mix in enumerate(topic_mixes, start=1):
-            focus_areas.append(mix.title)
-            mermaid_lines.append(f'  E --> M{idx}["{_safe_mermaid_label(mix.title, 30)}"]')
+        mix_by_id = {m.mix_id: m for m in (topic_mixes or [])}
 
-            cheatsheet_lines.append(f"## {idx}. {mix.title}")
-            for sec in mix.book_sections:
-                for tk in sec.key_takeaways:
-                    cheatsheet_lines.append(f"- {tk}")
-            if mix.user_notes:
-                cheatsheet_lines.append(f"> **Your Note:** {mix.user_notes.strip()}")
+        for idx, digest in enumerate(topic_digests, start=1):
+            focus_areas.append(digest.title)
+            node_label = digest.mermaid_node or _safe_mermaid_label(digest.title, 30)
+            mermaid_lines.append(f'  E --> M{idx}["{node_label}"]')
+
+            cheatsheet_lines.append(f"## {idx}. {digest.title}")
+            for tk in digest.summary_bullets:
+                cheatsheet_lines.append(f"- {tk}")
+            if digest.user_note_highlight:
+                cheatsheet_lines.append(f"> **Your Note:** {digest.user_note_highlight}")
             cheatsheet_lines.append("")
 
-            for q in mix.quizzes:
-                combined_questions.append(q)
+            mix = mix_by_id.get(digest.mix_id)
+            if mix and mix.quizzes:
+                combined_questions.extend(mix.quizzes)
 
         if not combined_questions:
             combined_questions.append(
                 PracticeQuestion(
                     question=f"Which mode builds the cross-topic prep sheet for {course_title}?",
                     options=[
-                        "Exam Mix (synthesized from TopicMix packs)",
+                        "Exam Mix (synthesized from TopicMix digests)",
                         "Direct exam answer scraping",
                         "Manual F12 cookie polling",
                         "Unfiltered quiz dumps",
                     ],
                     correct_index=0,
-                    explanation="ExamMix aggregates safe TopicMix summaries instead of re-reading raw PDFs or scraping exams.",
+                    explanation="ExamMix aggregates safe per-topic digests instead of re-reading raw PDFs or scraping exams.",
                     topic_ref="Course Overview",
                 )
             )
@@ -300,12 +530,33 @@ class StructuredPlaceholderMixGenerator(BaseMixGenerator):
             authority=authority,
             title=f"{course_title} — Exam Mix",
             included_mix_ids=included_ids,
+            topic_digests=topic_digests,
             master_cheatsheet_markdown="\n".join(cheatsheet_lines).strip(),
             concept_map_mermaid="\n".join(mermaid_lines),
             mock_exam_questions=combined_questions[:15],
             weak_spots_focus=focus_areas[:6],
+            incremental_updates=incremental_updates,
+            cached_topics_reused=cached_topics_reused,
             visibility="private",
             created_at=datetime.now(timezone.utc),
+        )
+
+    async def generate_exam_mix(
+        self,
+        course_id: int,
+        authority: str,
+        course_title: str,
+        topic_mixes: List[TopicMix],
+    ) -> ExamMix:
+        digests = [await self.build_topic_digest(mix, include_user_notes=True) for mix in topic_mixes]
+        return await self.merge_exam_mix(
+            course_id=course_id,
+            authority=authority,
+            course_title=course_title,
+            topic_digests=digests,
+            topic_mixes=topic_mixes,
+            incremental_updates=len(digests),
+            cached_topics_reused=0,
         )
 
 

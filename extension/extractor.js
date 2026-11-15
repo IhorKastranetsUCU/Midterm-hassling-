@@ -46,7 +46,133 @@
     return 'custom';
   }
 
-  async function extractCoursePayload(toolsConfig = null) {
+  const _DEEP_SESSION_CACHE = new Map();
+  const _DEEP_SAFE_MODS = new Set(['page', 'book', 'folder', 'assign', 'resource']);
+  const _RESTRICTED_HINTS = ['іспит', 'екзамен', 'контрольн', 'модульн', 'midterm', 'final', 'exam'];
+
+  function arrayBufferToBase64(buffer) {
+    const bytes = new Uint8Array(buffer);
+    const chunk = 0x8000;
+    const parts = [];
+    for (let i = 0; i < bytes.length; i += chunk) {
+      parts.push(String.fromCharCode(...bytes.subarray(i, i + chunk)));
+    }
+    return btoa(parts.join(''));
+  }
+
+  function extractCleanMainText(doc) {
+    if (!doc) return '';
+    const clone = (
+      doc.querySelector('.book_content, #region-main .generalbox, [role="main"] .no-overflow, #region-main') ||
+      doc.body
+    )?.cloneNode(true);
+    if (!clone) return '';
+    clone
+      .querySelectorAll('nav, header, footer, script, style, .activity-navigation, .modified, .accesshide, .sr-only')
+      .forEach((n) => n.remove());
+    return (clone.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 15000);
+  }
+
+  function guessFilenameFromUrl(urlStr, contentDisp) {
+    if (contentDisp) {
+      const m = contentDisp.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i);
+      if (m && m[1]) return decodeURIComponent(m[1].trim());
+    }
+    try {
+      const u = new URL(urlStr, window.location.origin);
+      const last = u.pathname.split('/').filter(Boolean).pop() || '';
+      if (/\.(pdf|pptx|docx|txt|md|html?)$/i.test(last)) return decodeURIComponent(last);
+    } catch (e) {}
+    return '';
+  }
+
+  async function fetchWithTimeout(url, timeoutMs = 3500) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+      return await fetch(url, { credentials: 'include', signal: ctrl.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function fetchSafeModuleDetail(mod, maxBytes = 1500000) {
+    const { moduleId, modname, name, href, textExcerpt } = mod;
+    if (!href || modname === 'quiz' || !_DEEP_SAFE_MODS.has(modname)) return null;
+    const lowerName = (name || '').toLowerCase();
+    if (_RESTRICTED_HINTS.some((kw) => lowerName.includes(kw))) return null;
+
+    let targetOrigin = '';
+    try {
+      targetOrigin = new URL(href, window.location.origin).origin;
+    } catch (e) {
+      return null;
+    }
+    if (targetOrigin !== window.location.origin) return null;
+
+    const cacheKey = `${moduleId}:${href}:${textExcerpt || ''}`;
+    if (_DEEP_SESSION_CACHE.has(cacheKey)) {
+      return _DEEP_SESSION_CACHE.get(cacheKey);
+    }
+
+    try {
+      const resp = await fetchWithTimeout(href, 3500);
+      if (!resp || !resp.ok) return null;
+
+      const cType = (resp.headers.get('content-type') || '').toLowerCase();
+      const cDisp = resp.headers.get('content-disposition') || '';
+      const finalUrl = resp.url || href;
+      const result = { extraText: '', attachmentFilename: null, attachmentBase64: null };
+
+      if (cType.includes('text/html') || modname === 'page' || modname === 'book' || modname === 'folder' || modname === 'assign') {
+        const html = await resp.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        if (modname === 'resource') {
+          const pluginLink = doc.querySelector('.resourceworkaround a[href*="pluginfile.php"], #region-main a[href*="pluginfile.php"]');
+          if (pluginLink && pluginLink.href && new URL(pluginLink.href, window.location.origin).origin === window.location.origin) {
+            const subResp = await fetchWithTimeout(pluginLink.href, 4000);
+            if (subResp && subResp.ok) {
+              const subType = (subResp.headers.get('content-type') || '').toLowerCase();
+              const subDisp = subResp.headers.get('content-disposition') || '';
+              const buf = await subResp.arrayBuffer();
+              if (buf.byteLength > 0 && buf.byteLength <= maxBytes) {
+                const fname = guessFilenameFromUrl(subResp.url || pluginLink.href, subDisp) || `${name}.pdf`;
+                if (subType.includes('text/plain') || /\.(txt|md)$/i.test(fname)) {
+                  result.extraText = new TextDecoder().decode(buf).slice(0, 15000);
+                } else if (subType.includes('pdf') || /\.(pdf|docx|pptx)$/i.test(fname)) {
+                  result.attachmentFilename = fname;
+                  result.attachmentBase64 = arrayBufferToBase64(buf);
+                }
+              }
+            }
+          }
+        }
+        if (!result.extraText && !result.attachmentBase64) {
+          result.extraText = extractCleanMainText(doc);
+        }
+      } else if (cType.includes('text/plain') || /\.(txt|md)$/i.test(finalUrl)) {
+        result.extraText = (await resp.text()).slice(0, 15000);
+      } else if (cType.includes('pdf') || /\.(pdf|docx|pptx)$/i.test(finalUrl) || /\.(pdf|docx|pptx)$/i.test(cDisp)) {
+        const buf = await resp.arrayBuffer();
+        if (buf.byteLength > 0 && buf.byteLength <= maxBytes) {
+          result.attachmentFilename = guessFilenameFromUrl(finalUrl, cDisp) || `${name}.pdf`;
+          result.attachmentBase64 = arrayBufferToBase64(buf);
+        }
+      }
+
+      if (result.extraText || result.attachmentBase64) {
+        _DEEP_SESSION_CACHE.set(cacheKey, result);
+        return result;
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  async function extractCoursePayload(toolsConfig = null, options = {}) {
+    const deepFetch = Boolean(options.deepFetch);
+    const maxDeepModules = options.maxDeepModules || 10;
+    const concurrency = options.concurrency || 3;
+    const maxBytes = options.maxBytes || 1500000;
     const courseId = detectCourseId();
     const isMoodleDom = Boolean(
       courseId ||
@@ -75,6 +201,7 @@
 
     const sections = [];
     const knownHashes = [];
+    const moduleHashes = {};
     let totalModules = 0;
     let quizCount = 0;
 
@@ -119,6 +246,15 @@
         const descEl = act.querySelector('.contentafterlink, .activity-altcontent, .description');
         const textExcerpt = cleanNodeText(descEl);
 
+        let dueAt = null;
+        if (modname === 'assign') {
+          const dateEl = act.querySelector('.activity-dates, [data-region="activity-dates"]');
+          const dateTxt = cleanNodeText(dateEl);
+          if (dateTxt) {
+            dueAt = dateTxt.slice(0, 120);
+          }
+        }
+
         let quizMeta = null;
         if (modname === 'quiz') {
           quizCount++;
@@ -133,17 +269,20 @@
           };
         }
 
-        const modHash = await sha256Hex(`${modname}:${name}:${textExcerpt}`);
-        if (modHash) knownHashes.push(modHash);
-
         modules.push({
           module_id: moduleId,
           name,
           modname,
           url: href,
           text_excerpt: textExcerpt || null,
-          file_hashes: modHash ? [modHash] : [],
+          attachment_filename: null,
+          attachment_base64: null,
+          due_at: dueAt,
+          module_hash: null,
+          file_hashes: [],
           quiz_meta: quizMeta,
+          _rawHref: href,
+          _rawExcerpt: textExcerpt,
         });
         totalModules++;
       }
@@ -156,6 +295,69 @@
       });
     }
 
+    let deepFetchedCount = 0;
+    let attachmentsCount = 0;
+    if (deepFetch) {
+      const queue = [];
+      for (const sec of sections) {
+        for (const m of sec.modules) {
+          if (m.modname !== 'quiz' && _DEEP_SAFE_MODS.has(m.modname) && m._rawHref) {
+            queue.push(m);
+            if (queue.length >= maxDeepModules) break;
+          }
+        }
+        if (queue.length >= maxDeepModules) break;
+      }
+
+      let cursor = 0;
+      async function worker() {
+        while (cursor < queue.length) {
+          const item = queue[cursor++];
+          const detail = await fetchSafeModuleDetail(
+            {
+              moduleId: item.module_id,
+              modname: item.modname,
+              name: item.name,
+              href: item._rawHref,
+              textExcerpt: item._rawExcerpt,
+            },
+            maxBytes
+          );
+          if (detail) {
+            if (detail.extraText) {
+              item.text_excerpt = item.text_excerpt
+                ? `${item.text_excerpt}\n\n${detail.extraText}`.slice(0, 16000)
+                : detail.extraText;
+              deepFetchedCount++;
+            }
+            if (detail.attachmentBase64) {
+              item.attachment_filename = detail.attachmentFilename;
+              item.attachment_base64 = detail.attachmentBase64;
+              attachmentsCount++;
+            }
+          }
+        }
+      }
+      await Promise.all(Array.from({ length: Math.min(concurrency, Math.max(1, queue.length)) }, () => worker()));
+    }
+
+    for (const sec of sections) {
+      for (const m of sec.modules) {
+        delete m._rawHref;
+        delete m._rawExcerpt;
+        const attSig = m.attachment_base64 ? await sha256Hex(m.attachment_base64.slice(0, 4096)) : '';
+        const modHash = await sha256Hex(
+          `${m.modname}:${m.name}:${m.text_excerpt || ''}:${m.attachment_filename || ''}:${m.due_at || ''}:${attSig}`
+        );
+        if (modHash) {
+          m.module_hash = modHash;
+          m.file_hashes = [modHash];
+          knownHashes.push(modHash);
+          moduleHashes[m.module_id] = modHash;
+        }
+      }
+    }
+
     const payload = {
       authority,
       moodle_url: moodleUrl,
@@ -164,6 +366,7 @@
       course_shortname: `LMS-${courseId}`,
       sections,
       known_hashes: knownHashes,
+      module_hashes: moduleHashes,
       tools_config: toolsConfig || undefined,
     };
 
@@ -177,6 +380,8 @@
         sectionsCount: sections.length,
         modulesCount: totalModules,
         quizCount,
+        deepFetchedCount,
+        attachmentsCount,
       },
     };
   }
