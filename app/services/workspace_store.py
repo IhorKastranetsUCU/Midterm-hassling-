@@ -24,6 +24,7 @@ from app.models.mix import (
     SyncDiffResponse,
     TopicDigest,
     TopicMix,
+    TopicPreviewItem,
     WorkspaceCourseSummary,
     compute_artifact_cache_key,
     compute_content_hash,
@@ -1132,6 +1133,139 @@ class WorkspaceStore:
             "chunks_indexed": len(chunk_records),
             "cache_hits": cache_hits,
             "recomputed_artifacts": recomputed,
+        }
+
+    async def create_course_from_confirmed_structure(
+        self,
+        owner_id: str,
+        course_id: int,
+        title: str,
+        shortname: str,
+        authority: str,
+        target_score: int,
+        topics: List[TopicPreviewItem],
+        tools: CourseToolsConfig,
+        debounce_seconds: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """
+        Build and persist a new course workspace from AI-generated, user-confirmed syllabus structure.
+        Creates raw topic snapshots, semantic chunks, and TopicMixes for each topic.
+        """
+        clean_auth = authority or "ucu"
+        sections = []
+        topic_mix_ids = []
+        total_chunks = 0
+        total_cache_hits = 0
+        total_recomputed = 0
+
+        for t in topics:
+            t_idx = t.topic_index
+            t_title = t.title
+            content_text = (
+                f"# {t_title}\n\n"
+                f"**Рівень складності:** {t.difficulty} | **Орієнтовний час:** {t.estimated_hours} год.\n\n"
+                f"{t.summary}\n\n"
+                f"## Ключові концепції:\n" + "\n".join(f"- {c}" for c in t.key_concepts) + "\n\n"
+                f"## План вивчення (Цільовий бал: {target_score}%):\n{t.suggested_focus}"
+            )
+
+            snapshot = RawTopicSnapshot(
+                source_id=f"syllabus-{course_id}-{t_idx}",
+                course_id=course_id,
+                authority=clean_auth,
+                title=t_title,
+                content_text=content_text,
+                source_type="moodle_extension",
+                safety_status="safe_material",
+                visibility="private",
+            )
+            self._save_snapshot(snapshot, topic_index=t_idx, owner_id=owner_id)
+
+            raw_chunks = split_text_into_semantic_chunks(t_title, content_text)
+            chunk_records = [
+                {
+                    "chunk_id": c["chunk_id"],
+                    "module_id": 0,
+                    "modname": "syllabus",
+                    "heading": c["heading"],
+                    "content_text": c["content_text"],
+                    "module_hash": c["content_hash"],
+                    "safety_status": "safe_material",
+                }
+                for c in raw_chunks
+            ]
+            self._save_topic_chunks(
+                owner_id=owner_id,
+                course_id=course_id,
+                topic_index=t_idx,
+                chunks=chunk_records,
+            )
+
+            sections.append({
+                "id": t_idx,
+                "name": t_title,
+                "summary": t.summary,
+                "modules": [
+                    {
+                        "id": t_idx * 100,
+                        "name": f"Матеріали теми: {t_title}",
+                        "modname": "resource",
+                        "safety_status": "safe_material",
+                        "description": t.summary,
+                    }
+                ],
+            })
+
+            topic_mix, cache_hits, recomputed = await self._build_topic_mix_cached(
+                snapshot=snapshot,
+                tools=tools,
+                topic_index=t_idx,
+                chunks=chunk_records,
+            )
+            self._save_topic_mix(topic_mix, owner_id=owner_id)
+            topic_mix_ids.append(topic_mix.mix_id)
+            total_chunks += len(chunk_records)
+            total_cache_hits += cache_hits
+            total_recomputed += recomputed
+
+        self._upsert_course(
+            owner_id=owner_id,
+            course_id=course_id,
+            authority=clean_auth,
+            title=title,
+            shortname=shortname or "COURSE",
+            moodle_url="",
+            source_type="moodle_extension",
+            tools=tools,
+            sections=sections,
+            blocked_quizzes=[],
+            exam_mix_stale=tools.exam_mix,
+        )
+
+        queued_job = None
+        if tools.exam_mix:
+            async def _bg_exam_build() -> None:
+                await self.build_exam_mix(course_id, owner_id=owner_id, from_queue=True)
+
+            queued_job = get_build_queue().schedule(
+                owner_id=owner_id,
+                course_id=course_id,
+                job_type="exam_mix",
+                coro_factory=_bg_exam_build,
+                debounce_seconds=debounce_seconds,
+            )
+
+        return {
+            "success": True,
+            "course_id": course_id,
+            "authority": clean_auth,
+            "topics_count": len(topics),
+            "workspace_url": f"/{clean_auth}/courses/{course_id}",
+            "topic_mix_ids": topic_mix_ids,
+            "exam_mix_queued": queued_job is not None,
+            "chunks_indexed": total_chunks,
+            "cache_hits": total_cache_hits,
+            "recomputed_artifacts": total_recomputed,
         }
 
     def list_courses(self, owner_id: str) -> List[WorkspaceCourseSummary]:

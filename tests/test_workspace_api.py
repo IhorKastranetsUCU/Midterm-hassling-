@@ -1034,3 +1034,65 @@ async def test_build_queue_respects_concurrency_limit(isolated_store, monkeypatc
     await asyncio.sleep(0.25)
     assert completed == 5
     assert max_active <= 2
+
+
+def test_preview_and_confirm_course_structure(isolated_store):
+    client = TestClient(app)
+
+    # 1. Preview course structure from syllabus
+    preview_res = client.post(
+        "/api/workspace/courses/preview-structure",
+        json={
+            "course_id": 101,
+            "title": "Computer Science & Algorithms",
+            "authority": "ucu",
+            "target_score": 90,
+            "custom_syllabus_text": "## Module 1: Complexity\nBig-O and amortized analysis.\n## Module 2: Trees\nBST and AVL balanced trees.",
+        },
+    )
+    assert preview_res.status_code == 200
+    preview_data = preview_res.json()
+    assert preview_data["course_id"] == 101
+    assert preview_data["target_score"] == 90
+    assert len(preview_data["topics"]) >= 2
+    top1 = preview_data["topics"][0]
+    assert "Complexity" in top1["title"]
+    assert top1["difficulty"] == "Basic"
+
+    # 2. Confirm and build the course in database
+    confirm_res = client.post(
+        "/api/workspace/courses/confirm-structure",
+        json={
+            "course_id": 101,
+            "title": "Computer Science & Algorithms",
+            "shortname": "CS101",
+            "authority": "ucu",
+            "target_score": 90,
+            "topics": preview_data["topics"],
+            "tools_config": {
+                "interactive_book": True,
+                "mermaid_diagrams": True,
+                "visual_cards": True,
+                "practice_quizzes": True,
+                "exam_mix": True,
+            },
+        },
+    )
+    assert confirm_res.status_code == 200
+    confirm_data = confirm_res.json()
+    assert confirm_data["success"] is True
+    assert confirm_data["course_id"] == 101
+    assert confirm_data["topics_count"] == len(preview_data["topics"])
+
+    # 3. Verify it is now returned by /api/workspace/courses
+    courses_res = client.get("/api/workspace/courses")
+    assert courses_res.status_code == 200
+    courses = courses_res.json()
+    assert any(c["course_id"] == 101 for c in courses)
+
+    # 4. Verify course bundle loads
+    bundle_res = client.get("/api/workspace/courses/101")
+    assert bundle_res.status_code == 200
+    bundle = bundle_res.json()
+    assert len(bundle["topic_mixes"]) == len(preview_data["topics"])
+

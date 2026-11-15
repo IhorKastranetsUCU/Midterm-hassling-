@@ -1,0 +1,159 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.0.0",
+  "title": "Moodle Parsing & Ingestion Restrictions Policy",
+  "description": "Rules and restrictions defining what content, files, URLs, and activities cannot be parsed or ingested into the AI workspace.",
+  
+  "security_and_anti_cheat": {
+    "enabled": true,
+    "description": "Fail-closed gates preventing the parsing or ingestion of active exams, confidential tests, and answer keys.",
+    "blocked_exam_keywords": [
+      "іспит",
+      "екзамен",
+      "контрольн",
+      "модульн",
+      "колоквіум",
+      "підсумков",
+      "атестаці",
+      "midterm",
+      "final exam",
+      "final_exam",
+      "colloquium",
+      "graded test",
+      "control work",
+      "exam paper"
+    ],
+    "allowed_self_test_hints": [
+      "self",
+      "practice",
+      "тренувал",
+      "самоперевірк",
+      "пробн",
+      "демо"
+    ],
+    "quiz_safety_rules": {
+      "block_if_timelimit_seconds_greater_than": 0,
+      "block_if_attempts_limited": true,
+      "block_if_requires_safe_exam_browser": true,
+      "block_if_review_answers_disallowed": true,
+      "block_if_availability_window_seconds_less_than": 14400
+    }
+  },
+
+  "url_restrictions": {
+    "description": "URL patterns and path prefixes that must never be crawled, scraped, or requested.",
+    "blocked_path_patterns": [
+      "/mod/quiz/attempt.php",
+      "/mod/quiz/processattempt.php",
+      "/mod/quiz/summary.php",
+      "/mod/assign/view.php?action=grading",
+      "/mod/assign/view.php?action=grade",
+      "/grade/report/",
+      "/grade/edit/",
+      "/admin/",
+      "/backup/",
+      "/restore/",
+      "/login/",
+      "/logout.php",
+      "/user/edit.php",
+      "/user/editadvanced.php",
+      "/calendar/export.php",
+      "/message/",
+      "/badges/"
+    ]
+  },
+
+  "module_type_restrictions": {
+    "description": "Moodle activity/resource types that are blocked from text extraction or study artifact generation.",
+    "blocked_modnames": [
+      "chat",
+      "survey",
+      "feedback",
+      "attendance",
+      "choice",
+      "lti",
+      "scorm",
+      "bigbluebuttonbn",
+      "zoom"
+    ],
+    "allowed_modnames": [
+      "resource",
+      "folder",
+      "page",
+      "book",
+      "assign",
+      "url",
+      "forum",
+      "label"
+    ]
+  },
+
+  "file_restrictions": {
+    "description": "File extensions and MIME constraints for document parsing and local caching.",
+    "allowed_extensions": [
+      ".pdf",
+      ".pptx",
+      ".ppt",
+      ".docx",
+      ".doc",
+      ".txt",
+      ".md",
+      ".html",
+      ".htm",
+      ".rtf",
+      ".csv",
+      ".xlsx",
+      ".xls",
+      ".json"
+    ],
+    "blocked_extensions": [
+      ".exe",
+      ".dmg",
+      ".apk",
+      ".bin",
+      ".bat",
+      ".sh",
+      ".cmd",
+      ".pyc",
+      ".so",
+      ".dylib",
+      ".dll",
+      ".zip",
+      ".rar",
+      ".tar",
+      ".gz",
+      ".7z",
+      ".mp4",
+      ".mkv",
+      ".avi",
+      ".mov",
+      ".wmv",
+      ".mp3",
+      ".wav",
+      ".ogg",
+      ".flac",
+      ".iso",
+      ".img"
+    ],
+    "max_file_size_bytes": 26214400,
+    "max_total_course_pull_bytes": 268435456
+  },
+
+  "content_and_privacy_filters": {
+    "description": "Rules for sanitizing extracted text to avoid leaking secrets or confidential tokens.",
+    "max_text_characters_per_module": 60000,
+    "blocked_content_keywords": [
+      "confidential",
+      "private key",
+      "secret token",
+      "do not distribute",
+      "відповіді до іспиту",
+      "answer key",
+      "restricted - instructors only"
+    ],
+    "redact_pii_patterns": [
+      "(?i)(password|secret|passwd|token)[\\s:=]+['\"]?([^\\s'\"&]+)",
+      "(?i)bearer\\s+[a-zA-Z0-9_.-]{20,}"
+    ]
+  }
+}

@@ -178,6 +178,26 @@ def decode_session_jwt(token: str, settings: Optional[Settings] = None) -> Dict[
         raise UnauthorizedError("Invalid session token.")
 
 
+def get_optional_moodle_session(request: Request, settings: Optional[Settings] = None) -> Optional[Dict[str, Any]]:
+    """Extract authenticated Moodle session if present, returning None otherwise without raising 401."""
+    if settings is None:
+        settings = get_settings()
+    token = request.cookies.get(settings.COOKIE_NAME)
+    if not token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header[7:].strip()
+    if token:
+        try:
+            session = decode_session_jwt(token, settings)
+            if "moodle_token" in session:
+                return session
+        except Exception:
+            pass
+    return None
+
+
+
 async def get_current_user_session(
     request: Request,
     bearer_auth: Optional[HTTPAuthorizationCredentials] = Depends(security_bearer),

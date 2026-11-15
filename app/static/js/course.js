@@ -888,6 +888,14 @@ function renderSections(sections) {
         const safetyBadge = m.safety_status === 'restricted_exam'
           ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-purple-950 text-purple-300 border border-purple-800">SHIELDED</span>'
           : '';
+
+        const hasFile = Boolean(m.download_url || (m.files && m.files.length > 0));
+        const fileBadges = (m.files || []).map(f => `
+          <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+            ${escapeHtml(f.filename)}
+          </span>
+        `).join('');
+
         return `
           <div class="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 transition-all group">
             <div class="flex items-center gap-2.5 min-w-0">
@@ -898,13 +906,22 @@ function renderSections(sections) {
               <span class="text-xs text-slate-200 group-hover:text-blue-400 transition-colors truncate">
                 ${escapeHtml(m.name)}
               </span>
+              ${fileBadges}
             </div>
-            ${m.url ? `
-              <a href="${m.url}" target="_blank" rel="noopener noreferrer"
-                class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-blue-600 text-[11px] font-medium text-slate-300 hover:text-white transition-all shrink-0 ml-3 flex items-center gap-1">
-                <span>Open</span>
-              </a>
-            ` : ''}
+            <div class="flex items-center gap-1.5 shrink-0 ml-3">
+              ${hasFile ? `
+                <a href="/api/courses/${currentCourseId}/files/download/${m.id}" target="_blank"
+                  class="px-2.5 py-1 rounded-lg bg-emerald-950/80 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-800/80 text-[11px] font-medium transition-all flex items-center gap-1 shadow-sm" title="Download File">
+                  <span>📥 File</span>
+                </a>
+              ` : ''}
+              ${m.url ? `
+                <a href="${m.url}" target="_blank" rel="noopener noreferrer"
+                  class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-blue-600 text-[11px] font-medium text-slate-300 hover:text-white transition-all flex items-center gap-1">
+                  <span>Open ↗</span>
+                </a>
+              ` : ''}
+            </div>
           </div>
         `;
       }).join('');
@@ -1031,6 +1048,37 @@ function toggleSection(idx) {
   const body = document.getElementById(`section-body-${idx}`);
   if (body) body.classList.toggle('hidden');
 }
+
+async function pullAllCourseFiles() {
+  const btn = document.getElementById('btn-pull-all-files');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳ Pulling files...</span>';
+  }
+
+  try {
+    const res = await fetch(`/api/courses/${currentCourseId}/files/pull-all`, {
+      method: 'POST',
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    const downloaded = data.total_downloaded || 0;
+    const skipped = data.total_skipped || 0;
+    const mb = (data.total_bytes / (1024 * 1024)).toFixed(1);
+
+    alert(`✅ Pull Complete!\n\n• Downloaded: ${downloaded} files (${mb} MB)\n• Shielded/Skipped: ${skipped} items\n\nAll safe course files cached in local workspace.`);
+    await reloadCourseData(true);
+  } catch (err) {
+    alert(`Could not pull files: ${err.message}. Ensure your Moodle session is active.`);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<span>📥 Pull All Files</span>';
+    }
+  }
+}
+
 
 function escapeHtml(text) {
   if (!text) return '';

@@ -17,6 +17,8 @@ from app.models.mix import (
     RawTopicSnapshot,
     TopicDigest,
     TopicMix,
+    TopicPreviewItem,
+    CourseStructurePreview,
     compute_content_hash,
 )
 
@@ -563,3 +565,165 @@ class StructuredPlaceholderMixGenerator(BaseMixGenerator):
 def get_mix_generator() -> BaseMixGenerator:
     """Factory hook — AI Engineer will swap this to return an LLM-backed generator when connecting AI."""
     return StructuredPlaceholderMixGenerator()
+
+
+def generate_course_structure_from_syllabus(
+    course_id: int,
+    title: str,
+    shortname: str = "COURSE",
+    authority: str = "ucu",
+    target_score: int = 85,
+    custom_syllabus_text: Optional[str] = None,
+    sections: Optional[List[Dict[str, Any]]] = None,
+    tools_config: Optional[CourseToolsConfig] = None,
+) -> CourseStructurePreview:
+    """
+    AI Course Architect: analyzes raw syllabus text or Moodle section metadata to generate
+    a coherent, structured topic roadmap with key concepts, estimated hours, and study focus
+    tailored to the user's target score (60% to 100%).
+    """
+    cfg = tools_config or CourseToolsConfig()
+    topics: List[TopicPreviewItem] = []
+    syllabus_excerpt = None
+    syllabus_found = False
+
+    # 1. If sections are provided from Moodle
+    if sections:
+        non_empty = [s for s in sections if s.get("modules") or (s.get("name") and s.get("name") not in ("General", "Вступ"))]
+        if not non_empty:
+            non_empty = sections
+
+        topic_idx = 1
+        for s in non_empty:
+            s_name = (s.get("name") or "").strip()
+            # If section is "General" and has summary, capture as syllabus excerpt
+            if s_name.lower() in ("general", "вступ", "course info", "інформація"):
+                summary_text = s.get("summary") or ""
+                mod_names = [m.get("name", "") for m in s.get("modules", [])]
+                syllabus_excerpt = (summary_text + "\n" + "\n".join(mod_names)).strip()[:500]
+                syllabus_found = True
+                if len(s.get("modules", [])) <= 1 and len(non_empty) > 1:
+                    continue
+
+            modules = s.get("modules", [])
+            mod_titles = [m.get("name", "") for m in modules if m.get("name")]
+            raw_summary = s.get("summary") or ""
+            clean_summary = re.sub(r"<[^>]+>", " ", raw_summary).strip()
+
+            if not clean_summary and mod_titles:
+                clean_summary = f"Опрацювання матеріалів: {', '.join(mod_titles[:3])}"
+            elif not clean_summary:
+                clean_summary = f"Теоретичний та практичний блок теми '{s_name}'."
+
+            # Extract key concepts
+            concepts = []
+            for t in mod_titles:
+                words = [w for w in re.split(r"[:,\-\(\)]", t) if len(w.strip()) > 3]
+                for w in words[:2]:
+                    cw = w.strip()
+                    if cw and cw not in concepts and len(cw) < 30:
+                        concepts.append(cw)
+            if not concepts:
+                concepts = [s_name, f"Основи {s_name}", "Практичні завдання"]
+
+            # Calculate estimated hours & difficulty
+            total_items = max(len(modules), 1)
+            score_factor = 1.0 if target_score < 75 else (1.4 if target_score < 90 else 1.8)
+            est_hours = max(2, int(round((total_items * 0.7 + 1.5) * score_factor)))
+
+            # Difficulty tiering
+            if topic_idx <= 1:
+                diff = "Basic"
+                focus = "Фундаментальна теорія та базова термінологія"
+            elif topic_idx >= len(non_empty) - 1:
+                diff = "Advanced" if target_score >= 80 else "Intermediate"
+                focus = "Комплексні задачі та підготовка до іспиту"
+            else:
+                diff = "Intermediate"
+                focus = "Поглиблений аналіз та вирішення типових кейсів"
+
+            topics.append(
+                TopicPreviewItem(
+                    topic_index=topic_idx,
+                    title=f"Тема {topic_idx}: {s_name}",
+                    summary=clean_summary[:250],
+                    key_concepts=concepts[:5],
+                    difficulty=diff,
+                    estimated_hours=est_hours,
+                    source_modules_count=len(modules),
+                    suggested_focus=focus,
+                )
+            )
+            topic_idx += 1
+
+    # 2. If custom syllabus text is provided
+    elif custom_syllabus_text and custom_syllabus_text.strip():
+        text = custom_syllabus_text.strip()
+        syllabus_found = True
+        syllabus_excerpt = text[:500]
+        chunks = re.split(r"(?=(?:^|\n)(?:Тема\s*\d+|Week\s*\d+|Module\s*\d+|Розділ\s*\d+|Topic\s*\d+|##\s+))", text, flags=re.IGNORECASE)
+        clean_chunks = [c.strip() for c in chunks if len(c.strip()) > 20]
+        if not clean_chunks:
+            clean_chunks = [c["content_text"] for c in split_text_into_semantic_chunks(title, text)]
+
+        for idx, chunk in enumerate(clean_chunks[:8], start=1):
+            lines = chunk.split("\n")
+            first_line = re.sub(r"^[#\s\d.:\-]+", "", lines[0]).strip() or f"Тема {idx}"
+            body_text = "\n".join(lines[1:]).strip() or first_line
+            key_pts, _ = _extract_key_points(body_text, first_line, limit=4)
+            diff = "Basic" if idx == 1 else ("Advanced" if idx == len(clean_chunks) else "Intermediate")
+            est_hours = 3 if target_score < 80 else 4
+            topics.append(
+                TopicPreviewItem(
+                    topic_index=idx,
+                    title=f"Тема {idx}: {first_line[:50]}",
+                    summary=body_text[:200].replace("\n", " "),
+                    key_concepts=key_pts[:4],
+                    difficulty=diff,
+                    estimated_hours=est_hours,
+                    source_modules_count=len(lines),
+                    suggested_focus="Теоретичний огляд та практичне закріплення",
+                )
+            )
+
+    # 3. Baseline fallback
+    if not topics:
+        syllabus_found = False
+        default_titles = [
+            f"Вступ та фундаментальні концепції {title}",
+            f"Методи та інструменти аналізу у {title}",
+            f"Практичне застосування та типові алгоритми",
+            f"Комплексна підготовка до контрольних заходів та іспиту",
+        ]
+        for idx, d_title in enumerate(default_titles, start=1):
+            topics.append(
+                TopicPreviewItem(
+                    topic_index=idx,
+                    title=f"Тема {idx}: {d_title}",
+                    summary=f"Структурований модуль вивчення курсу '{title}'.",
+                    key_concepts=[title, f"Модуль {idx}", "Практика"],
+                    difficulty="Basic" if idx == 1 else ("Advanced" if idx == 4 else "Intermediate"),
+                    estimated_hours=3,
+                    source_modules_count=1,
+                    suggested_focus="Опрацювання матеріалів та самоперевірка",
+                )
+            )
+
+    total_hours = sum(t.estimated_hours for t in topics)
+    weekly_rec = max(2, int(round(total_hours / max(len(topics), 1) * 1.5)))
+
+    return CourseStructurePreview(
+        course_id=course_id,
+        title=title,
+        shortname=shortname,
+        authority=authority,
+        target_score=target_score,
+        syllabus_source="Moodle Syllabus & Course Sections" if sections else ("Uploaded Syllabus Text" if custom_syllabus_text else "AI Adaptive Blueprint"),
+        syllabus_found=syllabus_found,
+        syllabus_excerpt=syllabus_excerpt,
+        topics=topics,
+        tools_config=cfg,
+        total_estimated_hours=total_hours,
+        weekly_hours_recommendation=weekly_rec,
+    )
+

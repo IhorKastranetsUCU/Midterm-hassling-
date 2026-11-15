@@ -5,6 +5,7 @@ from typing import Dict, Any, Optional, List, Union
 import httpx
 
 from app.config import get_settings
+from app.core.parsing_restrictions import get_parsing_restrictions
 from app.core.exceptions import (
     MoodleException,
     MoodleAuthError,
@@ -453,38 +454,328 @@ class MoodleClient:
     async def get_site_info(self, token: str, base_url: Optional[str] = None) -> Dict[str, Any]:
         return await self.call_ws("core_webservice_get_site_info", token, base_url=base_url)
 
+    def _format_courses_list(self, raw_courses: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        courses = []
+        for c in raw_courses:
+            if not isinstance(c, dict) or not c.get("id"):
+                continue
+            courses.append({
+                "id": c["id"],
+                "shortname": c.get("shortname", ""),
+                "fullname": c.get("fullname", f"Course {c['id']}"),
+                "summary": c.get("summary", ""),
+                "enrolledusercount": c.get("enrolledusercount"),
+                "progress": c.get("progress"),
+                "completed": c.get("completed", False),
+                "startdate": c.get("startdate"),
+                "enddate": c.get("enddate"),
+            })
+        return courses
+
+    def _enrich_course_sections(
+        self,
+        raw_sections: List[Dict[str, Any]],
+        base_url: str,
+        restrictions: Optional[Any] = None,
+    ) -> List[Dict[str, Any]]:
+        """Validate and enrich raw course sections with files, download URLs, and safety classifications."""
+        if restrictions is None:
+            restrictions = get_parsing_restrictions()
+
+        clean_sections = []
+        for s in raw_sections:
+            sec_id = s.get("id", len(clean_sections))
+            sec_name = s.get("name", "General")
+            sec_summary = s.get("summary")
+
+            modules = []
+            for m in s.get("modules", []):
+                mod_id = m.get("id", 0)
+                mod_name = m.get("name", f"Resource {mod_id}")
+                mod_type = m.get("modname", "resource")
+                mod_url = m.get("url")
+
+                # Check safety restrictions
+                is_safe, reason = restrictions.is_module_safe(mod_name, mod_type, mod_url)
+                safety_status = "safe_material" if is_safe else "restricted_exam"
+
+                # Extract files/contents
+                contents = m.get("contents", [])
+                files_list = []
+                download_url = m.get("download_url")
+
+                for f in contents:
+                    fname = f.get("filename") or f.get("name") or "document.pdf"
+                    furl = f.get("fileurl") or f.get("url")
+                    fsize = f.get("filesize")
+                    fmime = f.get("mimetype")
+                    f_safe, f_reason = restrictions.is_file_safe(fname, furl, fsize)
+                    files_list.append({
+                        "filename": fname,
+                        "fileurl": furl,
+                        "filesize": fsize,
+                        "mimetype": fmime,
+                        "is_safe": f_safe,
+                        "safety_reason": f_reason if not f_safe else None,
+                    })
+                    if not download_url and furl and f_safe:
+                        download_url = furl
+
+                if not download_url and mod_type == "resource":
+                    download_url = f"{base_url}/mod/resource/view.php?id={mod_id}"
+
+                modules.append({
+                    "id": mod_id,
+                    "name": mod_name,
+                    "modname": mod_type,
+                    "instance": m.get("instance", mod_id),
+                    "url": mod_url,
+                    "description": m.get("description"),
+                    "visible": m.get("visible", 1),
+                    "contents": contents,
+                    "files": files_list,
+                    "download_url": download_url,
+                    "safety_status": safety_status,
+                })
+
+            clean_sections.append({
+                "id": sec_id,
+                "name": sec_name,
+                "summary": sec_summary,
+                "modules": modules,
+            })
+
+        return clean_sections
+
     async def get_user_courses(
         self,
         token: str,
         user_id: int,
         auth_type: str = "token",
         sesskey: Optional[str] = None,
+        base_url: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-        """Retrieve enrolled courses via REST token or AJAX cookie."""
-        if auth_type == "cookie" and sesskey:
-            res = await self.call_ajax_ws(
-                "core_course_get_enrolled_courses_by_timeline_classification",
-                cookie=token,
-                sesskey=sesskey,
-                args={"classification": "all", "limit": 0, "offset": 0, "sort": "fullname"},
-            )
-            raw_courses = res.get("courses", []) if isinstance(res, dict) else []
-            courses = []
-            for c in raw_courses:
-                courses.append({
-                    "id": c.get("id"),
-                    "shortname": c.get("shortname", ""),
-                    "fullname": c.get("fullname", ""),
-                    "summary": c.get("summary", ""),
-                    "enrolledusercount": c.get("enrolledusercount"),
-                    "progress": c.get("progress"),
-                    "completed": c.get("completed", False),
-                    "startdate": c.get("startdate"),
-                    "enddate": c.get("enddate"),
-                })
-            return courses
+        """Retrieve enrolled courses via REST token, AJAX cookie, or resilient HTML dashboard scraping."""
+        target_base = (base_url or self.base_url).rstrip("/")
 
-        return await self.call_ws("core_enrol_get_users_courses", token, params={"userid": user_id})
+        # 1. Cookie Authentication (SSO / Web Session)
+        if auth_type == "cookie" and sesskey:
+            # 1a. Try timeline classifications (inprogress, all, past, future)
+            for classification in ("inprogress", "all", "future", "past"):
+                try:
+                    res = await self.call_ajax_ws(
+                        "core_course_get_enrolled_courses_by_timeline_classification",
+                        cookie=token,
+                        sesskey=sesskey,
+                        args={"classification": classification, "limit": 0, "offset": 0, "sort": "fullname"},
+                        base_url=target_base,
+                    )
+                    raw_courses = res.get("courses", []) if isinstance(res, dict) else []
+                    if raw_courses:
+                        return self._format_courses_list(raw_courses)
+                except Exception as e:
+                    logger.debug(f"AJAX timeline classification '{classification}' failed: {e}")
+
+            # 1b. Try recent courses
+            try:
+                recent = await self.call_ajax_ws(
+                    "core_course_get_recent_courses",
+                    cookie=token,
+                    sesskey=sesskey,
+                    args={},
+                    base_url=target_base,
+                )
+                if isinstance(recent, list) and recent:
+                    return self._format_courses_list(recent)
+            except Exception:
+                pass
+
+            # 1c. Universal HTML Fallback: scrape user's dashboard (/my/courses.php or /my/ or /)
+            try:
+                headers = {
+                    "Cookie": f"MoodleSession={token}",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                }
+                async with httpx.AsyncClient(timeout=self.settings.MOODLE_REQUEST_TIMEOUT, follow_redirects=True, headers=headers) as client:
+                    for endpoint in ("/my/courses.php", "/my/", "/"):
+                        resp = await client.get(f"{target_base}{endpoint}")
+                        if resp.status_code == 200:
+                            courses = self.parse_moodle_courses_from_html(resp.text)
+                            if courses:
+                                return courses
+            except Exception as e:
+                logger.warning(f"HTML courses scraping fallback failed: {e}")
+
+        # 2. Token Authentication (Web Services)
+        if auth_type == "token":
+            try:
+                raw_courses = await self.call_ws(
+                    "core_enrol_get_users_courses",
+                    token,
+                    params={"userid": user_id},
+                    base_url=target_base,
+                )
+                if isinstance(raw_courses, list) and raw_courses:
+                    return self._format_courses_list(raw_courses)
+            except Exception as e:
+                logger.debug(f"REST core_enrol_get_users_courses failed: {e}")
+
+        # 3. Sandbox / Mock Mode
+        if token.startswith("mock_") or self.settings.MOODLE_MOCK_MODE or user_id == 42:
+            return MOCK_COURSES
+
+        return []
+
+    def parse_moodle_courses_from_html(self, html: str) -> List[Dict[str, Any]]:
+        """Extract enrolled courses from Moodle dashboard HTML (/my/ or /my/courses.php)."""
+        courses = []
+        seen_ids = set()
+
+        # Find course links: /course/view.php?id=123
+        course_link_pattern = re.compile(r'href=["\'][^"\']*\/course\/view\.php\?id=(\d+)[^"\']*["\'][^>]*>(.*?)<\/a>', re.DOTALL | re.IGNORECASE)
+        for m in course_link_pattern.finditer(html):
+            cid = int(m.group(1))
+            if cid in seen_ids or cid <= 1:
+                continue
+
+            raw_text = m.group(2)
+            # Remove badges / spans
+            clean_title = re.sub(r'<[^>]+>', ' ', raw_text).strip()
+            clean_title = re.sub(r'\s+', ' ', clean_title).strip()
+            if not clean_title or len(clean_title) < 2 or clean_title.lower() in ("home", "dashboard", "courses"):
+                continue
+
+            seen_ids.add(cid)
+            courses.append({
+                "id": cid,
+                "shortname": f"COURSE-{cid}",
+                "fullname": clean_title,
+                "summary": "Imported from Moodle dashboard",
+                "enrolledusercount": None,
+                "progress": None,
+                "completed": False,
+                "startdate": None,
+                "enddate": None,
+            })
+
+        return courses
+
+    def parse_moodle_course_html(self, html: str, base_url: str = "") -> List[Dict[str, Any]]:
+        """
+        Robust parser for Moodle course HTML pages (/course/view.php?id=...).
+        Extracts sections, summaries, activities/modules, and attached file links.
+        Supports both Moodle 3.x (<li class="section ...">) and Moodle 4.x/5.x (<div class="course-section ...">).
+        """
+        sections: List[Dict[str, Any]] = []
+
+        # Split HTML by section elements
+        section_splits = re.split(
+            r'(?=(?:<li|<div)[^>]+(?:id=["\']section-\d+["\']|class=["\'][^"\']*\bsection\b[^"\']*["\']))',
+            html,
+            flags=re.IGNORECASE,
+        )
+
+        sec_counter = 0
+        for block in section_splits:
+            sec_id_match = re.search(r'id=["\']section-(\d+)["\']', block, re.IGNORECASE)
+            if not sec_id_match:
+                sec_id_match = re.search(r'data-sectionid=["\'](\d+)["\']', block, re.IGNORECASE)
+
+            if not sec_id_match and "activity " not in block:
+                continue
+
+            sec_num = int(sec_id_match.group(1)) if sec_id_match else sec_counter
+            sec_counter += 1
+
+            # Section title
+            name_m = re.search(r'<h3[^>]*class=["\'][^"\']*(?:sectionname|section-title)[^"\']*["\'][^>]*>(.*?)</h3>', block, re.DOTALL | re.IGNORECASE)
+            if not name_m:
+                name_m = re.search(r'data-sectionname=["\']([^"\']+)["\']', block, re.IGNORECASE)
+
+            if name_m:
+                raw_title = name_m.group(1)
+                clean_title = re.sub(r'<[^>]+>', '', raw_title).strip()
+            else:
+                clean_title = "General" if sec_num == 0 else f"Section {sec_num}"
+
+            # Section summary
+            summary_m = re.search(r'<div[^>]*class=["\'][^"\']*summary[^"\']*["\'][^>]*>(.*?)</div>', block, re.DOTALL | re.IGNORECASE)
+            clean_summary = re.sub(r'<[^>]+>', ' ', summary_m.group(1)).strip() if summary_m else None
+
+            # Extract modules
+            modules: List[Dict[str, Any]] = []
+            activity_pattern = re.compile(
+                r'(?:<li|<div)[^>]+class=["\'][^"\']*\bactivity\b[^"\']*["\'][^>]*>(.*?)(?=(?:<li|<div)[^>]+class=["\'][^"\']*\bactivity\b|\Z)',
+                re.DOTALL | re.IGNORECASE,
+            )
+
+            for act_match in activity_pattern.finditer(block):
+                act_html = act_match.group(0)
+                # Strip all accesshide / sr-only spans first to avoid nested span truncation
+                act_html_clean = re.sub(r'<span[^>]*\b(?:accesshide|sr-only)\b[^>]*>.*?</span>', '', act_html, flags=re.DOTALL | re.IGNORECASE)
+
+                mod_id_m = re.search(r'id=["\']module-(\d+)["\']', act_html_clean, re.IGNORECASE)
+                if not mod_id_m:
+                    mod_id_m = re.search(r'data-id=["\'](\d+)["\']', act_html_clean, re.IGNORECASE)
+                mod_id = int(mod_id_m.group(1)) if mod_id_m else len(modules) + 1000
+
+                modtype_m = re.search(r'\bmodtype_([a-zA-Z0-9_-]+)\b', act_html_clean, re.IGNORECASE)
+                if not modtype_m:
+                    modtype_m = re.search(r'\bactivity\s+([a-zA-Z0-9_-]+)\b', act_html_clean, re.IGNORECASE)
+                modname = modtype_m.group(1).lower() if modtype_m else "resource"
+
+                link_m = re.search(r'<a[^>]+class=["\'][^"\']*\baalink\b[^"\']*["\'][^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', act_html_clean, re.DOTALL | re.IGNORECASE)
+                if not link_m:
+                    link_m = re.search(r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', act_html_clean, re.DOTALL | re.IGNORECASE)
+
+                mod_url = link_m.group(1).strip() if link_m else None
+                name_html = link_m.group(2) if link_m else ""
+
+                name_m = re.search(r'<span[^>]*class=["\'][^"\']*instancename[^"\']*["\'][^>]*>(.*?)</span>', act_html_clean, re.DOTALL | re.IGNORECASE)
+                if name_m:
+                    raw_name = name_m.group(1)
+                    mod_name = re.sub(r'<[^>]+>', '', raw_name).strip()
+                elif name_html:
+                    mod_name = re.sub(r'<[^>]+>', '', name_html).strip()
+                else:
+                    mod_name = f"Resource {mod_id}"
+
+                desc_m = re.search(r'<div[^>]*class=["\'][^"\']*(?:contentafterlink|description)[^"\']*["\'][^>]*>(.*?)</div>', act_html, re.DOTALL | re.IGNORECASE)
+                mod_desc = re.sub(r'<[^>]+>', ' ', desc_m.group(1)).strip() if desc_m else None
+
+                # Extract file links
+                file_links = re.findall(r'href=["\']([^"\']*pluginfile\.php[^"\']*)["\']', act_html, re.IGNORECASE)
+                contents_list = []
+                for flink in file_links:
+                    fname = flink.split('/')[-1].split('?')[0]
+                    contents_list.append({
+                        "type": "file",
+                        "filename": fname,
+                        "fileurl": flink,
+                    })
+
+                download_url = file_links[0] if file_links else (mod_url if modname == "resource" else None)
+
+                modules.append({
+                    "id": mod_id,
+                    "name": mod_name,
+                    "modname": modname,
+                    "instance": mod_id,
+                    "url": mod_url,
+                    "description": mod_desc,
+                    "visible": 1,
+                    "contents": contents_list,
+                    "download_url": download_url,
+                })
+
+            sections.append({
+                "id": sec_num,
+                "name": clean_title,
+                "summary": clean_summary,
+                "modules": modules,
+            })
+
+        return sections
 
     async def get_course_contents(
         self,
@@ -492,8 +783,13 @@ class MoodleClient:
         course_id: int,
         auth_type: str = "token",
         sesskey: Optional[str] = None,
+        base_url: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-        """Retrieve course contents / modules."""
+        """Retrieve course contents / modules with resilient AJAX, REST, and HTML scraping fallback."""
+        target_base = (base_url or self.base_url).rstrip("/")
+        restrictions = get_parsing_restrictions()
+
+        # 1. Try AJAX if cookie session
         if auth_type == "cookie" and sesskey:
             try:
                 res = await self.call_ajax_ws(
@@ -501,13 +797,182 @@ class MoodleClient:
                     cookie=token,
                     sesskey=sesskey,
                     args={"courseid": course_id},
+                    base_url=target_base,
                 )
-                if isinstance(res, list):
-                    return res
-            except Exception:
-                pass
+                if isinstance(res, list) and len(res) > 0:
+                    return self._enrich_course_sections(res, target_base, restrictions)
+            except Exception as e:
+                logger.debug(f"AJAX core_course_get_contents failed for course {course_id}: {e}")
 
-        return await self.call_ws("core_course_get_contents", token, params={"courseid": course_id})
+        # 2. Try REST Web Services if token
+        if auth_type == "token":
+            try:
+                raw = await self.call_ws(
+                    "core_course_get_contents",
+                    token,
+                    params={"courseid": course_id},
+                    base_url=target_base,
+                )
+                if isinstance(raw, list) and len(raw) > 0:
+                    return self._enrich_course_sections(raw, target_base, restrictions)
+            except Exception as e:
+                logger.debug(f"REST core_course_get_contents failed for course {course_id}: {e}")
+
+        # 3. Universal HTML Fallback: scrape course page /course/view.php?id={course_id}
+        # When WebServices are restricted by university administrators, the student's browser session can ALWAYS
+        # fetch the course HTML page with their valid session cookie!
+        if auth_type == "cookie" and token:
+            try:
+                course_url = f"{target_base}/course/view.php?id={course_id}"
+                headers = {
+                    "Cookie": f"MoodleSession={token}",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                }
+                async with httpx.AsyncClient(timeout=self.settings.MOODLE_REQUEST_TIMEOUT, follow_redirects=True, headers=headers) as client:
+                    resp = await client.get(course_url)
+                    if resp.status_code == 200 and ("course-content" in resp.text or "section" in resp.text):
+                        parsed_sections = self.parse_moodle_course_html(resp.text, base_url=target_base)
+                        if parsed_sections:
+                            return self._enrich_course_sections(parsed_sections, target_base, restrictions)
+            except Exception as e:
+                logger.warning(f"HTML scraping fallback failed for course {course_id}: {e}")
+
+        # 4. Sandbox / Mock Mode
+        if token.startswith("mock_") or self.settings.MOODLE_MOCK_MODE:
+            mock = self._handle_mock_call("core_course_get_contents", {"courseid": course_id})
+            if mock:
+                return self._enrich_course_sections(mock, target_base, restrictions)
+
+        return []
+
+    async def pull_all_course_files(
+        self,
+        token: str,
+        course_id: int,
+        auth_type: str = "token",
+        sesskey: Optional[str] = None,
+        base_url: Optional[str] = None,
+        target_dir: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Download and pull all accessible, safe files from the course into local storage.
+        Enforces parsing restrictions: skips exams, binaries, and oversized files.
+        """
+        import os
+        target_base = (base_url or self.base_url).rstrip("/")
+        sections = await self.get_course_contents(
+            token=token,
+            course_id=course_id,
+            auth_type=auth_type,
+            sesskey=sesskey,
+            base_url=target_base,
+        )
+
+        restrictions = get_parsing_restrictions()
+        out_dir = target_dir or os.path.join("data", "courses", str(course_id), "files")
+        os.makedirs(out_dir, exist_ok=True)
+
+        downloaded_files = []
+        skipped_files = []
+        total_bytes = 0
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        }
+        if auth_type == "cookie":
+            headers["Cookie"] = f"MoodleSession={token}"
+
+        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True, headers=headers) as client:
+            for sec in sections:
+                sec_name = sec.get("name", "General")
+                for mod in sec.get("modules", []):
+                    mod_id = mod.get("id")
+                    mod_name = mod.get("name", "")
+                    mod_type = mod.get("modname", "")
+
+                    # Check module safety
+                    m_safe, m_reason = restrictions.is_module_safe(mod_name, mod_type, mod.get("url"))
+                    if not m_safe:
+                        skipped_files.append({
+                            "module_id": mod_id,
+                            "module_name": mod_name,
+                            "reason": m_reason,
+                        })
+                        continue
+
+                    # Process attached files or resource URL
+                    file_items = mod.get("files", [])
+                    if not file_items and mod.get("download_url"):
+                        file_items = [{"filename": f"{mod_name}.pdf", "fileurl": mod["download_url"]}]
+
+                    for fitem in file_items:
+                        fname = fitem.get("filename") or f"{mod_name}.pdf"
+                        furl = fitem.get("fileurl") or mod.get("download_url")
+                        if not furl:
+                            continue
+
+                        f_safe, f_reason = restrictions.is_file_safe(fname, furl, fitem.get("filesize"))
+                        if not f_safe:
+                            skipped_files.append({
+                                "module_id": mod_id,
+                                "module_name": mod_name,
+                                "filename": fname,
+                                "reason": f_reason,
+                            })
+                            continue
+
+                        # Check total bytes budget
+                        if total_bytes >= restrictions.file_restrictions.max_total_course_pull_bytes:
+                            skipped_files.append({
+                                "module_id": mod_id,
+                                "filename": fname,
+                                "reason": "Course file pull quota exceeded",
+                            })
+                            continue
+
+                        # Download the file
+                        try:
+                            # Normalize URL
+                            fetch_url = furl if furl.startswith("http") else f"{target_base}/{furl.lstrip('/')}"
+                            if auth_type == "token" and "wstoken" not in fetch_url:
+                                sep = "&" if "?" in fetch_url else "?"
+                                fetch_url = f"{fetch_url}{sep}wstoken={token}"
+
+                            resp = await client.get(fetch_url)
+                            if resp.status_code == 200 and len(resp.content) > 0:
+                                # Save file
+                                safe_fname = re.sub(r'[^a-zA-Z0-9_.-]', '_', fname)
+                                file_path = os.path.join(out_dir, f"{mod_id}_{safe_fname}")
+                                with open(file_path, "wb") as fp:
+                                    fp.write(resp.content)
+
+                                f_bytes = len(resp.content)
+                                total_bytes += f_bytes
+                                downloaded_files.append({
+                                    "module_id": mod_id,
+                                    "module_name": mod_name,
+                                    "section_name": sec_name,
+                                    "filename": fname,
+                                    "saved_path": file_path,
+                                    "size_bytes": f_bytes,
+                                })
+                        except Exception as e:
+                            skipped_files.append({
+                                "module_id": mod_id,
+                                "filename": fname,
+                                "reason": f"Download error: {str(e)}",
+                            })
+
+        return {
+            "course_id": course_id,
+            "total_downloaded": len(downloaded_files),
+            "total_skipped": len(skipped_files),
+            "total_bytes": total_bytes,
+            "downloaded_files": downloaded_files,
+            "skipped_files": skipped_files,
+            "storage_directory": out_dir,
+        }
 
     async def get_assignments(
         self,

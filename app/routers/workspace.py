@@ -12,6 +12,7 @@ from app.core.security import (
     create_workspace_jwt,
     get_workspace_owner,
     get_workspace_session_owner,
+    get_optional_moodle_session,
 )
 from app.models.mix import (
     CourseToolsConfig,
@@ -20,9 +21,17 @@ from app.models.mix import (
     SyncDiffRequest,
     SyncDiffResponse,
     WorkspaceCourseSummary,
+    TopicPreviewItem,
+    CourseStructurePreview,
+    PreviewStructureRequest,
+    ConfirmStructureRequest,
 )
 from app.services.build_queue import get_build_queue
-from app.services.mix_generator import extract_text_from_upload
+from app.services.mix_generator import (
+    extract_text_from_upload,
+    generate_course_structure_from_syllabus,
+)
+from app.services.moodle_client import MoodleClient
 from app.services.workspace_store import get_workspace_store
 
 router = APIRouter(tags=["Workspace & Extension Sync"])
@@ -166,6 +175,111 @@ async def list_workspace_courses(
     """List courses synced or uploaded by the current isolated user only."""
     store = get_workspace_store()
     return store.list_courses(owner_id=owner.owner_id)
+
+
+@router.post("/api/workspace/courses/preview-structure", response_model=CourseStructurePreview)
+async def preview_course_structure(
+    req: PreviewStructureRequest,
+    request: Request,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+) -> CourseStructurePreview:
+    """
+    AI Course Architect: analyzes Moodle syllabus & sections (or custom text) and generates
+    a proposed topic roadmap with key concepts, estimated hours, and depth before user confirmation.
+    """
+    course_id = req.course_id or 101
+    course_title = req.title or f"Course {course_id}"
+    shortname = f"CRS-{course_id}"
+    sections = None
+    custom_text = req.custom_syllabus_text
+
+    # 1. Try pulling real Moodle sections if user has an active session
+    session = get_optional_moodle_session(request)
+    if session and session.get("moodle_token") and req.course_id:
+        try:
+            client = MoodleClient(base_url=session.get("site_url"))
+            sections = await client.get_course_contents(
+                token=session["moodle_token"],
+                course_id=req.course_id,
+                auth_type=session.get("auth_type", "token"),
+                sesskey=session.get("sesskey"),
+                base_url=session.get("site_url"),
+            )
+            raw_courses = await client.get_user_courses(
+                token=session["moodle_token"],
+                user_id=session["user_id"],
+                auth_type=session.get("auth_type", "token"),
+                sesskey=session.get("sesskey"),
+                base_url=session.get("site_url"),
+            )
+            for c in raw_courses:
+                if c.get("id") == req.course_id:
+                    course_title = c.get("fullname", course_title)
+                    shortname = c.get("shortname", shortname)
+                    break
+        except Exception:
+            pass
+
+    # 2. If in demo/mock mode or no sections returned
+    if not sections and not custom_text:
+        from app.services.mock_data import MOCK_COURSES, MOCK_COURSE_CONTENTS
+        for mc in MOCK_COURSES:
+            if mc.get("id") == req.course_id:
+                course_title = mc.get("fullname", course_title)
+                shortname = mc.get("shortname", shortname)
+                break
+        sections = MOCK_COURSE_CONTENTS.get(req.course_id or 101, MOCK_COURSE_CONTENTS.get(101))
+
+    preview = generate_course_structure_from_syllabus(
+        course_id=course_id,
+        title=course_title,
+        shortname=shortname,
+        authority=req.authority,
+        target_score=req.target_score,
+        custom_syllabus_text=custom_text,
+        sections=sections,
+        tools_config=req.tools_config,
+    )
+    return preview
+
+
+@router.post("/api/workspace/courses/confirm-structure")
+async def confirm_course_structure(
+    req: ConfirmStructureRequest,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+) -> Dict[str, Any]:
+    """
+    Confirm and persist the AI-generated course structure.
+    Creates the course in the database, synthesizes TopicMixes, and launches the study workspace.
+    """
+    store = get_workspace_store()
+    tools = req.tools_config or CourseToolsConfig()
+
+    result = await store.create_course_from_confirmed_structure(
+        owner_id=owner.owner_id,
+        course_id=req.course_id,
+        title=req.title,
+        shortname=req.shortname or "COURSE",
+        authority=req.authority,
+        target_score=req.target_score,
+        topics=req.topics,
+        tools=tools,
+    )
+
+    await event_bus.publish(
+        AcademicEvent(
+            type="workspace.synced",
+            title=f"Course Created: {req.title}",
+            message=f"AI synthesized {len(req.topics)} topics from syllabus. Workspace ready!",
+            severity="success",
+            user_id=owner.moodle_user_id,
+            owner_id=owner.owner_id,
+            data={"course_id": result["course_id"], "authority": result["authority"]},
+        )
+    )
+
+    return result
+
 
 
 @router.post("/api/workspace/courses/create-text")

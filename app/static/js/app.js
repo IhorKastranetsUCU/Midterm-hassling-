@@ -650,7 +650,9 @@ function switchTab(tabId) {
   }
 }
 
-// 1. Fetch & Render Courses (with LocalCache support & Dedicated Subject Links)
+let currentWorkspaceCoursesList = [];
+
+// 1. Fetch & Render Courses (with LocalCache support, Cross-referencing DB Workspaces & AI Builder)
 async function loadCourses() {
   const loading = document.getElementById('courses-loading');
   const grid = document.getElementById('courses-grid');
@@ -666,9 +668,16 @@ async function loadCourses() {
   }
 
   try {
-    const res = await fetch('/api/courses');
-    if (!res.ok) throw new Error('Failed to load courses');
-    const courses = await res.json();
+    const [coursesRes, wsRes] = await Promise.all([
+      fetch('/api/courses'),
+      fetch('/api/workspace/courses').catch(() => null)
+    ]);
+
+    if (!coursesRes.ok) throw new Error('Failed to load courses');
+    const courses = await coursesRes.json();
+    if (wsRes && wsRes.ok) {
+      currentWorkspaceCoursesList = await wsRes.json();
+    }
 
     document.getElementById('stat-courses-count').innerText = courses.length;
     renderCoursesGrid(courses);
@@ -704,19 +713,28 @@ function renderCoursesGrid(courses) {
     card.className = 'glass-panel p-5 rounded-2xl flex flex-col justify-between hover:border-slate-600 transition-all group';
     const progressVal = c.progress !== null ? Math.round(c.progress) : 0;
     
+    // Check if this course already exists in the local database workspace
+    const existingWs = (currentWorkspaceCoursesList || []).find(w => String(w.course_id) === String(c.id));
+    const isCreated = !!existingWs;
+
     card.innerHTML = `
       <div>
         <div class="flex items-center justify-between mb-2">
           <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-800 text-blue-400 border border-slate-700">
             ${escapeHtml(c.shortname || 'COURSE')}
           </span>
-          ${c.completed ? '<span class="text-[10px] text-emerald-400 font-semibold">✓ Completed</span>' : ''}
+          <div class="flex items-center gap-1.5">
+            ${isCreated
+              ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1"><span>✅ Вже в базі</span></span>'
+              : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1"><span>⚡ Ще не створено</span></span>'}
+            ${c.completed ? '<span class="text-[10px] text-emerald-400 font-semibold">✓ Завершено</span>' : ''}
+          </div>
         </div>
         <h3 class="text-sm font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-2 mb-2">
           ${escapeHtml(c.fullname)}
         </h3>
         <p class="text-xs text-slate-400 line-clamp-3 mb-4">
-          ${c.summary ? escapeHtml(stripHtml(c.summary)) : 'No description provided.'}
+          ${c.summary ? escapeHtml(stripHtml(c.summary)) : 'Опис курсу не надано.'}
         </p>
       </div>
 
@@ -724,7 +742,7 @@ function renderCoursesGrid(courses) {
         ${c.progress !== null ? `
           <div class="mb-4">
             <div class="flex justify-between text-[11px] text-slate-400 mb-1">
-              <span>Progress</span>
+              <span>Прогрес</span>
               <span class="font-mono">${progressVal}%</span>
             </div>
             <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
@@ -732,16 +750,38 @@ function renderCoursesGrid(courses) {
             </div>
           </div>
         ` : ''}
-        <div class="flex items-center gap-2">
-          <a href="/${authSlug}/courses/${c.id}" target="_blank"
-            class="flex-1 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold text-center transition-all flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/20">
-            <span>Open Subject Workspace ↗</span>
-          </a>
-          <button onclick="openCourseDetails(${c.id}, '${escapeQuotes(c.fullname)}', '${escapeQuotes(c.shortname || '')}')"
-            title="Quick Preview Modal"
-            class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-all shrink-0">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-          </button>
+
+        <div class="space-y-2">
+          ${isCreated ? `
+            <div class="flex items-center gap-2">
+              <a href="/${authSlug}/courses/${c.id}"
+                class="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold text-center transition-all flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20">
+                <span>Відкрити Workspace ↗</span>
+              </a>
+              <button onclick="openAiCourseBuilder(${c.id}, '${escapeQuotes(c.fullname)}', '${escapeQuotes(c.shortname || '')}')"
+                title="Реструктуризувати або оновити через AI"
+                class="px-2.5 py-2 rounded-xl bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-300 hover:text-white border border-indigo-800/60 text-xs font-semibold transition-all shrink-0 flex items-center gap-1">
+                <span>✨ AI</span>
+              </button>
+              <button onclick="openCourseDetails(${c.id}, '${escapeQuotes(c.fullname)}', '${escapeQuotes(c.shortname || '')}')"
+                title="Перегляд матеріалів Moodle"
+                class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-all shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              </button>
+            </div>
+          ` : `
+            <div class="flex items-center gap-2">
+              <button onclick="openAiCourseBuilder(${c.id}, '${escapeQuotes(c.fullname)}', '${escapeQuotes(c.shortname || '')}')"
+                class="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white text-xs font-semibold text-center transition-all flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20">
+                <span>✨ Створити через AI</span>
+              </button>
+              <button onclick="openCourseDetails(${c.id}, '${escapeQuotes(c.fullname)}', '${escapeQuotes(c.shortname || '')}')"
+                title="Перегляд матеріалів Moodle"
+                class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-all shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              </button>
+            </div>
+          `}
         </div>
       </div>
     `;
@@ -982,6 +1022,7 @@ function renderGradesContainer(data) {
 }
 
 function refreshDashboardData() {
+  loadWorkspaceCourses();
   loadCourses();
   loadAssignments();
   loadGrades();
@@ -1186,6 +1227,7 @@ async function loadWorkspaceCourses() {
     const res = await fetch('/api/workspace/courses');
     if (!res.ok) return;
     const courses = await res.json();
+    currentWorkspaceCoursesList = courses;
 
     if (guestBadge) guestBadge.innerText = courses.length;
     if (authBadge) authBadge.innerText = courses.length;
@@ -1413,8 +1455,258 @@ async function deleteWorkspaceCourse(courseId) {
     const res = await fetch(`/api/workspace/courses/${courseId}`, { method: 'DELETE' });
     if (res.ok) {
       await loadWorkspaceCourses();
+      await loadCourses();
     }
   } catch (err) {}
+}
+
+// ========================================================
+// AI COURSE ARCHITECT & SYLLABUS BUILDER (PREVIEW & CONFIRM)
+// ========================================================
+
+let currentAiCourse = null;
+let currentAiTargetScore = 85;
+let currentAiGeneratedStructure = null;
+
+function setAiTargetScore(score) {
+  currentAiTargetScore = score;
+  const btns = document.querySelectorAll('#ai-target-score-btns .score-btn');
+  btns.forEach(btn => {
+    const btnScore = parseInt(btn.dataset.score, 10);
+    if (btnScore === score) {
+      btn.className = 'score-btn active px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-blue-600 text-white border border-blue-500 shadow transition-all';
+    } else {
+      btn.className = 'score-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-slate-300 border border-slate-700 hover:text-white transition-all';
+    }
+  });
+}
+
+function toggleAiCustomSyllabus() {
+  const panel = document.getElementById('ai-custom-syllabus-panel');
+  if (panel) {
+    panel.classList.toggle('hidden');
+    if (!panel.classList.contains('hidden')) {
+      const input = document.getElementById('ai-custom-syllabus-input');
+      if (input) input.focus();
+    }
+  }
+}
+
+function openAiCourseBuilder(courseId, courseTitle, courseShortname) {
+  const authSlug = document.body.dataset.authoritySlug || 'ucu';
+  currentAiCourse = {
+    course_id: courseId,
+    title: courseTitle,
+    shortname: courseShortname || 'COURSE',
+    authority: authSlug
+  };
+  currentAiGeneratedStructure = null;
+
+  const titleEl = document.getElementById('ai-modal-course-title');
+  const codeEl = document.getElementById('ai-modal-course-code');
+  if (titleEl) titleEl.innerText = courseTitle;
+  if (codeEl) codeEl.innerText = courseShortname || 'COURSE';
+
+  // Reset custom syllabus input & panel
+  const customInput = document.getElementById('ai-custom-syllabus-input');
+  if (customInput) customInput.value = '';
+  const customPanel = document.getElementById('ai-custom-syllabus-panel');
+  if (customPanel) customPanel.classList.add('hidden');
+
+  setAiTargetScore(85);
+
+  const modal = document.getElementById('ai-course-preview-modal');
+  if (modal) modal.classList.remove('hidden');
+
+  refreshAiStructurePreview();
+}
+
+function closeAiCoursePreviewModal() {
+  const modal = document.getElementById('ai-course-preview-modal');
+  if (modal) modal.classList.add('hidden');
+  currentAiCourse = null;
+  currentAiGeneratedStructure = null;
+}
+
+function getAiToolsConfig() {
+  return {
+    interactive_book: !!document.getElementById('ai-tool-interactive_book')?.checked,
+    mermaid_diagrams: !!document.getElementById('ai-tool-mermaid_diagrams')?.checked,
+    practice_quizzes: !!document.getElementById('ai-tool-practice_quizzes')?.checked,
+    flashcards: !!document.getElementById('ai-tool-flashcards')?.checked,
+    exam_mix: !!document.getElementById('ai-tool-exam_mix')?.checked,
+    visual_cards: true
+  };
+}
+
+async function refreshAiStructurePreview() {
+  if (!currentAiCourse) return;
+
+  const loading = document.getElementById('ai-preview-loading');
+  const errorBox = document.getElementById('ai-preview-error');
+  const errorMsg = document.getElementById('ai-preview-error-msg');
+  const content = document.getElementById('ai-preview-content');
+  const confirmBtn = document.getElementById('btn-confirm-ai-course');
+
+  if (loading) loading.classList.remove('hidden');
+  if (errorBox) errorBox.classList.add('hidden');
+  if (content) content.classList.add('hidden');
+  if (confirmBtn) confirmBtn.disabled = true;
+
+  const customText = document.getElementById('ai-custom-syllabus-input')?.value.trim() || null;
+  const tools = getAiToolsConfig();
+
+  try {
+    const res = await fetch('/api/workspace/courses/preview-structure', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        course_id: currentAiCourse.course_id,
+        title: currentAiCourse.title,
+        shortname: currentAiCourse.shortname,
+        authority: currentAiCourse.authority,
+        target_score: currentAiTargetScore,
+        custom_syllabus_text: customText,
+        tools: tools
+      })
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({ detail: 'Помилка сервера' }));
+      throw new Error(errData.detail || 'Не вдалося побудувати структуру');
+    }
+
+    const preview = await res.json();
+    currentAiGeneratedStructure = preview;
+
+    // Render Stats
+    const topicsCountEl = document.getElementById('ai-stat-topics-count');
+    const hoursCountEl = document.getElementById('ai-stat-hours-count');
+    const targetScoreEl = document.getElementById('ai-stat-target-score');
+
+    if (topicsCountEl) topicsCountEl.innerText = preview.topics.length;
+    if (hoursCountEl) hoursCountEl.innerText = `${preview.estimated_total_hours} год`;
+    if (targetScoreEl) targetScoreEl.innerText = `${preview.target_score}%`;
+
+    // Render Topics Cards
+    const topicsContainer = document.getElementById('ai-topics-container');
+    if (topicsContainer) {
+      topicsContainer.innerHTML = '';
+
+      if (preview.topics.length === 0) {
+        topicsContainer.innerHTML = `
+          <div class="p-6 rounded-xl border border-dashed border-slate-700 bg-slate-900/40 text-center text-xs text-slate-400">
+            Теми не знайдено автоматично. Будь ласка, натисніть "📝 Текст силабусу" та вставте назви лекцій вручну.
+          </div>
+        `;
+      } else {
+        preview.topics.forEach((t, idx) => {
+          const diffBadge = t.difficulty === 'advanced'
+            ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-300 border border-rose-800">Advanced</span>'
+            : t.difficulty === 'intermediate'
+            ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800">Intermediate</span>'
+            : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">Beginner</span>';
+
+          const conceptsBadges = (t.key_concepts || []).map(c => 
+            `<span class="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-indigo-300 border border-slate-700/80">${escapeHtml(c)}</span>`
+          ).join(' ');
+
+          const card = document.createElement('div');
+          card.className = 'p-4 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition-all space-y-2';
+          card.innerHTML = `
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-lg bg-indigo-950 border border-indigo-800 flex items-center justify-center text-xs font-bold text-indigo-300 shrink-0">
+                  ${t.topic_index || (idx + 1)}
+                </span>
+                <h5 class="text-sm font-bold text-white">${escapeHtml(t.title)}</h5>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                ${diffBadge}
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-slate-300 border border-slate-700">⏱ ${t.estimated_hours} год</span>
+              </div>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed">${escapeHtml(t.summary)}</p>
+            ${conceptsBadges ? `
+              <div class="pt-1 flex flex-wrap items-center gap-1">
+                <span class="text-[10px] font-semibold text-slate-500 uppercase">Ключові концепти:</span>
+                ${conceptsBadges}
+              </div>
+            ` : ''}
+          `;
+          topicsContainer.appendChild(card);
+        });
+      }
+    }
+
+    if (loading) loading.classList.add('hidden');
+    if (content) content.classList.remove('hidden');
+    if (confirmBtn) confirmBtn.disabled = false;
+  } catch (err) {
+    if (loading) loading.classList.add('hidden');
+    if (errorMsg) errorMsg.innerText = err.message || 'Сталася помилка при зверненні до сервера.';
+    if (errorBox) errorBox.classList.remove('hidden');
+    if (confirmBtn) confirmBtn.disabled = true;
+  }
+}
+
+async function confirmAndBuildAiCourse() {
+  if (!currentAiCourse || !currentAiGeneratedStructure) return;
+
+  const btn = document.getElementById('btn-confirm-ai-course');
+  const text = document.getElementById('btn-confirm-ai-text');
+  const spinner = document.getElementById('btn-confirm-ai-spinner');
+
+  if (btn) btn.disabled = true;
+  if (text) text.innerText = 'Створюємо курс та генеруємо мікси...';
+  if (spinner) spinner.classList.remove('hidden');
+
+  try {
+    const payload = {
+      course_id: currentAiCourse.course_id,
+      title: currentAiCourse.title,
+      shortname: currentAiCourse.shortname,
+      authority: currentAiCourse.authority,
+      target_score: currentAiTargetScore,
+      topics: currentAiGeneratedStructure.topics,
+      tools: getAiToolsConfig()
+    };
+
+    const res = await fetch('/api/workspace/courses/confirm-structure', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Помилка збереження курсу' }));
+      throw new Error(err.detail || 'Не вдалося створити курс');
+    }
+
+    const data = await res.json();
+    showToast(`🎉 Курс "${escapeHtml(currentAiCourse.title)}" успішно створено! (${data.topics_created} тем)`);
+
+    closeAiCoursePreviewModal();
+
+    // Reload courses and workspace cards
+    await Promise.all([
+      loadWorkspaceCourses(),
+      loadCourses()
+    ]);
+
+    // Redirect to newly created workspace
+    if (data.workspace_url) {
+      setTimeout(() => {
+        window.location.href = data.workspace_url;
+      }, 700);
+    }
+  } catch (err) {
+    showToast(`Помилка: ${err.message}`, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+    if (text) text.innerText = '🚀 Підтвердити та побудувати курс';
+    if (spinner) spinner.classList.add('hidden');
+  }
 }
 
 

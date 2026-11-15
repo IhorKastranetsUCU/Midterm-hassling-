@@ -179,3 +179,12 @@ async def inspect_moodle_compatibility(url: str):
         latency_ms=latency,
         recommendation=rec,
     )
+
+
+@router.get("/parsing-restrictions")
+async def get_system_parsing_restrictions():
+    """Return the active Moodle parsing restrictions and anti-cheat configuration."""
+    from app.core.parsing_restrictions import get_parsing_restrictions
+    restrictions = get_parsing_restrictions()
+    return restrictions.model_dump()
+
