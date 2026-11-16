@@ -1,3 +1,5 @@
+import html.parser
+import json
 import logging
 import re
 from urllib.parse import urlencode
@@ -42,6 +44,82 @@ def build_moodle_params(params: Dict[str, Any], prefix: str = "") -> List[tuple]
             else:
                 items.append((param_name, value))
     return items
+
+
+class _FastDOMNode:
+    VOID_TAGS = {"img", "br", "hr", "input", "meta", "link", "area", "base", "col", "embed", "param", "source", "track", "wbr"}
+
+    def __init__(self, tag: str, attrs: list, parent: Optional["_FastDOMNode"] = None):
+        self.tag = tag.lower()
+        self.attrs = dict(attrs)
+        self.classes = set(self.attrs.get("class", "").split())
+        self.id = self.attrs.get("id", "")
+        self.parent = parent
+        self.children: List["_FastDOMNode"] = []
+        self.text_parts: List[str] = []
+
+    def get_text(self, exclude_classes: Optional[set] = None) -> str:
+        exclude_classes = exclude_classes or set()
+        if self.classes.intersection(exclude_classes):
+            return ""
+        parts = list(self.text_parts)
+        for c in self.children:
+            txt = c.get_text(exclude_classes)
+            if txt:
+                parts.append(txt)
+        return " ".join("".join(parts).split())
+
+    def find_all(self, tag: Optional[str] = None, class_name: Optional[str] = None) -> List["_FastDOMNode"]:
+        res = []
+        for c in self.children:
+            match = True
+            if tag and c.tag != tag.lower():
+                match = False
+            if class_name and class_name not in c.classes:
+                match = False
+            if match:
+                res.append(c)
+            res.extend(c.find_all(tag=tag, class_name=class_name))
+        return res
+
+    def find_first(self, tag: Optional[str] = None, class_name: Optional[str] = None) -> Optional["_FastDOMNode"]:
+        matches = self.find_all(tag=tag, class_name=class_name)
+        return matches[0] if matches else None
+
+
+class _FastDOMParser(html.parser.HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.root = _FastDOMNode("root", [])
+        self.current = self.root
+
+    def handle_starttag(self, tag: str, attrs: list):
+        tag_l = tag.lower()
+        node = _FastDOMNode(tag_l, attrs, parent=self.current)
+        self.current.children.append(node)
+        if tag_l not in _FastDOMNode.VOID_TAGS:
+            self.current = node
+
+    def handle_endtag(self, tag: str):
+        tag_l = tag.lower()
+        cur = self.current
+        while cur and cur != self.root:
+            if cur.tag == tag_l:
+                self.current = cur.parent or self.root
+                break
+            cur = cur.parent
+
+    def handle_data(self, data: str):
+        self.current.text_parts.append(data)
+
+
+def _get_dom_parents(node: _FastDOMNode, stop_at: Optional[_FastDOMNode] = None) -> List[_FastDOMNode]:
+    res = []
+    cur = node.parent
+    while cur and cur != stop_at:
+        res.append(cur)
+        cur = cur.parent
+    return res
 
 
 class MoodleClient:
@@ -660,94 +738,230 @@ class MoodleClient:
 
         return courses
 
+    def _parse_courseformat_state(self, state_data: Dict[str, Any], base_url: str) -> List[Dict[str, Any]]:
+        """Parse Moodle 4+ core_courseformat_get_state structure into standard section dicts."""
+        cm_map: Dict[int, Dict[str, Any]] = {}
+        cm_list = state_data.get("cm", [])
+        if isinstance(cm_list, dict):
+            cm_list = list(cm_list.values())
+
+        for cm in cm_list:
+            cm_id = cm.get("id")
+            if cm_id is not None:
+                modname = (cm.get("modname") or "resource").lower()
+                url = cm.get("url") or f"{base_url}/mod/{modname}/view.php?id={cm_id}"
+                cm_map[int(cm_id)] = {
+                    "id": int(cm_id),
+                    "name": cm.get("name") or f"Resource {cm_id}",
+                    "modname": modname,
+                    "instance": cm.get("instance", cm_id),
+                    "url": url,
+                    "description": cm.get("description"),
+                    "visible": cm.get("visible", 1),
+                    "contents": [],
+                    "download_url": url if modname == "resource" else None,
+                    "sectionid": cm.get("sectionid"),
+                }
+
+        raw_sections = []
+        sections_list = state_data.get("section", [])
+        if isinstance(sections_list, dict):
+            sections_list = list(sections_list.values())
+
+        for sec in sections_list:
+            sec_id = sec.get("id", len(raw_sections))
+            sec_num = sec.get("section", len(raw_sections))
+            sec_name = sec.get("title") or sec.get("name") or ("General" if sec_num == 0 else f"Section {sec_num}")
+            cmlist = sec.get("cmlist", [])
+            modules = []
+            for cid in cmlist:
+                try:
+                    cid_int = int(cid)
+                    if cid_int in cm_map:
+                        modules.append(cm_map[cid_int])
+                except (ValueError, TypeError):
+                    pass
+
+            if not modules and sec_id:
+                for c_item in cm_map.values():
+                    if c_item.get("sectionid") == sec_id:
+                        modules.append(c_item)
+
+            raw_sections.append({
+                "id": sec_num,
+                "name": sec_name,
+                "summary": sec.get("summary"),
+                "modules": modules,
+            })
+        return raw_sections
+
     def parse_moodle_course_html(self, html: str, base_url: str = "") -> List[Dict[str, Any]]:
         """
         Robust parser for Moodle course HTML pages (/course/view.php?id=...).
         Extracts sections, summaries, activities/modules, and attached file links.
-        Supports both Moodle 3.x (<li class="section ...">) and Moodle 4.x/5.x (<div class="course-section ...">).
+        Supports Moodle 3.x, 4.x/5.x (Boost, RemUI, Classic, and custom university themes).
         """
+        parser = _FastDOMParser()
+        parser.feed(html)
+
+        # 1. Identify section containers
+        raw_sections: List[_FastDOMNode] = []
+        for node in parser.root.find_all():
+            is_sec = False
+            if "section" in node.classes or "course-section" in node.classes:
+                if not any(c in node.classes for c in ("activity", "activity-item", "sectionname", "section-title", "section-handle")):
+                    is_sec = True
+            elif node.id and re.match(r"^section-\d+$", node.id, re.IGNORECASE):
+                is_sec = True
+            elif "data-sectionid" in node.attrs or "data-for" in node.attrs and node.attrs["data-for"] == "section":
+                is_sec = True
+
+            if is_sec:
+                if not any(parent in raw_sections for parent in _get_dom_parents(node)):
+                    raw_sections.append(node)
+
         sections: List[Dict[str, Any]] = []
-
-        # Split HTML by section elements
-        section_splits = re.split(
-            r'(?=(?:<li|<div)[^>]+(?:id=["\']section-\d+["\']|class=["\'][^"\']*\bsection\b[^"\']*["\']))',
-            html,
-            flags=re.IGNORECASE,
-        )
-
         sec_counter = 0
-        for block in section_splits:
-            sec_id_match = re.search(r'id=["\']section-(\d+)["\']', block, re.IGNORECASE)
-            if not sec_id_match:
-                sec_id_match = re.search(r'data-sectionid=["\'](\d+)["\']', block, re.IGNORECASE)
 
-            if not sec_id_match and "activity " not in block:
-                continue
+        # If no explicit sections found, check if activities exist on the page directly
+        if not raw_sections:
+            all_page_mods: List[_FastDOMNode] = []
+            for node in parser.root.find_all():
+                if ("activity" in node.classes or "activity-item" in node.classes) and not any(
+                    c in node.classes for c in ("activity-basis", "activity-instance", "activityname", "activity-actions", "activity-dates", "activity-information")
+                ):
+                    if not any(parent in all_page_mods for parent in _get_dom_parents(node)):
+                        all_page_mods.append(node)
+            if all_page_mods:
+                raw_sections = [parser.root]
 
-            sec_num = int(sec_id_match.group(1)) if sec_id_match else sec_counter
+        for sec_node in raw_sections:
+            sec_id_m = re.search(r"section-(\d+)", sec_node.id) if sec_node.id else None
+            if not sec_id_m and "data-sectionid" in sec_node.attrs:
+                sec_id_m = re.search(r"(\d+)", sec_node.attrs["data-sectionid"])
+            sec_num = int(sec_id_m.group(1)) if sec_id_m else sec_counter
             sec_counter += 1
 
             # Section title
-            name_m = re.search(r'<h3[^>]*class=["\'][^"\']*(?:sectionname|section-title)[^"\']*["\'][^>]*>(.*?)</h3>', block, re.DOTALL | re.IGNORECASE)
-            if not name_m:
-                name_m = re.search(r'data-sectionname=["\']([^"\']+)["\']', block, re.IGNORECASE)
-
-            if name_m:
-                raw_title = name_m.group(1)
-                clean_title = re.sub(r'<[^>]+>', '', raw_title).strip()
-            else:
+            title_node = None
+            for cand in sec_node.find_all():
+                if "sectionname" in cand.classes or "section-title" in cand.classes or "data-sectionname" in cand.attrs or cand.attrs.get("data-for") == "section_title":
+                    title_node = cand
+                    break
+                if cand.tag in ("h3", "h4") and not title_node and not any(c in cand.classes for c in ("activity-title", "activityname")):
+                    title_node = cand
+            clean_title = title_node.get_text({"accesshide", "sr-only"}) if title_node else ("General" if sec_num == 0 else f"Section {sec_num}")
+            if not clean_title.strip():
                 clean_title = "General" if sec_num == 0 else f"Section {sec_num}"
 
             # Section summary
-            summary_m = re.search(r'<div[^>]*class=["\'][^"\']*summary[^"\']*["\'][^>]*>(.*?)</div>', block, re.DOTALL | re.IGNORECASE)
-            clean_summary = re.sub(r'<[^>]+>', ' ', summary_m.group(1)).strip() if summary_m else None
+            summary_node = None
+            for cand in sec_node.find_all():
+                if "summary" in cand.classes or "summarytext" in cand.classes:
+                    summary_node = cand
+                    break
+            clean_summary = summary_node.get_text() if summary_node else None
 
-            # Extract modules
+            # 2. Identify modules inside this section
+            raw_mods: List[_FastDOMNode] = []
+            for node in sec_node.find_all():
+                is_mod = False
+                if "activity" in node.classes or "activity-item" in node.classes:
+                    if not any(c in node.classes for c in ("activity-basis", "activity-instance", "activityname", "activity-actions", "activity-dates", "activity-information")):
+                        is_mod = True
+                elif node.id and re.match(r"^module-\d+$", node.id, re.IGNORECASE):
+                    is_mod = True
+
+                if is_mod:
+                    if not any(parent in raw_mods for parent in _get_dom_parents(node, stop_at=sec_node)):
+                        raw_mods.append(node)
+
             modules: List[Dict[str, Any]] = []
-            activity_pattern = re.compile(
-                r'(?:<li|<div)[^>]+class=["\'][^"\']*\bactivity\b[^"\']*["\'][^>]*>(.*?)(?=(?:<li|<div)[^>]+class=["\'][^"\']*\bactivity\b|\Z)',
-                re.DOTALL | re.IGNORECASE,
-            )
+            for m_idx, mod_node in enumerate(raw_mods):
+                mod_id = None
+                if mod_node.id:
+                    m_id_m = re.search(r"module-(\d+)", mod_node.id, re.IGNORECASE)
+                    if m_id_m:
+                        mod_id = int(m_id_m.group(1))
+                if mod_id is None and "data-id" in mod_node.attrs:
+                    try:
+                        mod_id = int(mod_node.attrs["data-id"])
+                    except ValueError:
+                        pass
 
-            for act_match in activity_pattern.finditer(block):
-                act_html = act_match.group(0)
-                # Strip all accesshide / sr-only spans first to avoid nested span truncation
-                act_html_clean = re.sub(r'<span[^>]*\b(?:accesshide|sr-only)\b[^>]*>.*?</span>', '', act_html, flags=re.DOTALL | re.IGNORECASE)
+                # Module Type (modname)
+                modname = "resource"
+                for c in mod_node.classes:
+                    if c.startswith("modtype_"):
+                        modname = c.replace("modtype_", "").lower()
+                        break
+                if modname == "resource":
+                    for c in mod_node.classes:
+                        if c in ("assign", "quiz", "forum", "page", "url", "book", "folder", "label", "choice", "lesson", "feedback", "glossary"):
+                            modname = c
+                            break
 
-                mod_id_m = re.search(r'id=["\']module-(\d+)["\']', act_html_clean, re.IGNORECASE)
-                if not mod_id_m:
-                    mod_id_m = re.search(r'data-id=["\'](\d+)["\']', act_html_clean, re.IGNORECASE)
-                mod_id = int(mod_id_m.group(1)) if mod_id_m else len(modules) + 1000
+                # Links and files
+                all_a = mod_node.find_all(tag="a")
+                link_node = None
+                file_links = []
+                for a in all_a:
+                    href = a.attrs.get("href", "").strip()
+                    if not href or href.startswith("#") or href.startswith("javascript:"):
+                        continue
+                    if "pluginfile.php" in href:
+                        file_links.append(href)
+                    if not link_node:
+                        if f"/mod/{modname}/" in href or "aalink" in a.classes or "/mod/" in href:
+                            link_node = a
 
-                modtype_m = re.search(r'\bmodtype_([a-zA-Z0-9_-]+)\b', act_html_clean, re.IGNORECASE)
-                if not modtype_m:
-                    modtype_m = re.search(r'\bactivity\s+([a-zA-Z0-9_-]+)\b', act_html_clean, re.IGNORECASE)
-                modname = modtype_m.group(1).lower() if modtype_m else "resource"
+                if not link_node and all_a:
+                    for a in all_a:
+                        href = a.attrs.get("href", "").strip()
+                        if href and not href.startswith("#") and not href.startswith("javascript:"):
+                            link_node = a
+                            break
 
-                link_m = re.search(r'<a[^>]+class=["\'][^"\']*\baalink\b[^"\']*["\'][^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', act_html_clean, re.DOTALL | re.IGNORECASE)
-                if not link_m:
-                    link_m = re.search(r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', act_html_clean, re.DOTALL | re.IGNORECASE)
+                mod_url = link_node.attrs.get("href") if link_node else None
 
-                mod_url = link_m.group(1).strip() if link_m else None
-                name_html = link_m.group(2) if link_m else ""
+                if mod_id is None and mod_url:
+                    url_id_m = re.search(r"[?&]id=(\d+)", mod_url)
+                    if url_id_m:
+                        mod_id = int(url_id_m.group(1))
+                if mod_id is None:
+                    mod_id = sec_num * 1000 + m_idx + 1
 
-                name_m = re.search(r'<span[^>]*class=["\'][^"\']*instancename[^"\']*["\'][^>]*>(.*?)</span>', act_html_clean, re.DOTALL | re.IGNORECASE)
-                if name_m:
-                    raw_name = name_m.group(1)
-                    mod_name = re.sub(r'<[^>]+>', '', raw_name).strip()
-                elif name_html:
-                    mod_name = re.sub(r'<[^>]+>', '', name_html).strip()
+                if modname == "resource" and mod_url:
+                    url_mod_m = re.search(r"/mod/([a-zA-Z0-9_-]+)/", mod_url)
+                    if url_mod_m:
+                        modname = url_mod_m.group(1).lower()
+
+                # Name
+                name_node = None
+                for cand in mod_node.find_all():
+                    if "instancename" in cand.classes or "activityname" in cand.classes:
+                        name_node = cand
+                        break
+                if name_node:
+                    mod_name = name_node.get_text({"accesshide", "sr-only"})
+                elif link_node:
+                    mod_name = link_node.get_text({"accesshide", "sr-only"})
                 else:
                     mod_name = f"Resource {mod_id}"
+                mod_name = mod_name.strip() or f"Resource {mod_id}"
 
-                desc_m = re.search(r'<div[^>]*class=["\'][^"\']*(?:contentafterlink|description)[^"\']*["\'][^>]*>(.*?)</div>', act_html, re.DOTALL | re.IGNORECASE)
-                mod_desc = re.sub(r'<[^>]+>', ' ', desc_m.group(1)).strip() if desc_m else None
+                # Description
+                desc_node = None
+                for cand in mod_node.find_all():
+                    if any(c in cand.classes for c in ("contentafterlink", "activity-altcontent", "description")):
+                        desc_node = cand
+                        break
+                mod_desc = desc_node.get_text() if desc_node else None
 
-                # Extract file links
-                file_links = re.findall(r'href=["\']([^"\']*pluginfile\.php[^"\']*)["\']', act_html, re.IGNORECASE)
+                # File contents
                 contents_list = []
                 for flink in file_links:
-                    fname = flink.split('/')[-1].split('?')[0]
+                    fname = flink.split("/")[-1].split("?")[0]
                     contents_list.append({
                         "type": "file",
                         "filename": fname,
@@ -788,13 +1002,33 @@ class MoodleClient:
         """Retrieve course contents / modules with resilient AJAX, REST, and HTML scraping fallback."""
         target_base = (base_url or self.base_url).rstrip("/")
         restrictions = get_parsing_restrictions()
+        clean_cookie = token.replace("MoodleSession=", "").strip(" ;\"'") if token else ""
 
         # 1. Try AJAX if cookie session
         if auth_type == "cookie" and sesskey:
+            # 1a. Try Moodle 4+ core_courseformat_get_state (allowed over AJAX in Moodle 4+)
+            try:
+                res_state = await self.call_ajax_ws(
+                    "core_courseformat_get_state",
+                    cookie=clean_cookie,
+                    sesskey=sesskey,
+                    args={"courseid": course_id},
+                    base_url=target_base,
+                )
+                if res_state:
+                    state_obj = json.loads(res_state) if isinstance(res_state, str) else res_state
+                    if isinstance(state_obj, dict) and (state_obj.get("section") or state_obj.get("cm")):
+                        parsed = self._parse_courseformat_state(state_obj, target_base)
+                        if parsed and any(len(s.get("modules", [])) > 0 for s in parsed):
+                            return self._enrich_course_sections(parsed, target_base, restrictions)
+            except Exception as e:
+                logger.debug(f"AJAX core_courseformat_get_state failed for course {course_id}: {e}")
+
+            # 1b. Try core_course_get_contents via AJAX
             try:
                 res = await self.call_ajax_ws(
                     "core_course_get_contents",
-                    cookie=token,
+                    cookie=clean_cookie,
                     sesskey=sesskey,
                     args={"courseid": course_id},
                     base_url=target_base,
@@ -821,17 +1055,18 @@ class MoodleClient:
         # 3. Universal HTML Fallback: scrape course page /course/view.php?id={course_id}
         # When WebServices are restricted by university administrators, the student's browser session can ALWAYS
         # fetch the course HTML page with their valid session cookie!
-        if auth_type == "cookie" and token:
+        if auth_type == "cookie" and clean_cookie:
             try:
                 course_url = f"{target_base}/course/view.php?id={course_id}"
                 headers = {
-                    "Cookie": f"MoodleSession={token}",
+                    "Cookie": f"MoodleSession={clean_cookie}",
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
                     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Referer": f"{target_base}/my/",
                 }
                 async with httpx.AsyncClient(timeout=self.settings.MOODLE_REQUEST_TIMEOUT, follow_redirects=True, headers=headers) as client:
                     resp = await client.get(course_url)
-                    if resp.status_code == 200 and ("course-content" in resp.text or "section" in resp.text):
+                    if resp.status_code == 200 and "login/index.php" not in str(resp.url):
                         parsed_sections = self.parse_moodle_course_html(resp.text, base_url=target_base)
                         if parsed_sections:
                             return self._enrich_course_sections(parsed_sections, target_base, restrictions)

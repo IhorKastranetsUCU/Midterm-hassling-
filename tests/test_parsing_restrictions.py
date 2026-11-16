@@ -110,3 +110,62 @@ def test_moodle_html_fallback_parsing():
     enriched = client._enrich_course_sections(sections, "https://learn.ucu.edu.ua")
     assert enriched[0]["modules"][0]["safety_status"] == "safe_material"
     assert enriched[0]["modules"][1]["safety_status"] == "restricted_exam"
+
+
+def test_moodle_remui_and_courseformat_state_parsing():
+    client = MoodleClient()
+    remui_html = """
+    <div class="course-content">
+      <section id="section-1" class="course-section section main" data-sectionid="101" data-sectionname="Topic 1: Foundations">
+        <h3 class="sectionname course-content-item">
+          <a href="#">Topic 1: Foundations</a>
+        </h3>
+        <div class="summary"><p>Introduction to the module</p></div>
+        <ul class="section img-text">
+          <li class="activity activity-item resource modtype_resource" id="module-201">
+            <div class="activity-basis d-flex align-items-center">
+              <div class="activity-instance d-flex flex-column">
+                <div class="activitytitle media">
+                  <div class="activityname">
+                    <a href="https://learn.ucu.edu.ua/mod/resource/view.php?id=201" class="aalink text-truncate">
+                      <span class="media-body activity-title">Lecture 1 - Architecture Overview</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li class="activity activity-item url modtype_url" id="module-202">
+            <a href="https://learn.ucu.edu.ua/mod/url/view.php?id=202" class="aalink">
+              <span class="instancename">Course GitHub Repo</span>
+            </a>
+          </li>
+        </ul>
+      </section>
+    </div>
+    """
+    sections = client.parse_moodle_course_html(remui_html, base_url="https://learn.ucu.edu.ua")
+    assert len(sections) == 1
+    assert sections[0]["name"] == "Topic 1: Foundations"
+    assert len(sections[0]["modules"]) == 2
+    assert sections[0]["modules"][0]["name"] == "Lecture 1 - Architecture Overview"
+    assert sections[0]["modules"][0]["url"] == "https://learn.ucu.edu.ua/mod/resource/view.php?id=201"
+
+    # Test Moodle 4 AJAX courseformat state parsing
+    state = {
+        "course": {"id": 123},
+        "section": [
+            {"id": 1, "section": 0, "title": "Introduction & Syllabus", "cmlist": [10, 11]},
+            {"id": 2, "section": 1, "title": "Week 1 - Foundations", "cmlist": [12]},
+        ],
+        "cm": [
+            {"id": 10, "name": "Course Syllabus", "modname": "resource", "url": "https://learn.ucu.edu.ua/mod/resource/view.php?id=10"},
+            {"id": 11, "name": "Intro Quiz", "modname": "quiz", "url": "https://learn.ucu.edu.ua/mod/quiz/view.php?id=11"},
+            {"id": 12, "name": "Lecture 1 PDF", "modname": "resource", "url": "https://learn.ucu.edu.ua/mod/resource/view.php?id=12"},
+        ],
+    }
+    state_sections = client._parse_courseformat_state(state, "https://learn.ucu.edu.ua")
+    assert len(state_sections) == 2
+    assert len(state_sections[0]["modules"]) == 2
+    assert len(state_sections[1]["modules"]) == 1
+
