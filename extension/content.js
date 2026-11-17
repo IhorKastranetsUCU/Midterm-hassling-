@@ -8,7 +8,7 @@
     const btn = document.createElement('button');
     btn.id = BUTTON_ID;
     btn.type = 'button';
-    btn.textContent = '⚡ Sync to AI Workspace';
+    btn.textContent = 'До Hustle →';
     Object.assign(btn.style, {
       position: 'fixed',
       bottom: '22px',
@@ -16,8 +16,8 @@
       zIndex: '2147483647',
       padding: '10px 16px',
       borderRadius: '12px',
-      border: '1px solid rgba(99, 102, 241, 0.5)',
-      background: 'linear-gradient(135deg, #2563eb, #4f46e5)',
+      border: '1px solid #70506c',
+      background: '#381b39',
       color: '#ffffff',
       fontFamily: 'system-ui, -apple-system, sans-serif',
       fontSize: '13px',
@@ -36,7 +36,7 @@
 
     btn.addEventListener('click', async () => {
       btn.disabled = true;
-      btn.textContent = 'Syncing course...';
+      btn.textContent = 'Переносимо курс…';
 
       try {
         const extracted = await window.__moodleWorkspaceExtract();
@@ -44,7 +44,7 @@
           btn.textContent = extracted?.error || 'Open a Moodle course page';
           setTimeout(() => {
             btn.disabled = false;
-            btn.textContent = '⚡ Sync to AI Workspace';
+            btn.textContent = 'До Hustle →';
           }, 3000);
           return;
         }
@@ -60,13 +60,13 @@
             }
             setTimeout(() => {
               btn.disabled = false;
-              btn.textContent = '⚡ Sync to AI Workspace';
+              btn.textContent = 'До Hustle →';
             }, 3500);
           }
         );
       } catch (err) {
         btn.disabled = false;
-        btn.textContent = '⚡ Sync to AI Workspace';
+        btn.textContent = 'До Hustle →';
       }
     });
 

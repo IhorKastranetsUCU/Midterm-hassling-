@@ -340,7 +340,9 @@ async def google_oauth_callback(
         res.headers["content-length"] = str(len(res.body))
         return res
 
-    redir = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+    return_url = "/hustle/app.html" if request.cookies.get("hustle_oauth_return") == "workspace" else "/"
+    redir = RedirectResponse(url=return_url, status_code=status.HTTP_302_FOUND)
+    redir.delete_cookie("hustle_oauth_return", path="/")
     _issue_platform_session_cookie(redir, google_sub, email, fullname, picture_url, request=request)
     redir.delete_cookie("google_oauth_state", path="/")
     return redir

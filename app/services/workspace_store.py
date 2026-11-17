@@ -1087,6 +1087,8 @@ class WorkspaceStore:
         )
 
         shortname = payload.course_shortname or f"CRS-{payload.course_id}"
+        if existing:
+            sanitized_sections.extend(s for s in existing["sections"] if s.get("source_type") == "manual_upload")
         self._upsert_course(
             owner_id=owner_id,
             course_id=payload.course_id,
@@ -1132,14 +1134,14 @@ class WorkspaceStore:
         """
         now_id = course_id or self._next_custom_course_id(owner_id=owner_id)
         existing = self.get_course_bundle(now_id, owner_id=owner_id)
-        topic_index = len(existing["snapshots"]) + 1 if existing else 1
+        topic_index = max([m.topic_index for m in existing["topic_mixes"]] + [1000000 if existing["course"].source_type != "manual_upload" else 0]) + 1 if existing else 1
         course_title = existing["course"].title if existing else title
         course_short = existing["course"].shortname if existing else (shortname or "CUSTOM")
-        clean_auth = authority or (existing["course"].authority if existing else "custom")
-        topic_title = title if existing else f"Topic {topic_index}: {filename}"
+        clean_auth = existing["course"].authority if existing else (authority or "custom")
+        topic_title = filename if filename != "pasted-notes.md" else title
 
         snapshot = RawTopicSnapshot(
-            source_id=f"upload-{now_id}-{filename}",
+            source_id=f"upload-{now_id}-{topic_index}-{filename}",
             course_id=now_id,
             authority=clean_auth,
             title=topic_title,
@@ -1174,6 +1176,7 @@ class WorkspaceStore:
         sections.append(
             {
                 "id": topic_index,
+                "source_type": "manual_upload",
                 "name": snapshot.title,
                 "summary": f"Uploaded file: {filename} ({len(chunk_records)} chunk(s))",
                 "modules": [
@@ -1194,8 +1197,8 @@ class WorkspaceStore:
             authority=clean_auth,
             title=course_title,
             shortname=course_short,
-            moodle_url="",
-            source_type="manual_upload",
+            moodle_url=existing["course"].moodle_url if existing else "",
+            source_type=existing["course"].source_type if existing else "manual_upload",
             tools=tools,
             sections=sections,
             blocked_quizzes=existing["blocked_quizzes"] if existing else [],
@@ -1261,7 +1264,7 @@ class WorkspaceStore:
         total_recomputed = 0
 
         # If no explicit Moodle sections provided, pull mock data if applicable
-        if not moodle_sections and (clean_auth == "mock" or course_id in (101, 102, 103, 104)):
+        if not moodle_sections and (get_settings().MOODLE_MOCK_MODE or clean_auth == "mock"):
             from app.services.mock_data import MOCK_COURSE_CONTENTS
             moodle_sections = MOCK_COURSE_CONTENTS.get(course_id)
 
@@ -1452,6 +1455,8 @@ class WorkspaceStore:
             except Exception:
                 pass
 
+        if bundle["course"].source_type == "manual_upload":
+            return {"checked": False, "has_updates": False, "message": "Курс містить власні матеріали."}
         fresh_sections = None
         if moodle_client and session and session.get("moodle_token"):
             # Retrieve fresh contents from Moodle
@@ -1466,7 +1471,7 @@ class WorkspaceStore:
             except Exception as exc:
                 logger.warning(f"Failed to fetch Moodle course contents for update check: {exc}")
                 return {"checked": False, "error": str(exc)}
-        elif bundle["course"].authority == "mock" or course_id in (101, 102):
+        elif (get_settings().MOODLE_MOCK_MODE or bundle["course"].authority == "mock") and bundle["course"].source_type != "manual_upload":
             from app.services.mock_data import MOCK_COURSE_CONTENTS
             fresh_sections = MOCK_COURSE_CONTENTS.get(course_id)
         else:
@@ -1484,6 +1489,11 @@ class WorkspaceStore:
                 )
             return {"checked": True, "has_updates": False, "message": "Матеріали актуальні."}
 
+        fresh_sections = [{**s, "modules": [dict(m) for m in s.get("modules", [])]} for s in fresh_sections]
+        fresh_sections.extend(s for s in bundle["sections"] if s.get("source_type") == "manual_upload")
+        from app.services.course_organization import safe_sections
+        fresh_sections = safe_sections(fresh_sections)
+
         # Build topics list for matcher
         existing_mixes: List[TopicMix] = bundle.get("topic_mixes", [])
         topics_data: List[Dict[str, Any]] = []
@@ -1496,6 +1506,7 @@ class WorkspaceStore:
             })
 
         existing_chunks = self._load_topic_chunks(owner_id=owner_id, course_id=course_id)
+        previous_content = {int(c["module_id"]): c["content_text"] for c in existing_chunks if int(c.get("module_id", 0)) > 0}
         existing_hashes = {
             int(c["module_id"]): c["module_hash"]
             for c in existing_chunks
@@ -1527,7 +1538,7 @@ class WorkspaceStore:
                         "module_id": m_id,
                         "modname": mod.get("modname", "resource"),
                         "heading": m_name,
-                        "content_text": f"{m_name}\n\n{m_desc}",
+                        "content_text": previous_content.get(m_id) or f"{m_name}\n\n{m_desc}",
                         "module_hash": m_hash,
                         "safety_status": mod.get("safety_status", "safe_material"),
                     })
@@ -1559,6 +1570,7 @@ class WorkspaceStore:
                     chunks=new_chunks,
                     existing_notes=existing_mix.user_notes if existing_mix else None,
                     version=(existing_mix.version + 1) if existing_mix else 1,
+                    stable_mix_id=existing_mix.mix_id if existing_mix else None,
                     api_key=course_api_key,
                     materials=topic_mat_items,
                 )

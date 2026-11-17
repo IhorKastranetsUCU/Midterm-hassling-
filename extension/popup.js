@@ -21,6 +21,7 @@ function showStatus(text, isError = false) {
 async function initPopup() {
   const portalInput = document.getElementById('portal-url');
   const stored = await chrome.storage.local.get(['portalUrl']);
+  portalInput.value = HUSTLE_CONFIG.defaultPortal;
   if (stored.portalUrl) {
     portalInput.value = stored.portalUrl;
   }
@@ -41,8 +42,8 @@ async function initPopup() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab || !tab.id || !tab.url || !tab.url.startsWith('http')) {
-      document.getElementById('course-name').textContent = 'Not a Moodle course tab';
-      document.getElementById('course-meta').textContent = 'Navigate to any Moodle course page (course/view.php?id=...) to sync.';
+      document.getElementById('course-name').textContent = 'Відкрий курс у Moodle';
+      document.getElementById('course-meta').textContent = 'Після цього натисни «До Hustle».';
       return;
     }
 
@@ -57,8 +58,8 @@ async function initPopup() {
     });
 
     if (!result || !result.ok) {
-      document.getElementById('course-name').textContent = 'Course page not detected';
-      document.getElementById('course-meta').textContent = result?.error || 'Open a Moodle course page to sync.';
+      document.getElementById('course-name').textContent = 'Курс не знайдено';
+      document.getElementById('course-meta').textContent = result?.error || 'Відкрий сторінку курсу у Moodle.';
       return;
     }
 
@@ -79,7 +80,7 @@ async function initPopup() {
 
     document.getElementById('btn-sync').disabled = false;
   } catch (err) {
-    document.getElementById('course-name').textContent = 'Cannot inspect this page';
+    document.getElementById('course-name').textContent = 'Не вдалося прочитати сторінку';
     document.getElementById('course-meta').textContent = err.message;
   }
 }
@@ -92,7 +93,7 @@ async function handleSyncClick() {
   await chrome.storage.local.set({ portalUrl });
 
   btn.disabled = true;
-  btn.textContent = 'Extracting safe pages & files...';
+  btn.textContent = 'Збираємо матеріали…';
 
   const tools = readToolsSelection();
   let syncPayload = { ...lastExtraction.payload, tools_config: tools };
@@ -116,16 +117,16 @@ async function handleSyncClick() {
     }
   } catch (e) {}
 
-  btn.textContent = 'Diffing hashes & syncing workspace...';
+  btn.textContent = 'Переносимо курс…';
 
   chrome.runtime.sendMessage(
     { type: 'SYNC_COURSE', portalUrl, payload: syncPayload, openWorkspace: true },
     (resp) => {
       btn.disabled = false;
-      btn.textContent = '⚡ Sync & Open Workspace';
+      btn.textContent = 'До Hustle →';
 
       if (chrome.runtime.lastError || !resp || !resp.success) {
-        showStatus(resp?.error || chrome.runtime.lastError?.message || 'Sync failed.', true);
+        showStatus(resp?.error || chrome.runtime.lastError?.message || 'Не вдалося перенести курс.', true);
         return;
       }
 

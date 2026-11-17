@@ -1,9 +1,17 @@
 import os
+import asyncio
+import hashlib
+import io
+import zipfile
+from pathlib import Path
 from typing import List, Dict, Any, Optional
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
+
+from app.config import get_settings
+from urllib.parse import quote
 
 from app.core.parsing_restrictions import get_parsing_restrictions
 from app.core.exceptions import MoodleException
@@ -19,6 +27,12 @@ from app.models.course import (
 from app.services.moodle_client import MoodleClient
 
 router = APIRouter(prefix="/api/courses", tags=["Courses"])
+
+
+def _private_file_dir(session, course_id):
+    identity = f"{session.get('site_url', '')}|{session.get('user_id', '')}"
+    return os.path.join("data", "course_files", hashlib.sha256(identity.encode()).hexdigest(), str(course_id))
+
 
 
 @router.get("", response_model=List[CourseSummary])
@@ -217,15 +231,18 @@ async def list_course_files(
 
             m_safe, m_reason = restrictions.is_module_safe(mod_name, mod_type, m.get("url"))
 
-            file_items = m.get("files", [])
+            file_items = m.get("files") or [f for f in m.get("contents", []) if f.get("type", "file") == "file"]
             if not file_items and m.get("download_url"):
                 file_items = [{"filename": f"{mod_name}.pdf", "fileurl": m["download_url"]}]
+
+            if not file_items and mod_type == "resource" and m.get("url"):
+                file_items = [{"filename": mod_name, "fileurl": m["url"], "module_resource": True}]
 
             for f in file_items:
                 fname = f.get("filename") or f"{mod_name}.pdf"
                 furl = f.get("fileurl") or m.get("download_url")
                 fsize = f.get("filesize")
-                f_safe, f_reason = restrictions.is_file_safe(fname, furl, fsize)
+                f_safe, f_reason = (True, "") if f.get("module_resource") else restrictions.is_file_safe(fname, furl, fsize)
                 is_allowed = m_safe and f_safe
 
                 if is_allowed:
@@ -242,7 +259,7 @@ async def list_course_files(
                     "file_size": fsize,
                     "is_safe": is_allowed,
                     "restriction_reason": None if is_allowed else (m_reason if not m_safe else f_reason),
-                    "download_api": f"/api/courses/{course_id}/files/download/{mod_id}",
+                    "download_api": f"/api/courses/{course_id}/files/download/{mod_id}" + ("" if f.get("module_resource") else f"?filename={quote(fname, safe='')}"),
                 })
 
     return CourseFilesSummary(
@@ -274,6 +291,7 @@ async def pull_all_course_files(
         auth_type=auth_type,
         sesskey=sesskey,
         base_url=session.get("site_url"),
+        target_dir=_private_file_dir(session, course_id),
     )
     return result
 
@@ -282,6 +300,7 @@ async def pull_all_course_files(
 async def download_module_file(
     course_id: int,
     module_id: int,
+    filename: Optional[str] = None,
     session: Dict[str, Any] = Depends(get_current_user_session),
 ):
     """
@@ -293,33 +312,80 @@ async def download_module_file(
     sesskey = session.get("sesskey")
     site_url = (session.get("site_url") or client.base_url).rstrip("/")
 
-    # Check if file was already downloaded locally
-    local_dir = os.path.join("data", "courses", str(course_id), "files")
+    # Revalidate course membership before serving even an owner-scoped cached file.
+    sections = await client.get_course_contents(token=token, course_id=course_id, auth_type=auth_type,
+                                               sesskey=sesskey, base_url=site_url)
+    module = next((m for section in sections for m in section.get("modules", []) if m.get("id") == module_id), None)
+    if not module:
+        raise HTTPException(status_code=404, detail="Файл не знайдено в цьому курсі.")
+    allowed, _ = get_parsing_restrictions().is_module_safe(module.get("name", ""), module.get("modname", ""), module.get("url"))
+    if not allowed or module.get("safety_status") == "restricted_exam":
+        raise HTTPException(status_code=403, detail="Цей матеріал недоступний для завантаження.")
+    local_dir = _private_file_dir(session, course_id)
     if os.path.exists(local_dir):
         for fname in os.listdir(local_dir):
-            if fname.startswith(f"{module_id}_"):
+            if fname.startswith(f"{module_id}_") and (filename is None or fname.split("_", 1)[-1] == filename):
                 return FileResponse(os.path.join(local_dir, fname), filename=fname.split("_", 1)[-1])
 
-    # Otherwise stream directly from Moodle
-    target_url = f"{site_url}/mod/resource/view.php?id={module_id}"
+    files = module.get("files") or [f for f in module.get("contents", []) if f.get("type", "file") == "file"]
+    selected_file = next((f for f in files if filename is None or f.get("filename") == filename), None)
+    if filename and files and not selected_file:
+        raise HTTPException(status_code=404, detail="Файл не знайдено в цьому матеріалі.")
+    target_url = (selected_file or {}).get("fileurl") or module.get("download_url") or module.get("url") or f"{site_url}/mod/resource/view.php?id={module_id}"
+    if auth_type == "cookie":
+        data = await client.fetch_module_resource(cookie=token, module_url=target_url,
+                    modname="file" if selected_file else module.get("modname", "resource"),
+                    max_bytes=get_settings().TEMP_STORAGE_MAX_FILE_BYTES)
+        if not data:
+            raise HTTPException(status_code=502, detail="Не вдалося отримати файл з Moodle.")
+        name = quote(filename or data["filename"], safe="")
+        return Response(data["raw_bytes"], media_type=data["content_type"], headers={"Content-Disposition": f"attachment; filename*=UTF-8''{name}", "Cache-Control": "private, no-store"})
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
     }
     if auth_type == "cookie":
         headers["Cookie"] = f"MoodleSession={token}"
     elif auth_type == "token":
-        target_url = f"{target_url}&wstoken={token}"
+        target_url = f"{target_url}{'&' if '?' in target_url else '?'}wstoken={token}"
 
     try:
-        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True, headers=headers) as http_client:
-            resp = await http_client.get(target_url)
+        async with httpx.AsyncClient(timeout=30.0, follow_redirects=False, headers=headers) as http_client:
+            from urllib.parse import urljoin
+            for _ in range(5):
+                if not client._is_same_moodle_origin(target_url):
+                    raise HTTPException(status_code=400, detail="Файл перенаправляє за межі Moodle.")
+                resp = await http_client.get(target_url)
+                if resp.status_code not in (301, 302, 303, 307, 308):
+                    break
+                target_url = urljoin(target_url, resp.headers.get("location", ""))
             if resp.status_code == 200:
-                c_disp = resp.headers.get("content-disposition", f"attachment; filename=module_{module_id}.pdf")
+                if resp.headers.get("content-type", "").startswith("text/html") and client._looks_like_login_html(resp.text):
+                    raise HTTPException(status_code=401, detail="Сесія Moodle завершилася.")
+                c_disp = resp.headers.get("content-disposition", f"attachment; filename*=UTF-8''{quote(filename or f'module_{module_id}.pdf', safe='')}")
                 c_type = resp.headers.get("content-type", "application/octet-stream")
                 return Response(content=resp.content, media_type=c_type, headers={"Content-Disposition": c_disp})
             raise HTTPException(status_code=resp.status_code, detail="Failed to fetch file from Moodle")
+    except HTTPException:
+        raise
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Error streaming file: {str(exc)}")
+        raise HTTPException(status_code=502, detail="Не вдалося отримати файл з Moodle.") from exc
+
+
+@router.get("/{course_id}/files/archive")
+async def download_course_archive(course_id: int, session: Dict[str, Any] = Depends(get_current_user_session)):
+    result = await pull_all_course_files(course_id, session)
+    downloaded = result.get("downloaded_files", [])
+    if not downloaded:
+        raise HTTPException(status_code=404, detail="У курсі немає доступних файлів для завантаження.")
+    root = Path(_private_file_dir(session, course_id)).resolve()
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zipped:
+        for item in downloaded:
+            path = Path(item["saved_path"]).resolve()
+            if path.is_relative_to(root) and path.is_file():
+                zipped.write(path, path.name)
+    return Response(archive.getvalue(), media_type="application/zip",
+                    headers={"Content-Disposition": f'attachment; filename="hustle-course-{course_id}.zip"', "Cache-Control": "private, no-store"})
 
 
 class VideoTranscriptionRequest(BaseModel):
@@ -335,7 +401,10 @@ async def transcribe_video(req: VideoTranscriptionRequest):
     Directly extracts subtitles & transcripts from YouTube or subtitle files without consuming LLM tokens.
     """
     from app.services.video_transcriber import VideoTranscriberService
-    res = VideoTranscriberService.get_youtube_transcript(req.url)
+    try:
+        res = await asyncio.wait_for(asyncio.to_thread(VideoTranscriberService.get_youtube_transcript, req.url), timeout=30)
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=504, detail="Відеосервіс не відповів. Спробуй ще раз.")
     if not res:
         return {
             "success": False,

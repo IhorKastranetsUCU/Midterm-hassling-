@@ -1,4 +1,5 @@
-const DEFAULT_PORTAL_URL = 'http://127.0.0.1:8000';
+importScripts('hustle-config.js', 'hustle-bridge-worker.js');
+const DEFAULT_PORTAL_URL = HUSTLE_CONFIG.defaultPortal;
 const ALLOWED_LOCAL_PORTAL_ORIGINS = new Set([
   'http://127.0.0.1:8000',
   'http://localhost:8000',
@@ -20,6 +21,7 @@ function sanitizePortalUrl(rawUrl) {
   if (!rawUrl || typeof rawUrl !== 'string') return null;
   try {
     const u = new URL(rawUrl.trim());
+    if (!HUSTLE_CONFIG.portalOrigins.includes(u.origin) || u.username || u.password) return null;
     const origin = `${u.protocol}//${u.host}`.toLowerCase();
     if (ALLOWED_LOCAL_PORTAL_ORIGINS.has(origin) || /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(origin)) {
       return origin;
@@ -54,6 +56,7 @@ async function hashCookieValue(cookieValue) {
 async function pairMoodleCookie(moodleOrigin, cookieValue, portalUrlOverride, force = false) {
   if (!moodleOrigin || !cookieValue) return { success: false, skipped: true };
   const portalUrl = await getPortalUrl(portalUrlOverride);
+  if (!(await approvedConnection(moodleOrigin, portalUrl))) return {success:false, error:"Спершу підключи Moodle на сайті Hustle."};
   const cookieHash = await hashCookieValue(cookieValue);
   const dedupKey = `${portalUrl}|${moodleOrigin}|${cookieHash}`;
 
@@ -64,7 +67,7 @@ async function pairMoodleCookie(moodleOrigin, cookieValue, portalUrlOverride, fo
   const runPromise = (async () => {
     const cacheStore = await chrome.storage.local.get(['pairedCookieCache']);
     const existingMap = cacheStore.pairedCookieCache || {};
-    const cache = existingMap[moodleOrigin];
+    const cache = existingMap[`${portalUrl}|${moodleOrigin}`];
     const cacheFresh =
       cache &&
       cache.cookieHash === cookieHash &&
@@ -87,12 +90,12 @@ async function pairMoodleCookie(moodleOrigin, cookieValue, portalUrlOverride, fo
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        return { success: false, error: data.detail || `HTTP ${res.status}` };
+        return { success: false, status: res.status, error: data.detail || `HTTP ${res.status}` };
       }
 
       const freshStore = await chrome.storage.local.get(['pairedCookieCache']);
       const nextCache = freshStore.pairedCookieCache || {};
-      nextCache[moodleOrigin] = {
+      nextCache[`${portalUrl}|${moodleOrigin}`] = {
         cookieHash,
         pairedAt: Date.now(),
         owner_id: data.owner_id,
@@ -118,7 +121,7 @@ async function syncCookieForUrl(tabUrl, portalUrlOverride, force = false) {
   try {
     const cookieObj = await chrome.cookies.get({ url: origin, name: 'MoodleSession' });
     if (!cookieObj || !cookieObj.value) {
-      return { success: false, error: 'No active MoodleSession cookie found in browser' };
+      return { success: false, needsLogin: true, error: 'No active MoodleSession cookie found in browser' };
     }
     return await pairMoodleCookie(origin, cookieObj.value, portalUrlOverride, force);
   } catch (err) {
@@ -202,12 +205,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     (async () => {
       try {
         const portalUrl = await getPortalUrl(message.portalUrl);
-        const [, headers] = await Promise.all([
-          message.payload && message.payload.moodle_url
-            ? syncCookieForUrl(message.payload.moodle_url, portalUrl, false).catch(() => {})
-            : Promise.resolve(),
-          resolveWorkspaceHeaders(portalUrl),
-        ]);
+        const moodleOrigin = extractMoodleOrigin(message.payload?.moodle_url);
+        if (!moodleOrigin || !(await approvedConnection(moodleOrigin, portalUrl))) {
+          sendResponse({success:false,error:'Спершу відкрий Hustle → Підключити LMS.'}); return;
+        }
+        const paired = await syncCookieForUrl(moodleOrigin, portalUrl, true);
+        if (!paired.success) {sendResponse({success:false,error:'Увійди в Moodle повторно та спробуй ще раз.'});return;}
+        const headers = await resolveCurrentWorkspaceHeaders(portalUrl);
 
         let uploadPayload = message.payload;
         let diffSkipped = 0;
@@ -280,7 +284,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           data.workspace_url.startsWith('/') &&
           !data.workspace_url.startsWith('//')
         ) {
-          chrome.tabs.create({ url: `${portalUrl}${data.workspace_url}` });
+          const courseId = data.summary?.course_id || message.payload.course_id;
+          chrome.tabs.create({ url: `${portalUrl}/hustle/app.html#course/${encodeURIComponent(courseId)}` });
         }
 
         sendResponse({ success: true, portalUrl, diffSkipped, data });
@@ -305,7 +310,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'OPEN_PORTAL_HOME') {
     (async () => {
       const portalUrl = await getPortalUrl(message.portalUrl);
-      chrome.tabs.create({ url: portalUrl });
+      chrome.tabs.create({ url: `${portalUrl}/hustle/connect.html` });
       sendResponse({ success: true });
     })();
     return true;

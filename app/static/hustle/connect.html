@@ -1,0 +1,17 @@
+<!doctype html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Підключити Moodle — Hustle</title><link rel="icon" href="favicon.svg"><link rel="stylesheet" href="landing.css"><link rel="stylesheet" href="theme.css"><link rel="stylesheet" href="register.css"><link rel="stylesheet" href="product.css"><link rel="stylesheet" href="connected.css"><script src="ui.js" defer></script><script src="extension-connect.js" defer></script></head>
+<body><header class="site-header container"><a href="index.html" class="wordmark">hustle<span>.</span></a><nav class="site-nav"><a href="app.html#settings">← Назад</a></nav></header>
+<main class="connect-shell extension-setup"><h1>Підключити Moodle</h1>
+<p id="extension-status" role="status">Перевіряємо розширення…</p>
+<section id="extension-install" hidden>
+<a class="primary wide" id="extension-download" href="/api/hustle/extension.zip" download>Завантажити розширення ↓</a>
+<details id="install-guide"><summary>Як встановити</summary><ol class="install-steps"><li>Розпакуй завантажений ZIP.</li><li>Відкрий <code id="extensions-address">chrome://extensions</code> <button class="text-button copy-inline" id="copy-extensions" type="button">Копіювати</button> та увімкни <strong>Режим розробника</strong>.</li><li>Натисни <strong>Завантажити розпаковане</strong> й вибери папку <strong>Hustle</strong>.</li></ol><button class="secondary wide" id="extension-recheck">Встановив — перевірити</button></details>
+</section>
+<form id="extension-connect-form" class="import-form">
+<label>Твій університет<select name="moodle" id="moodle-origin" required></select></label>
+<p class="connection-consent">Розширення передасть Hustle сесію Moodle для доступу до твоїх курсів.</p>
+<button class="registration-submit" id="connect-moodle" disabled>Підключити Moodle →</button>
+</form>
+<div id="extension-success" hidden><span class="course-avatar butter" aria-hidden="true">✓</span><h2>Moodle підключено</h2><a class="primary wide" href="app.html#connect">Обрати курси →</a></div>
+<p id="extension-error" class="field-error" role="alert" hidden></p>
+<details class="manual-connection"><summary>Підключити за токеном</summary><form id="manual-connect-form" class="import-form"><label>Адреса LMS<input type="url" name="url" placeholder="https://learn.ucu.edu.ua" required></label><label>Токен Moodle<input type="password" name="token" autocomplete="off" required></label><button class="secondary" type="submit">Підключити</button></form></details>
+</main></body></html>

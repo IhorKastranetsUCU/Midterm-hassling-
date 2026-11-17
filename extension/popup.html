@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
   <meta charset="UTF-8">
-  <title>LMS AI Workspace Sync</title>
+  <title>Hustle — Moodle</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -115,50 +115,50 @@
     .status-err { display: block; background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.4); color: #fda4af; }
     .shield-note { font-size: 10px; color: #c4b5fd; margin-top: 6px; }
   </style>
-</head>
+<link rel="stylesheet" href="hustle-popup.css"></head>
 <body>
   <div class="header">
-    <span class="title">⚡ LMS AI Workspace</span>
-    <span class="badge">Zero Passwords</span>
+    <span class="title">hustle.</span>
+    <span class="badge">Moodle</span>
   </div>
 
-  <div class="card">
-    <label class="field-label" for="portal-url">Web Portal Endpoint</label>
+  <details class="card"><summary>Параметри</summary>
+    <label class="field-label" for="portal-url">Адреса Hustle</label>
     <input type="url" id="portal-url" value="http://127.0.0.1:8000" placeholder="http://127.0.0.1:8000">
-  </div>
+  </details>
 
   <div class="card" id="course-preview-card">
-    <label class="field-label">Active Tab Course Scan</label>
-    <div id="course-name" style="font-weight:700; color:#fff;">Inspecting active tab...</div>
+    <label class="field-label">Поточний курс</label>
+    <div id="course-name" style="font-weight:700; color:#fff;">Перевіряємо вкладку…</div>
     <div id="course-meta" style="font-size:11px; color:#94a3b8; margin-top:2px;"></div>
 
     <div class="stats-grid" id="stats-grid" style="display:none;">
-      <div class="stat-box"><span class="stat-val" id="stat-sections">0</span><span class="stat-lbl">Topics</span></div>
-      <div class="stat-box"><span class="stat-val" id="stat-modules">0</span><span class="stat-lbl">Materials</span></div>
-      <div class="stat-box"><span class="stat-val" id="stat-quizzes" style="color:#c4b5fd;">0</span><span class="stat-lbl">Shielded Quizzes</span></div>
+      <div class="stat-box"><span class="stat-val" id="stat-sections">0</span><span class="stat-lbl">Теми</span></div>
+      <div class="stat-box"><span class="stat-val" id="stat-modules">0</span><span class="stat-lbl">Матеріали</span></div>
+      <div class="stat-box"><span class="stat-val" id="stat-quizzes" style="color:#c4b5fd;">0</span><span class="stat-lbl">Захищені тести</span></div>
     </div>
     <div class="shield-note" id="shield-note" style="display:none;">
-      🛡️ Timed/graded quizzes are excluded automatically by Academic Integrity Policy.
+      🛡️ Оцінювані тести не переносяться.
     </div>
   </div>
 
   <div class="card" id="tools-card" style="display:none;">
-    <label class="field-label">Select Course Tools (Checkboxes)</label>
+    <label class="field-label">Матеріали для навчання</label>
     <div class="tools-grid">
-      <label><input type="checkbox" id="ext-book" checked> 📚 Interactive Book</label>
+      <label><input type="checkbox" id="ext-book" checked> 📚 Конспект</label>
       <label><input type="checkbox" id="ext-mermaid" checked> 🔀 Mermaid</label>
-      <label><input type="checkbox" id="ext-visuals" checked> 🖼️ Visual Cards</label>
-      <label><input type="checkbox" id="ext-quizzes" checked> ❓ Practice Quiz</label>
-      <label><input type="checkbox" id="ext-flashcards"> 🃏 Flashcards</label>
-      <label><input type="checkbox" id="ext-exam" checked> 🎯 Exam Mix</label>
+      <label><input type="checkbox" id="ext-visuals" checked> 🖼️ Візуальні картки</label>
+      <label><input type="checkbox" id="ext-quizzes" checked> ❓ Самоперевірка</label>
+      <label><input type="checkbox" id="ext-flashcards"> 🃏 Картки</label>
+      <label><input type="checkbox" id="ext-exam" checked> 🎯 До іспиту</label>
     </div>
   </div>
 
-  <button type="button" id="btn-sync" class="btn-primary" disabled>⚡ Sync & Open Workspace</button>
-  <button type="button" id="btn-open-portal" class="btn-secondary">Open Web Portal Home ↗</button>
+  <button type="button" id="btn-sync" class="btn-primary" disabled>⚡ До Hustle</button>
+  <button type="button" id="btn-open-portal" class="btn-secondary">Підключити Moodle ↗</button>
 
   <div id="status-box" class="status-msg"></div>
 
-  <script src="popup.js"></script>
+  <script src="hustle-config.js"></script><script src="popup.js"></script>
 </body>
 </html>

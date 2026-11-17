@@ -1,0 +1,54 @@
+.connected-empty { padding: clamp(2rem,6vw,5rem); text-align: center; border: 1px solid var(--line); border-radius: 1.25rem; background: var(--paper); }
+.connected-empty h2 { font-size: 1.7rem; letter-spacing: -.04em; }
+.connected-empty p { color: var(--muted); margin-bottom: 1.5rem; }
+.import-form { display: grid; gap: 1rem; }
+.import-form label { display: grid; gap: .4rem; font-size: .85rem; font-weight: 750; }
+.import-form input,.import-form textarea { width: 100%; border: 1px solid #aa93a3; border-radius: .6rem; padding: .8rem; font: inherit; color: var(--ink); background: #fffefa; }
+.import-form textarea { min-height: 10rem; resize: vertical; }
+.course-card { display: flex; flex-direction: column; align-items: start; }
+.course-card .primary { margin-top: auto; }
+.course-card h2 { overflow-wrap: anywhere; }
+.topic-list { display: grid; gap: 1rem; }
+.topic-card { padding: 1.5rem; border: 1px solid var(--line); border-radius: 1rem; background: var(--paper); }
+.topic-card summary { cursor: pointer; font-size: 1.1rem; font-weight: 800; }
+.topic-card h3 { margin-top: 1.5rem; }
+.topic-card p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; }
+.topic-card details { margin-top: 1rem; padding: 1rem; border-radius: .75rem; background: #f3e9f2; }
+.topic-card details summary { font-size: .9rem; }
+.live-error { border: 1px solid #c79e9e; padding: 1rem; border-radius: .75rem; background: #faefea; }
+.course-tabs { display: flex; gap: .5rem; flex-wrap: wrap; margin: 0 0 1.5rem; }
+.course-tabs a { padding: .65rem 1rem; border-radius: .65rem; text-decoration: none; font-weight: 750; font-size: .85rem; color: var(--muted); }
+.course-tabs a[aria-current] { background: var(--plum); color: var(--paper); }
+.course-tabs a:hover:not([aria-current]) { background: var(--lilac); }
+.notes-form { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--line); }
+.notes-actions { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+.notes-actions [role=status] { font-size: .8rem; color: var(--muted); }
+.exam-intro { display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 1.5rem; border-radius: 1rem; background: #f8e4ac; }
+.exam-intro h2 { margin: 0; font-size: 1.4rem; letter-spacing: -.035em; }
+.exam-intro p { margin-bottom: 0; }
+.material-search { margin-bottom: 1.5rem; }
+.material-row .material-title { cursor: default; }
+.material-row .material-title strong { text-decoration: none; }
+@media(max-width:36rem) { .material-row { flex-wrap: wrap; }.material-row .secondary { margin-left: 2.4rem; }.course-tabs a { padding: .6rem .75rem; }.notes-actions { align-items: start; flex-direction: column; } }
+.import-tools { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; padding: 1rem; border: 1px solid var(--line); border-radius: .75rem; }
+.import-tools legend { font-size: .85rem; font-weight: 750; padding-inline: .4rem; }
+.import-tools label { display: flex; align-items: center; gap: .5rem; }
+.import-tools input { width: 1.1rem; height: 1.1rem; accent-color: var(--plum); }
+[data-exam-status]:empty { display: none; }
+.topic-card blockquote { margin-inline: 0; padding: .75rem 1rem; border-left: 3px solid #ac8ca7; background: #f2eaf0; border-radius: 0 .5rem .5rem 0; overflow-wrap: anywhere; }
+.topic-card pre { overflow: auto; padding: 1rem; background: #f0e9de; border-radius: .65rem; font-size: .8rem; }
+.extension-setup { width: min(35rem, calc(100% - 2.25rem)); }
+.extension-setup #extension-status { color: var(--muted); font-size: .875rem; }
+.extension-setup #extension-status:empty { display: none; }
+.extension-setup #extension-install { margin-block: 1.5rem; }
+.extension-setup details { margin-top: 1.25rem; }
+.extension-setup summary { cursor: pointer; font-weight: 750; font-size: .85rem; }
+.install-steps { padding-left: 1.25rem; font-size: .85rem; }
+.install-steps li + li { margin-top: .8rem; }
+.extension-setup .copy-inline { display: inline; margin: 0; padding: .2rem .4rem; min-height: 2rem; font-size: .75rem; }
+.extension-setup select { width: 100%; padding: .85rem; border: 1px solid #aa93a3; border-radius: .6rem; color: var(--ink); background: var(--paper); font: inherit; }
+.extension-setup .connection-consent { margin: 0; font-size: .8rem; line-height: 1.6; color: var(--muted); }
+.extension-setup .registration-submit { margin-top: 0; }
+.manual-connection { padding-top: 1.25rem; border-top: 1px solid var(--line); color: var(--muted); }
+.manual-connection form { margin-top: 1rem; }
+#extension-success { padding-block: 1.5rem; }

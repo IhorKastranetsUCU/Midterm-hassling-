@@ -7,6 +7,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
+from app.routers import hustle_extension
 from app.core.exceptions import MoodleException, UnauthorizedError
 from app.core.authorities import get_authority, list_authorities
 from app.routers import auth, courses, assignments, grades, system, events, authorities, workspace
@@ -63,6 +64,7 @@ async def unauthorized_exception_handler(request: Request, exc: UnauthorizedErro
 
 
 # Include API Routers
+app.include_router(hustle_extension.router)
 app.include_router(auth.router)
 app.include_router(courses.router)
 app.include_router(assignments.router)
@@ -81,6 +83,7 @@ os.makedirs(static_dir, exist_ok=True)
 os.makedirs(templates_dir, exist_ok=True)
 
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
+app.mount("/hustle", StaticFiles(directory=os.path.join(static_dir, "hustle"), html=True), name="hustle")
 templates = Jinja2Templates(directory=templates_dir)
 
 

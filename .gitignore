@@ -65,3 +65,9 @@ ehthumbs.db
 # Documents & Presentations
 pitch.pdf
 *.pdf
+
+# Local integration QA and non-destructive source backups
+backups/
+output/
+tools/hustle-ui/node_modules/
+.playwright-cli/

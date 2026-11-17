@@ -16,5 +16,13 @@ Sync courses from **any Moodle LMS** (`learn.ucu.edu.ua`, `e-learning.lnu.edu.ua
 
 ## Security & Academic Integrity
 
-* **Zero passwords or `MoodleSession` cookies leave Chrome.** Extraction runs inside your already-authenticated browser tab and sends only non-exam course materials via `POST /api/sync/extension`.
+* **No manual token copying.** After you explicitly connect a supported university on the Hustle website, the extension sends its MoodleSession cookie to that Hustle server through `/api/auth/extension-pair`. The server retains the session in an HttpOnly signed JWT cookie (signed, not encrypted). Course material extraction uses `/api/sync/extension`; Moodle passwords are not requested by the extension.
 * **Fail-closed Quiz Shield**: Graded/timed quizzes are automatically filtered out and never ingested into AI storage.
+
+## Hustle installation flow (v1.1)
+
+Open `/hustle/connect.html`. Download the ZIP, unpack it, and load its `Hustle` folder at `chrome://extensions` with Developer mode enabled. The website detects the extension; if necessary, reload the page. Choose the university and click Connect. No portal URL or token needs to be copied.
+
+Automatic session pairing is restricted to the university/portal pair explicitly selected on the Hustle website. The bridge only runs on packaged portal origins, exposes no session credentials to web pages, and checks the sender again in the service worker. Sync resolves the current workspace only after Moodle pairing. Synced courses open `/hustle/app.html#course/…`.
+
+Download package endpoint: `/api/hustle/extension.zip`. Server setting `HUSTLE_PUBLIC_ORIGIN` controls the portal origin included in the package; request Host headers do not. A deployed origin must use HTTPS. To replace ZIP installation with the published listing, configure `HUSTLE_EXTENSION_STORE_URL`. Publishing and Chrome review are separate; no listing has been published by this change. ZIP/unpacked installations require manual updates; Store installations support automatic updates.

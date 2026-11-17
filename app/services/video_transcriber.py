@@ -70,7 +70,7 @@ class VideoTranscriberService:
         try:
             # 1. Try preferred languages directly
             # In youtube-transcript-api, get_transcript accepts languages list
-            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+            transcript_list = YouTubeTranscriptApi().list(video_id)
             
             # Find best transcript
             transcript = None
@@ -90,8 +90,8 @@ class VideoTranscriberService:
                 segments = []
                 for entry in fetched:
                     # Entry has 'text', 'start', 'duration'
-                    text_line = entry.get("text", "").strip()
-                    start_sec = entry.get("start", 0.0)
+                    text_line = (entry.get("text", "") if isinstance(entry, dict) else entry.text).strip()
+                    start_sec = entry.get("start", 0.0) if isinstance(entry, dict) else entry.start
                     if text_line:
                         full_text_parts.append(text_line)
                         m, s = divmod(int(start_sec), 60)

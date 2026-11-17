@@ -1,0 +1,9 @@
+body { background: #f5f2e8; color: #2e1b2e; }
+.card { background: #fffdf5; border-color: #ded1d9; }
+.title, #course-name { color: #381b39 !important; }
+.field-label, #course-meta { color: #675660 !important; }
+input[type=url],input[type=text] { background: #fffdf5; color: #381b39; border-color: #aa93a3; }
+.btn-primary { background: #381b39; color: #fffdf5; }
+.btn-secondary { background: #edd8ec; color: #381b39; border-color: #d5bfd3; }
+.stat-box { background: #f5e8c5; }.stat-val { color: #381b39; }.stat-lbl { color: #675660; }
+.tools-grid label { color: #381b39; }.badge { background: #edd8ec; color: #381b39; border-color: #d5bfd3; }

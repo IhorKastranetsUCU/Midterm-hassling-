@@ -113,6 +113,7 @@ MOCK_COURSE_CONTENTS: Dict[int, List[Dict[str, Any]]] = {
                 {
                     "id": 508,
                     "name": "Самоперевірка: Тест на розуміння Big-O (Self-Test)",
+                    "quiz_meta": {"name": "Big-O Self-Test", "attempts": 0, "timelimit_seconds": 0, "review_correctness_allowed": True},
                     "modname": "quiz",
                     "url": "https://moodle.example.com/mod/quiz/view.php?id=508",
                     "description": "Формативний тест без ліміту часу. Перевірте, чи правильно ви визначаєте часову складність рекурсивних викликів та циклів."

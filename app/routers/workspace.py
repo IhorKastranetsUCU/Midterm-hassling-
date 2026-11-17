@@ -37,6 +37,7 @@ from app.models.mix import (
     ConfirmStructureRequest,
 )
 from app.services.build_queue import get_build_queue
+from app.services.course_organization import safe_sections, save_organization, get_organization, material_groups
 from app.services.mix_generator import (
     extract_text_from_upload,
     generate_course_structure_from_syllabus,
@@ -198,15 +199,19 @@ async def preview_course_structure(
     AI Course Architect: analyzes Moodle syllabus & sections (or custom text) and generates
     a proposed topic roadmap with key concepts, estimated hours, and depth before user confirmation.
     """
-    course_id = req.course_id or 101
+    course_id = req.course_id or get_workspace_store()._next_custom_course_id(owner.owner_id)
     course_title = req.title or f"Course {course_id}"
     shortname = f"CRS-{course_id}"
-    sections = None
+    existing = get_workspace_store().get_course_bundle(course_id, owner_id=owner.owner_id)
+    sections = existing["sections"] if existing else None
+    if existing:
+        course_title = existing["course"].title
+        shortname = existing["course"].shortname
     custom_text = req.custom_syllabus_text
 
     # 1. Try pulling real Moodle sections if user has an active session
     session = get_optional_moodle_session(request)
-    if session and session.get("moodle_token") and req.course_id:
+    if not sections and session and session.get("moodle_token") and req.course_id:
         try:
             client = MoodleClient(base_url=session.get("site_url"))
             sections = await client.get_course_contents(
@@ -232,7 +237,7 @@ async def preview_course_structure(
             pass
 
     # 2. If in demo/mock mode or no sections returned
-    if not sections and not custom_text:
+    if not sections and not custom_text and (get_settings().MOODLE_MOCK_MODE or req.authority == "mock"):
         from app.services.mock_data import MOCK_COURSES, MOCK_COURSE_CONTENTS
         for mc in MOCK_COURSES:
             if mc.get("id") == req.course_id:
@@ -241,6 +246,9 @@ async def preview_course_structure(
                 break
         sections = MOCK_COURSE_CONTENTS.get(req.course_id or 101, MOCK_COURSE_CONTENTS.get(101))
 
+    if not sections and not custom_text:
+        raise HTTPException(status_code=400, detail="Додай матеріали курсу або підключи Moodle для побудови структури.")
+    sections = safe_sections(sections) if sections else None
     preview = await generate_course_structure_from_syllabus(
         course_id=course_id,
         title=course_title,
@@ -269,6 +277,14 @@ async def confirm_course_structure(
     store = get_workspace_store()
     tools = req.tools_config or CourseToolsConfig()
 
+    if not req.topics or len({t.topic_index for t in req.topics}) != len(req.topics):
+        raise HTTPException(status_code=400, detail="Додай теми з унікальними номерами.")
+    existing = store.get_course_bundle(req.course_id, owner_id=owner.owner_id)
+    if existing:
+        # Reorganizing materials must not replace source text or erase saved notes.
+        organization = save_organization(store, owner.owner_id, req.course_id, req.topics, req.target_score)
+        return {"success": True, "course_id": req.course_id, "topics_count": len(req.topics),
+                "organization": organization, "materials_only": True}
     sections = None
     session = get_optional_moodle_session(request)
     if session and session.get("moodle_token") and req.course_id:
@@ -284,7 +300,7 @@ async def confirm_course_structure(
         except Exception:
             pass
 
-    if not sections and (req.authority == "mock" or req.course_id in (101, 102, 103, 104)):
+    if not sections and (get_settings().MOODLE_MOCK_MODE or req.authority == "mock"):
         from app.services.mock_data import MOCK_COURSE_CONTENTS
         sections = MOCK_COURSE_CONTENTS.get(req.course_id)
 
@@ -298,8 +314,9 @@ async def confirm_course_structure(
         topics=req.topics,
         tools=tools,
         gemini_api_key=req.gemini_api_key,
-        moodle_sections=sections,
+        moodle_sections=safe_sections(sections) if sections else [],
     )
+    save_organization(store, owner.owner_id, req.course_id, req.topics, req.target_score)
 
     await event_bus.publish(
         AcademicEvent(
@@ -362,9 +379,9 @@ async def auto_cluster_course(
                     shortname = c.get("shortname", shortname)
                     break
         except Exception as exc:
-            logger.warning(f"Failed to fetch live Moodle contents for auto-cluster: {exc}")
+            raise HTTPException(status_code=502, detail="Не вдалося отримати матеріали Moodle.") from exc
 
-    if not sections:
+    if not sections and get_settings().MOODLE_MOCK_MODE:
         from app.services.mock_data import MOCK_COURSES, MOCK_COURSE_CONTENTS
         for mc in MOCK_COURSES:
             if mc.get("id") == course_id:
@@ -373,6 +390,9 @@ async def auto_cluster_course(
                 break
         sections = MOCK_COURSE_CONTENTS.get(course_id) or MOCK_COURSE_CONTENTS.get(101, [])
 
+    if not sections:
+        raise HTTPException(status_code=400, detail="Підключи Moodle або додай матеріали курсу.")
+    sections = safe_sections(sections)
     preview = await generate_course_structure_from_syllabus(
         course_id=course_id,
         title=course_title,
@@ -414,7 +434,8 @@ async def create_or_append_text_course(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Study material text cannot be empty.")
 
     store = get_workspace_store()
-    tools = req.tools_config or CourseToolsConfig()
+    existing = store.get_course_bundle(req.course_id, owner.owner_id) if req.course_id else None
+    tools = req.tools_config or (CourseToolsConfig.model_validate(existing["tools_config"]) if existing else CourseToolsConfig())
     result = await store.create_or_ingest_upload(
         owner_id=owner.owner_id,
         title=req.topic_title or req.title,
@@ -492,6 +513,9 @@ async def upload_course_material(
         tools = CourseToolsConfig()
 
     store = get_workspace_store()
+    existing = store.get_course_bundle(course_id, owner.owner_id) if course_id else None
+    if existing and not tools_json:
+        tools = CourseToolsConfig.model_validate(existing["tools_config"])
     staged = await asyncio.to_thread(
         store.stage_material,
         owner_id=owner.owner_id,
@@ -987,7 +1011,10 @@ async def get_workspace_course(
     bundle = store.get_course_bundle(course_id, owner_id=owner.owner_id)
     if not bundle:
         raise HTTPException(status_code=404, detail=f"Workspace course {course_id} not found.")
+    organization = get_organization(store, owner.owner_id, course_id)
     return {
+        "organization": organization,
+        "material_groups": material_groups(bundle, organization),
         "course": bundle["course"].model_dump(mode="json"),
         "tools_config": bundle["tools_config"],
         "sections": bundle["sections"],

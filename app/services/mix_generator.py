@@ -7,6 +7,7 @@ import zipfile
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
+from typing import Any
 
 from app.config import get_settings
 from app.services.gemini_service import GeminiService

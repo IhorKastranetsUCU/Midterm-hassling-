@@ -1131,7 +1131,7 @@ class MoodleClient:
         if auth_type == "cookie":
             headers["Cookie"] = f"MoodleSession={token}"
 
-        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True, headers=headers) as client:
+        async with httpx.AsyncClient(timeout=30.0, follow_redirects=False, headers=headers) as client:
             for sec in sections:
                 sec_name = sec.get("name", "General")
                 for mod in sec.get("modules", []):
@@ -1150,9 +1150,35 @@ class MoodleClient:
                         continue
 
                     # Process attached files or resource URL
-                    file_items = mod.get("files", [])
+                    file_items = mod.get("files") or [f for f in mod.get("contents", []) if f.get("type", "file") == "file"]
                     if not file_items and mod.get("download_url"):
                         file_items = [{"filename": f"{mod_name}.pdf", "fileurl": mod["download_url"]}]
+
+                    if not file_items and mod_type == "resource" and mod.get("url") and auth_type == "cookie":
+                        try:
+                            remaining = restrictions.file_restrictions.max_total_course_pull_bytes - total_bytes
+                            if remaining <= 0:
+                                raise ValueError("Course file pull quota exceeded")
+                            downloaded = await self.fetch_module_resource(
+                                cookie=token, module_url=mod["url"], modname="resource",
+                                max_bytes=min(remaining, restrictions.file_restrictions.max_file_size_bytes), http_client=client)
+                            if not downloaded:
+                                raise ValueError("Resource is unavailable")
+                            name, raw = downloaded["filename"], downloaded["raw_bytes"]
+                            allowed, reason = restrictions.is_file_safe(name, downloaded["resolved_url"], len(raw))
+                            if not allowed:
+                                raise ValueError(reason)
+                            safe_name = re.sub(r'[^a-zA-Z0-9_.-]', '_', name)
+                            path = os.path.join(out_dir, f"{mod_id}_{safe_name}")
+                            with open(path, "wb") as target:
+                                target.write(raw)
+                            total_bytes += len(raw)
+                            downloaded_files.append({"module_id": mod_id, "module_name": mod_name,
+                                                     "section_name": sec_name, "filename": name,
+                                                     "saved_path": path, "size_bytes": len(raw)})
+                        except Exception as exc:
+                            skipped_files.append({"module_id": mod_id, "module_name": mod_name, "reason": str(exc)})
+                        continue
 
                     for fitem in file_items:
                         fname = fitem.get("filename") or f"{mod_name}.pdf"
@@ -1187,8 +1213,15 @@ class MoodleClient:
                                 sep = "&" if "?" in fetch_url else "?"
                                 fetch_url = f"{fetch_url}{sep}wstoken={token}"
 
-                            resp = await client.get(fetch_url)
-                            if resp.status_code == 200 and len(resp.content) > 0:
+                            resp = None
+                            for _ in range(5):
+                                if not self._is_same_moodle_origin(fetch_url):
+                                    raise ValueError("File redirects outside the connected Moodle")
+                                resp = await client.get(fetch_url)
+                                if resp.status_code not in (301, 302, 303, 307, 308):
+                                    break
+                                fetch_url = urljoin(fetch_url, resp.headers.get("location", ""))
+                            if resp is not None and resp.status_code == 200 and len(resp.content) > 0:
                                 # Save file
                                 safe_fname = re.sub(r'[^a-zA-Z0-9_.-]', '_', fname)
                                 file_path = os.path.join(out_dir, f"{mod_id}_{safe_fname}")

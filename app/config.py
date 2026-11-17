@@ -4,6 +4,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    HUSTLE_PUBLIC_ORIGIN: str = "http://127.0.0.1:8000"
+    HUSTLE_EXTENSION_STORE_URL: str = ""
+
     # Moodle Settings
     MOODLE_BASE_URL: str = "https://learn.ucu.edu.ua"
     MOODLE_SERVICE_SHORTNAME: str = "moodle_mobile_app"

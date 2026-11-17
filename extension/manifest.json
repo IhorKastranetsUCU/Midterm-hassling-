@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Universal LMS AI Workspace Sync",
-  "version": "1.0.0",
-  "description": "Sync Moodle courses in 1 click without passwords or F12 cookies, with fail-closed exam privacy protection.",
+  "name": "Hustle — Moodle",
+  "version": "1.1.0",
+  "description": "Курси Moodle у твоєму навчальному просторі Hustle.",
   "permissions": [
     "activeTab",
     "cookies",
@@ -25,7 +25,7 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Sync Course to AI Workspace"
+    "default_title": "Hustle — підключити курс"
   },
   "content_scripts": [
     {
@@ -44,6 +44,16 @@
       "js": [
         "extractor.js",
         "content.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "http://127.0.0.1:8000/hustle/*",
+        "http://localhost:8000/hustle/*"
+      ],
+      "js": [
+        "hustle-bridge.js"
       ],
       "run_at": "document_idle"
     }
