@@ -230,7 +230,7 @@ async def preview_course_structure(
                 break
         sections = MOCK_COURSE_CONTENTS.get(req.course_id or 101, MOCK_COURSE_CONTENTS.get(101))
 
-    preview = generate_course_structure_from_syllabus(
+    preview = await generate_course_structure_from_syllabus(
         course_id=course_id,
         title=course_title,
         shortname=shortname,
@@ -239,6 +239,7 @@ async def preview_course_structure(
         custom_syllabus_text=custom_text,
         sections=sections,
         tools_config=req.tools_config,
+        gemini_api_key=req.gemini_api_key,
     )
     return preview
 
@@ -246,14 +247,35 @@ async def preview_course_structure(
 @router.post("/api/workspace/courses/confirm-structure")
 async def confirm_course_structure(
     req: ConfirmStructureRequest,
+    request: Request,
     owner: WorkspaceOwner = Depends(get_workspace_owner),
 ) -> Dict[str, Any]:
     """
     Confirm and persist the AI-generated course structure.
-    Creates the course in the database, synthesizes TopicMixes, and launches the study workspace.
+    Creates the course in the database, maps real Moodle materials (video, audio, lectures, self-tests)
+    with their analyzed key-items to each topic, synthesizes TopicMixes, and launches the study workspace.
     """
     store = get_workspace_store()
     tools = req.tools_config or CourseToolsConfig()
+
+    sections = None
+    session = get_optional_moodle_session(request)
+    if session and session.get("moodle_token") and req.course_id:
+        try:
+            client = MoodleClient(base_url=session.get("site_url"))
+            sections = await client.get_course_contents(
+                token=session["moodle_token"],
+                course_id=req.course_id,
+                auth_type=session.get("auth_type", "token"),
+                sesskey=session.get("sesskey"),
+                base_url=session.get("site_url"),
+            )
+        except Exception:
+            pass
+
+    if not sections and (req.authority == "mock" or req.course_id in (101, 102, 103, 104)):
+        from app.services.mock_data import MOCK_COURSE_CONTENTS
+        sections = MOCK_COURSE_CONTENTS.get(req.course_id)
 
     result = await store.create_course_from_confirmed_structure(
         owner_id=owner.owner_id,
@@ -264,6 +286,8 @@ async def confirm_course_structure(
         target_score=req.target_score,
         topics=req.topics,
         tools=tools,
+        gemini_api_key=req.gemini_api_key,
+        moodle_sections=sections,
     )
 
     await event_bus.publish(
@@ -279,6 +303,93 @@ async def confirm_course_structure(
     )
 
     return result
+
+
+@router.post("/api/workspace/courses/{course_id}/auto-cluster")
+async def auto_cluster_course(
+    course_id: int,
+    request: Request,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+) -> Dict[str, Any]:
+    """
+    Automatic end-to-end curriculum architect & material clusterer:
+    When a user opens a course, automatically analyzes all Moodle sections and files,
+    extracts strictly the canonical topics defined in the syllabus, clusters all materials
+    (with zero-token video transcription and key items), and builds the complete study workspace.
+    """
+    store = get_workspace_store()
+    existing = store.get_course_bundle(course_id, owner_id=owner.owner_id)
+    if existing and existing.get("topic_mixes") and len(existing.get("topic_mixes", [])) > 0:
+        return {"success": True, "message": "Workspace already exists", "bundle": existing}
+
+    sections = None
+    course_title = f"Course #{course_id}"
+    shortname = f"CRS-{course_id}"
+    authority = "ucu"
+
+    session = get_optional_moodle_session(request)
+    if session and session.get("moodle_token"):
+        try:
+            client = MoodleClient(base_url=session.get("site_url"))
+            sections = await client.get_course_contents(
+                token=session["moodle_token"],
+                course_id=course_id,
+                auth_type=session.get("auth_type", "token"),
+                sesskey=session.get("sesskey"),
+                base_url=session.get("site_url"),
+            )
+            raw_courses = await client.get_user_courses(
+                token=session["moodle_token"],
+                user_id=session["user_id"],
+                auth_type=session.get("auth_type", "token"),
+                sesskey=session.get("sesskey"),
+                base_url=session.get("site_url"),
+            )
+            for c in raw_courses:
+                if c.get("id") == course_id:
+                    course_title = c.get("fullname", course_title)
+                    shortname = c.get("shortname", shortname)
+                    break
+        except Exception as exc:
+            logger.warning(f"Failed to fetch live Moodle contents for auto-cluster: {exc}")
+
+    if not sections:
+        from app.services.mock_data import MOCK_COURSES, MOCK_COURSE_CONTENTS
+        for mc in MOCK_COURSES:
+            if mc.get("id") == course_id:
+                course_title = mc.get("fullname", course_title)
+                shortname = mc.get("shortname", shortname)
+                break
+        sections = MOCK_COURSE_CONTENTS.get(course_id) or MOCK_COURSE_CONTENTS.get(101, [])
+
+    preview = await generate_course_structure_from_syllabus(
+        course_id=course_id,
+        title=course_title,
+        shortname=shortname,
+        authority=authority,
+        target_score=85,
+        sections=sections,
+    )
+
+    if not preview.topics:
+        raise HTTPException(status_code=400, detail="Could not identify syllabus topics for this course.")
+
+    tools = CourseToolsConfig()
+    result = await store.create_course_from_confirmed_structure(
+        owner_id=owner.owner_id,
+        course_id=course_id,
+        title=course_title,
+        shortname=shortname,
+        authority=authority,
+        target_score=85,
+        topics=preview.topics,
+        tools=tools,
+        moodle_sections=sections,
+    )
+
+    bundle = store.get_course_bundle(course_id, owner_id=owner.owner_id)
+    return {"success": True, "topics_count": len(preview.topics), "bundle": bundle}
+
 
 
 
@@ -386,10 +497,26 @@ async def upload_course_material(
 @router.get("/api/workspace/courses/{course_id}")
 async def get_workspace_course(
     course_id: int,
+    request: Request,
     owner: WorkspaceOwner = Depends(get_workspace_owner),
 ) -> Dict[str, Any]:
     """Retrieve complete study workspace bundle owned by the current user."""
     store = get_workspace_store()
+
+    # Auto-check upstream updates on course entry (debounced to 1 min inside store)
+    session = get_optional_moodle_session(request)
+    client = MoodleClient(base_url=session.get("site_url")) if session and session.get("site_url") else None
+    try:
+        await store.check_and_apply_course_updates(
+            course_id=course_id,
+            owner_id=owner.owner_id,
+            moodle_client=client,
+            session=session,
+            force=False,
+        )
+    except Exception:
+        pass
+
     bundle = store.get_course_bundle(course_id, owner_id=owner.owner_id)
     if not bundle:
         raise HTTPException(status_code=404, detail=f"Workspace course {course_id} not found.")
@@ -401,6 +528,28 @@ async def get_workspace_course(
         "exam_mix": bundle["exam_mix"].model_dump(mode="json") if bundle["exam_mix"] else None,
         "blocked_quizzes": [b.model_dump(mode="json") for b in bundle["blocked_quizzes"]],
     }
+
+
+@router.post("/api/workspace/courses/{course_id}/check-updates")
+async def check_course_updates(
+    course_id: int,
+    request: Request,
+    force: bool = Query(default=False),
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+) -> Dict[str, Any]:
+    """Explicitly check Moodle upstream for new/updated course materials and map them to weekly syllabus topics."""
+    store = get_workspace_store()
+    session = get_optional_moodle_session(request)
+    client = MoodleClient(base_url=session.get("site_url")) if session and session.get("site_url") else None
+
+    result = await store.check_and_apply_course_updates(
+        course_id=course_id,
+        owner_id=owner.owner_id,
+        moodle_client=client,
+        session=session,
+        force=force,
+    )
+    return result
 
 
 @router.get("/api/workspace/courses/{course_id}/jobs")

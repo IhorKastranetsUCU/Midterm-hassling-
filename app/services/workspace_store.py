@@ -23,6 +23,7 @@ from app.models.mix import (
     SyncDiffRequest,
     SyncDiffResponse,
     TopicDigest,
+    TopicMaterialItem,
     TopicMix,
     TopicPreviewItem,
     WorkspaceCourseSummary,
@@ -30,6 +31,8 @@ from app.models.mix import (
     compute_content_hash,
 )
 from app.services.build_queue import get_build_queue
+from app.services.course_update_matcher import CourseUpdateMatcher
+from app.services.text_analyzer import MaterialTextAnalyzer, detect_material_type
 from app.services.mix_generator import (
     _extract_key_points,
     extract_text_from_upload,
@@ -79,6 +82,8 @@ class WorkspaceStore:
                 sections_json TEXT NOT NULL DEFAULT '[]',
                 blocked_quizzes_json TEXT NOT NULL DEFAULT '[]',
                 exam_mix_stale INTEGER NOT NULL DEFAULT 0,
+                gemini_api_key TEXT,
+                last_moodle_check_at TEXT,
                 updated_at TEXT NOT NULL,
                 PRIMARY KEY (owner_id, course_id)
             );
@@ -196,6 +201,14 @@ class WorkspaceStore:
                 if "exam_mix_stale" not in cols:
                     conn.execute(
                         "ALTER TABLE workspace_courses ADD COLUMN exam_mix_stale INTEGER NOT NULL DEFAULT 0"
+                    )
+                if "gemini_api_key" not in cols:
+                    conn.execute(
+                        "ALTER TABLE workspace_courses ADD COLUMN gemini_api_key TEXT"
+                    )
+                if "last_moodle_check_at" not in cols:
+                    conn.execute(
+                        "ALTER TABLE workspace_courses ADD COLUMN last_moodle_check_at TEXT"
                     )
 
             self._create_tables(conn)
@@ -447,12 +460,13 @@ class WorkspaceStore:
         source_type: str,
         source_id: str,
         old_sections_by_chunk: Optional[Dict[str, InteractiveBookSection]] = None,
+        api_key: Optional[str] = None,
     ) -> Tuple[List[InteractiveBookSection], int, int]:
         """
         Build InteractiveBookSections independently per chunk with shared content-addressed caching.
         Reuses existing unchanged chunk sections and hits shared cache for prose/mermaid/visual cards.
         """
-        generator = get_mix_generator()
+        generator = get_mix_generator(api_key=api_key)
         pv = generator.prompt_version
         sections: List[InteractiveBookSection] = []
         cache_hits = 0
@@ -587,10 +601,11 @@ class WorkspaceStore:
         source_hash: str,
         content_text: str,
         safety_status: str,
+        api_key: Optional[str] = None,
     ) -> Tuple[List[PracticeQuestion], int, int]:
         if safety_status == "restricted_exam":
             return [], 0, 0
-        generator = get_mix_generator()
+        generator = get_mix_generator(api_key=api_key)
         pv = generator.prompt_version
         cached = self._get_cached_artifact(source_hash, "topic_quizzes", pv)
         if cached:
@@ -615,10 +630,11 @@ class WorkspaceStore:
         source_hash: str,
         key_takeaways: List[str],
         safety_status: str,
+        api_key: Optional[str] = None,
     ) -> Tuple[List[Flashcard], int, int]:
         if safety_status == "restricted_exam":
             return [], 0, 0
-        generator = get_mix_generator()
+        generator = get_mix_generator(api_key=api_key)
         pv = generator.prompt_version
         cached = self._get_cached_artifact(source_hash, "topic_flashcards", pv)
         if cached:
@@ -644,6 +660,8 @@ class WorkspaceStore:
         version: int = 1,
         stable_mix_id: Optional[str] = None,
         old_sections_by_chunk: Optional[Dict[str, InteractiveBookSection]] = None,
+        api_key: Optional[str] = None,
+        materials: Optional[List[TopicMaterialItem]] = None,
     ) -> Tuple[TopicMix, int, int]:
         """Build a TopicMix using shared per-artifact caching and optional chunk reuse."""
         if snapshot.safety_status == "restricted_exam":
@@ -662,6 +680,7 @@ class WorkspaceStore:
                 source_type=snapshot.source_type,
                 source_id=snapshot.source_id,
                 old_sections_by_chunk=old_sections_by_chunk,
+                api_key=api_key,
             )
             total_hits += h
             total_recomputed += r
@@ -673,6 +692,7 @@ class WorkspaceStore:
                 source_hash=src_hash,
                 content_text=snapshot.content_text,
                 safety_status=snapshot.safety_status,
+                api_key=api_key,
             )
             total_hits += h
             total_recomputed += r
@@ -687,6 +707,7 @@ class WorkspaceStore:
                 source_hash=src_hash,
                 key_takeaways=takeaways,
                 safety_status=snapshot.safety_status,
+                api_key=api_key,
             )
             total_hits += h
             total_recomputed += r
@@ -704,6 +725,7 @@ class WorkspaceStore:
             visibility=snapshot.visibility,
             tools_enabled=tools,
             book_sections=book_sections,
+            materials=materials or [],
             quizzes=quizzes,
             flashcards=flashcards,
             user_notes=existing_notes,
@@ -975,6 +997,26 @@ class WorkspaceStore:
                     topic_index=sec.section_index,
                     chunks=topic_chunks,
                 )
+                # Attach real section materials with key items
+                sec_raw_modules = [m.model_dump() if hasattr(m, "model_dump") else m for m in sec.modules]
+                sec_mat_items = []
+                for m_raw in sec_raw_modules:
+                    m_name = m_raw.get("name") or "Матеріал"
+                    m_mod = (m_raw.get("modname") or "resource").lower()
+                    m_desc = m_raw.get("description") or m_raw.get("text_excerpt") or ""
+                    m_type = detect_material_type(name=m_name, modname=m_mod, url=m_raw.get("url"), description=m_desc)
+                    sec_mat_items.append(
+                        TopicMaterialItem(
+                            id=int(m_raw.get("module_id") or 0) or (sec.section_index * 1000 + len(sec_mat_items) + 1),
+                            name=m_name,
+                            material_type=m_type,
+                            modname=m_mod,
+                            url=m_raw.get("url"),
+                            description=m_desc[:500] if m_desc else None,
+                            key_items=MaterialTextAnalyzer.extract_key_items(text=m_desc, title=m_name, material_type=m_type, max_items=4),
+                        )
+                    )
+                new_mix.materials = sec_mat_items
                 total_cache_hits += hits
                 total_recomputed += recomp
                 self._save_topic_mix(new_mix, owner_id=owner_id)
@@ -1146,10 +1188,12 @@ class WorkspaceStore:
         topics: List[TopicPreviewItem],
         tools: CourseToolsConfig,
         debounce_seconds: Optional[float] = None,
+        gemini_api_key: Optional[str] = None,
+        moodle_sections: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         """
         Build and persist a new course workspace from AI-generated, user-confirmed syllabus structure.
-        Creates raw topic snapshots, semantic chunks, and TopicMixes for each topic.
+        Creates raw topic snapshots, semantic chunks, and TopicMixes for each topic with analyzed Moodle materials.
         """
         clean_auth = authority or "ucu"
         sections = []
@@ -1157,6 +1201,33 @@ class WorkspaceStore:
         total_chunks = 0
         total_cache_hits = 0
         total_recomputed = 0
+
+        # If no explicit Moodle sections provided, pull mock data if applicable
+        if not moodle_sections and (clean_auth == "mock" or course_id in (101, 102, 103, 104)):
+            from app.services.mock_data import MOCK_COURSE_CONTENTS
+            moodle_sections = MOCK_COURSE_CONTENTS.get(course_id)
+
+        # Match real materials to topics and extract key items for each material
+        matched_items_by_topic: Dict[int, List[TopicMaterialItem]] = {}
+        if moodle_sections:
+            from app.services.content_clusterer import MaterialContentClusterer
+            topics_data = [
+                {
+                    "topic_index": t.topic_index,
+                    "title": t.title,
+                    "keywords": getattr(t, "keywords", None) or t.key_concepts or [t.title],
+                    "key_concepts": t.key_concepts,
+                }
+                for t in topics
+            ]
+            matched_items_by_topic = MaterialContentClusterer.cluster_all_materials(
+                sections=moodle_sections, canonical_topics=topics_data
+            )
+            # Fallback if clustering returned empty
+            if not any(matched_items_by_topic.values()):
+                matcher = CourseUpdateMatcher(topics_data)
+                match_res = matcher.match_all_sections(moodle_sections)
+                matched_items_by_topic = match_res.get("topic_material_items", {})
 
         for t in topics:
             t_idx = t.topic_index
@@ -1216,12 +1287,18 @@ class WorkspaceStore:
                 ],
             })
 
+            topic_mat_items = matched_items_by_topic.get(t_idx, [])
             topic_mix, cache_hits, recomputed = await self._build_topic_mix_cached(
                 snapshot=snapshot,
                 tools=tools,
                 topic_index=t_idx,
                 chunks=chunk_records,
+                api_key=gemini_api_key,
+                materials=topic_mat_items,
             )
+            topic_mix.materials = topic_mat_items
+            topic_mix.keywords = list(getattr(t, "keywords", None) or t.key_concepts or [t_title])
+            topic_mix.last_updated_at = t.last_updated_at or _utc_iso()
             self._save_topic_mix(topic_mix, owner_id=owner_id)
             topic_mix_ids.append(topic_mix.mix_id)
             total_chunks += len(chunk_records)
@@ -1237,9 +1314,11 @@ class WorkspaceStore:
             moodle_url="",
             source_type="moodle_extension",
             tools=tools,
-            sections=sections,
+            sections=moodle_sections if moodle_sections else sections,
             blocked_quizzes=[],
             exam_mix_stale=tools.exam_mix,
+            gemini_api_key=gemini_api_key,
+            last_moodle_check_at=_utc_iso(),
         )
 
         queued_job = None
@@ -1266,6 +1345,206 @@ class WorkspaceStore:
             "chunks_indexed": total_chunks,
             "cache_hits": total_cache_hits,
             "recomputed_artifacts": total_recomputed,
+        }
+
+    async def check_and_apply_course_updates(
+        self,
+        course_id: int,
+        owner_id: str,
+        moodle_client: Optional[Any] = None,
+        session: Optional[Dict[str, Any]] = None,
+        force: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Automatic course updater with 1-minute debounce:
+        1. Checks if last update check was within 60 seconds (returns early if so, unless force=True).
+        2. Retrieves latest Moodle contents.
+        3. Uses CourseUpdateMatcher to map new/modified materials to topics by logical structure
+           or maximum keyword overlap.
+        4. Updates topic timestamps and regenerates dirty TopicMixes without losing user notes.
+        """
+        bundle = self.get_course_bundle(course_id, owner_id=owner_id)
+        if not bundle:
+            return {"checked": False, "error": f"Course {course_id} not found."}
+
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT gemini_api_key, last_moodle_check_at, tools_config_json FROM workspace_courses WHERE owner_id = ? AND course_id = ?",
+                (owner_id, course_id),
+            ).fetchone()
+
+        course_api_key = row["gemini_api_key"] if row and "gemini_api_key" in row.keys() else None
+        last_check = row["last_moodle_check_at"] if row and "last_moodle_check_at" in row.keys() else None
+
+        now = datetime.now(timezone.utc)
+        if not force and last_check:
+            try:
+                dt_check = datetime.fromisoformat(last_check)
+                if dt_check.tzinfo is None:
+                    dt_check = dt_check.replace(tzinfo=timezone.utc)
+                age = (now - dt_check).total_seconds()
+                if age < 60:
+                    return {
+                        "checked": False,
+                        "debounced": True,
+                        "age_seconds": round(age, 1),
+                        "has_updates": False,
+                        "message": f"Курс було перевірено {round(age)}с тому. Наступна автоперевірка через {int(60 - age)}с.",
+                    }
+            except Exception:
+                pass
+
+        fresh_sections = None
+        if moodle_client and session and session.get("moodle_token"):
+            # Retrieve fresh contents from Moodle
+            try:
+                fresh_sections = await moodle_client.get_course_contents(
+                    token=session["moodle_token"],
+                    course_id=course_id,
+                    auth_type=session.get("auth_type", "token"),
+                    sesskey=session.get("sesskey"),
+                    base_url=session.get("site_url"),
+                )
+            except Exception as exc:
+                logger.warning(f"Failed to fetch Moodle course contents for update check: {exc}")
+                return {"checked": False, "error": str(exc)}
+        elif bundle["course"].authority == "mock" or course_id in (101, 102):
+            from app.services.mock_data import MOCK_COURSE_CONTENTS
+            fresh_sections = MOCK_COURSE_CONTENTS.get(course_id)
+        else:
+            return {
+                "checked": False,
+                "has_updates": False,
+                "message": "Немає активної Moodle-сесії для перевірки оновлень.",
+            }
+
+        if not fresh_sections:
+            with self._connect() as conn:
+                conn.execute(
+                    "UPDATE workspace_courses SET last_moodle_check_at = ? WHERE owner_id = ? AND course_id = ?",
+                    (now.isoformat(), owner_id, course_id),
+                )
+            return {"checked": True, "has_updates": False, "message": "Матеріали актуальні."}
+
+        # Build topics list for matcher
+        existing_mixes: List[TopicMix] = bundle.get("topic_mixes", [])
+        topics_data: List[Dict[str, Any]] = []
+        for m in existing_mixes:
+            topics_data.append({
+                "topic_index": m.topic_index,
+                "title": m.title,
+                "keywords": getattr(m, "keywords", None) or [],
+                "last_updated_at": getattr(m, "last_updated_at", None),
+            })
+
+        existing_chunks = self._load_topic_chunks(owner_id=owner_id, course_id=course_id)
+        existing_hashes = {
+            int(c["module_id"]): c["module_hash"]
+            for c in existing_chunks
+            if int(c.get("module_id", 0)) > 0
+        }
+
+        matcher = CourseUpdateMatcher(topics_data)
+        match_res = matcher.match_all_sections(fresh_sections, existing_hashes)
+
+        tools = CourseToolsConfig.model_validate(bundle["tools_config"])
+        updated_topics_count = 0
+
+        if match_res["has_updates"]:
+            for t_idx in match_res["dirty_topics"]:
+                assigned_mods = match_res["topic_materials"].get(t_idx, [])
+                if not assigned_mods:
+                    continue
+
+                existing_mix = next((m for m in existing_mixes if m.topic_index == t_idx), None)
+
+                new_chunks = []
+                for mod in assigned_mods:
+                    m_id = mod.get("id", 0)
+                    m_name = mod.get("name", f"Resource {m_id}")
+                    m_desc = mod.get("description") or ""
+                    m_hash = mod.get("module_hash") or compute_content_hash(f"{m_id}:{m_name}")
+                    new_chunks.append({
+                        "chunk_id": f"mod-{m_id}",
+                        "module_id": m_id,
+                        "modname": mod.get("modname", "resource"),
+                        "heading": m_name,
+                        "content_text": f"{m_name}\n\n{m_desc}",
+                        "module_hash": m_hash,
+                        "safety_status": mod.get("safety_status", "safe_material"),
+                    })
+
+                self._save_topic_chunks(
+                    owner_id=owner_id,
+                    course_id=course_id,
+                    topic_index=t_idx,
+                    chunks=new_chunks,
+                )
+
+                t_title = existing_mix.title if existing_mix else f"Тема {t_idx}"
+                snap_rec = RawTopicSnapshot(
+                    source_id=f"syllabus-{course_id}-{t_idx}",
+                    course_id=course_id,
+                    authority=bundle["course"].authority,
+                    title=t_title,
+                    content_text="\n\n".join(c["content_text"] for c in new_chunks),
+                    source_type="moodle_api",
+                    safety_status="safe_material",
+                    visibility="private",
+                )
+
+                topic_mat_items = match_res.get("topic_material_items", {}).get(t_idx, [])
+                rebuilt_mix, _, _ = await self._build_topic_mix_cached(
+                    snapshot=snap_rec,
+                    tools=tools,
+                    topic_index=t_idx,
+                    chunks=new_chunks,
+                    existing_notes=existing_mix.user_notes if existing_mix else None,
+                    version=(existing_mix.version + 1) if existing_mix else 1,
+                    api_key=course_api_key,
+                    materials=topic_mat_items,
+                )
+                rebuilt_mix.has_upstream_update = True
+                rebuilt_mix.materials = topic_mat_items
+                rebuilt_mix.keywords = matcher._extract_topic_keywords(
+                    next((td for td in topics_data if td["topic_index"] == t_idx), {})
+                )
+                rebuilt_mix.last_updated_at = match_res["topic_timestamps"].get(t_idx) or now.isoformat()
+                self._save_topic_mix(rebuilt_mix, owner_id=owner_id)
+                updated_topics_count += 1
+
+            self._set_exam_mix_stale(owner_id=owner_id, course_id=course_id, stale=True)
+
+            await event_bus.publish(
+                AcademicEvent(
+                    type="topic.update_available",
+                    title=f"Оновлено курс: {bundle['course'].title}",
+                    message=f"Виявлено {match_res['new_materials_count']} нових матеріалів у {len(match_res['dirty_topics'])} темах.",
+                    severity="info",
+                    owner_id=owner_id,
+                    data={"course_id": course_id, "dirty_topics": match_res["dirty_topics"]},
+                )
+            )
+
+        with self._connect() as conn:
+            conn.execute(
+                "UPDATE workspace_courses SET sections_json = ?, last_moodle_check_at = ?, updated_at = ? WHERE owner_id = ? AND course_id = ?",
+                (json.dumps(fresh_sections), now.isoformat(), _utc_iso(), owner_id, course_id),
+            )
+
+        return {
+            "checked": True,
+            "has_updates": match_res["has_updates"],
+            "dirty_topics": match_res["dirty_topics"],
+            "updated_topics_count": updated_topics_count,
+            "new_materials_count": match_res["new_materials_count"],
+            "total_materials_count": match_res["total_materials_count"],
+            "topic_timestamps": match_res["topic_timestamps"],
+            "message": (
+                f"Виявлено {match_res['new_materials_count']} оновлень!"
+                if match_res["has_updates"]
+                else "Всі матеріали курсу актуальні."
+            ),
         }
 
     def list_courses(self, owner_id: str) -> List[WorkspaceCourseSummary]:
@@ -1352,12 +1631,35 @@ class WorkspaceStore:
             )
             for r in snap_rows
         ]
+        sections_data = json.loads(course_row["sections_json"] or "[]")
         mixes: List[TopicMix] = []
         for r in mix_rows:
             mix = TopicMix.model_validate_json(r["mix_json"])
             mix.has_upstream_update = bool(r["has_upstream_update"])
             mix.user_notes = r["user_notes"]
             mixes.append(mix)
+
+        # Dynamic Material Linking & Key-Item Extraction:
+        # Ensures that every time a topic is loaded, all Moodle materials related to it
+        # (videos, audios, lectures, self-tests) and their analyzed key items are present.
+        if mixes and any(not m.materials for m in mixes) and sections_data:
+            try:
+                topics_data = [
+                    {
+                        "topic_index": m.topic_index,
+                        "title": m.title,
+                        "keywords": getattr(m, "keywords", None) or [m.title],
+                    }
+                    for m in mixes
+                ]
+                matcher = CourseUpdateMatcher(topics_data)
+                match_res = matcher.match_all_sections(sections_data)
+                mat_items_map = match_res.get("topic_material_items", {})
+                for m in mixes:
+                    if not m.materials and m.topic_index in mat_items_map:
+                        m.materials = mat_items_map[m.topic_index]
+            except Exception as e:
+                logger.debug(f"Dynamic material enrichment error in get_course_bundle: {e}")
 
         exam_mix = ExamMix.model_validate_json(exam_row["exam_mix_json"]) if exam_row else None
         tools_cfg = CourseToolsConfig.model_validate_json(course_row["tools_config_json"])
@@ -1991,6 +2293,8 @@ class WorkspaceStore:
         sections: List[Dict[str, Any]],
         blocked_quizzes: List[BlockedQuizNotice],
         exam_mix_stale: bool = False,
+        gemini_api_key: Optional[str] = None,
+        last_moodle_check_at: Optional[str] = None,
     ) -> None:
         with self._connect() as conn:
             conn.execute(
@@ -1998,9 +2302,9 @@ class WorkspaceStore:
                 INSERT INTO workspace_courses (
                     owner_id, course_id, authority, title, shortname, moodle_url, source_type,
                     visibility, tools_config_json, sections_json, blocked_quizzes_json,
-                    exam_mix_stale, updated_at
+                    exam_mix_stale, gemini_api_key, last_moodle_check_at, updated_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, 'private', ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'private', ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(owner_id, course_id) DO UPDATE SET
                     authority = excluded.authority,
                     title = excluded.title,
@@ -2011,6 +2315,8 @@ class WorkspaceStore:
                     sections_json = excluded.sections_json,
                     blocked_quizzes_json = excluded.blocked_quizzes_json,
                     exam_mix_stale = excluded.exam_mix_stale,
+                    gemini_api_key = COALESCE(excluded.gemini_api_key, workspace_courses.gemini_api_key),
+                    last_moodle_check_at = COALESCE(excluded.last_moodle_check_at, workspace_courses.last_moodle_check_at),
                     updated_at = excluded.updated_at
                 """,
                 (
@@ -2025,6 +2331,8 @@ class WorkspaceStore:
                     json.dumps(sections),
                     json.dumps([b.model_dump() for b in blocked_quizzes]),
                     1 if exam_mix_stale else 0,
+                    gemini_api_key,
+                    last_moodle_check_at,
                     _utc_iso(),
                 ),
             )

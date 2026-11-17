@@ -3,6 +3,7 @@ from typing import List, Dict, Any, Optional
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from fastapi.responses import FileResponse, StreamingResponse
+from pydantic import BaseModel
 
 from app.core.parsing_restrictions import get_parsing_restrictions
 from app.core.exceptions import MoodleException
@@ -319,3 +320,34 @@ async def download_module_file(
             raise HTTPException(status_code=resp.status_code, detail="Failed to fetch file from Moodle")
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Error streaming file: {str(exc)}")
+
+
+class VideoTranscriptionRequest(BaseModel):
+    url: str
+    module_id: Optional[int] = None
+    course_id: Optional[int] = None
+
+
+@router.post("/transcribe-video")
+async def transcribe_video(req: VideoTranscriptionRequest):
+    """
+    Zero-token video transcription.
+    Directly extracts subtitles & transcripts from YouTube or subtitle files without consuming LLM tokens.
+    """
+    from app.services.video_transcriber import VideoTranscriberService
+    res = VideoTranscriberService.get_youtube_transcript(req.url)
+    if not res:
+        return {
+            "success": False,
+            "message": "Субтитри або транскрипт не знайдено для цього відео (або відео недоступне).",
+            "token_cost": 0,
+        }
+    return {
+        "success": True,
+        "video_id": res.get("video_id"),
+        "language": res.get("language"),
+        "full_text": res.get("full_text"),
+        "segments": res.get("segments", []),
+        "token_cost": 0,
+    }
+

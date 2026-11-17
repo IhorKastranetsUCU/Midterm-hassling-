@@ -8,6 +8,9 @@ from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 
+from app.config import get_settings
+from app.services.gemini_service import GeminiService
+from app.services.text_analyzer import CurriculumConceptParser, ADMINISTRATIVE_WORDS
 from app.models.mix import (
     CourseToolsConfig,
     ExamMix,
@@ -562,12 +565,128 @@ class StructuredPlaceholderMixGenerator(BaseMixGenerator):
         )
 
 
-def get_mix_generator() -> BaseMixGenerator:
-    """Factory hook — AI Engineer will swap this to return an LLM-backed generator when connecting AI."""
+class GeminiMixGenerator(StructuredPlaceholderMixGenerator):
+    """
+    Live AI generator using Google Gemini 2.0 Flash for authentic educational content,
+    Mermaid diagrams, conceptual practice quizzes, and flashcards.
+    Falls back gracefully to deterministic templates if API quota is reached or network is offline.
+    """
+
+    prompt_version: str = "gemini-v2"
+
+    def __init__(self, api_key: Optional[str] = None):
+        super().__init__()
+        self.gemini = GeminiService(api_key=api_key)
+
+    async def generate_mermaid_diagram(self, title: str, key_points: List[str]) -> str:
+        if self.gemini.is_available:
+            diagram = await self.gemini.generate_mermaid_diagram(title, key_points)
+            if diagram:
+                return diagram
+        return await super().generate_mermaid_diagram(title, key_points)
+
+    async def generate_book_section(
+        self,
+        title: str,
+        content_text: str,
+        source_type: str = "manual_upload",
+        source_id: str = "",
+        include_mermaid: bool = True,
+        include_visual_cards: bool = True,
+        chunk_id: Optional[str] = None,
+        source_hash: Optional[str] = None,
+    ) -> InteractiveBookSection:
+        key_points, _ = _extract_key_points(content_text, title, limit=6)
+        mermaid_code = await self.generate_mermaid_diagram(title, key_points) if include_mermaid else None
+        card_caption, card_prompt = (
+            await self.generate_visual_card(title) if include_visual_cards else (None, None)
+        )
+
+        explanation = None
+        key_takeaways = key_points[:4]
+
+        if self.gemini.is_available:
+            ai_data = await self.gemini.generate_book_section_content(title, content_text, key_points)
+            if ai_data and ai_data.get("explanation_markdown"):
+                explanation = ai_data["explanation_markdown"]
+                if ai_data.get("key_takeaways"):
+                    key_takeaways = ai_data["key_takeaways"]
+
+        if not explanation:
+            summary_body = "\n".join(f"- {pt}" for pt in key_points[:6])
+            explanation = (
+                f"### {title}\n\n"
+                f"Опрацювання матеріалу з **{source_type}** (`{source_id}`).\n\n"
+                f"{summary_body}"
+            )
+
+        return InteractiveBookSection(
+            chunk_id=chunk_id,
+            source_hash=source_hash or compute_content_hash(content_text or title),
+            heading=title,
+            explanation_markdown=explanation,
+            key_takeaways=key_takeaways,
+            mermaid_diagram=mermaid_code,
+            visual_card_caption=card_caption,
+            visual_card_prompt=card_prompt,
+        )
+
+    async def generate_practice_quizzes(
+        self,
+        title: str,
+        key_points: List[str],
+        total_points: Optional[int] = None,
+    ) -> List[PracticeQuestion]:
+        if self.gemini.is_available:
+            ai_quizzes = await self.gemini.generate_practice_quizzes(title, key_points, num_questions=3)
+            if ai_quizzes:
+                results = []
+                for q in ai_quizzes:
+                    question_txt = q.get("question")
+                    options = q.get("options")
+                    if question_txt and options and len(options) >= 2:
+                        results.append(
+                            PracticeQuestion(
+                                question=question_txt,
+                                options=options,
+                                correct_index=q.get("correct_index", 0),
+                                explanation=q.get("explanation", f"Пояснення до теми '{title}'."),
+                                topic_ref=title,
+                            )
+                        )
+                if results:
+                    return results
+        return await super().generate_practice_quizzes(title, key_points, total_points)
+
+    async def generate_flashcards(
+        self,
+        title: str,
+        key_takeaways: List[str],
+    ) -> List[Flashcard]:
+        if self.gemini.is_available:
+            ai_cards = await self.gemini.generate_flashcards(title, key_takeaways, num_cards=4)
+            if ai_cards:
+                cards = []
+                for c in ai_cards:
+                    front = c.get("front")
+                    back = c.get("back")
+                    if front and back:
+                        cards.append(Flashcard(front=front, back=back, tag=c.get("tag", title[:25])))
+                if cards:
+                    return cards
+        return await super().generate_flashcards(title, key_takeaways)
+
+
+def get_mix_generator(api_key: Optional[str] = None) -> BaseMixGenerator:
+    """Factory hook returning GeminiMixGenerator when an API key is available, else fallback."""
+    settings = get_settings()
+    effective_key = (api_key or settings.GEMINI_API_KEY or "").strip()
+    if effective_key:
+        return GeminiMixGenerator(api_key=effective_key)
     return StructuredPlaceholderMixGenerator()
 
 
-def generate_course_structure_from_syllabus(
+async def generate_course_structure_from_syllabus(
     course_id: int,
     title: str,
     shortname: str = "COURSE",
@@ -576,91 +695,111 @@ def generate_course_structure_from_syllabus(
     custom_syllabus_text: Optional[str] = None,
     sections: Optional[List[Dict[str, Any]]] = None,
     tools_config: Optional[CourseToolsConfig] = None,
+    gemini_api_key: Optional[str] = None,
 ) -> CourseStructurePreview:
     """
     AI Course Architect: analyzes raw syllabus text or Moodle section metadata to generate
-    a coherent, structured topic roadmap with key concepts, estimated hours, and study focus
-    tailored to the user's target score (60% to 100%).
+    a coherent, structured topic roadmap with key concepts, keywords, and estimated hours
+    tailored to the user's target score.
     """
     cfg = tools_config or CourseToolsConfig()
     topics: List[TopicPreviewItem] = []
     syllabus_excerpt = None
     syllabus_found = False
 
-    # 1. If sections are provided from Moodle
-    if sections:
-        non_empty = [s for s in sections if s.get("modules") or (s.get("name") and s.get("name") not in ("General", "Вступ"))]
-        if not non_empty:
-            non_empty = sections
-
-        topic_idx = 1
-        for s in non_empty:
-            s_name = (s.get("name") or "").strip()
-            # If section is "General" and has summary, capture as syllabus excerpt
-            if s_name.lower() in ("general", "вступ", "course info", "інформація"):
-                summary_text = s.get("summary") or ""
-                mod_names = [m.get("name", "") for m in s.get("modules", [])]
-                syllabus_excerpt = (summary_text + "\n" + "\n".join(mod_names)).strip()[:500]
-                syllabus_found = True
-                if len(s.get("modules", [])) <= 1 and len(non_empty) > 1:
-                    continue
-
-            modules = s.get("modules", [])
-            mod_titles = [m.get("name", "") for m in modules if m.get("name")]
-            raw_summary = s.get("summary") or ""
-            clean_summary = re.sub(r"<[^>]+>", " ", raw_summary).strip()
-
-            if not clean_summary and mod_titles:
-                clean_summary = f"Опрацювання матеріалів: {', '.join(mod_titles[:3])}"
-            elif not clean_summary:
-                clean_summary = f"Теоретичний та практичний блок теми '{s_name}'."
-
-            # Extract key concepts
-            concepts = []
-            for t in mod_titles:
-                words = [w for w in re.split(r"[:,\-\(\)]", t) if len(w.strip()) > 3]
-                for w in words[:2]:
-                    cw = w.strip()
-                    if cw and cw not in concepts and len(cw) < 30:
-                        concepts.append(cw)
-            if not concepts:
-                concepts = [s_name, f"Основи {s_name}", "Практичні завдання"]
-
-            # Calculate estimated hours & difficulty
-            total_items = max(len(modules), 1)
-            score_factor = 1.0 if target_score < 75 else (1.4 if target_score < 90 else 1.8)
-            est_hours = max(2, int(round((total_items * 0.7 + 1.5) * score_factor)))
-
-            # Difficulty tiering
-            if topic_idx <= 1:
-                diff = "Basic"
-                focus = "Фундаментальна теорія та базова термінологія"
-            elif topic_idx >= len(non_empty) - 1:
-                diff = "Advanced" if target_score >= 80 else "Intermediate"
-                focus = "Комплексні задачі та підготовка до іспиту"
-            else:
-                diff = "Intermediate"
-                focus = "Поглиблений аналіз та вирішення типових кейсів"
-
-            topics.append(
-                TopicPreviewItem(
-                    topic_index=topic_idx,
-                    title=f"Тема {topic_idx}: {s_name}",
-                    summary=clean_summary[:250],
-                    key_concepts=concepts[:5],
-                    difficulty=diff,
-                    estimated_hours=est_hours,
-                    source_modules_count=len(modules),
-                    suggested_focus=focus,
-                )
+    # 0. Live Gemini AI Curriculum Architect
+    settings = get_settings()
+    effective_gemini_key = (gemini_api_key or settings.GEMINI_API_KEY or "").strip()
+    if effective_gemini_key:
+        try:
+            gemini = GeminiService(api_key=effective_gemini_key)
+            ai_topics = await gemini.structure_syllabus_to_topics(
+                course_title=title,
+                sections=sections,
+                custom_syllabus_text=custom_syllabus_text,
+                target_score=target_score,
             )
-            topic_idx += 1
+            if ai_topics and len(ai_topics) > 0:
+                for item in ai_topics:
+                    t_idx = item.get("topic_index", len(topics) + 1)
+                    t_title = item.get("title") or f"Тиждень {t_idx}"
+                    concepts = item.get("key_concepts") or [t_title]
+                    kws = item.get("keywords") or concepts
+                    topics.append(
+                        TopicPreviewItem(
+                            topic_index=t_idx,
+                            title=t_title,
+                            summary=item.get("summary") or f"Огляд теми '{t_title}'.",
+                            key_concepts=concepts,
+                            keywords=kws,
+                            difficulty=item.get("difficulty", "Intermediate"),
+                            estimated_hours=item.get("estimated_hours", 3),
+                            source_modules_count=len(concepts),
+                            suggested_focus=item.get("suggested_focus") or "Опрацювання ключових концепцій",
+                        )
+                    )
+                if topics:
+                    syllabus_found = True
+                    syllabus_excerpt = (
+                        custom_syllabus_text[:500]
+                        if custom_syllabus_text
+                        else f"Згенеровано моделлю Gemini 2.0 Flash на основі матеріалів Moodle ({len(sections or [])} секцій)."
+                    )
+        except Exception as exc:
+            logger.warning(f"Gemini syllabus structuring failed: {exc}")
 
-    # 2. If custom syllabus text is provided
-    elif custom_syllabus_text and custom_syllabus_text.strip():
+    # 1. Canonical Syllabus Topic Extraction and Content-Driven Material Clustering
+    if not topics and (sections or custom_syllabus_text):
+        from app.services.content_clusterer import MaterialContentClusterer
+
+        canonical_meta_list = MaterialContentClusterer.extract_canonical_syllabus_topics(
+            sections=sections,
+            custom_syllabus_text=custom_syllabus_text,
+            target_score=target_score,
+        )
+
+        clustered_mats = (
+            MaterialContentClusterer.cluster_all_materials(sections, canonical_meta_list)
+            if sections
+            else {}
+        )
+
+        if canonical_meta_list:
+            syllabus_found = True
+            syllabus_excerpt = (
+                custom_syllabus_text[:500]
+                if custom_syllabus_text
+                else f"Автоматично виділено {len(canonical_meta_list)} канонічних тем силабусу з матеріалів Moodle."
+            )
+
+            score_factor = 1.0 if target_score < 75 else (1.4 if target_score < 90 else 1.8)
+            for meta in canonical_meta_list:
+                t_idx = meta["topic_index"]
+                clean_kws = [kw for kw in meta.get("keywords", []) if kw.lower() not in ADMINISTRATIVE_WORDS]
+                mats = clustered_mats.get(t_idx, [])
+                total_items = max(len(mats), len(meta.get("key_concepts", [])))
+                est_hours = max(2, int(round((total_items * 0.7 + 1.5) * score_factor)))
+
+                topics.append(
+                    TopicPreviewItem(
+                        topic_index=t_idx,
+                        title=meta["title"],
+                        summary=meta["summary"][:250],
+                        key_concepts=meta["key_concepts"][:5],
+                        keywords=clean_kws,
+                        difficulty=meta.get("difficulty", "Intermediate"),
+                        estimated_hours=est_hours,
+                        source_modules_count=len(mats),
+                        suggested_focus=meta.get("suggested_focus", "Опанування ключових концептів"),
+                    )
+                )
+
+    # 2. Fallback heuristic: If custom syllabus text is provided and not parsed
+    elif not topics and custom_syllabus_text and custom_syllabus_text.strip():
         text = custom_syllabus_text.strip()
         syllabus_found = True
         syllabus_excerpt = text[:500]
+
         chunks = re.split(r"(?=(?:^|\n)(?:Тема\s*\d+|Week\s*\d+|Module\s*\d+|Розділ\s*\d+|Topic\s*\d+|##\s+))", text, flags=re.IGNORECASE)
         clean_chunks = [c.strip() for c in chunks if len(c.strip()) > 20]
         if not clean_chunks:
@@ -669,20 +808,19 @@ def generate_course_structure_from_syllabus(
         for idx, chunk in enumerate(clean_chunks[:8], start=1):
             lines = chunk.split("\n")
             first_line = re.sub(r"^[#\s\d.:\-]+", "", lines[0]).strip() or f"Тема {idx}"
-            body_text = "\n".join(lines[1:]).strip() or first_line
-            key_pts, _ = _extract_key_points(body_text, first_line, limit=4)
-            diff = "Basic" if idx == 1 else ("Advanced" if idx == len(clean_chunks) else "Intermediate")
-            est_hours = 3 if target_score < 80 else 4
+            clean_concept = CurriculumConceptParser.clean_concept_name(first_line)
+            meta = CurriculumConceptParser.expand_concept_metadata(clean_concept, idx, target_score)
             topics.append(
                 TopicPreviewItem(
                     topic_index=idx,
-                    title=f"Тема {idx}: {first_line[:50]}",
-                    summary=body_text[:200].replace("\n", " "),
-                    key_concepts=key_pts[:4],
-                    difficulty=diff,
-                    estimated_hours=est_hours,
-                    source_modules_count=len(lines),
-                    suggested_focus="Теоретичний огляд та практичне закріплення",
+                    title=meta["title"],
+                    summary=meta["summary"][:250],
+                    key_concepts=meta["key_concepts"][:4],
+                    keywords=[kw for kw in meta["keywords"] if kw.lower() not in ADMINISTRATIVE_WORDS],
+                    difficulty=meta.get("difficulty", "Intermediate"),
+                    estimated_hours=meta.get("estimated_hours", 4),
+                    source_modules_count=len(meta.get("key_concepts", [])),
+                    suggested_focus=meta.get("suggested_focus", "Опанування ключових концептів"),
                 )
             )
 
@@ -702,6 +840,7 @@ def generate_course_structure_from_syllabus(
                     title=f"Тема {idx}: {d_title}",
                     summary=f"Структурований модуль вивчення курсу '{title}'.",
                     key_concepts=[title, f"Модуль {idx}", "Практика"],
+                    keywords=[title.lower(), f"модуль {idx}", f"тиждень {idx}", "практика", "теорія"],
                     difficulty="Basic" if idx == 1 else ("Advanced" if idx == 4 else "Intermediate"),
                     estimated_hours=3,
                     source_modules_count=1,
@@ -718,7 +857,11 @@ def generate_course_structure_from_syllabus(
         shortname=shortname,
         authority=authority,
         target_score=target_score,
-        syllabus_source="Moodle Syllabus & Course Sections" if sections else ("Uploaded Syllabus Text" if custom_syllabus_text else "AI Adaptive Blueprint"),
+        syllabus_source=(
+            "Gemini 2.0 Flash AI Syllabus Architecture"
+            if effective_gemini_key and syllabus_found
+            else ("Moodle Syllabus & Course Sections" if sections else ("Uploaded Syllabus Text" if custom_syllabus_text else "AI Adaptive Blueprint"))
+        ),
         syllabus_found=syllabus_found,
         syllabus_excerpt=syllabus_excerpt,
         topics=topics,

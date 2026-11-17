@@ -798,6 +798,23 @@
             <span>🎯 Exam Mix (Мікс міксів)</span>
           </label>
         </div>
+
+        <!-- Gemini API Key (User-provided, persistent) -->
+        <div class="pt-2 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-950 text-purple-300 border border-purple-800">GEMINI API</span>
+            <label for="ai-gemini-api-key" class="text-[11px] font-semibold text-slate-300">Власний Google Gemini API Key:</label>
+          </div>
+          <div class="flex items-center gap-2 flex-1 max-w-md">
+            <input type="password" id="ai-gemini-api-key" placeholder="AIzaSy... (опціонально, зберігається у браузері)"
+              onchange="saveGeminiApiKey(this.value)"
+              class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-[11px] text-purple-300 placeholder-slate-600 focus:outline-none focus:border-purple-500 font-mono">
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer"
+              class="text-[10px] text-purple-400 hover:text-purple-300 underline shrink-0 whitespace-nowrap">
+              Отримати ключ ↗
+            </a>
+          </div>
+        </div>
       </div>
 
       <!-- Modal Body (Content, Loading or Error) -->

@@ -119,7 +119,48 @@ async function reloadCourseData(force = false) {
 
   // Ensure Interactive Book, Practice, Exam, and Header never stay stuck on "Loading..." when no workspace exists yet
   if (!hasWorkspace) {
-    renderEmptyWorkspaceState(contentsErrorMsg);
+    if (currentSectionsData && currentSectionsData.length > 0 && !isAutoClustering) {
+      autoClusterAndBuildWorkspace();
+    } else {
+      renderEmptyWorkspaceState(contentsErrorMsg);
+    }
+  }
+}
+
+let isAutoClustering = false;
+
+async function autoClusterAndBuildWorkspace() {
+  if (isAutoClustering || !currentCourseId) return;
+  isAutoClustering = true;
+
+  const bookPanel = document.getElementById('book-content-panel');
+  if (bookPanel) {
+    bookPanel.innerHTML = `
+      <div class="glass-panel p-8 rounded-2xl border border-indigo-500/40 text-center space-y-4">
+        <div class="w-10 h-10 border-4 border-indigo-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <div>
+          <h3 class="text-base font-bold text-white">⚡ Автоматичний аналіз та кластеризація курсу</h3>
+          <p class="text-xs text-slate-300 mt-1 max-w-md mx-auto">
+            Аналізуємо наповнення кожного матеріалу Moodle, витягуємо канонічні теми силабусу, транскрибуємо відео (0 токенів) та формуємо структурований воркспейс...
+          </p>
+        </div>
+      </div>
+    `;
+  }
+
+  try {
+    const res = await fetch(`/api/workspace/courses/${currentCourseId}/auto-cluster`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (res.ok) {
+      await reloadCourseData(true);
+      return;
+    }
+  } catch (err) {
+    console.warn("Auto-clustering failed:", err);
+  } finally {
+    isAutoClustering = false;
   }
 }
 
@@ -247,15 +288,28 @@ function renderEmptyWorkspaceState(errorMsg = '') {
 }
 
 async function buildWorkspaceFromLoadedSyllabus() {
-  if (!currentSectionsData || currentSectionsData.length === 0) return;
+  if (!currentCourseId) return;
   const btn = document.getElementById('btn-build-from-syllabus');
   if (btn) {
     btn.disabled = true;
-    btn.innerText = '⚡ Building Interactive Mixes...';
+    btn.innerText = '⚡ Кластеризація та генерація тем...';
   }
 
   try {
-    const sections = currentSectionsData.map((sec, idx) => ({
+    const res = await fetch(`/api/workspace/courses/${currentCourseId}/auto-cluster`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (res.ok) {
+      await reloadCourseData(true);
+      return;
+    }
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.detail || 'Не вдалося автоматично кластеризувати курс.');
+  } catch (err) {
+    console.warn("Auto-cluster failed, falling back to extension sync:", err);
+    // Fallback to manual sync if needed
+    const sections = (currentSectionsData || []).map((sec, idx) => ({
       section_index: idx,
       title: sec.name || `Topic ${idx + 1}`,
       summary: stripHtml(sec.summary || ''),
@@ -301,14 +355,14 @@ async function buildWorkspaceFromLoadedSyllabus() {
       throw new Error(errData.detail || 'Could not build workspace mixes');
     }
     await reloadCourseData(true);
-  } catch (err) {
-    alert(err.message);
+  } finally {
     if (btn) {
       btn.disabled = false;
       btn.innerText = '⚡ Build Interactive Book from Syllabus';
     }
   }
 }
+
 
 function renderWorkspaceBundle(bundle) {
   const course = bundle.course;
@@ -470,6 +524,49 @@ function renderActiveTopic() {
       `;
     } else {
       bookPanel.innerHTML = '';
+
+      // Topic Metadata Card (Keywords & Timestamps)
+      const keywordsHtml = (mix.keywords || []).length > 0
+        ? `<div class="flex flex-wrap items-center gap-1.5 pt-1">
+            <span class="text-[10px] uppercase font-mono font-bold text-slate-400">Ключові слова теми:</span>
+            ${(mix.keywords || []).map(kw => `<span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-950/60 text-purple-300 border border-purple-800/60">#${escapeHtml(kw)}</span>`).join('')}
+          </div>`
+        : '';
+
+      let formattedTime = '';
+      if (mix.last_updated_at) {
+        try {
+          const d = new Date(mix.last_updated_at);
+          formattedTime = d.toLocaleString();
+        } catch (e) {
+          formattedTime = mix.last_updated_at;
+        }
+      }
+
+      const topicMetaCard = document.createElement('div');
+      topicMetaCard.className = 'glass-panel p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-indigo-900/40 bg-indigo-950/20';
+      topicMetaCard.innerHTML = `
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-950 text-indigo-300 border border-indigo-800">Тема ${mix.topic_index}</span>
+            <h3 class="text-sm sm:text-base font-bold text-white">${escapeHtml(mix.title)}</h3>
+          </div>
+          ${keywordsHtml}
+        </div>
+        <div class="shrink-0 text-left sm:text-right space-y-0.5">
+          <span class="text-[10px] font-mono text-slate-400 block">Останнє оновлення матеріалів:</span>
+          <span class="text-[11px] font-mono text-emerald-400 font-semibold flex items-center sm:justify-end gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            ${formattedTime || 'Актуально'}
+          </span>
+        </div>
+      `;
+      bookPanel.appendChild(topicMetaCard);
+
+      // Render All Moodle Materials Related to This Topic (Video, Audio, Self-Test, Lecture)
+      const materialsSection = renderTopicMaterialsSection(mix);
+      bookPanel.appendChild(materialsSection);
+
       mix.book_sections.forEach((sec, sIdx) => {
         const card = document.createElement('div');
         card.className = 'glass-panel p-6 rounded-2xl space-y-4';
@@ -517,6 +614,253 @@ function renderActiveTopic() {
   }
 
   renderPracticeAndFlashcards(mix);
+}
+
+let currentMaterialFilter = 'all';
+
+function renderTopicMaterialsSection(mix) {
+  const container = document.createElement('div');
+  container.className = 'glass-panel p-5 rounded-2xl space-y-4 border border-slate-800/90 shadow-lg';
+
+  const materials = mix.materials || [];
+  const counts = {
+    all: materials.length,
+    video: materials.filter(m => m.material_type === 'video').length,
+    audio: materials.filter(m => m.material_type === 'audio').length,
+    lecture: materials.filter(m => m.material_type === 'lecture').length,
+    self_test: materials.filter(m => m.material_type === 'self_test').length,
+    assignment: materials.filter(m => m.material_type === 'assignment').length,
+  };
+
+  container.innerHTML = `
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-bold text-white">📁 Матеріали теми з Moodle</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-950 text-indigo-300 border border-indigo-800">${materials.length}</span>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-0.5">Всі прив'язані лекції, відео, аудіо та самоперевірки з виділеними ключовими тезами (Key-Items).</p>
+      </div>
+
+      <!-- Filter Chips -->
+      <div class="flex items-center gap-1.5 flex-wrap text-[11px]">
+        <button type="button" onclick="filterTopicMaterials('all')" class="mat-filter-btn ${currentMaterialFilter === 'all' ? 'active bg-blue-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'} px-2.5 py-1 rounded-lg border border-slate-800 transition-all font-medium">
+          Всі (${counts.all})
+        </button>
+        ${counts.video > 0 ? `
+          <button type="button" onclick="filterTopicMaterials('video')" class="mat-filter-btn ${currentMaterialFilter === 'video' ? 'active bg-rose-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'} px-2.5 py-1 rounded-lg border border-slate-800 transition-all font-medium">
+            🎥 Відео (${counts.video})
+          </button>
+        ` : ''}
+        ${counts.audio > 0 ? `
+          <button type="button" onclick="filterTopicMaterials('audio')" class="mat-filter-btn ${currentMaterialFilter === 'audio' ? 'active bg-amber-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'} px-2.5 py-1 rounded-lg border border-slate-800 transition-all font-medium">
+            🎧 Аудіо (${counts.audio})
+          </button>
+        ` : ''}
+        ${counts.lecture > 0 ? `
+          <button type="button" onclick="filterTopicMaterials('lecture')" class="mat-filter-btn ${currentMaterialFilter === 'lecture' ? 'active bg-blue-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'} px-2.5 py-1 rounded-lg border border-slate-800 transition-all font-medium">
+            📄 Лекції (${counts.lecture})
+          </button>
+        ` : ''}
+        ${counts.self_test > 0 ? `
+          <button type="button" onclick="filterTopicMaterials('self_test')" class="mat-filter-btn ${currentMaterialFilter === 'self_test' ? 'active bg-emerald-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'} px-2.5 py-1 rounded-lg border border-slate-800 transition-all font-medium">
+            ❓ Самоперевірка (${counts.self_test})
+          </button>
+        ` : ''}
+        ${counts.assignment > 0 ? `
+          <button type="button" onclick="filterTopicMaterials('assignment')" class="mat-filter-btn ${currentMaterialFilter === 'assignment' ? 'active bg-purple-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'} px-2.5 py-1 rounded-lg border border-slate-800 transition-all font-medium">
+            📝 Завдання (${counts.assignment})
+          </button>
+        ` : ''}
+      </div>
+    </div>
+
+    <!-- Materials Cards List -->
+    <div id="topic-materials-list" class="space-y-3"></div>
+  `;
+
+  const listEl = container.querySelector('#topic-materials-list');
+  const filtered = currentMaterialFilter === 'all'
+    ? materials
+    : materials.filter(m => m.material_type === currentMaterialFilter);
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = `
+      <div class="p-6 rounded-xl border border-dashed border-slate-800 bg-slate-900/30 text-center text-xs text-slate-400 space-y-1">
+        <p class="font-semibold text-slate-300">Матеріалів обраного типу не знайдено для цієї теми.</p>
+        <p class="text-[11px] text-slate-500">Натисніть "Check Updates" у шапці, щоб підтягнути оновлення з Moodle.</p>
+      </div>
+    `;
+    return container;
+  }
+
+  filtered.forEach(mat => {
+    const card = document.createElement('div');
+    card.className = 'p-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-all space-y-3';
+
+    // Type badge styling
+    let badgeClass = 'bg-blue-950 text-blue-300 border-blue-800';
+    let icon = '📄';
+    let typeLabel = 'Лекція / Слайди';
+    if (mat.material_type === 'video') {
+      badgeClass = 'bg-rose-950 text-rose-300 border-rose-800';
+      icon = '🎥';
+      typeLabel = 'Відеолекція';
+    } else if (mat.material_type === 'audio') {
+      badgeClass = 'bg-amber-950 text-amber-300 border-amber-800';
+      icon = '🎧';
+      typeLabel = 'Аудіо / Подкаст';
+    } else if (mat.material_type === 'self_test') {
+      badgeClass = 'bg-emerald-950 text-emerald-300 border-emerald-800';
+      icon = '❓';
+      typeLabel = 'Самоперевірка';
+    } else if (mat.material_type === 'assignment') {
+      badgeClass = 'bg-purple-950 text-purple-300 border-purple-800';
+      icon = '📝';
+      typeLabel = 'Практичне завдання';
+    }
+
+    const moodleLink = mat.url || (mat.id ? `/mod/${mat.modname}/view.php?id=${mat.id}` : '#');
+    const keyItems = mat.key_items || [];
+    const keyItemsHtml = keyItems.length > 0 ? `
+      <div class="p-3 rounded-lg bg-slate-950/70 border border-slate-800/80 space-y-1.5">
+        <span class="text-[10px] uppercase font-mono font-bold text-indigo-300 flex items-center gap-1.5">
+          <span>⚡ Ключові тези матеріалу (Key-Items):</span>
+        </span>
+        <ul class="space-y-1 text-xs text-slate-200">
+          ${keyItems.map(ki => `<li class="flex items-start gap-2"><span class="text-indigo-400 font-bold">•</span><span class="leading-relaxed">${escapeHtml(ki)}</span></li>`).join('')}
+        </ul>
+      </div>
+    ` : '';
+
+    let formattedTime = '';
+    if (mat.last_updated_at || mat.timemodified) {
+      try {
+        const d = mat.last_updated_at ? new Date(mat.last_updated_at) : new Date(mat.timemodified * 1000);
+        formattedTime = d.toLocaleDateString();
+      } catch (e) {}
+    }
+
+    card.innerHTML = `
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${badgeClass} shrink-0">
+            ${icon} ${typeLabel}
+          </span>
+          <a href="${escapeHtml(moodleLink)}" target="_blank" rel="noopener noreferrer"
+            class="text-sm font-bold text-white hover:text-indigo-300 transition-colors flex items-center gap-1">
+            <span>${escapeHtml(mat.name)}</span>
+            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </a>
+        </div>
+        ${formattedTime ? `<span class="text-[10px] font-mono text-slate-400 shrink-0">📅 ${formattedTime}</span>` : ''}
+      </div>
+
+      ${mat.description ? `<p class="text-xs text-slate-400 leading-relaxed">${escapeHtml(mat.description)}</p>` : ''}
+      ${keyItemsHtml}
+
+      ${mat.has_transcript ? `
+        <div class="p-3 rounded-lg bg-rose-950/20 border border-rose-900/40 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-mono font-bold text-rose-300 uppercase flex items-center gap-1.5">
+              <span>🎙️ Транскрипт відео (0 токенів):</span>
+            </span>
+            <button type="button" onclick="toggleTranscriptBox(${mat.id})" class="text-[10px] font-mono text-rose-400 hover:text-rose-300 underline">
+              Переглянути / Сховати
+            </button>
+          </div>
+          <p id="transcript-box-${mat.id}" class="text-xs text-slate-300 leading-relaxed font-mono whitespace-pre-line bg-slate-950 p-2.5 rounded border border-slate-800">
+            ${escapeHtml(mat.transcript_snippet || 'Транскрипт завантажено.')}
+          </p>
+        </div>
+      ` : (mat.material_type === 'video' && mat.url ? `
+        <div class="p-2.5 rounded-lg bg-rose-950/20 border border-rose-900/30 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-mono text-rose-300">🎙️ Доступна миттєва транскрипція субтитрів (0 токенів)</span>
+            <button type="button" onclick="fetchLiveVideoTranscript(${mat.id}, '${escapeHtml(mat.url)}')"
+              id="btn-transcribe-${mat.id}"
+              class="px-2.5 py-1 rounded text-[10px] font-bold bg-rose-600 hover:bg-rose-500 text-white transition-all shadow">
+              ⚡ Отримати транскрипт (0 токенів)
+            </button>
+          </div>
+          <div id="transcript-live-${mat.id}" class="hidden text-xs text-slate-300 leading-relaxed font-mono whitespace-pre-line bg-slate-950 p-3 rounded-lg border border-slate-800"></div>
+        </div>
+      ` : '')}
+
+      <div class="flex items-center justify-between pt-1 text-[11px]">
+        <span class="text-[10px] font-mono text-slate-500">Moodle Module #${mat.id} • ${mat.modname}</span>
+        <a href="${escapeHtml(moodleLink)}" target="_blank" rel="noopener noreferrer"
+          class="px-2.5 py-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-700/40 font-semibold transition-all flex items-center gap-1">
+          <span>Відкрити в Moodle</span>
+          <span>↗</span>
+        </a>
+      </div>
+    `;
+    listEl.appendChild(card);
+  });
+
+  return container;
+}
+
+function toggleTranscriptBox(id) {
+  const el = document.getElementById(`transcript-box-${id}`);
+  if (el) el.classList.toggle('hidden');
+}
+
+async function fetchLiveVideoTranscript(id, url) {
+  const btn = document.getElementById(`btn-transcribe-${id}`);
+  const liveBox = document.getElementById(`transcript-live-${id}`);
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = '⏳ Завантаження (0 токенів)...';
+  }
+  try {
+    const res = await fetch('/api/courses/transcribe-video', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: url, module_id: id, course_id: currentCourseId }),
+    });
+    const data = await res.json();
+    if (data.success && data.full_text) {
+      if (liveBox) {
+        liveBox.classList.remove('hidden');
+        let segmentsHtml = '';
+        if (data.segments && data.segments.length > 0) {
+          segmentsHtml = '<div class="space-y-1 mt-2 max-h-60 overflow-y-auto pr-1">' +
+            data.segments.map(s => `<div class="flex items-start gap-2"><span class="text-rose-400 font-bold shrink-0">[${escapeHtml(s.timestamp)}]</span><span>${escapeHtml(s.text)}</span></div>`).join('') +
+            '</div>';
+        }
+        liveBox.innerHTML = `
+          <div class="flex items-center justify-between border-b border-slate-800 pb-1.5 mb-2">
+            <span class="text-[10px] font-mono text-emerald-400 font-bold">✅ Транскрипт отримано (Використано 0 токенів) • Мова: ${escapeHtml(data.language || 'auto')}</span>
+          </div>
+          ${segmentsHtml || `<p class="text-xs text-slate-200">${escapeHtml(data.full_text)}</p>`}
+        `;
+      }
+      if (btn) {
+        btn.innerText = '✅ Готово (0 токенів)';
+        btn.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-600 text-white';
+      }
+    } else {
+      alert(data.message || 'Не вдалося витягнути субтитри для цього відео.');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerText = '⚡ Отримати транскрипт (0 токенів)';
+      }
+    }
+  } catch (e) {
+    alert('Помилка запиту: ' + e.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = '⚡ Отримати транскрипт (0 токенів)';
+    }
+  }
+}
+
+
+function filterTopicMaterials(type) {
+  currentMaterialFilter = type;
+  renderActiveTopic();
 }
 
 function renderMermaidInto(slotId, code, label) {
@@ -1079,6 +1423,38 @@ async function pullAllCourseFiles() {
   }
 }
 
+
+async function triggerCourseSyncUpdates() {
+  if (!currentCourseId) return;
+  const btn = document.getElementById('btn-sync-updates');
+  const icon = document.getElementById('icon-sync-spin');
+  const text = document.getElementById('text-sync-btn');
+
+  if (btn) btn.disabled = true;
+  if (icon) icon.classList.add('animate-spin');
+  if (text) text.innerText = 'Checking...';
+
+  try {
+    const res = await fetch(`/api/workspace/courses/${currentCourseId}/check-updates?force=true`, {
+      method: 'POST',
+    });
+    const data = await res.json();
+    if (data.has_updates) {
+      alert(`🔄 Оновлення на Moodle знайдено!\n\nОновлено матеріалів: ${data.new_materials_count}\nОновлено тем: ${(data.dirty_topics || []).length}\n\nКурс перезавантажується...`);
+      await reloadCourseData(true);
+    } else if (data.debounced) {
+      alert(data.message || 'Курс нещодавно перевірявся.');
+    } else {
+      alert(data.message || 'Матеріали курсу актуальні (жодних нових змін на Moodle не виявлено).');
+    }
+  } catch (err) {
+    alert(`Помилка перевірки оновлень: ${err.message}`);
+  } finally {
+    if (btn) btn.disabled = false;
+    if (icon) icon.classList.remove('animate-spin');
+    if (text) text.innerText = 'Check Updates';
+  }
+}
 
 function escapeHtml(text) {
   if (!text) return '';

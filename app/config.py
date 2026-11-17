@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     COOKIE_SECURE: bool = False
     COOKIE_SAMESITE: str = "lax"
 
+    # Gemini AI Settings
+    GEMINI_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = "gemini-2.0-flash"
+
     # Workspace Persistence & Isolation (Zero Moodle passwords/cookies stored; only mixes & hashes)
     WORKSPACE_DB_PATH: str = "data/workspace.db"
     WORKSPACE_COOKIE_NAME: str = "workspace_session"

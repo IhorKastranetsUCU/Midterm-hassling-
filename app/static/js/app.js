@@ -1492,6 +1492,23 @@ function toggleAiCustomSyllabus() {
   }
 }
 
+function saveGeminiApiKey(key) {
+  if (key && key.trim()) {
+    localStorage.setItem('gemini_api_key', key.trim());
+    showToast('✨ Gemini API ключ збережено');
+  } else {
+    localStorage.removeItem('gemini_api_key');
+  }
+}
+
+function getGeminiApiKey() {
+  const input = document.getElementById('ai-gemini-api-key');
+  if (input && input.value.trim()) {
+    return input.value.trim();
+  }
+  return localStorage.getItem('gemini_api_key') || null;
+}
+
 function openAiCourseBuilder(courseId, courseTitle, courseShortname) {
   const authSlug = document.body.dataset.authoritySlug || 'ucu';
   currentAiCourse = {
@@ -1506,6 +1523,12 @@ function openAiCourseBuilder(courseId, courseTitle, courseShortname) {
   const codeEl = document.getElementById('ai-modal-course-code');
   if (titleEl) titleEl.innerText = courseTitle;
   if (codeEl) codeEl.innerText = courseShortname || 'COURSE';
+
+  // Restore Gemini API key from localStorage
+  const geminiInput = document.getElementById('ai-gemini-api-key');
+  if (geminiInput) {
+    geminiInput.value = localStorage.getItem('gemini_api_key') || '';
+  }
 
   // Reset custom syllabus input & panel
   const customInput = document.getElementById('ai-custom-syllabus-input');
@@ -1555,6 +1578,7 @@ async function refreshAiStructurePreview() {
 
   const customText = document.getElementById('ai-custom-syllabus-input')?.value.trim() || null;
   const tools = getAiToolsConfig();
+  const geminiApiKey = getGeminiApiKey();
 
   try {
     const res = await fetch('/api/workspace/courses/preview-structure', {
@@ -1567,7 +1591,8 @@ async function refreshAiStructurePreview() {
         authority: currentAiCourse.authority,
         target_score: currentAiTargetScore,
         custom_syllabus_text: customText,
-        tools: tools
+        tools: tools,
+        gemini_api_key: geminiApiKey
       })
     });
 
@@ -1607,8 +1632,8 @@ async function refreshAiStructurePreview() {
             ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800">Intermediate</span>'
             : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">Beginner</span>';
 
-          const conceptsBadges = (t.key_concepts || []).map(c => 
-            `<span class="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-indigo-300 border border-slate-700/80">${escapeHtml(c)}</span>`
+          const conceptsBadges = (t.keywords || t.key_concepts || []).map(c => 
+            `<span class="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-indigo-300 border border-slate-700/80">#${escapeHtml(c)}</span>`
           ).join(' ');
 
           const card = document.createElement('div');
@@ -1662,6 +1687,7 @@ async function confirmAndBuildAiCourse() {
   if (spinner) spinner.classList.remove('hidden');
 
   try {
+    const geminiApiKey = getGeminiApiKey();
     const payload = {
       course_id: currentAiCourse.course_id,
       title: currentAiCourse.title,
@@ -1669,7 +1695,8 @@ async function confirmAndBuildAiCourse() {
       authority: currentAiCourse.authority,
       target_score: currentAiTargetScore,
       topics: currentAiGeneratedStructure.topics,
-      tools: getAiToolsConfig()
+      tools: getAiToolsConfig(),
+      gemini_api_key: geminiApiKey
     };
 
     const res = await fetch('/api/workspace/courses/confirm-structure', {

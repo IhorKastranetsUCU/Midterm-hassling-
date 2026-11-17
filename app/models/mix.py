@@ -136,6 +136,26 @@ class Flashcard(BaseModel):
     tag: Optional[str] = None
 
 
+class TopicMaterialItem(BaseModel):
+    """A real course material associated with a topic (lecture, video, audio, self-test, etc.)."""
+
+    id: int
+    name: str
+    material_type: str = "lecture"  # "video" | "audio" | "lecture" | "self_test" | "assignment" | "resource" | "url"
+    modname: str = "resource"
+    url: Optional[str] = None
+    download_url: Optional[str] = None
+    description: Optional[str] = None
+    timemodified: Optional[int] = None
+    time_created: Optional[int] = None
+    last_updated_at: Optional[str] = None
+    safety_status: str = "safe_material"
+    key_items: List[str] = Field(default_factory=list)
+    files_count: int = 0
+    has_transcript: bool = False
+    transcript_snippet: Optional[str] = None
+
+
 class TopicMix(BaseModel):
     """Level 1 AI artifact for a single course topic, preserving user notes across upstream updates."""
 
@@ -149,9 +169,12 @@ class TopicMix(BaseModel):
     visibility: VisibilityScope = "private"
     tools_enabled: CourseToolsConfig = Field(default_factory=CourseToolsConfig)
     book_sections: List[InteractiveBookSection] = Field(default_factory=list)
+    materials: List[TopicMaterialItem] = Field(default_factory=list)
     quizzes: List[PracticeQuestion] = Field(default_factory=list)
     flashcards: List[Flashcard] = Field(default_factory=list)
     user_notes: Optional[str] = None
+    keywords: List[str] = Field(default_factory=list)
+    last_updated_at: Optional[str] = None
     has_upstream_update: bool = False
     dirty_chunk_ids: List[str] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -322,6 +345,9 @@ class TopicPreviewItem(BaseModel):
     title: str
     summary: str
     key_concepts: List[str] = Field(default_factory=list)
+    keywords: List[str] = Field(default_factory=list)
+    last_updated_at: Optional[str] = None
+    material_ids: List[int] = Field(default_factory=list)
     difficulty: str = "Intermediate"  # Basic, Intermediate, Advanced
     estimated_hours: int = 3
     source_modules_count: int = 0
@@ -354,6 +380,7 @@ class PreviewStructureRequest(BaseModel):
     target_score: int = 85
     custom_syllabus_text: Optional[str] = None
     tools_config: Optional[CourseToolsConfig] = None
+    gemini_api_key: Optional[str] = None
 
 
 class ConfirmStructureRequest(BaseModel):
@@ -366,4 +393,5 @@ class ConfirmStructureRequest(BaseModel):
     target_score: int = 85
     topics: List[TopicPreviewItem]
     tools_config: Optional[CourseToolsConfig] = None
+    gemini_api_key: Optional[str] = None
 

@@ -90,17 +90,39 @@ MOCK_COURSE_CONTENTS: Dict[int, List[Dict[str, Any]]] = {
             "modules": [
                 {
                     "id": 503,
-                    "name": "Lecture 1 Slides - Complexity Analysis",
+                    "name": "Конспект лекції 1: Складність алгоритмів (PDF)",
                     "modname": "resource",
                     "url": "https://moodle.example.com/mod/resource/view.php?id=503",
-                    "description": "Slide deck covering worst-case vs average-case."
+                    "description": "Повний конспект лекції з графіками зростання функцій, теоремами та порівняльними таблицями worst-case vs average-case."
+                },
+                {
+                    "id": 506,
+                    "name": "Відеозапис лекції 1: Асимптотичний аналіз та Big-O (Video)",
+                    "modname": "url",
+                    "url": "https://www.youtube.com/watch?v=CS101-Lec1",
+                    "description": "Відеозапис першої лекції курсу. Розглядаються верхні та нижні оцінки O(n), розбір прикладів на дошці та типові помилки."
+                },
+                {
+                    "id": 507,
+                    "name": "Аудіо-подкаст: Інтуїція алгоритмічної складності (Audio)",
+                    "modname": "resource",
+                    "url": "https://moodle.example.com/mod/resource/view.php?id=507",
+                    "mimetype": "audio/mp3",
+                    "description": "Аудіо-розбір для повторення матеріалу в дорозі. Обговорення різниці між O(1), O(log n), O(n) та O(2^n)."
+                },
+                {
+                    "id": 508,
+                    "name": "Самоперевірка: Тест на розуміння Big-O (Self-Test)",
+                    "modname": "quiz",
+                    "url": "https://moodle.example.com/mod/quiz/view.php?id=508",
+                    "description": "Формативний тест без ліміту часу. Перевірте, чи правильно ви визначаєте часову складність рекурсивних викликів та циклів."
                 },
                 {
                     "id": 504,
-                    "name": "Lab 1: Implementing Binary Search Trees",
+                    "name": "Лабораторна робота 1: Бінарні дерева пошуку (Assignment)",
                     "modname": "assign",
                     "url": "https://moodle.example.com/mod/assign/view.php?id=504",
-                    "description": "Complete the BST insertion, deletion, and traversal methods."
+                    "description": "Реалізація вставки, видалення та обходу BST з проходженням автоматичних юніт-тестів."
                 }
             ]
         },
