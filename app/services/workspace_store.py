@@ -953,6 +953,10 @@ class WorkspaceStore:
             )
 
         section_dict = {
+            "moodle_section_id": sec.moodle_section_id,
+            "parent_section_id": sec.parent_section_id,
+            "parent_section_index": sec.parent_section_index,
+            "url": sec.url,
             "id": sec.section_index,
             "name": sec.title,
             "summary": sec.summary or "",
@@ -1617,6 +1621,42 @@ class WorkspaceStore:
             ),
         }
 
+    @staticmethod
+    def _current_mix_rows(rows) -> List[Dict[str, Any]]:
+        """One current generation per source topic; historical rows stay untouched.
+
+        Older generators used a content hash in mix_id, so a changed source could
+        leave several IDs for the same owner/course/topic. Names are not identity:
+        two separate sections called "Lecture" must remain separate topics.
+        """
+        groups: Dict[Tuple[str, int, int], List[Dict[str, Any]]] = {}
+        for row in rows:
+            key = (row["owner_id"], row["course_id"], row["topic_index"])
+            groups.setdefault(key, []).append(dict(row))
+        current = []
+        for key in sorted(groups):
+            versions = groups[key]
+            selected = dict(max(versions, key=lambda row: (
+                row["version"], row["updated_at"], row["mix_id"],
+            )))
+            # None means no note was saved on this generation. An explicit empty
+            # string is a cleared note and must not resurrect an older revision.
+            if selected["user_notes"] is None:
+                notes = [row for row in versions if row["user_notes"] is not None]
+                if notes:
+                    selected["user_notes"] = max(notes, key=lambda row: (
+                        row["updated_at"], row["version"], row["mix_id"],
+                    ))["user_notes"]
+            current.append(selected)
+        return current
+
+    def _current_mix_for_row(self, conn, row) -> Dict[str, Any]:
+        versions = conn.execute(
+            "SELECT * FROM topic_mixes WHERE owner_id = ? AND course_id = ? AND topic_index = ?",
+            (row["owner_id"], row["course_id"], row["topic_index"]),
+        ).fetchall()
+        return self._current_mix_rows(versions)[0]
+
     def list_courses(self, owner_id: str) -> List[WorkspaceCourseSummary]:
         with self._connect() as conn:
             rows = conn.execute(
@@ -1629,7 +1669,10 @@ class WorkspaceStore:
                 cid = row["course_id"]
                 mix_stats = conn.execute(
                     "SELECT COUNT(*) AS cnt, COALESCE(SUM(has_upstream_update), 0) AS upd "
-                    "FROM topic_mixes WHERE owner_id = ? AND course_id = ?",
+                    "FROM (SELECT has_upstream_update, ROW_NUMBER() OVER ("
+                    "PARTITION BY topic_index ORDER BY version DESC, updated_at DESC, mix_id DESC"
+                    ") AS generation_rank FROM topic_mixes WHERE owner_id = ? AND course_id = ?) "
+                    "WHERE generation_rank = 1",
                     (owner_id, cid),
                 ).fetchone()
                 has_exam = (
@@ -1683,6 +1726,7 @@ class WorkspaceStore:
                 (owner_id, course_id),
             ).fetchone()
 
+        mix_rows = self._current_mix_rows(mix_rows)
         blocked = [
             BlockedQuizNotice.model_validate(item)
             for item in json.loads(course_row["blocked_quizzes_json"] or "[]")
@@ -2132,6 +2176,8 @@ class WorkspaceStore:
             ).fetchone()
             if not row:
                 return None
+            row = self._current_mix_for_row(conn, row)
+            mix_id = row["mix_id"]
             mix = TopicMix.model_validate_json(row["mix_json"])
             mix.user_notes = notes
             mix.updated_at = datetime.now(timezone.utc)
@@ -2163,6 +2209,8 @@ class WorkspaceStore:
             ).fetchone()
             if not mix_row:
                 return None
+            mix_row = self._current_mix_for_row(conn, mix_row)
+            mix_id = mix_row["mix_id"]
 
             course_id = mix_row["course_id"]
             topic_index = mix_row["topic_index"]
@@ -2455,6 +2503,22 @@ class WorkspaceStore:
 
     def _save_topic_mix(self, mix: TopicMix, owner_id: str) -> None:
         with self._connect() as conn:
+            # Serialize the identity lookup with the write. Two simultaneous
+            # imports must not both insert a fresh ID for the same source topic.
+            conn.execute("BEGIN IMMEDIATE")
+            current = self._current_mix_rows(conn.execute(
+                "SELECT * FROM topic_mixes WHERE owner_id = ? AND course_id = ? AND topic_index = ?",
+                (owner_id, mix.course_id, mix.topic_index),
+            ).fetchall())
+            if current:
+                previous = current[0]
+                new_generation = mix.mix_id != previous["mix_id"] or mix.source_hash != previous["source_hash"]
+                mix.mix_id = previous["mix_id"]
+                mix.version = max(mix.version, previous["version"] + int(new_generation))
+                if previous["user_notes"] is not None:
+                    mix.user_notes = previous["user_notes"]
+                mix.created_at = TopicMix.model_validate_json(previous["mix_json"]).created_at
+            mix.updated_at = datetime.now(timezone.utc)
             conn.execute(
                 """
                 INSERT INTO topic_mixes (

@@ -3,7 +3,7 @@ import json
 from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -38,6 +38,7 @@ from app.models.mix import (
 )
 from app.services.build_queue import get_build_queue
 from app.services.course_organization import safe_sections, save_organization, get_organization, material_groups
+from app.services.course_structure import build_course_map
 from app.services.mix_generator import (
     extract_text_from_upload,
     generate_course_structure_from_syllabus,
@@ -756,6 +757,7 @@ async def sync_course_from_moodle_backend(
             parsed_sections_meta.append(
                 {
                     "sec_idx": sec_idx,
+                    "structure": {k: sec.get(k) for k in ("moodle_section_id", "parent_section_id", "parent_section_index", "url")},
                     "sec_name": sec_name,
                     "sec_summary": sec_summary,
                     "mods": mod_entries,
@@ -897,6 +899,7 @@ async def sync_course_from_moodle_backend(
 
             sections_payload.append(
                 ExtensionSectionPayload(
+                    **sec_meta["structure"],
                     section_index=sec_meta["sec_idx"],
                     title=sec_meta["sec_name"],
                     summary=sec_meta["sec_summary"],
@@ -989,6 +992,7 @@ async def cleanup_my_expired_staging(
 async def get_workspace_course(
     course_id: int,
     request: Request,
+    background_tasks: BackgroundTasks,
     owner: WorkspaceOwner = Depends(get_workspace_owner),
 ) -> Dict[str, Any]:
     """Retrieve complete study workspace bundle owned by the current user."""
@@ -997,16 +1001,17 @@ async def get_workspace_course(
     # Auto-check upstream updates on course entry (debounced to 1 min inside store)
     session = get_optional_moodle_session(request)
     client = MoodleClient(base_url=session.get("site_url")) if session and session.get("site_url") else None
-    try:
-        await store.check_and_apply_course_updates(
-            course_id=course_id,
-            owner_id=owner.owner_id,
-            moodle_client=client,
-            session=session,
-            force=False,
-        )
-    except Exception:
-        pass
+    async def check_after_response():
+        try:
+            await store.check_and_apply_course_updates(
+                course_id=course_id, owner_id=owner.owner_id,
+                moodle_client=client, session=session, force=False,
+            )
+        except Exception:
+            pass
+
+    if session and client:
+        background_tasks.add_task(check_after_response)
 
     bundle = store.get_course_bundle(course_id, owner_id=owner.owner_id)
     if not bundle:
@@ -1014,6 +1019,7 @@ async def get_workspace_course(
     organization = get_organization(store, owner.owner_id, course_id)
     return {
         "organization": organization,
+        "course_map": build_course_map(bundle),
         "material_groups": material_groups(bundle, organization),
         "course": bundle["course"].model_dump(mode="json"),
         "tools_config": bundle["tools_config"],

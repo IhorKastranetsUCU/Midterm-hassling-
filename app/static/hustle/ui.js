@@ -1,5 +1,6 @@
 (() => {
   const shapes = {
+    dashboard: '<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="11" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="18" width="7" height="3" rx="1.5"/>',
     plan: '<rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h5M8 16h6"/>',
     courses: '<path d="M3 5c3-1 6-1 9 1 3-2 6-2 9-1v15c-3-1-6-1-9 1-3-2-6-2-9-1Z"/><path d="M12 6v15"/>',
     practice: '<rect x="5" y="3" width="15" height="17" rx="3"/><path d="M2 7v13a3 3 0 0 0 3 3M9 11l2 2 5-5"/>',
@@ -49,7 +50,7 @@ markdown(value) {
 },
 route() {
  const [path,query='']=location.hash.slice(1).split('?');const parts=path.split('/');const params=new URLSearchParams(query);
- return {view:parts[0]||'courses',courseId:parts[0]==='course'&&/^\d+$/.test(parts[1]||'')?parts[1]:null,section:parts[2]||'overview',topic:parts[3],from:['materials','practice'].includes(params.get('from'))?params.get('from'):null};
+ return {view:parts[0]||'dashboard',courseId:parts[0]==='course'&&/^\d+$/.test(parts[1]||'')?parts[1]:null,section:parts[2]||'overview',topic:parts[3],from:['materials','practice'].includes(params.get('from'))?params.get('from'):null};
 },
 courseLink(id,section='overview',topic) {const from=this.route().from;return `#course/${encodeURIComponent(id)}/${section}${topic!==undefined?'/'+encodeURIComponent(topic):''}${from?'?from='+from:''}`;},
 safeLink(value) {if(!value)return null;try {const url=new URL(value,location.origin);return ['https:','http:'].includes(url.protocol)&&!url.username&&!url.password?url.href:null;}catch{return null;}},

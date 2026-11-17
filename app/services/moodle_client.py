@@ -8,6 +8,7 @@ from typing import Dict, Any, Optional, List, Union
 import httpx
 
 from app.config import get_settings
+from app.services.course_structure import canonical_module, clean_text
 from app.core.parsing_restrictions import get_parsing_restrictions
 from app.core.exceptions import (
     MoodleException,
@@ -58,6 +59,22 @@ class _FastDOMNode:
         self.parent = parent
         self.children: List["_FastDOMNode"] = []
         self.text_parts: List[str] = []
+        self.content_parts: list = []
+
+    def get_markdown(self) -> str:
+        """Keep source paragraphs/headings/lists in DOM order, without raw HTML."""
+        if self.tag in {"script", "style"} or self.classes.intersection({"accesshide", "sr-only"}):
+            return ""
+        body = "".join(p if isinstance(p, str) else p.get_markdown() for p in self.content_parts)
+        if self.tag == "br":
+            return "\n"
+        if self.tag in {"h1", "h2", "h3", "h4", "h5", "h6"}:
+            return "\n\n### " + clean_text(body) + "\n\n"
+        if self.tag == "li":
+            return "\n- " + body.strip() + "\n"
+        if self.tag in {"p", "div", "ul", "ol", "section"}:
+            return "\n\n" + body.strip() + "\n\n"
+        return body
 
     def get_text(self, exclude_classes: Optional[set] = None) -> str:
         exclude_classes = exclude_classes or set()
@@ -97,6 +114,7 @@ class _FastDOMParser(html.parser.HTMLParser):
     def handle_starttag(self, tag: str, attrs: list):
         tag_l = tag.lower()
         node = _FastDOMNode(tag_l, attrs, parent=self.current)
+        self.current.content_parts.append(node)
         self.current.children.append(node)
         if tag_l not in _FastDOMNode.VOID_TAGS:
             self.current = node
@@ -111,6 +129,7 @@ class _FastDOMParser(html.parser.HTMLParser):
             cur = cur.parent
 
     def handle_data(self, data: str):
+        self.current.content_parts.append(data)
         self.current.text_parts.append(data)
 
 
@@ -564,7 +583,7 @@ class MoodleClient:
 
         clean_sections = []
         for s in raw_sections:
-            sec_id = s.get("id", len(clean_sections))
+            sec_id = s.get("section", s.get("id", len(clean_sections)))
             sec_name = s.get("name", "General")
             sec_summary = s.get("summary")
 
@@ -572,7 +591,7 @@ class MoodleClient:
             for m in s.get("modules", []):
                 mod_id = m.get("id", 0)
                 mod_name = m.get("name", f"Resource {mod_id}")
-                mod_type = m.get("modname", "resource")
+                mod_type = canonical_module(m)
                 mod_url = m.get("url")
 
                 # Check safety restrictions
@@ -605,6 +624,7 @@ class MoodleClient:
                     download_url = f"{base_url}/mod/resource/view.php?id={mod_id}"
 
                 modules.append({
+                    **{k: m[k] for k in ("sectionid", "delegatesectionid", "completionstate", "isoverallcomplete", "uservisible") if k in m},
                     "id": mod_id,
                     "name": mod_name,
                     "modname": mod_type,
@@ -619,6 +639,9 @@ class MoodleClient:
                 })
 
             clean_sections.append({
+                **{k: s[k] for k in ("moodle_section_id", "parent_section_id", "parent_section_index", "url", "component", "itemid") if k in s},
+                "moodle_section_id": s.get("moodle_section_id", s.get("id") if "section" in s else None),
+                "parent_section_id": s.get("parent_section_id", s.get("parentsectionid")),
                 "id": sec_id,
                 "name": sec_name,
                 "summary": sec_summary,
@@ -750,11 +773,12 @@ class MoodleClient:
         for cm in cm_list:
             cm_id = cm.get("id")
             if cm_id is not None:
-                modname = (cm.get("modname") or "resource").lower()
-                url = cm.get("url") or f"{base_url}/mod/{modname}/view.php?id={cm_id}"
+                modname = canonical_module(cm)
+                url = cm.get("url") or (f"{base_url}/mod/{modname}/view.php?id={cm_id}" if modname not in {"label", "subsection"} else None)
                 cm_map[int(cm_id)] = {
+                    **{k: cm[k] for k in ("delegatesectionid", "completionstate", "isoverallcomplete", "uservisible") if k in cm},
                     "id": int(cm_id),
-                    "name": cm.get("name") or f"Resource {cm_id}",
+                    "name": clean_text(cm.get("name")) or f"Resource {cm_id}",
                     "modname": modname,
                     "instance": cm.get("instance", cm_id),
                     "url": url,
@@ -790,8 +814,13 @@ class MoodleClient:
                         modules.append(c_item)
 
             raw_sections.append({
+                "moodle_section_id": sec_id,
+                "parent_section_id": sec.get("parentsectionid"),
+                "url": sec.get("sectionurl"),
+                "component": sec.get("component"),
+                "itemid": sec.get("itemid"),
                 "id": sec_num,
-                "name": sec_name,
+                "name": clean_text(sec_name),
                 "summary": sec.get("summary"),
                 "modules": modules,
             })
@@ -819,7 +848,7 @@ class MoodleClient:
                 is_sec = True
 
             if is_sec:
-                if not any(parent in raw_sections for parent in _get_dom_parents(node)):
+                if node.id and re.match(r"^section-\d+$", node.id) or not any(parent in raw_sections for parent in _get_dom_parents(node)):
                     raw_sections.append(node)
 
         sections: List[Dict[str, Any]] = []
@@ -838,6 +867,7 @@ class MoodleClient:
                 raw_sections = [parser.root]
 
         for sec_node in raw_sections:
+            parent_section = next((p for p in _get_dom_parents(sec_node) if p in raw_sections), None)
             sec_id_m = re.search(r"section-(\d+)", sec_node.id) if sec_node.id else None
             if not sec_id_m and "data-sectionid" in sec_node.attrs:
                 sec_id_m = re.search(r"(\d+)", sec_node.attrs["data-sectionid"])
@@ -847,6 +877,8 @@ class MoodleClient:
             # Section title
             title_node = None
             for cand in sec_node.find_all():
+                if any(p in raw_sections for p in _get_dom_parents(cand, stop_at=sec_node)):
+                    continue
                 if "sectionname" in cand.classes or "section-title" in cand.classes or "data-sectionname" in cand.attrs or cand.attrs.get("data-for") == "section_title":
                     title_node = cand
                     break
@@ -859,14 +891,18 @@ class MoodleClient:
             # Section summary
             summary_node = None
             for cand in sec_node.find_all():
+                if any(p in raw_sections for p in _get_dom_parents(cand, stop_at=sec_node)):
+                    continue
                 if "summary" in cand.classes or "summarytext" in cand.classes:
                     summary_node = cand
                     break
-            clean_summary = summary_node.get_text() if summary_node else None
+            clean_summary = summary_node.get_markdown().strip() if summary_node else None
 
             # 2. Identify modules inside this section
             raw_mods: List[_FastDOMNode] = []
             for node in sec_node.find_all():
+                if any(p in raw_sections for p in _get_dom_parents(node, stop_at=sec_node)):
+                    continue
                 is_mod = False
                 if "activity" in node.classes or "activity-item" in node.classes:
                     if not any(c in node.classes for c in ("activity-basis", "activity-instance", "activityname", "activity-actions", "activity-dates", "activity-information")):
@@ -958,7 +994,13 @@ class MoodleClient:
                     if any(c in cand.classes for c in ("contentafterlink", "activity-altcontent", "description")):
                         desc_node = cand
                         break
-                mod_desc = desc_node.get_text() if desc_node else None
+                mod_desc = desc_node.get_markdown().strip() if desc_node else None
+                if modname == "label":
+                    heading_node = next((n for n in mod_node.find_all() if n.tag in {"h3", "h4", "h5"}), None)
+                    if heading_node:
+                        mod_name = heading_node.get_text()
+                    if not mod_desc:
+                        mod_desc = mod_node.get_markdown().strip()
 
                 # File contents
                 contents_list = []
@@ -985,6 +1027,8 @@ class MoodleClient:
                 })
 
             sections.append({
+                "moodle_section_id": int(sec_node.attrs["data-id"]) if str(sec_node.attrs.get("data-id", "")).isdigit() else None,
+                "parent_section_index": int(parent_section.id.split("-")[-1]) if parent_section and re.match(r"^section-\d+$", parent_section.id) else None,
                 "id": sec_num,
                 "name": clean_title,
                 "summary": clean_summary,
@@ -1025,6 +1069,23 @@ class MoodleClient:
                     if isinstance(state_obj, dict) and (state_obj.get("section") or state_obj.get("cm")):
                         parsed = self._parse_courseformat_state(state_obj, target_base)
                         if parsed and any(len(s.get("modules", [])) > 0 for s in parsed):
+                            # State has identities/completion, course HTML has actual introductions.
+                            # Join only by source IDs, never by topic numbers or similar words.
+                            try:
+                                visible = await self._scrape_course_contents_html(cookie=clean_cookie, course_id=course_id)
+                                visible_sections = {s["id"]: s for s in visible}
+                                visible_modules = {m["id"]: m for s in visible for m in s["modules"]}
+                                for section in parsed:
+                                    html_section = visible_sections.get(section["id"], {})
+                                    section["summary"] = html_section.get("summary") or section.get("summary")
+                                    for module in section["modules"]:
+                                        html_module = visible_modules.get(module["id"], {})
+                                        module["description"] = html_module.get("description") or module.get("description")
+                                        module["contents"] = html_module.get("contents") or module.get("contents", [])
+                                        if module["modname"] == "label" and html_module.get("name"):
+                                            module["name"] = html_module["name"]
+                            except Exception as exc:
+                                logger.debug("Course introduction enrichment unavailable: %s", type(exc).__name__)
                             return self._enrich_course_sections(parsed, target_base, restrictions)
             except Exception as e:
                 logger.debug(f"AJAX core_courseformat_get_state failed for course {course_id}: {e}")
@@ -1315,6 +1376,13 @@ class MoodleClient:
             raise MoodleAuthError("MoodleSession cookie is no longer valid for this course.", error_code="invalid_cookie")
 
         page_html = res.text
+        structured_sections = self.parse_moodle_course_html(page_html, self.base_url)
+        # Some old themes wrap several independent activity links in one .activity.
+        # Keep the legacy link parser for that shape, rather than lose sibling files.
+        linked_ids = {int(i) for i in re.findall(r'/mod/[a-z0-9_]+/view\.php\?[^"<>]*?\bid=(\d+)', page_html, re.I)}
+        parsed_ids = {m["id"] for s in structured_sections for m in s.get("modules", [])}
+        if structured_sections and parsed_ids and linked_ids.issubset(parsed_ids):
+            return structured_sections
         section_blocks = re.split(r'(?=<li[^>]+id="section-\d+")', page_html)
         sections: List[Dict[str, Any]] = []
         mod_re = re.compile(

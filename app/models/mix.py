@@ -260,6 +260,10 @@ class ExtensionSectionPayload(BaseModel):
     """Course topic/section payload sent by the Chrome Extension."""
 
     section_index: int
+    moodle_section_id: Optional[int] = None
+    parent_section_id: Optional[int] = None
+    parent_section_index: Optional[int] = None
+    url: Optional[str] = None
     title: str
     summary: Optional[str] = None
     modules: List[ExtensionModuleItem] = Field(default_factory=list)

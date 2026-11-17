@@ -5,7 +5,7 @@
   const body = document.querySelector('#dialog-body');
   const close = document.querySelector('[data-close-dialog]');
   document.querySelector('.skip-link').onclick=event=>{event.preventDefault();main.focus();};
-  const nav = [['courses','Мої курси','courses'],['deadlines','Дедлайни','calendar'],['settings','Налаштування','settings']];
+  const nav = [['dashboard','Дашборд','dashboard'],['courses','Мої курси','courses'],['deadlines','Дедлайни','calendar'],['settings','Налаштування','settings']];
   let account, courses = [], currentBundle, generation = 0, busy = false, selection, importState, courseQuery='';
   let stream, refreshAvailable = false, connectVersion=0;
   dialog.addEventListener('close',()=>{connectVersion++;});
@@ -71,6 +71,13 @@
       const name=account.fullname || 'Гість';
       document.querySelectorAll('[data-name]').forEach(el=>el.textContent=name);
       document.querySelectorAll('[data-initial]').forEach(el=>el.textContent=name[0]);
+      HustleBrand.applyProfile(account);
+      HustleDashboard.setAccount(account);
+      HustlePlan.setAccount(account);
+      if(!route.courseId&&['deadlines','settings'].includes(route.view)){
+        courses=await UI.api('/api/workspace/courses');if(turn!==generation)return;
+        HustleSpace.setCourses(courses);
+      }
       let title;
       if(route.courseId) {
         const [bundle,available]=await Promise.all([UI.api(`/api/workspace/courses/${route.courseId}`),UI.api('/api/workspace/courses').catch(()=>courses)]); if(turn!==generation)return;
@@ -80,6 +87,10 @@
         if(window.HustleSpace)main.innerHTML=HustleSpace.courseHeader(bundle,courses,`<button class="secondary" data-add>Додати матеріали +</button><a class="icon-button course-options" href="${UI.courseLink(route.courseId,'manage')}" aria-label="Параметри курсу" title="Параметри курсу">${icon('settings')}</a>`)+HustleLearning.renderBundle(bundle,route.section);
         else main.innerHTML=`<nav class="breadcrumbs" aria-label="Шлях сторінки"><a href="#${back}">${esc(backLabel)}</a><span aria-hidden="true">/</span><span>${esc(title)}</span></nav>` + heading(title,`<button class="secondary" data-add>Додати матеріали +</button><a class="icon-button course-options" href="${UI.courseLink(route.courseId,'manage')}" aria-label="Параметри курсу" title="Параметри курсу">${icon('settings')}</a>`) + HustleLearning.renderBundle(bundle,route.section);
         HustleCourse.mount(bundle,route.section,account);
+      } else if(route.view==='dashboard') {
+        courses=await UI.api('/api/workspace/courses'); if(turn!==generation)return;
+        title='Мій план';
+        main.innerHTML=HustlePlan.render(courses,addButtons);
       } else if(route.view==='settings') {
         title='Налаштування';
         main.innerHTML=heading(title)+`<div class="settings-grid"><section class="settings-card"><h2>${esc(name)}</h2><p>${esc(account.email || 'Гостьовий простір')}</p>${!account.google_linked?'<a class="secondary" href="signin.html">Увійти через Google</a>':''}<button class="logout-button" data-logout>${icon('logout')} Вийти</button></section><section class="settings-card"><h2>Moodle</h2><p>${esc(account.moodle_url || 'Не підключено')}</p><div class="page-actions"><button class="primary" data-connect>${account.moodle_paired?'Додати курси':'Підключити LMS'} →</button>${account.moodle_paired?'<a class="text-button" href="connect.html">Перепідключити</a>':''}</div></section></div><section class="topic-card settings-events"><h2>Останні оновлення</h2><div data-events role="status">Завантажуємо…</div></section>`;
@@ -100,6 +111,9 @@
       compactCourseHeader();
       document.title=`${title} — Hustle`; main.removeAttribute('aria-busy');main.inert=false; UI.enhance(main);HustleLearning.afterRender();connectEvents();
       if(window.HustleSpace){HustleSpace.preview(main.querySelector('[data-agenda-preview]'),account);HustleSpace.preview(main.querySelector('[data-course-agenda]'),account,route.courseId);}
+      HustleDashboard.loadActivity(main.querySelector('[data-dashboard-activity]'),courses);
+      HustlePlan.mount(main,account,courses);
+      window.HustleFrame?.mount(main,account,courses,currentBundle);
       if(navigate) {main.focus({preventScroll:true});window.scrollTo(0,scrolls.get(location.hash)||0);}
       if(route.view==='connect')await showConnect();
     } catch(err) {if(turn===generation){main.innerHTML=errorMarkup(err.message);main.removeAttribute('aria-busy');main.inert=false;}}

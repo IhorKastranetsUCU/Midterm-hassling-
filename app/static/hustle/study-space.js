@@ -41,6 +41,7 @@
   const scopeAssignments=(items,courseId)=>courseId?items.filter(item=>String(item.course_id)===String(courseId)):imported(items);
   const count=(n,forms)=>UI.countLabel(n,...forms);
   function home(courses,query,buttons) {
+    courses=courses.map(c=>({...c,title:UI.plain(UI.plain(c.title))}));
     setCourses(courses);
     return `<div class="page-heading course-list-heading"><h1>Мої курси</h1><span class="muted">${courses.length}</span><time class="space-date">${esc(format(new Date(),{weekday:'long',day:'numeric',month:'long'}))}</time></div><div class="collection-toolbar course-list-toolbar"><label class="search-field">${icon('search')}<input type="search" data-course-search value="${esc(query)}" placeholder="Знайти курс" aria-label="Пошук курсів"></label><div class="page-actions">${buttons}</div></div><div class="study-home"><section class="course-shelf" aria-label="Мої курси"><div class="notebook-grid">${courses.map(course=>`<a class="course-notebook ${tone(course.course_id)}" href="#course/${course.course_id}/overview" data-course-searchable="${esc(course.title.toLocaleLowerCase('uk'))}" ${course.title.toLocaleLowerCase('uk').includes(query)?'':'hidden'}><div class="notebook-top"><span class="notebook-mark">${icon('courses')}</span>${course.updates_pending?'<span class="notebook-update"><i></i> Є оновлення</span>':''}</div><h2>${esc(course.title)}</h2><div class="notebook-bottom"><span>${esc(count(course.topic_count,['тема','теми','тем']))}</span><span class="notebook-arrow">${icon('arrow')}</span></div></a>`).join('')}</div><p class="search-empty" data-courses-empty ${courses.some(c=>c.title.toLocaleLowerCase('uk').includes(query))?'hidden':''}>Курсів за цим запитом немає.</p></section><aside class="upcoming-note" data-home-agenda aria-label="Найближчі дедлайни"><div class="note-heading"><h2>Найближче</h2><a href="#deadlines" class="icon-button" aria-label="Усі дедлайни">${icon('arrow')}</a></div><div data-agenda-preview><p class="muted" role="status">Завантажуємо…</p></div></aside></div>`;
   }
@@ -56,9 +57,10 @@
   }
   function courseHeader(bundle,courses,actions) {
     setCourses(courses);
-    const c=bundle.course;
+    const c=bundle.course_map?{...bundle.course,topic_count:bundle.course_map.nodes.filter(n=>n.learnable).length}:bundle.course;
+    c.title=UI.plain(UI.plain(c.title));
     const section=['overview','materials','practice','exam','assignments','grades','manage'].includes(UI.route().section)?UI.route().section:'overview';
-    return `<div class="course-location"><a href="#courses" class="back-to-courses">← Мої курси</a>${courses.length>1?`<label class="course-switch"><span class="sr-only">Перейти до іншого курсу</span><select data-course-switch aria-label="Перейти до іншого курсу"><option value="" selected disabled>Змінити курс</option>${courses.map(item=>`<option value="#course/${item.course_id}/${section}" ${item.course_id===c.course_id?'disabled':''}>${esc(item.title)}</option>`).join('')}</select></label>`:''}</div><header class="course-cover ${tone(c.course_id)}"><span class="course-cover-mark" aria-hidden="true">${icon('courses')}</span><div class="course-cover-copy"><h1>${esc(c.title)}</h1><p>${esc(count(c.topic_count,['тема','теми','тем']))}${c.source_type==='manual_upload'?' · Власні матеріали':' · Moodle'}</p></div><div class="page-actions">${actions}</div></header>`;
+    return `<div class="course-location"><a href="#courses" class="back-to-courses">← Мої курси</a>${courses.length>1?`<label class="course-switch"><span class="sr-only">Перейти до іншого курсу</span><select data-course-switch aria-label="Перейти до іншого курсу"><option value="" selected disabled>Змінити курс</option>${courses.map(item=>`<option value="#course/${item.course_id}/${section}" ${item.course_id===c.course_id?'disabled':''}>${esc(UI.plain(UI.plain(item.title)))}</option>`).join('')}</select></label>`:''}</div><header class="course-cover ${tone(c.course_id)}"><span class="course-cover-mark" aria-hidden="true">${icon('courses')}</span><div class="course-cover-copy"><h1>${esc(c.title)}</h1><p>${esc(count(c.topic_count,['тема','теми','тем']))}${c.source_type==='manual_upload'?' · Власні матеріали':' · Moodle'}</p></div><div class="page-actions">${actions}</div></header>`;
   }
   function overview(bundle) {
     const topics=bundle.topic_mixes,id=bundle.course.course_id;
@@ -69,6 +71,7 @@
   function topicActions(topic) {
     const id=UI.route().courseId;
     readingHistory.set(String(id),String(topic.topic_index));
+    window.HustleDashboard?.remember(topic,id);
     return `<div class="topic-study-actions"><a class="text-button" href="${UI.courseLink(id,'overview')}">← Усі теми</a><div>${topic.flashcards.length?`<button class="secondary" data-study="cards" data-mix="${esc(topic.mix_id)}">Картки</button>`:''}${topic.quizzes.length?`<button class="secondary" data-study="quiz" data-mix="${esc(topic.mix_id)}">Самоперевірка</button>`:''}</div></div>`;
   }
   function taskMarkup(item,profile,showCourse) {
@@ -86,6 +89,8 @@
       const items=scopeAssignments(raw,courseId),key=String(courseId||'all');
       const query=new URLSearchParams(location.hash.split('?')[1]||'').get('course');
       const state={period:'upcoming',course:'',...filters.get(key)};
+      const periodQuery=new URLSearchParams(location.hash.split('?')[1]||'').get('period');
+      if(['past','all','upcoming'].includes(periodQuery))state.period=periodQuery;
       if(!courseId&&query&&courses.some(c=>String(c.course_id)===query))state.course=query;
       target.innerHTML=`<div class="agenda-toolbar"><div class="agenda-periods" role="group" aria-label="Період дедлайнів">${[['upcoming','Найближчі'],['past','Минулі'],['all','Усі']].map(([value,label])=>`<button type="button" data-agenda-period="${value}" aria-pressed="${state.period===value}">${label}</button>`).join('')}</div>${!courseId?`<label class="compact-select agenda-course-select"><span class="sr-only">Курс</span><select data-agenda-course aria-label="Курс"><option value="">Усі мої курси</option>${courses.map(c=>`<option value="${c.course_id}" ${String(c.course_id)===state.course?'selected':''}>${esc(c.title)}</option>`).join('')}</select></label>`:''}</div><div class="agenda-groups" aria-live="polite"></div>`;
       const draw=()=>{

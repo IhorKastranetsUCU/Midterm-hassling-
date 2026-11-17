@@ -198,6 +198,8 @@
       document.querySelectorAll('.course-content > ul > li.section, .course-content li.section.main, [data-for="section"]')
     );
     const uniqueSections = sectionNodes.filter((el, idx) => sectionNodes.indexOf(el) === idx);
+    const nearestSection = el => { let p = el.parentElement; while (p && !uniqueSections.includes(p)) p = p.parentElement; return p; };
+    const sectionNumber = el => Number((el.id || '').match(/^section-(\d+)$/)?.[1] ?? uniqueSections.indexOf(el));
 
     const sections = [];
     const knownHashes = [];
@@ -220,6 +222,7 @@
 
       for (let mIdx = 0; mIdx < actNodes.length; mIdx++) {
         const act = actNodes[mIdx];
+        if (nearestSection(act) !== secEl || actNodes.some(other => other !== act && other.contains(act))) continue;
         const cls = act.className || '';
         const modTypeMatch = cls.match(/\bmodtype_([a-z0-9_]+)\b/i);
         const linkEl = act.querySelector('a.aalink, .activityname a, a[href*="/mod/"]');
@@ -288,7 +291,9 @@
       }
 
       sections.push({
-        section_index: sIdx,
+        section_index: sectionNumber(secEl),
+        moodle_section_id: Number(secEl.dataset.id) || null,
+        parent_section_index: nearestSection(secEl) ? sectionNumber(nearestSection(secEl)) : null,
         title: secTitle,
         summary: secSummary || null,
         modules,

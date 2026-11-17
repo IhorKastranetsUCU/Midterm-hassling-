@@ -1,12 +1,22 @@
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.core.exceptions import MoodleException
 from app.core.security import get_current_user_session
 from app.models.assignment import AssignmentItem, AssignmentListResponse
 from app.services.moodle_client import MoodleClient
+from app.services.submission_status import get_submission_states
 
 router = APIRouter(prefix="/api/assignments", tags=["Assignments"])
+
+
+@router.get("/submission-status")
+async def get_assignment_submission_status(
+    assignment_ids: List[int] = Query(default=[], max_length=24),
+    session: Dict[str, Any] = Depends(get_current_user_session),
+):
+    client = MoodleClient(base_url=session.get("site_url"))
+    return {"statuses": await get_submission_states(client, session, [i for i in assignment_ids if i > 0])}
 
 
 @router.get("", response_model=AssignmentListResponse)

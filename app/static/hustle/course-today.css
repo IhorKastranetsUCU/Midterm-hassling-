@@ -1,0 +1,58 @@
+.course-dashboard { --today-quiet:#786777; --today-line:#dfd5ce; --today-paper:#fffcf5; min-width:0; }
+.course-now-heading { display:flex; justify-content:space-between; align-items:center; gap:1rem; margin:1.3rem 0 1.1rem; }
+.course-now-heading h2 { margin:0; font-size:1.2rem; letter-spacing:-.035em; }
+.course-now-heading>.text-button { font-size:.78rem; }
+.course-now-grid { display:grid; grid-template-columns:minmax(0,1.9fr) minmax(17rem,1fr); gap:1.7rem; align-items:stretch; }
+.course-now-grid.without-study { grid-template-columns:1fr; }
+.course-now-grid>[data-course-focus] { min-width:0; }
+.course-now-grid .today-focus { min-height:21rem; height:100%; }
+.course-now-grid .today-focus h2 { margin-top:0; margin-bottom:1rem; }
+.course-now-grid .today-focus-actions { padding-top:1.5rem; }
+.course-task-context { display:flex; align-items:flex-start; gap:.5rem; font-size:.8rem; line-height:1.5; color:#796044; text-decoration:none; overflow-wrap:anywhere; margin-bottom:1rem; }
+.course-task-context .icon { flex-shrink:0; width:1rem; margin-top:.1rem; }
+.course-task-context:hover { text-decoration:underline; }
+.course-now-study { min-height:21rem; }
+.course-now-study[hidden] { display:none; }
+.course-now-study h3 { font-size:1.6rem; }
+.course-now-study .today-study-action { background:transparent; border-right:0; border-left:0; border-bottom:0; border-radius:0; text-align:left; cursor:pointer; }
+.course-practice-topic { font-size:.7rem; color:#79647b; display:flex; flex-direction:column; gap:.4rem; width:100%; margin:.1rem 0 .5rem; }
+.course-practice-topic select { min-width:0; width:100%; font:inherit; font-size:.8rem; min-height:2.65rem; padding:.5rem 1.5rem .5rem .6rem; border:1px solid #cebbd1; border-radius:.5rem; background-color:#faf4fa; color:var(--ink); text-overflow:ellipsis; }
+.course-ready-resources { width:100%; margin-bottom:1.1rem; }
+.course-ready-resources>a { display:flex; align-items:center; gap:.5rem; padding:.8rem 0; color:var(--plum); text-decoration:none; font-size:.8rem; line-height:1.5; }
+.course-ready-resources>a+a { border-top:1px solid #dbc9de; }
+.course-ready-resources>a>span:first-of-type { flex:1; overflow-wrap:anywhere; }
+.course-ready-resources .icon { width:1rem; flex-shrink:0; }
+.course-ready-resources>a:hover { text-decoration:underline; }
+.course-clear-status { color:#786343; font-size:.72rem; font-weight:400; }
+.course-status-retry { padding:.45rem .6rem; border:1px solid #bd9f74; background:#fff6df; color:#7a5632; border-radius:.4rem; font:inherit; font-size:.72rem; cursor:pointer; }
+.course-status-retry:disabled { cursor:wait; }
+.course-now-queue { margin-top:1.75rem; }
+.course-now-queue[hidden] { display:none; }
+.course-now-queue .today-task-copy>span { display:none; }
+.course-now-review { margin-top:1.1rem; }
+.course-now-review:empty { display:none; }
+.course-now-review>.text-button { font-size:.75rem; color:#786777; }
+#workspace-main:has(.course-dashboard) .course-cover { padding:1.3rem 1.6rem; }
+#workspace-main:has(.course-dashboard) .course-cover h1 { font-size:clamp(1.35rem,2.1vw,1.9rem); }
+@media(max-width:70rem) {
+  .course-now-grid { grid-template-columns:minmax(0,1.5fr) minmax(15rem,1fr); gap:1.3rem; }
+  .course-now-study { padding-inline:1.15rem; }
+}
+@media(max-width:62rem) {
+  .course-now-grid { grid-template-columns:1fr; gap:1.7rem; }
+  .course-now-grid .today-focus { min-height:19rem; }
+  .course-now-study { min-height:0; }
+  .course-now-study .course-practice-topic { margin-top:1.1rem; }
+}
+@media(max-width:38rem) {
+  .course-now-heading { gap:.5rem; margin-top:1.1rem; }
+  .course-now-heading h2 { font-size:1.05rem; }
+  .course-now-heading>.text-button { font-size:.72rem; }
+  .course-now-grid .today-focus { min-height:0; }
+  .course-now-grid .today-focus-actions { padding-top:.4rem; }
+  .course-now-study { margin-top:0; }
+  .course-now-study h3 { font-size:1.4rem; }
+  #workspace-main:has(.course-dashboard) .course-cover { padding:1.1rem; }
+  .course-tabs:has(a[href$="/topics"]) { display:flex; flex-wrap:wrap; row-gap:.2rem; }
+  .course-tabs:has(a[href$="/topics"]) a { flex:1 1 auto; font-size:.7rem; padding:.65rem .5rem; }
+}

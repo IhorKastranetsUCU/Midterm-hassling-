@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 from app.models.mix import TopicMaterialItem
 from app.services.text_analyzer import MaterialTextAnalyzer, detect_material_type, ADMINISTRATIVE_WORDS
+from app.services.course_structure import clean_text, normalize_sections, topic_number
 
 logger = logging.getLogger("course_update_matcher")
 
@@ -75,34 +76,44 @@ class CourseUpdateMatcher:
         Check if material has a direct logical connection to a specific topic
         (e.g. matching week/topic number or strong section name overlap).
         """
-        sec_clean = (sec_name or "").lower().strip()
+        sec_clean = clean_text(sec_name).lower()
         mod_name = (mod.get("name") or "").lower().strip()
 
         # Ignore generic sections for logical mapping
         is_generic_sec = sec_clean in ("general", "вступ", "загальне", "інформація", "оголошення", "syllabus", "course info", "")
 
+        # A section's actual identity precedes numbers appearing in its title.
+        exact = [t for t in self.topics if clean_text(t.get("title")).lower() == sec_clean]
+        if len(exact) == 1:
+            return exact[0].get("topic_index")
+        indexed = [t for t in exact if t.get("topic_index") == sec_index]
+        if len(indexed) == 1:
+            return indexed[0].get("topic_index")
+
         # 1. Check if section title contains explicit topic or week number
         sec_week_match = re.search(r"(?:week|тиждень|тема|topic|модуль)\s*(\d+)", sec_clean)
         if sec_week_match:
             week_num = int(sec_week_match.group(1))
-            for t in self.topics:
-                if t.get("topic_index") == week_num:
-                    return week_num
+            candidates = [t for t in self.topics if topic_number(t.get("title")) == week_num]
+            if len(candidates) == 1:
+                return candidates[0].get("topic_index")
 
         # 2. Check if module name contains explicit week or topic number
         mod_week_match = re.search(r"(?:week|тиждень|тема|topic|lecture|лекція)\s*(\d+)", mod_name)
         if mod_week_match:
             num = int(mod_week_match.group(1))
-            for t in self.topics:
-                if t.get("topic_index") == num:
-                    return num
+            candidates = [t for t in self.topics if topic_number(t.get("title")) == num]
+            if len(candidates) == 1:
+                return candidates[0].get("topic_index")
 
         # 3. Check direct title match between section name and topic title
         if not is_generic_sec:
             sec_tokens = _normalize_tokens(sec_clean)
             for t in self.topics:
                 t_tokens = _normalize_tokens(t.get("title", ""))
-                overlap = sec_tokens.intersection(t_tokens)
+                if topic_number(sec_clean) is not None and topic_number(t.get("title")) not in (None, topic_number(sec_clean)):
+                    continue
+                overlap = sec_tokens.intersection(t_tokens) - {"topic", "week", "тема", "тиждень", "module", "модуль"}
                 if len(overlap) >= 2 or (len(overlap) >= 1 and len(t_tokens) <= 3):
                     return t.get("topic_index")
 
@@ -145,7 +156,7 @@ class CourseUpdateMatcher:
         mod: Dict[str, Any],
         sec_name: str,
         sec_index: int,
-    ) -> int:
+    ) -> Optional[int]:
         """
         Assign a single material to the most relevant topic:
         1. Logical match
@@ -180,10 +191,8 @@ class CourseUpdateMatcher:
         if best_topic_idx is not None and best_score > 0.0:
             return best_topic_idx
 
-        # Step 3: Default fallback (match by section index if within topic count, else Topic 1)
-        if 1 <= sec_index <= len(self.topics):
-            return sec_index
-        return self.topics[0].get("topic_index", 1) if self.topics else 1
+        # Unknown materials remain in their source section, not silently in Topic 1.
+        return None
 
     def match_all_sections(
         self,
@@ -208,16 +217,18 @@ class CourseUpdateMatcher:
         new_materials_count = 0
         total_materials_count = 0
 
-        for sec_idx, sec in enumerate(sections, start=1):
+        unassigned_materials = []
+        for sec_idx, sec in enumerate(normalize_sections(sections), start=1):
             sec_name = sec.get("name", f"Section {sec_idx}")
             for mod in sec.get("modules", []):
                 mod_id = mod.get("id", 0)
                 total_materials_count += 1
-                assigned_idx = self.match_material_to_topic(mod, sec_name, sec_idx)
+                assigned_idx = self.match_material_to_topic(mod, sec_name, sec.get("id", sec_idx))
 
                 # Ensure assigned_idx is recognized
                 if assigned_idx not in topic_materials:
-                    assigned_idx = self.topics[0].get("topic_index", 1) if self.topics else 1
+                    unassigned_materials.append(mod)
+                    continue
 
                 # Extract rich metadata, detect material type, and analyze key items
                 mod_name = mod.get("name", f"Resource {mod_id}")
@@ -292,6 +303,7 @@ class CourseUpdateMatcher:
                 topic_iso_timestamps[t_idx] = None
 
         return {
+            "unassigned_materials": unassigned_materials,
             "has_updates": len(dirty_topics) > 0,
             "dirty_topics": sorted(list(dirty_topics)),
             "new_materials_count": new_materials_count,

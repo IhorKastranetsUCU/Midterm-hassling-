@@ -8,11 +8,12 @@ from datetime import datetime, timezone
 
 from app.models.mix import QuizSafetyMetadata
 from app.services.course_update_matcher import CourseUpdateMatcher
+from app.services.course_structure import normalize_sections
 
 
 def safe_sections(sections):
     result = []
-    for index, section in enumerate(sections or []):
+    for index, section in enumerate(normalize_sections(sections)):
         modules = []
         for module in section.get("modules", []):
             item = dict(module)
