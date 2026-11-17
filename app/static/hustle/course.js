@@ -20,6 +20,8 @@
   }
   async function academic(target,courseId,profile,section='assignments') {
     if(!target)return;
+    if(courseId&&bundle?.course.source_type==='manual_upload'&&String(bundle.course.course_id)===String(courseId)){target.innerHTML='<section class="space-empty"><p>Цей курс створено з власних матеріалів.</p><a class="secondary" href="'+UI.courseLink(courseId,'overview')+'">До тем курсу →</a></section>';return;}
+    if(section==='assignments'&&window.HustleSpace)return HustleSpace.deadlines(target,courseId,profile);
     if(!profile.moodle_paired){target.innerHTML='<section class="connected-empty"><h2>Підключи Moodle</h2><a class="primary" href="connect.html">Підключити LMS →</a></section>';return;}
     const selected=courseId?`?course_id=${encodeURIComponent(courseId)}`:'';
     target.innerHTML='<p role="status">Завантажуємо…</p>';

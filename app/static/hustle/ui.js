@@ -49,9 +49,9 @@ markdown(value) {
 },
 route() {
  const [path,query='']=location.hash.slice(1).split('?');const parts=path.split('/');const params=new URLSearchParams(query);
- return {view:parts[0]||'courses',courseId:parts[0]==='course'&&/^\d+$/.test(parts[1]||'')?parts[1]:null,section:parts[2]||'reading',topic:parts[3],from:['materials','practice'].includes(params.get('from'))?params.get('from'):null};
+ return {view:parts[0]||'courses',courseId:parts[0]==='course'&&/^\d+$/.test(parts[1]||'')?parts[1]:null,section:parts[2]||'overview',topic:parts[3],from:['materials','practice'].includes(params.get('from'))?params.get('from'):null};
 },
-courseLink(id,section='reading',topic) {const from=this.route().from;return `#course/${encodeURIComponent(id)}/${section}${topic!==undefined?'/'+encodeURIComponent(topic):''}${from?'?from='+from:''}`;},
+courseLink(id,section='overview',topic) {const from=this.route().from;return `#course/${encodeURIComponent(id)}/${section}${topic!==undefined?'/'+encodeURIComponent(topic):''}${from?'?from='+from:''}`;},
 safeLink(value) {if(!value)return null;try {const url=new URL(value,location.origin);return ['https:','http:'].includes(url.protocol)&&!url.username&&!url.password?url.href:null;}catch{return null;}},
 plain(value) {const doc=new DOMParser().parseFromString(String(value||''),'text/html');return doc.body.textContent||'';},
 countLabel(value,one,few,many) {const rule=new Intl.PluralRules('uk-UA').select(Number(value));return `${value} ${{one,few,many,other:many}[rule]}`;},

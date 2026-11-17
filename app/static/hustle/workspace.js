@@ -5,7 +5,7 @@
   const body = document.querySelector('#dialog-body');
   const close = document.querySelector('[data-close-dialog]');
   document.querySelector('.skip-link').onclick=event=>{event.preventDefault();main.focus();};
-  const nav = [['courses','Курси','courses'],['materials','Матеріали','files'],['practice','Практика','practice'],['deadlines','Дедлайни','calendar'],['settings','Налаштування','settings']];
+  const nav = [['courses','Мої курси','courses'],['deadlines','Дедлайни','calendar'],['settings','Налаштування','settings']];
   let account, courses = [], currentBundle, generation = 0, busy = false, selection, importState, courseQuery='';
   let stream, refreshAvailable = false, connectVersion=0;
   dialog.addEventListener('close',()=>{connectVersion++;});
@@ -50,6 +50,7 @@
     const toolbar = search.closest('.collection-toolbar');
     const pageHeading = main.querySelector('.page-heading');
     const actions = pageHeading.querySelector('.page-actions');
+    if (!actions) return;
     const count = toolbar.querySelector(':scope > .muted');
     pageHeading.classList.add('course-list-heading');
     toolbar.classList.add('course-list-toolbar');
@@ -58,7 +59,9 @@
   }
   async function render({navigate=false}={}) {
     const turn=++generation, route=UI.route(); currentBundle=null;
-    const active=route.courseId ? route.from || 'courses' : (nav.some(([key])=>key===route.view)?route.view:'courses');
+    if(['materials','practice'].includes(route.view)){history.replaceState(null,'','#courses');return render({navigate});}
+    const active=route.courseId ? 'courses' : (nav.some(([key])=>key===route.view)?route.view:'courses');
+    main.dataset.view=route.courseId?'course':active;
     document.querySelectorAll('[data-nav]').forEach(a=>a.setAttribute('aria-current',a.dataset.nav===active?'page':'false'));
     document.querySelector('#view-name').textContent=nav.find(([key])=>key===active)?.[1] || 'Курси';
     main.setAttribute('aria-busy','true');main.inert=true;
@@ -70,10 +73,12 @@
       document.querySelectorAll('[data-initial]').forEach(el=>el.textContent=name[0]);
       let title;
       if(route.courseId) {
-        const bundle=await UI.api(`/api/workspace/courses/${route.courseId}`); if(turn!==generation)return;
+        const [bundle,available]=await Promise.all([UI.api(`/api/workspace/courses/${route.courseId}`),UI.api('/api/workspace/courses').catch(()=>courses)]); if(turn!==generation)return;
+        courses=available;
         currentBundle=bundle; title=bundle.course.title;
         const back=route.from || 'courses', backLabel=nav.find(([key])=>key===back)?.[1] || 'Курси';
-        main.innerHTML=`<nav class="breadcrumbs" aria-label="Шлях сторінки"><a href="#${back}">${esc(backLabel)}</a><span aria-hidden="true">/</span><span>${esc(title)}</span></nav>` + heading(title,`<button class="secondary" data-add>Додати матеріали +</button><a class="icon-button course-options" href="${UI.courseLink(route.courseId,'manage')}" aria-label="Параметри курсу" title="Параметри курсу">${icon('settings')}</a>`) + HustleLearning.renderBundle(bundle,route.section);
+        if(window.HustleSpace)main.innerHTML=HustleSpace.courseHeader(bundle,courses,`<button class="secondary" data-add>Додати матеріали +</button><a class="icon-button course-options" href="${UI.courseLink(route.courseId,'manage')}" aria-label="Параметри курсу" title="Параметри курсу">${icon('settings')}</a>`)+HustleLearning.renderBundle(bundle,route.section);
+        else main.innerHTML=`<nav class="breadcrumbs" aria-label="Шлях сторінки"><a href="#${back}">${esc(backLabel)}</a><span aria-hidden="true">/</span><span>${esc(title)}</span></nav>` + heading(title,`<button class="secondary" data-add>Додати матеріали +</button><a class="icon-button course-options" href="${UI.courseLink(route.courseId,'manage')}" aria-label="Параметри курсу" title="Параметри курсу">${icon('settings')}</a>`) + HustleLearning.renderBundle(bundle,route.section);
         HustleCourse.mount(bundle,route.section,account);
       } else if(route.view==='settings') {
         title='Налаштування';
@@ -89,11 +94,12 @@
       } else {
         courses=await UI.api('/api/workspace/courses'); if(turn!==generation)return;
         title='Мої курси';
-        main.innerHTML=heading(title,addButtons)+(courses.length?`<div class="collection-toolbar"><label class="search-field">${icon('search')}<input type="search" data-course-search value="${esc(courseQuery)}" placeholder="Знайти курс" aria-label="Пошук курсів"></label><span class="muted">${UI.countLabel(courses.length,'курс','курси','курсів')}</span></div><div class="course-grid">${courses.map((course,i)=>`<article class="course-card" data-course-searchable="${esc(course.title.toLocaleLowerCase('uk'))}" ${course.title.toLocaleLowerCase('uk').includes(courseQuery)?'':'hidden'}><div class="course-card-top"><span class="course-avatar ${['butter','lilac','blush'][i%3]}">${icon('courses')}</span>${course.updates_pending?'<span class="status-pill">Є оновлення</span>':''}</div><h2><a href="#course/${course.course_id}">${esc(course.title)}</a></h2><div class="course-meta"><span>${UI.countLabel(course.topic_count,'тема','теми','тем')}</span><span>${course.source_type==='manual_upload'?'Власні матеріали':'Moodle'}</span></div><div class="course-shortcuts"><a href="#course/${course.course_id}/materials">Матеріали ${icon('arrow')}</a><a href="#course/${course.course_id}/practice">Практика ${icon('arrow')}</a></div></article>`).join('')}</div><p data-courses-empty hidden>Курсів за цим запитом немає.</p>`:`<section class="connected-empty"><span class="course-avatar butter">${icon('courses')}</span><h2>Додай перший курс</h2><p>Обери курси з Moodle або завантаж власні матеріали.</p></section>`);
+        main.innerHTML=courses.length&&window.HustleSpace?HustleSpace.home(courses,courseQuery,addButtons):heading(title,addButtons)+(courses.length?`<div class="collection-toolbar"><label class="search-field">${icon('search')}<input type="search" data-course-search value="${esc(courseQuery)}" placeholder="Знайти курс" aria-label="Пошук курсів"></label><span class="muted">${UI.countLabel(courses.length,'курс','курси','курсів')}</span></div><div class="course-grid">${courses.map((course,i)=>`<article class="course-card" data-course-searchable="${esc(course.title.toLocaleLowerCase('uk'))}" ${course.title.toLocaleLowerCase('uk').includes(courseQuery)?'':'hidden'}><div class="course-card-top"><span class="course-avatar ${['butter','lilac','blush'][i%3]}">${icon('courses')}</span>${course.updates_pending?'<span class="status-pill">Є оновлення</span>':''}</div><h2><a href="#course/${course.course_id}">${esc(course.title)}</a></h2><div class="course-meta"><span>${UI.countLabel(course.topic_count,'тема','теми','тем')}</span><span>${course.source_type==='manual_upload'?'Власні матеріали':'Moodle'}</span></div><div class="course-shortcuts"><a href="#course/${course.course_id}/materials">Матеріали ${icon('arrow')}</a><a href="#course/${course.course_id}/practice">Практика ${icon('arrow')}</a></div></article>`).join('')}</div><p data-courses-empty hidden>Курсів за цим запитом немає.</p>`:`<section class="connected-empty"><span class="course-avatar butter">${icon('courses')}</span><h2>Додай перший курс</h2><p>Обери курси з Moodle або завантаж власні матеріали.</p></section>`);
       }
       if(turn!==generation)return;
       compactCourseHeader();
       document.title=`${title} — Hustle`; main.removeAttribute('aria-busy');main.inert=false; UI.enhance(main);HustleLearning.afterRender();connectEvents();
+      if(window.HustleSpace){HustleSpace.preview(main.querySelector('[data-agenda-preview]'),account);HustleSpace.preview(main.querySelector('[data-course-agenda]'),account,route.courseId);}
       if(navigate) {main.focus({preventScroll:true});window.scrollTo(0,scrolls.get(location.hash)||0);}
       if(route.view==='connect')await showConnect();
     } catch(err) {if(turn===generation){main.innerHTML=errorMarkup(err.message);main.removeAttribute('aria-busy');main.inert=false;}}

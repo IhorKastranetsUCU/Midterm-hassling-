@@ -5,7 +5,7 @@
   const body = document.querySelector('#dialog-body');
   const drafts = new Map();
   let activeBundle, practice, viewVersion = 0;
-  const tabs = [['reading','Конспект'],['materials','Матеріали'],['practice','Практика'],['exam','До іспиту'],['assignments','Дедлайни й оцінки']];
+  const tabs = [['overview','Теми'],['materials','Матеріали'],['practice','Практика'],['assignments','Дедлайни']];
   let materialRecords = []; const materialFilters = new Map();
   const filterKey=()=>UI.route().courseId||'library';
   const empty = text => `<div class="connected-empty"><p>${esc(text)}</p></div>`;
@@ -16,11 +16,11 @@
   }
   const materialTypes={lecture:'Лекції',video:'Відео',audio:'Аудіо',self_test:'Самоперевірка',assignment:'Завдання',resource:'Файли',url:'Посилання'};
   function materialCards(groups,course) {
-    return groups.map(group=>`<section class="material-group" data-material-group><div class="group-heading"><h2>${esc(group.title)}</h2><span>${group.materials.length}</span></div><div class="material-group-list">${group.materials.filter(m=>m.safety_status!=='restricted_exam').map(m=>{
+    return groups.map((group,groupIndex)=>`<details class="material-group" data-material-group ${groupIndex===0?'open':''}><summary class="group-heading"><h2>${esc(group.title)}</h2><span>${group.materials.length}</span><i aria-hidden="true">⌄</i></summary><div class="material-group-list">${group.materials.filter(m=>m.safety_status!=='restricted_exam').map(m=>{
       const index=materialRecords.push({...m,course})-1, type=m.material_type||'resource';
       const search=`${m.name} ${group.title} ${course.title} ${(m.key_items||[]).join(' ')}`.toLocaleLowerCase('uk');
       return `<article class="material-row" data-material-search="${esc(search)}" data-material-type="${esc(type)}" data-material-course="${course.course_id}"><span class="material-icon ${type==='video'?'lilac':'butter'}">${icon(type==='self_test'?'practice':'files')}</span><button class="material-title" data-material="${index}"><strong>${esc(m.name)}</strong><span>${esc(materialTypes[type]||'Матеріал')}${m.timemodified?' · '+esc(UI.date(m.timemodified)):''}</span></button><button class="icon-button" data-material="${index}" aria-label="Відкрити ${esc(m.name)}">${icon('arrow')}</button></article>`;
-    }).join('')}</div></section>`).join('');
+    }).join('')}</div></details>`).join('');
   }
   function materialToolbar(courses=[]) {const saved=materialFilters.get(filterKey())||{};return `<div class="collection-toolbar"><label class="search-field">${icon('search')}<input type="search" data-search-materials aria-label="Пошук матеріалів" placeholder="Знайти матеріал" value="${esc(saved.term||'')}"></label><label class="compact-select"><span class="sr-only">Тип матеріалу</span><select data-material-filter><option value="">Усі типи</option>${Object.entries(materialTypes).map(([key,label])=>`<option value="${key}" ${saved.type===key?'selected':''}>${label}</option>`).join('')}</select></label>${courses.length?`<label class="compact-select"><span class="sr-only">Курс</span><select data-material-course-filter><option value="">Усі курси</option>${courses.map(c=>`<option value="${c.course_id}" ${String(c.course_id)===saved.course?'selected':''}>${esc(c.title)}</option>`).join('')}</select></label>`:''}</div>`;}
   function groupsFor(bundle) {return bundle.material_groups || bundle.topic_mixes.map(t=>({title:t.title,materials:t.materials||[]}));}
@@ -31,6 +31,7 @@
     const rows=[...main.querySelectorAll('[data-material-search]')];
     rows.forEach(row=>row.hidden=!row.dataset.materialSearch.includes(term)||!!type&&row.dataset.materialType!==type||!!course&&row.dataset.materialCourse!==course);
     main.querySelectorAll('[data-material-group],[data-material-course-group]').forEach(group=>group.hidden=![...group.querySelectorAll('[data-material-search]')].some(row=>!row.hidden));
+    if(term||type||course)main.querySelectorAll('details[data-material-group]:not([hidden])').forEach(group=>group.open=true);
     const empty=main.querySelector('[data-search-empty]');if(empty)empty.hidden=rows.some(row=>!row.hidden);
   }
   function showMaterial(index) {
@@ -45,7 +46,7 @@
   }
   function notesForm(topic) {
     const value = drafts.has(topic.mix_id) ? drafts.get(topic.mix_id) : topic.user_notes || '';
-    return `<form class="notes-form import-form" data-notes="${esc(topic.mix_id)}"><label>Мої нотатки<textarea name="notes">${esc(value)}</textarea></label><div class="notes-actions"><button class="secondary" type="submit">Зберегти нотатки</button><span role="status" data-save-status>${drafts.has(topic.mix_id)?'Не збережено':''}</span></div></form>`;
+    return `<form class="notes-form import-form" data-notes="${esc(topic.mix_id)}"><label>Мої нотатки<textarea name="notes">\n${esc(value)}</textarea></label><div class="notes-actions"><button class="secondary" type="submit">Зберегти нотатки</button><span role="status" data-save-status>${drafts.has(topic.mix_id)?'Не збережено':''}</span></div></form>`;
   }
   function readableSection(section) {
     // Hide only the deterministic generator's wrapper; preserve stored course content.
@@ -68,23 +69,27 @@
     if(!topics.length)return empty('Матеріали ще готуються.');
     const selected=Math.max(0,topics.findIndex(t=>String(t.topic_index)===UI.route().topic)),topic=topics[selected];
     const link=t=>UI.courseLink(bundle.course.course_id,'reading',t.topic_index);
-    return `<div class="reading-layout"><nav class="topic-outline" aria-label="Теми курсу"><h2>Зміст</h2>${topics.map((t,i)=>`<a href="${link(t)}" ${i===selected?'aria-current="page"':''}><span>${String(i+1).padStart(2,'0')}</span>${esc(t.title)}${t.has_upstream_update?'<i class="update-dot" aria-label="Є оновлення"></i>':''}</a>`).join('')}</nav><div class="reading-content"><label class="mobile-topic-select">Тема<select data-topic-select>${topics.map((t,i)=>`<option value="${esc(link(t))}" ${i===selected?'selected':''}>${i+1}. ${esc(t.title)}</option>`).join('')}</select></label><article class="topic-card reading-paper"><h2>${esc(topic.title)}</h2>${topic.has_upstream_update?`<div class="update-banner"><span>Матеріали теми змінилися</span><button class="secondary" data-ack-topic="${esc(topic.mix_id)}">Оновити конспект ↻</button><p role="status"></p></div>`:''}${topic.book_sections.map(readableSection).map(section=>`${section.heading!==topic.title?`<h3>${esc(section.heading)}</h3>`:''}${UI.markdown(section.explanation_markdown)}${section.key_takeaways.length?`<ul class="key-items">${section.key_takeaways.map(point=>`<li>${esc(point)}</li>`).join('')}</ul>`:''}${section.mermaid_diagram?`<figure class="diagram" data-diagram="${esc(section.mermaid_diagram)}" aria-label="Схема теми"></figure>`:''}${safeLink(section.visual_card_url)?`<figure class="visual-explanation"><img src="${esc(safeLink(section.visual_card_url))}" alt="${esc(section.visual_card_caption||section.heading)}" loading="lazy" referrerpolicy="no-referrer">${section.visual_card_caption?`<figcaption>${esc(section.visual_card_caption)}</figcaption>`:''}</figure>`:section.visual_card_caption?`<aside class="concept-card">${esc(section.visual_card_caption)}</aside>`:''}`).join('')||'<p class="muted">Конспект вимкнено в параметрах курсу.</p>'}${notesForm(topic)}</article><nav class="topic-pagination" aria-label="Перехід між темами">${selected?`<a class="secondary" href="${link(topics[selected-1])}">← Попередня тема</a>`:'<span></span>'}${selected<topics.length-1?`<a class="secondary" href="${link(topics[selected+1])}">Наступна тема →</a>`:''}</nav></div></div>`;
+    return `${HustleSpace.topicActions(topic)}<div class="reading-layout"><nav class="topic-outline" aria-label="Теми курсу"><h2>Зміст</h2>${topics.map((t,i)=>`<a href="${link(t)}" ${i===selected?'aria-current="page"':''}><span>${String(i+1).padStart(2,'0')}</span>${esc(t.title)}${t.has_upstream_update?'<i class="update-dot" aria-label="Є оновлення"></i>':''}</a>`).join('')}</nav><div class="reading-content"><label class="mobile-topic-select">Тема<select data-topic-select>${topics.map((t,i)=>`<option value="${esc(link(t))}" ${i===selected?'selected':''}>${i+1}. ${esc(t.title)}</option>`).join('')}</select></label><article class="topic-card reading-paper"><h2>${esc(topic.title)}</h2>${topic.has_upstream_update?`<div class="update-banner"><span>Матеріали теми змінилися</span><button class="secondary" data-ack-topic="${esc(topic.mix_id)}">Оновити конспект ↻</button><p role="status"></p></div>`:''}${topic.book_sections.map(readableSection).map(section=>`${section.heading!==topic.title?`<h3>${esc(section.heading)}</h3>`:''}${UI.markdown(section.explanation_markdown)}${section.key_takeaways.length?`<ul class="key-items">${section.key_takeaways.map(point=>`<li>${esc(point)}</li>`).join('')}</ul>`:''}${section.mermaid_diagram?`<figure class="diagram" data-diagram="${esc(section.mermaid_diagram)}" aria-label="Схема теми"></figure>`:''}${safeLink(section.visual_card_url)?`<figure class="visual-explanation"><img src="${esc(safeLink(section.visual_card_url))}" alt="${esc(section.visual_card_caption||section.heading)}" loading="lazy" referrerpolicy="no-referrer">${section.visual_card_caption?`<figcaption>${esc(section.visual_card_caption)}</figcaption>`:''}</figure>`:section.visual_card_caption?`<aside class="concept-card">${esc(section.visual_card_caption)}</aside>`:''}`).join('')||'<p class="muted">Конспект вимкнено в параметрах курсу.</p>'}${notesForm(topic)}</article><nav class="topic-pagination" aria-label="Перехід між темами">${selected?`<a class="secondary" href="${link(topics[selected-1])}">← Попередня тема</a>`:'<span></span>'}${selected<topics.length-1?`<a class="secondary" href="${link(topics[selected+1])}">Наступна тема →</a>`:''}</nav></div></div>`;
   }
   function examView(bundle) {
     const exam = bundle.exam_mix;
     return `<section class="exam-intro"><div><h2>Підготовка до іспиту</h2>${bundle.course.exam_mix_stale?'<p>Є нові матеріали або результати практики.</p>':''}</div><button class="primary" data-build-exam>${exam?'Оновити підготовку':'Підготувати матеріали'} →</button></section><p data-exam-status role="status"></p>${exam?`<article class="topic-card">${UI.markdown(exam.master_cheatsheet_markdown)}${exam.concept_map_mermaid?`<figure class="diagram" data-diagram="${esc(exam.concept_map_mermaid)}" aria-label="Карта понять курсу"></figure>`:''}${exam.weak_spots_focus.length?`<h3>На що звернути увагу</h3><ul>${exam.weak_spots_focus.map(point=>`<li>${esc(point)}</li>`).join('')}</ul>`:''}${exam.mock_exam_questions.length?'<button class="primary" data-study="exam">Пробний тест →</button>':''}</article>`:empty('Збери головне з тем курсу в одну підготовку.')}`;
   }
-  function renderBundle(bundle, section='reading') {
+  function renderBundle(bundle, section='overview') {
     activeBundle=bundle;materialRecords=[];
-    const tab=[...tabs.map(([key])=>key),'grades','manage'].includes(section)?section:'reading';
+    const tab=[...tabs.map(([key])=>key),'reading','exam','grades','manage'].includes(section)?section:'overview';
+    const visibleTabs=bundle.course.source_type==='manual_upload'?tabs.filter(([key])=>key!=='assignments'):tabs;
+    const active=tab==='reading'?'overview':tab==='exam'?'practice':tab==='grades'?'assignments':tab;
     let content;
-    if(tab==='reading')content=reading(bundle);
+    if(tab==='overview')content=HustleSpace.overview(bundle);
+    else if(tab==='reading')content=reading(bundle);
     else if(tab==='practice')content=practiceCards(bundle.topic_mixes)||empty('Практики поки немає.');
     else if(tab==='materials')content=materialToolbar()+`<div class="materials-heading"><span class="muted">За темами курсу</span><button class="text-button" data-structure>Уточнити структуру ${icon('settings')}</button></div>`+materialCards(groupsFor(bundle),bundle.course)+(bundle.course.source_type!=='manual_upload'?`<details class="source-tree" data-source-files><summary>Файли з Moodle</summary><div data-file-list></div></details>`:'')+`<p data-search-empty ${materialRecords.length?'hidden':''}>Матеріалів не знайдено.</p>`;
     else if(tab==='exam')content=examView(bundle);
     else if(tab==='manage')content=HustleCourse.manage(bundle);
     else content=HustleCourse.activity(bundle);
-    return `<nav class="course-tabs" aria-label="Розділи курсу">${tabs.map(([key,label])=>`<a href="${UI.courseLink(bundle.course.course_id,key)}" ${key===tab||key==='assignments'&&tab==='grades'?'aria-current="page"':''}>${label}</a>`).join('')}</nav><div class="course-content">${content}</div>`;
+    if(['practice','exam'].includes(tab))content=`<nav class="study-mode-tabs" aria-label="Режим практики"><a href="${UI.courseLink(bundle.course.course_id,'practice')}" ${tab==='practice'?'aria-current="page"':''}>За темами</a><a href="${UI.courseLink(bundle.course.course_id,'exam')}" ${tab==='exam'?'aria-current="page"':''}>До іспиту</a></nav>`+content;
+    return `<nav class="course-tabs" aria-label="Розділи курсу">${visibleTabs.map(([key,label])=>`<a href="${UI.courseLink(bundle.course.course_id,key)}" ${key===active?'aria-current="page"':''}>${label}</a>`).join('')}</nav><div class="course-content">${content}</div>`;
   }
   async function library(kind, current) {
     const courses=await UI.api('/api/workspace/courses'),loaded=[];
@@ -176,5 +181,11 @@
   });
   dialog.addEventListener('close',()=>{practice=null;});
   window.addEventListener('beforeunload',event=>{if(drafts.size) {event.preventDefault();event.returnValue='';}});
-  window.HustleLearning={renderBundle,library,afterRender:filterMaterials,hasDrafts:()=>drafts.size>0};
+  function afterRender() {
+    const toolbar=main.querySelector('.collection-toolbar:has([data-search-materials])');
+    const structure=main.querySelector('.materials-heading');
+    if(toolbar&&structure)toolbar.append(structure);
+    filterMaterials();
+  }
+  window.HustleLearning={renderBundle,library,afterRender,hasDrafts:()=>drafts.size>0};
 })();
