@@ -17,6 +17,7 @@ class Settings(BaseSettings):
 
     # Cookie Settings
     COOKIE_NAME: str = "moodle_session"
+    PLATFORM_COOKIE_NAME: str = "platform_session"
     COOKIE_SECURE: bool = False
     COOKIE_SAMESITE: str = "lax"
 
@@ -24,12 +25,27 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: Optional[str] = None
     GEMINI_MODEL: str = "gemini-2.0-flash"
 
+    # Google OAuth (Website Account Login -> pairs MoodleSession without passwords)
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    GOOGLE_REDIRECT_URI: str = "http://127.0.0.1:8000/api/auth/google/callback"
+    AUTH_DEV_GOOGLE_ENABLED: bool = False
+
     # Workspace Persistence & Isolation (Zero Moodle passwords/cookies stored; only mixes & hashes)
     WORKSPACE_DB_PATH: str = "data/workspace.db"
     WORKSPACE_COOKIE_NAME: str = "workspace_session"
     WORKSPACE_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 30
     BUILD_DEBOUNCE_SECONDS: float = 30.0
     BUILD_MAX_CONCURRENCY: int = 3
+
+    # Per-Person Temporary File Staging Storage (ОБД: retained only for validation & processing)
+    TEMP_STORAGE_DIR: str = "data/staging"
+    TEMP_STORAGE_TTL_SECONDS: int = 3600
+    TEMP_STORAGE_MAX_FILE_BYTES: int = 20 * 1024 * 1024
+    TEMP_STORAGE_AUTO_PURGE: bool = True
+    S3_BUCKET: str = ""
+    S3_REGION: str = "eu-central-1"
+    S3_PREFIX: str = "staging"
     CORS_ALLOW_ORIGIN_REGEX: str = (
         r"^https?://(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$"
         r"|^(chrome|edge|moz)-extension://.*$"

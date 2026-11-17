@@ -39,3 +39,27 @@ class HealthCheckResponse(BaseModel):
     moodle_url: str
     mock_mode: bool
     version: str = "1.0.0"
+
+
+class ExtensionPairRequest(BaseModel):
+    moodle_url: str = Field(..., description="Origin URL of the Moodle instance (e.g. https://learn.ucu.edu.ua)")
+    cookie: str = Field(..., min_length=4, description="Active MoodleSession cookie transferred by the Chrome extension")
+
+
+class DevGoogleLoginRequest(BaseModel):
+    email: str = Field(..., min_length=3, description="Student/user email for local dev Google sign-in")
+    fullname: Optional[str] = Field(None, description="Display name")
+    google_sub: Optional[str] = Field(None, description="Optional deterministic Google subject ID")
+
+
+class PlatformAccountStatus(BaseModel):
+    owner_id: str
+    auth_mode: str
+    google_linked: bool = False
+    email: Optional[str] = None
+    fullname: Optional[str] = None
+    picture_url: Optional[str] = None
+    moodle_paired: bool = False
+    moodle_url: Optional[str] = None
+    moodle_user_id: Optional[int] = None
+    moodle_username: Optional[str] = None

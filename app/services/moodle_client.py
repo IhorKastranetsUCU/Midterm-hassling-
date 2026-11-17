@@ -1,8 +1,9 @@
+import html as html_lib
 import html.parser
 import json
 import logging
 import re
-from urllib.parse import urlencode
+from urllib.parse import unquote, urlencode, urljoin, urlparse
 from typing import Dict, Any, Optional, List, Union
 import httpx
 
@@ -134,6 +135,7 @@ class MoodleClient:
     def __init__(self, base_url: Optional[str] = None):
         self.settings = get_settings()
         self.base_url = (base_url or self.settings.clean_moodle_url).rstrip("/")
+        self.timeout = self.settings.MOODLE_REQUEST_TIMEOUT
 
     # 1. Cookie Authentication (MoodleSession)
     async def authenticate_with_cookie(
@@ -150,7 +152,7 @@ class MoodleClient:
         # Clean cookie string: strip 'MoodleSession=' or whitespace or quotes
         clean_cookie = cookie_input.strip()
         if "MoodleSession=" in clean_cookie:
-            match = re.search(r'MoodleSession=([a-zA-Z0-9]+)', clean_cookie)
+            match = re.search(r'MoodleSession=([^;\s"\']+)', clean_cookie)
             if match:
                 clean_cookie = match.group(1)
             else:
@@ -1000,6 +1002,9 @@ class MoodleClient:
         base_url: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Retrieve course contents / modules with resilient AJAX, REST, and HTML scraping fallback."""
+        if token and (token.startswith("mock_") or self.settings.MOODLE_MOCK_MODE):
+            return self._handle_mock_call("core_course_get_contents", {"courseid": course_id})
+
         target_base = (base_url or self.base_url).rstrip("/")
         restrictions = get_parsing_restrictions()
         clean_cookie = token.replace("MoodleSession=", "").strip(" ;\"'") if token else ""
@@ -1038,6 +1043,7 @@ class MoodleClient:
             except Exception as e:
                 logger.debug(f"AJAX core_course_get_contents failed for course {course_id}: {e}")
 
+
         # 2. Try REST Web Services if token
         if auth_type == "token":
             try:
@@ -1056,6 +1062,13 @@ class MoodleClient:
         # When WebServices are restricted by university administrators, the student's browser session can ALWAYS
         # fetch the course HTML page with their valid session cookie!
         if auth_type == "cookie" and clean_cookie:
+            try:
+                scraped = await self._scrape_course_contents_html(cookie=clean_cookie, course_id=course_id)
+                if scraped and any(len(s.get("modules", [])) > 0 for s in scraped):
+                    return self._enrich_course_sections(scraped, target_base, restrictions)
+            except Exception as e:
+                logger.debug(f"_scrape_course_contents_html failed for course {course_id}: {e}")
+
             try:
                 course_url = f"{target_base}/course/view.php?id={course_id}"
                 headers = {
@@ -1208,6 +1221,271 @@ class MoodleClient:
             "skipped_files": skipped_files,
             "storage_directory": out_dir,
         }
+
+    @staticmethod
+    def _clean_html_text(raw_html: str) -> str:
+        cleaned = re.sub(r"<(script|style)[^>]*>.*?</\1>", " ", raw_html or "", flags=re.DOTALL | re.IGNORECASE)
+        cleaned = re.sub(r"<[^>]+>", " ", cleaned)
+        cleaned = html_lib.unescape(cleaned)
+        return re.sub(r"\s+", " ", cleaned).strip()
+
+    @staticmethod
+    def _is_login_redirect(location: str) -> bool:
+        path = (urlparse(location or "").path or "").lower()
+        return "/login/" in path or path.endswith("/login")
+
+    @staticmethod
+    def _looks_like_login_html(html_str: str) -> bool:
+        low = (html_str or "").lower()
+        return 'name="logintoken"' in low or ('name="username"' in low and 'type="password"' in low)
+
+    def _is_same_moodle_origin(self, candidate_url: str) -> bool:
+        base_parsed = urlparse(self.base_url)
+        cand_parsed = urlparse(candidate_url)
+        if cand_parsed.netloc.lower() != base_parsed.netloc.lower():
+            return False
+        if base_parsed.scheme.lower() == "https" and cand_parsed.scheme.lower() != "https":
+            return False
+        return cand_parsed.scheme.lower() in ("http", "https")
+
+    async def _scrape_course_contents_html(
+        self,
+        cookie: str,
+        course_id: int,
+    ) -> List[Dict[str, Any]]:
+        """Fallback HTML parser for /course/view.php?id=... when AJAX core_course_get_contents is disabled."""
+        current_url = f"{self.base_url}/course/view.php?id={course_id}"
+        headers = {
+            "Cookie": f"MoodleSession={cookie}",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        }
+        res: Optional[httpx.Response] = None
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=False) as client:
+                for _ in range(5):
+                    if not self._is_same_moodle_origin(current_url):
+                        return []
+                    res = await client.get(current_url, headers=headers)
+                    if res.status_code in (301, 302, 303, 307, 308):
+                        loc = res.headers.get("location", "")
+                        if not loc:
+                            break
+                        if self._is_login_redirect(loc):
+                            raise MoodleAuthError("MoodleSession cookie expired; please refresh Moodle in Chrome.", error_code="invalid_cookie")
+                        current_url = urljoin(current_url, loc)
+                        continue
+                    break
+        except httpx.RequestError as exc:
+            raise MoodleConnectionError(f"Failed to fetch Moodle course page: {exc}")
+
+        if res is None or res.status_code != 200 or self._looks_like_login_html(res.text):
+            raise MoodleAuthError("MoodleSession cookie is no longer valid for this course.", error_code="invalid_cookie")
+
+        page_html = res.text
+        section_blocks = re.split(r'(?=<li[^>]+id="section-\d+")', page_html)
+        sections: List[Dict[str, Any]] = []
+        mod_re = re.compile(
+            r'<a[^>]+href="([^"]*/mod/([a-z0-9_]+)/view\.php\?[^"]*id=(\d+)[^"]*)"[^>]*>(.*?)</a>',
+            flags=re.DOTALL | re.IGNORECASE,
+        )
+
+        for block in section_blocks:
+            sec_id_m = re.search(r'id="section-(\d+)"', block)
+            if not sec_id_m:
+                continue
+            sec_idx = int(sec_id_m.group(1))
+            name_m = re.search(r'<h3[^>]*class="[^"]*sectionname[^"]*"[^>]*>(.*?)</h3>', block, flags=re.DOTALL | re.IGNORECASE)
+            sec_name = self._clean_html_text(name_m.group(1)) if name_m else f"Section {sec_idx}"
+            sum_m = re.search(r'<div[^>]*class="[^"]*summary[^"]*"[^>]*>(.*?)</div>', block, flags=re.DOTALL | re.IGNORECASE)
+            sec_summary = self._clean_html_text(sum_m.group(1)) if sum_m else ""
+
+            modules: List[Dict[str, Any]] = []
+            seen_cmids = set()
+            for href, modname, cmid_str, inner in mod_re.findall(block):
+                cmid = int(cmid_str)
+                if cmid in seen_cmids:
+                    continue
+                seen_cmids.add(cmid)
+                mod_title = self._clean_html_text(inner) or f"{modname} #{cmid}"
+                modules.append({
+                    "id": cmid,
+                    "name": mod_title,
+                    "modname": modname.lower(),
+                    "url": html_lib.unescape(href),
+                    "description": "",
+                    "contents": [],
+                })
+
+            if sec_name or modules or sec_summary:
+                sections.append({
+                    "id": sec_idx,
+                    "section": sec_idx,
+                    "name": sec_name,
+                    "summary": sec_summary,
+                    "modules": modules,
+                })
+
+        return sections
+
+    async def fetch_module_resource(
+        self,
+        cookie: str,
+        module_url: str,
+        modname: str = "resource",
+        max_bytes: int = 10 * 1024 * 1024,
+        http_client: Optional[httpx.AsyncClient] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Download a safe Moodle module/file using the paired MoodleSession cookie.
+        Strictly refuses quiz endpoints (including after redirects), checks HTTPS scheme + host,
+        and streams responses to enforce max_bytes before buffering huge files in memory.
+        """
+        clean_mod = (modname or "resource").lower().strip()
+        if clean_mod == "quiz" or "/mod/quiz/" in (module_url or "").lower():
+            raise ValueError("Exam Shield: backend fetcher never downloads quiz modules.")
+
+        if not module_url or not cookie:
+            return None
+
+        target_url = urljoin(f"{self.base_url}/", module_url)
+        if not self._is_same_moodle_origin(target_url) or "/mod/quiz/" in target_url.lower():
+            return None
+
+        if "pluginfile.php" not in target_url and clean_mod == "resource" and "redirect=" not in target_url:
+            sep = "&" if "?" in target_url else "?"
+            target_url = f"{target_url}{sep}redirect=1"
+
+        headers = {
+            "Cookie": f"MoodleSession={cookie}",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        }
+
+        async def _perform(client: httpx.AsyncClient) -> Optional[Dict[str, Any]]:
+            current_url = target_url
+            raw_chunks: List[bytes] = []
+            res_status = 0
+            res_headers: Dict[str, str] = {}
+            resolved_url = current_url
+
+            for _ in range(5):
+                if "/mod/quiz/" in current_url.lower():
+                    raise ValueError("Exam Shield: redirect targeted restricted quiz module.")
+                if not self._is_same_moodle_origin(current_url):
+                    return None
+
+                async with client.stream("GET", current_url, headers=headers) as res:
+                    res_status = res.status_code
+                    res_headers = {k.lower(): v for k, v in res.headers.items()}
+                    resolved_url = str(res.url)
+
+                    if "/mod/quiz/" in resolved_url.lower():
+                        raise ValueError("Exam Shield: resolved URL is a restricted quiz module.")
+
+                    if res_status in (301, 302, 303, 307, 308):
+                        loc = res_headers.get("location", "")
+                        if not loc:
+                            return None
+                        if self._is_login_redirect(loc):
+                            raise MoodleAuthError("MoodleSession cookie expired during file download.", error_code="invalid_cookie")
+                        current_url = urljoin(current_url, loc)
+                        continue
+
+                    if res_status != 200:
+                        return None
+
+                    content_len = res_headers.get("content-length")
+                    if content_len and content_len.isdigit() and int(content_len) > max_bytes:
+                        raise ValueError(f"Resource exceeds max allowed staging limit ({max_bytes // (1024 * 1024)} MB)")
+
+                    total = 0
+                    raw_chunks = []
+                    async for chunk in res.aiter_bytes(65536):
+                        total += len(chunk)
+                        if total > max_bytes:
+                            raise ValueError(f"Resource exceeds max allowed staging limit ({max_bytes // (1024 * 1024)} MB)")
+                        raw_chunks.append(chunk)
+                    break
+
+            if res_status != 200:
+                return None
+
+            raw_bytes = b"".join(raw_chunks)
+            content_type = (res_headers.get("content-type") or "application/octet-stream").split(";")[0].strip().lower()
+
+            if content_type.startswith("text/html"):
+                html_str = raw_bytes.decode("utf-8", errors="ignore")
+                if self._looks_like_login_html(html_str):
+                    raise MoodleAuthError("MoodleSession cookie expired during resource fetch.", error_code="invalid_cookie")
+
+                # Follow nested pluginfile.php resource wrapper link once (keeping quiz/origin guards)
+                if clean_mod == "resource":
+                    pf_m = re.search(r'(https?://[^"\s<>]+/pluginfile\.php/[^"\s<>]+)', html_str)
+                    if not pf_m:
+                        pf_rel = re.search(r'(/pluginfile\.php/[^"\s<>]+)', html_str)
+                        pf_url = urljoin(f"{self.base_url}/", html_lib.unescape(pf_rel.group(1))) if pf_rel else None
+                    else:
+                        pf_url = html_lib.unescape(pf_m.group(1))
+                    if pf_url and "/mod/quiz/" not in pf_url.lower() and self._is_same_moodle_origin(pf_url):
+                        return await self.fetch_module_resource(
+                            cookie=cookie,
+                            module_url=pf_url,
+                            modname="file",
+                            max_bytes=max_bytes,
+                            http_client=client,
+                        )
+
+            filename = ""
+            cd = res_headers.get("content-disposition", "")
+            cd_m = re.search(r'filename\*?=(?:UTF-8\'\')?"?([^";]+)"?', cd, flags=re.IGNORECASE)
+            if cd_m:
+                filename = unquote(cd_m.group(1).strip())
+            if not filename:
+                url_path = urlparse(resolved_url).path
+                filename = unquote(url_path.rsplit("/", 1)[-1]) or f"module_{clean_mod}"
+
+            low_fn = filename.lower()
+            if content_type == "text/html" and not low_fn.endswith((".html", ".htm")):
+                stem = filename[:-4] if low_fn.endswith(".php") else filename
+                filename = f"module_{clean_mod}.html" if stem.lower() in ("", "view", "index") else f"{stem}.html"
+            elif low_fn.endswith(".php") or "." not in filename:
+                mime_ext = {
+                    "application/pdf": ".pdf",
+                    "text/plain": ".txt",
+                    "text/markdown": ".md",
+                    "text/csv": ".csv",
+                    "application/json": ".json",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+                    "application/vnd.openxmlformats-officedocument.presentationml.presentation": ".pptx",
+                }.get(content_type)
+                if mime_ext:
+                    stem = filename[:-4] if low_fn.endswith(".php") else filename
+                    filename = f"{stem or f'module_{clean_mod}'}{mime_ext}"
+
+            text_excerpt: Optional[str] = None
+            if content_type.startswith("text/html"):
+                html_str = raw_bytes.decode("utf-8", errors="ignore")
+                main_m = re.search(r'<div[^>]+role="main"[^>]*>(.*?)</section>', html_str, flags=re.DOTALL | re.IGNORECASE)
+                text_excerpt = self._clean_html_text(main_m.group(1) if main_m else html_str)
+
+            return {
+                "filename": filename,
+                "content_type": content_type,
+                "raw_bytes": raw_bytes,
+                "text_excerpt": text_excerpt,
+                "resolved_url": resolved_url,
+            }
+
+        try:
+            if http_client is not None:
+                return await _perform(http_client)
+            async with httpx.AsyncClient(
+                timeout=max(self.timeout, 30.0),
+                follow_redirects=False,
+                limits=httpx.Limits(max_connections=10, max_keepalive_connections=8),
+            ) as owns_client:
+                return await _perform(owns_client)
+        except httpx.RequestError as exc:
+            raise MoodleConnectionError(f"Failed to download Moodle resource: {exc}")
 
     async def get_assignments(
         self,
