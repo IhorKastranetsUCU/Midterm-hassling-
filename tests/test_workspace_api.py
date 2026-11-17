@@ -1382,3 +1382,237 @@ async def test_moodle_client_fetch_module_resource_guards():
                 max_bytes=1024 * 1024,
                 http_client=http_client,
             )
+
+
+def _make_sample_pdf_bytes(text: str) -> bytes:
+    """Build a minimal single-page PDF readable by pypdf."""
+    escaped = text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+    stream = f"BT /F1 12 Tf 72 720 Td ({escaped}) Tj ET\n".encode("latin-1")
+    objs = [
+        b"1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj\n",
+        b"2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj\n",
+        b"3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>endobj\n",
+        f"4 0 obj<< /Length {len(stream)} >>stream\n".encode("ascii") + stream + b"endstream\nendobj\n",
+        b"5 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj\n",
+    ]
+    out = bytearray(b"%PDF-1.4\n")
+    offsets = [0]
+    for obj in objs:
+        offsets.append(len(out))
+        out.extend(obj)
+    xref_pos = len(out)
+    out.extend(f"xref\n0 {len(objs) + 1}\n0000000000 65535 f \n".encode("ascii"))
+    for off in offsets[1:]:
+        out.extend(f"{off:010d} 00000 n \n".encode("ascii"))
+    out.extend(f"trailer<< /Size {len(objs) + 1} /Root 1 0 R >>\nstartxref\n{xref_pos}\n%%EOF\n".encode("ascii"))
+    return bytes(out)
+
+
+def _make_sample_docx_bytes(paragraphs: list[str]) -> bytes:
+    import io
+    import zipfile
+
+    body = "".join(f"<w:p><w:r><w:t>{p}</w:t></w:r></w:p>" for p in paragraphs)
+    doc_xml = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+        f"<w:body>{body}</w:body></w:document>"
+    )
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("word/document.xml", doc_xml)
+    return buf.getvalue()
+
+
+def _make_sample_pptx_bytes(slides: list[list[str]]) -> bytes:
+    import io
+    import zipfile
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for idx, lines in enumerate(slides, start=1):
+            txts = "".join(f"<a:r><a:t>{ln}</a:t></a:r>" for ln in lines)
+            slide_xml = (
+                '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+                '<p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" '
+                'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'
+                f"<p:cSld><p:spTree>{txts}</p:spTree></p:cSld></p:sld>"
+            )
+            zf.writestr(f"ppt/slides/slide{idx}.xml", slide_xml)
+    return buf.getvalue()
+
+
+def test_import_extractors_for_pdf_docx_pptx_and_html(isolated_store):
+    """Upload pipeline validates, extracts text from PDF/DOCX/PPTX/HTML, persists TopicMix, and purges staging."""
+    client = TestClient(app)
+    client.post("/api/auth/google/dev-login", json={"email": "importer@ucu.edu.ua"})
+
+    samples = [
+        ("lecture.pdf", _make_sample_pdf_bytes("Bayesian Posterior Inference"), "application/pdf", "Bayesian Posterior"),
+        ("syllabus.docx", _make_sample_docx_bytes(["Markov Chains and Stationary Distributions"]), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Markov Chains"),
+        ("slides.pptx", _make_sample_pptx_bytes([["SVD Decomposition", "Singular values capture variance"]]), "application/vnd.openxmlformats-officedocument.presentationml.presentation", "SVD Decomposition"),
+        ("reading.html", b"<html><script>alert(1)</script><body><h1>Convex Optimization</h1><p>Lagrange multipliers</p></body></html>", "text/html", "Lagrange multipliers"),
+    ]
+
+    for idx, (fname, raw_bytes, mime, expected_phrase) in enumerate(samples, start=1):
+        res = client.post(
+            "/api/workspace/courses/upload",
+            data={"course_id": str(800 + idx), "course_title": f"Course {idx}", "shortname": f"C{idx}"},
+            files={"file": (fname, raw_bytes, mime)},
+        )
+        assert res.status_code == 200, f"{fname}: {res.text}"
+        payload = res.json()
+        assert payload["success"] is True
+        assert payload["staging_purged"] is True
+        assert payload["extracted_chars"] > 0
+
+        bundle = client.get(f"/api/workspace/courses/{800 + idx}").json()
+        book_md = "\n".join(s["explanation_markdown"] for s in bundle["topic_mixes"][0]["book_sections"])
+        assert expected_phrase in book_md
+        assert "alert(1)" not in book_md
+
+    assert client.get("/api/workspace/storage/staging").json()["items"] == []
+
+
+def test_moodle_html_scraping_and_resource_import_end_to_end(isolated_store, monkeypatch):
+    """Full cookie-auth -> AJAX course list -> HTML course scrape fallback -> file fetch/extract -> purge flow."""
+    import json
+    import httpx
+    from app.services.temp_storage import get_temp_storage
+
+    requested_urls = []
+    pdf_bytes = _make_sample_pdf_bytes("Dynamic Programming Memoization Table")
+    pptx_bytes = _make_sample_pptx_bytes([["Shortest Paths", "Dijkstra relaxes non-negative edges"]])
+
+    def moodle_handler(request: httpx.Request) -> httpx.Response:
+        url_str = str(request.url)
+        requested_urls.append(url_str)
+        path = request.url.path
+
+        # Never touch quiz endpoints
+        if "/mod/quiz/" in path:
+            raise AssertionError(f"Exam Shield violated! Requested quiz URL: {url_str}")
+
+        if path == "/my/":
+            assert "MoodleSession=valid_real_cookie_777" in request.headers.get("cookie", "")
+            html = (
+                '<html><script>M.cfg={"sesskey":"realSess99","userId":901};</script>'
+                '<span class="usertext">Nadia Franko</span>'
+                '<a href="https://learn.ucu.edu.ua/user/profile.php?id=901">Profile</a></html>'
+            )
+            return httpx.Response(200, headers={"Content-Type": "text/html"}, content=html.encode("utf-8"))
+
+        if path == "/lib/ajax/service.php":
+            info = request.url.params.get("info", "")
+            if info == "core_course_get_enrolled_courses_by_timeline_classification":
+                return httpx.Response(
+                    200,
+                    json=[
+                        {
+                            "error": False,
+                            "data": {
+                                "courses": [
+                                    {"id": 612, "shortname": "CS-612", "fullname": "Algorithm Design"}
+                                ]
+                            },
+                        }
+                    ],
+                )
+            # Simulate AJAX core_course_get_contents disabled so real HTML scraping fallback runs
+            if info == "core_course_get_contents":
+                return httpx.Response(
+                    200,
+                    json=[{"error": True, "exception": {"message": "Web service disabled"}}],
+                )
+
+        if path == "/course/view.php" and request.url.params.get("id") == "612":
+            course_html = """
+            <html><body>
+              <ul class="topics">
+                <li id="section-1" class="section main">
+                  <h3 class="sectionname"><span>Week 1: Graphs & DP</span></h3>
+                  <div class="summary"><p>Core graph traversal and DP techniques</p></div>
+                  <div class="activity">
+                    <a href="https://learn.ucu.edu.ua/mod/resource/view.php?id=401"><span>Lecture 1 PDF</span></a>
+                    <a href="https://learn.ucu.edu.ua/mod/resource/view.php?id=402"><span>Lecture 2 Slides</span></a>
+                    <a href="https://learn.ucu.edu.ua/mod/page/view.php?id=403"><span>Course Syllabus Page</span></a>
+                    <a href="https://learn.ucu.edu.ua/mod/quiz/view.php?id=999"><span>Final Exam</span></a>
+                  </div>
+                </li>
+              </ul>
+            </body></html>
+            """
+            return httpx.Response(200, headers={"Content-Type": "text/html"}, content=course_html.encode("utf-8"))
+
+        if path == "/mod/resource/view.php" and request.url.params.get("id") == "401":
+            return httpx.Response(
+                302,
+                headers={"Location": "https://learn.ucu.edu.ua/pluginfile.php/55/mod_resource/content/1/week1.pdf?forcedownload=1"},
+            )
+
+        if path == "/pluginfile.php/55/mod_resource/content/1/week1.pdf":
+            return httpx.Response(200, headers={"Content-Type": "application/pdf"}, content=pdf_bytes)
+
+        # Simulate HTML wrapper resource page containing nested pluginfile.php link
+        if path == "/mod/resource/view.php" and request.url.params.get("id") == "402":
+            wrapper = '<html><body><div class="resourceworkaround"><a href="/pluginfile.php/55/mod_resource/content/2/dijkstra.pptx">Download</a></div></body></html>'
+            return httpx.Response(200, headers={"Content-Type": "text/html"}, content=wrapper.encode("utf-8"))
+
+        if path == "/pluginfile.php/55/mod_resource/content/2/dijkstra.pptx":
+            return httpx.Response(
+                200,
+                headers={"Content-Type": "application/vnd.openxmlformats-officedocument.presentationml.presentation"},
+                content=pptx_bytes,
+            )
+
+        if path == "/mod/page/view.php" and request.url.params.get("id") == "403":
+            page_html = '<html><body><nav>Menu</nav><section id="region-main"><div role="main"><p>Weekly office hours are Tuesday 16:00.</p></div></section></body></html>'
+            return httpx.Response(200, headers={"Content-Type": "text/html"}, content=page_html.encode("utf-8"))
+
+        return httpx.Response(404, text="Not found")
+
+    mock_transport = httpx.MockTransport(moodle_handler)
+    orig_async_client = httpx.AsyncClient
+
+    class PatchedAsyncClient(orig_async_client):
+        def __init__(self, *args, **kwargs):
+            kwargs["transport"] = mock_transport
+            super().__init__(*args, **kwargs)
+
+    monkeypatch.setattr(httpx, "AsyncClient", PatchedAsyncClient)
+
+    client = TestClient(app)
+    g_res = client.post("/api/auth/google/dev-login", json={"email": "nadia@ucu.edu.ua", "fullname": "Nadia Franko"})
+    assert g_res.status_code == 200
+
+    pair_res = client.post(
+        "/api/auth/extension-pair",
+        json={"moodle_url": "https://learn.ucu.edu.ua", "cookie": "MoodleSession=valid_real_cookie_777"},
+    )
+    assert pair_res.status_code == 200, pair_res.text
+    assert pair_res.json()["moodle_user_id"] == 901
+
+    sync_res = client.post("/api/workspace/courses/612/sync-moodle", json={"fetch_files": True})
+    assert sync_res.status_code == 200, sync_res.text
+    sdata = sync_res.json()
+    assert sdata["success"] is True
+    assert sdata["downloaded_files"] == 3  # PDF + PPTX + HTML page
+    assert sdata["staged_count"] == 3
+    assert sdata["staging_purged"] is True
+    assert sdata["blocked_exams"] == 1
+    assert not any("/mod/quiz/" in u for u in requested_urls)
+
+    bundle = client.get("/api/workspace/courses/612").json()
+    assert bundle["course"]["title"] == "Algorithm Design"
+    assert bundle["course"]["shortname"] == "CS-612"
+    book_md = "\n".join(s["explanation_markdown"] for s in bundle["topic_mixes"][0]["book_sections"])
+    assert "Dynamic Programming Memoization Table" in book_md
+    assert "Dijkstra relaxes non-negative edges" in book_md
+    assert "Weekly office hours are Tuesday 16:00." in book_md
+
+    # Verify all 3 staged raw files were purged after processing
+    stg = client.get("/api/workspace/storage/staging?include_purged=true").json()
+    assert len(stg["items"]) == 3
+    assert all(item["status"] == "purged" for item in stg["items"])
+    assert all(not get_temp_storage().exists(item["storage_key"]) for item in stg["items"])
+

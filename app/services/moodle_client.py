@@ -73,7 +73,7 @@ class MoodleClient:
         # Clean cookie string: strip 'MoodleSession=' or whitespace or quotes
         clean_cookie = cookie_input.strip()
         if "MoodleSession=" in clean_cookie:
-            match = re.search(r'MoodleSession=([a-zA-Z0-9]+)', clean_cookie)
+            match = re.search(r'MoodleSession=([^;\s"\']+)', clean_cookie)
             if match:
                 clean_cookie = match.group(1)
             else:
@@ -735,8 +735,24 @@ class MoodleClient:
             if not filename:
                 url_path = urlparse(resolved_url).path
                 filename = unquote(url_path.rsplit("/", 1)[-1]) or f"module_{clean_mod}"
-            if content_type == "text/html" and "." not in filename:
-                filename = f"{filename}.html"
+
+            low_fn = filename.lower()
+            if content_type == "text/html" and not low_fn.endswith((".html", ".htm")):
+                stem = filename[:-4] if low_fn.endswith(".php") else filename
+                filename = f"module_{clean_mod}.html" if stem.lower() in ("", "view", "index") else f"{stem}.html"
+            elif low_fn.endswith(".php") or "." not in filename:
+                mime_ext = {
+                    "application/pdf": ".pdf",
+                    "text/plain": ".txt",
+                    "text/markdown": ".md",
+                    "text/csv": ".csv",
+                    "application/json": ".json",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+                    "application/vnd.openxmlformats-officedocument.presentationml.presentation": ".pptx",
+                }.get(content_type)
+                if mime_ext:
+                    stem = filename[:-4] if low_fn.endswith(".php") else filename
+                    filename = f"{stem or f'module_{clean_mod}'}{mime_ext}"
 
             text_excerpt: Optional[str] = None
             if content_type.startswith("text/html"):
