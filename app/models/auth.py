@@ -21,6 +21,7 @@ class UserProfile(BaseModel):
     user_id: int
     username: str
     fullname: str
+    email: Optional[str] = None
     userpictureurl: Optional[str] = None
     site_name: Optional[str] = None
     site_url: Optional[str] = None

@@ -6,7 +6,7 @@ import zipfile
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Response
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
@@ -24,6 +24,7 @@ from app.models.course import (
     CourseFile,
     CourseFilesSummary,
 )
+from app.services.academic_cache import get_academic_cache
 from app.services.moodle_client import MoodleClient
 
 router = APIRouter(prefix="/api/courses", tags=["Courses"])
@@ -34,73 +35,70 @@ def _private_file_dir(session, course_id):
     return os.path.join("data", "course_files", hashlib.sha256(identity.encode()).hexdigest(), str(course_id))
 
 
+async def _get_cached_user_courses(session: Dict[str, Any], refresh: bool = False) -> List[Dict[str, Any]]:
+    site_url = session.get("site_url")
+    user_id = session["user_id"]
+    cache = get_academic_cache()
+    if not refresh:
+        cached = cache.get(site_url, user_id, "courses")
+        if cached is not None:
+            return cached
+
+    client = MoodleClient(base_url=site_url)
+    raw_courses = await client.get_user_courses(
+        token=session["moodle_token"],
+        user_id=user_id,
+        auth_type=session.get("auth_type", "token"),
+        sesskey=session.get("sesskey"),
+        base_url=site_url,
+    )
+    cache.set(site_url, user_id, "courses", raw_courses, ttl_seconds=300.0)
+    return raw_courses
+
 
 @router.get("", response_model=List[CourseSummary])
-async def get_my_courses(session: Dict[str, Any] = Depends(get_current_user_session)):
+async def get_my_courses(
+    refresh: bool = Query(default=False),
+    session: Dict[str, Any] = Depends(get_current_user_session),
+):
     """
-    Fetch all courses the currently logged-in user is enrolled in.
-    Supports token, cookie, and resilient dashboard scraping.
+    Fetch all courses the currently logged-in user is enrolled in (uses short-lived per-user TTL cache).
     """
-    client = MoodleClient(base_url=session.get("site_url"))
-    token = session["moodle_token"]
-    user_id = session["user_id"]
-    auth_type = session.get("auth_type", "token")
-    sesskey = session.get("sesskey")
-
     try:
-        raw_courses = await client.get_user_courses(
-            token=token,
-            user_id=user_id,
-            auth_type=auth_type,
-            sesskey=sesskey,
-            base_url=session.get("site_url"),
-        )
+        raw_courses = await _get_cached_user_courses(session, refresh=refresh)
     except MoodleException as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Moodle error fetching courses: {exc.message}",
         )
 
-    courses = []
-    for c in raw_courses:
-        courses.append(
-            CourseSummary(
-                id=c["id"],
-                shortname=c.get("shortname", ""),
-                fullname=c.get("fullname", ""),
-                summary=c.get("summary", ""),
-                enrolledusercount=c.get("enrolledusercount"),
-                progress=c.get("progress"),
-                completed=c.get("completed"),
-                startdate=c.get("startdate"),
-                enddate=c.get("enddate"),
-            )
+    return [
+        CourseSummary(
+            id=c["id"],
+            shortname=c.get("shortname", ""),
+            fullname=c.get("fullname", ""),
+            summary=c.get("summary", ""),
+            enrolledusercount=c.get("enrolledusercount"),
+            progress=c.get("progress"),
+            completed=c.get("completed"),
+            startdate=c.get("startdate"),
+            enddate=c.get("enddate"),
         )
-    return courses
+        for c in raw_courses
+    ]
 
 
 @router.get("/{course_id}", response_model=CourseSummary)
 async def get_course_detail(
     course_id: int,
+    refresh: bool = Query(default=False),
     session: Dict[str, Any] = Depends(get_current_user_session),
 ):
     """
     Fetch summary metadata for a specific course by ID.
     """
-    client = MoodleClient(base_url=session.get("site_url"))
-    token = session["moodle_token"]
-    user_id = session["user_id"]
-    auth_type = session.get("auth_type", "token")
-    sesskey = session.get("sesskey")
-
     try:
-        raw_courses = await client.get_user_courses(
-            token=token,
-            user_id=user_id,
-            auth_type=auth_type,
-            sesskey=sesskey,
-            base_url=session.get("site_url"),
-        )
+        raw_courses = await _get_cached_user_courses(session, refresh=refresh)
     except MoodleException as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

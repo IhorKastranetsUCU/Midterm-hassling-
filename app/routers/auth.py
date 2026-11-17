@@ -1,8 +1,9 @@
 import hashlib
+import os
 import secrets
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
@@ -29,10 +30,49 @@ from app.models.auth import (
     PlatformAccountStatus,
     UserProfile,
 )
+from app.services.academic_cache import get_academic_cache, schedule_background_task
 from app.services.moodle_client import MoodleClient
 from app.services.workspace_store import get_workspace_store
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
+
+
+async def _prefetch_academic_snapshot(session_data: Dict[str, Any]) -> None:
+    """Warm courses & assignments TTL cache after login/pairing so first UI click feels instant."""
+    site_url = session_data.get("site_url")
+    user_id = session_data.get("user_id")
+    token = session_data.get("moodle_token") or ""
+    auth_type = session_data.get("auth_type", "cookie")
+    sesskey = session_data.get("sesskey")
+    if not site_url or not token or token.startswith("mock_"):
+        return
+
+    cache = get_academic_cache()
+    client = MoodleClient(base_url=site_url)
+    try:
+        if cache.get(site_url, user_id, "courses") is None:
+            raw_courses = await client.get_user_courses(
+                token=token, user_id=user_id, auth_type=auth_type, sesskey=sesskey, base_url=site_url
+            )
+            cache.set(site_url, user_id, "courses", raw_courses, ttl_seconds=300.0)
+
+        if cache.get(site_url, user_id, "assignments", "all") is None:
+            from app.routers.assignments import get_my_assignments
+            await get_my_assignments(course_id=None, refresh=True, session=session_data)
+    except Exception:
+        pass
+
+
+def _schedule_prefetch(session_payload: Dict[str, Any]) -> None:
+    if os.getenv("PYTEST_CURRENT_TEST"):
+        return
+    token = str(session_payload.get("moodle_token", ""))
+    if session_payload.get("auth_type") == "cookie" and not token.startswith("mock_"):
+        uid = session_payload.get("user_id") or 0
+        schedule_background_task(
+            _prefetch_academic_snapshot(dict(session_payload)),
+            dedup_key=(f"prefetch:{session_payload.get('site_url', '')}:{uid}", int(uid)),
+        )
 
 
 @router.post("/login", response_model=LoginResponse)
@@ -91,9 +131,11 @@ async def login(login_req: LoginRequest, response: Response, request: Request):
         "sub": user_info["username"],
         "user_id": user_info["user_id"],
         "fullname": user_info["fullname"],
+        "email": user_info.get("email"),
         "userpictureurl": user_info.get("userpictureurl"),
         "site_name": user_info.get("site_name"),
         "site_url": user_info.get("site_url"),
+        "role": user_info.get("role", "student"),
         "moodle_token": moodle_token,
         "auth_type": auth_result.get("auth_type", "token"),
         "sesskey": auth_result.get("sesskey"),
@@ -124,11 +166,14 @@ async def login(login_req: LoginRequest, response: Response, request: Request):
         user_id=user_info["user_id"],
         username=user_info["username"],
         fullname=user_info["fullname"],
-        userpictureurl=user_info.get("userpictureurl"),
+        email=user_info.get("email"),
+        userpictureurl=_public_avatar_url(session_payload),
         site_name=user_info.get("site_name"),
         site_url=user_info.get("site_url"),
         role=user_info.get("role", "student"),
     )
+
+    _schedule_prefetch(session_payload)
 
     return LoginResponse(
         success=True,
@@ -139,9 +184,16 @@ async def login(login_req: LoginRequest, response: Response, request: Request):
 
 
 @router.post("/logout")
-async def logout(response: Response):
+async def logout(request: Request, response: Response):
     """Log out user by clearing Moodle and Google platform session cookies."""
     settings = get_settings()
+    raw_jwt = request.cookies.get(settings.COOKIE_NAME)
+    if raw_jwt:
+        try:
+            decoded = decode_session_jwt(raw_jwt, settings)
+            get_academic_cache().invalidate_user(decoded.get("site_url"), decoded.get("user_id"))
+        except Exception:
+            pass
     response.delete_cookie(
         key=settings.COOKIE_NAME,
         path="/",
@@ -155,17 +207,89 @@ async def logout(response: Response):
     return {"success": True, "message": "Logged out successfully."}
 
 
+def _clean_user_email(addr: Optional[str]) -> Optional[str]:
+    clean = (addr or "").strip()
+    if not clean or "@" not in clean:
+        return None
+    local = clean.split("@", 1)[0].strip().lower()
+    if local in {"helpdesk", "support", "noreply", "no-reply", "donotreply", "admin", "administrator", "moodle", "webmaster", "info", "postmaster"} or local.startswith(("helpdesk", "support", "noreply", "no-reply")):
+        return None
+    return clean
+
+
+def _public_avatar_url(session_data: Dict[str, Any]) -> Optional[str]:
+    """Proxy authenticated Moodle avatars through /api/auth/avatar so browser <img> tags load without CORS/cookie issues."""
+    raw = (session_data.get("userpictureurl") or "").strip()
+    if not raw:
+        return None
+    site_url = (session_data.get("site_url") or "").rstrip("/")
+    if (
+        session_data.get("auth_type") == "cookie"
+        and site_url
+        and raw.startswith("https://")
+        and urlparse(raw).netloc.lower() == urlparse(site_url).netloc.lower()
+        and not str(session_data.get("moodle_token", "")).startswith("mock_")
+    ):
+        sig = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:10]
+        return f"/api/auth/avatar?v={sig}"
+    return raw
+
+
 @router.get("/me", response_model=UserProfile)
 async def get_current_user(session: Dict[str, Any] = Depends(get_current_user_session)):
     """Retrieve the currently authenticated user's profile."""
+    clean_email = _clean_user_email(session.get("email"))
     return UserProfile(
         user_id=session["user_id"],
         username=session["sub"],
-        fullname=session.get("fullname", session["sub"]),
-        userpictureurl=session.get("userpictureurl"),
+        fullname=session.get("fullname") or clean_email or session["sub"],
+        email=clean_email,
+        userpictureurl=_public_avatar_url(session),
         site_name=session.get("site_name"),
         site_url=session.get("site_url"),
-        role="student",
+        role=session.get("role") or "student",
+    )
+
+
+@router.get("/avatar")
+async def get_current_user_avatar(session: Dict[str, Any] = Depends(get_current_user_session)):
+    """Proxy the authenticated user's Moodle profile photo safely using their MoodleSession cookie."""
+    raw_url = (session.get("userpictureurl") or "").strip()
+    site_url = (session.get("site_url") or "").rstrip("/")
+    moodle_token = session.get("moodle_token") or ""
+    if not raw_url or not site_url:
+        raise HTTPException(status_code=404, detail="No avatar available.")
+
+    parsed = urlparse(raw_url)
+    site_parsed = urlparse(site_url)
+    if (
+        parsed.scheme.lower() != "https"
+        or not parsed.netloc
+        or parsed.netloc.lower() != site_parsed.netloc.lower()
+    ):
+        raise HTTPException(status_code=400, detail="Invalid avatar origin.")
+
+    headers = {
+        "Cookie": f"MoodleSession={moodle_token}",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=False) as client:
+            res = await client.get(raw_url, headers=headers)
+    except httpx.RequestError:
+        raise HTTPException(status_code=502, detail="Could not fetch Moodle avatar.")
+
+    if res.status_code != 200 or len(res.content) > 2 * 1024 * 1024:
+        raise HTTPException(status_code=404, detail="Avatar unavailable.")
+
+    ctype = (res.headers.get("content-type") or "image/png").split(";")[0].strip().lower()
+    if not ctype.startswith("image/"):
+        raise HTTPException(status_code=404, detail="Avatar is not an image.")
+
+    return Response(
+        content=res.content,
+        media_type=ctype,
+        headers={"Cache-Control": "private, max-age=300"},
     )
 
 
@@ -411,9 +535,11 @@ async def extension_pair_moodle_cookie(
         "sub": user_info["username"],
         "user_id": user_info["user_id"],
         "fullname": user_info["fullname"],
+        "email": user_info.get("email"),
         "userpictureurl": user_info.get("userpictureurl"),
         "site_name": user_info.get("site_name"),
         "site_url": moodle_site,
+        "role": user_info.get("role", "student"),
         "moodle_token": auth_result["token"],
         "auth_type": "cookie",
         "sesskey": auth_result.get("sesskey"),
@@ -457,6 +583,8 @@ async def extension_pair_moodle_cookie(
         )
     )
 
+    _schedule_prefetch(session_payload)
+
     return {
         "success": True,
         "owner_id": owner_id,
@@ -465,6 +593,9 @@ async def extension_pair_moodle_cookie(
         "moodle_url": moodle_site,
         "moodle_user_id": user_info["user_id"],
         "moodle_username": user_info["username"],
+        "fullname": user_info["fullname"],
+        "email": user_info.get("email"),
+        "userpictureurl": _public_avatar_url(session_payload),
         "paired_at": datetime.now(timezone.utc).isoformat(),
     }
 
@@ -488,13 +619,31 @@ async def get_auth_status(request: Request, response: Response):
         except UnauthorizedError:
             moodle_session = None
 
+    resolved_email = (
+        _clean_user_email((platform_claims or {}).get("email"))
+        or _clean_user_email((user_row or {}).get("email"))
+        or _clean_user_email((moodle_session or {}).get("email"))
+    )
+    resolved_fullname = (
+        (platform_claims or {}).get("fullname")
+        or (user_row or {}).get("fullname")
+        or (moodle_session or {}).get("fullname")
+        or resolved_email
+        or (moodle_session or {}).get("sub")
+    )
+    resolved_picture = (
+        (platform_claims or {}).get("picture_url")
+        or (user_row or {}).get("picture_url")
+        or (_public_avatar_url(moodle_session) if moodle_session else None)
+    )
+
     return PlatformAccountStatus(
         owner_id=owner.owner_id,
         auth_mode=owner.auth_mode,
         google_linked=bool(platform_claims or user_row),
-        email=(platform_claims or {}).get("email") or (user_row or {}).get("email"),
-        fullname=(platform_claims or {}).get("fullname") or (user_row or {}).get("fullname"),
-        picture_url=(platform_claims or {}).get("picture_url") or (user_row or {}).get("picture_url"),
+        email=resolved_email,
+        fullname=resolved_fullname,
+        picture_url=resolved_picture,
         moodle_paired=bool(moodle_session and moodle_session.get("moodle_token")),
         moodle_url=(moodle_session or {}).get("site_url") or (user_row or {}).get("linked_moodle_url"),
         moodle_user_id=(moodle_session or {}).get("user_id") or (user_row or {}).get("linked_moodle_user_id"),
