@@ -36,6 +36,7 @@ from app.models.mix import (
     PreviewStructureRequest,
     ConfirmStructureRequest,
 )
+from app.services.academic_cache import get_academic_cache, schedule_background_task
 from app.services.build_queue import get_build_queue
 from app.services.course_organization import safe_sections, save_organization, get_organization, material_groups
 from app.services.mix_generator import (
@@ -209,25 +210,36 @@ async def preview_course_structure(
         shortname = existing["course"].shortname
     custom_text = req.custom_syllabus_text
 
-    # 1. Try pulling real Moodle sections if user has an active session
+    # 1. Try pulling real Moodle sections if user has an active session (reusing short TTL cache)
     session = get_optional_moodle_session(request)
     if not sections and session and session.get("moodle_token") and req.course_id:
+        acache = get_academic_cache()
+        site_url = session.get("site_url")
+        uid = session["user_id"]
+        sections = acache.get(site_url, uid, "course_contents", str(req.course_id))
         try:
-            client = MoodleClient(base_url=session.get("site_url"))
-            sections = await client.get_course_contents(
-                token=session["moodle_token"],
-                course_id=req.course_id,
-                auth_type=session.get("auth_type", "token"),
-                sesskey=session.get("sesskey"),
-                base_url=session.get("site_url"),
-            )
-            raw_courses = await client.get_user_courses(
-                token=session["moodle_token"],
-                user_id=session["user_id"],
-                auth_type=session.get("auth_type", "token"),
-                sesskey=session.get("sesskey"),
-                base_url=session.get("site_url"),
-            )
+            client = MoodleClient(base_url=site_url)
+            if sections is None:
+                sections = await client.get_course_contents(
+                    token=session["moodle_token"],
+                    course_id=req.course_id,
+                    auth_type=session.get("auth_type", "token"),
+                    sesskey=session.get("sesskey"),
+                    base_url=site_url,
+                )
+                if sections:
+                    acache.set(site_url, uid, "course_contents", sections, key=str(req.course_id), ttl_seconds=120.0)
+
+            raw_courses = acache.get(site_url, uid, "courses")
+            if raw_courses is None:
+                raw_courses = await client.get_user_courses(
+                    token=session["moodle_token"],
+                    user_id=uid,
+                    auth_type=session.get("auth_type", "token"),
+                    sesskey=session.get("sesskey"),
+                    base_url=site_url,
+                )
+                acache.set(site_url, uid, "courses", raw_courses, ttl_seconds=300.0)
             for c in raw_courses:
                 if c.get("id") == req.course_id:
                     course_title = c.get("fullname", course_title)
@@ -288,17 +300,24 @@ async def confirm_course_structure(
     sections = None
     session = get_optional_moodle_session(request)
     if session and session.get("moodle_token") and req.course_id:
-        try:
-            client = MoodleClient(base_url=session.get("site_url"))
-            sections = await client.get_course_contents(
-                token=session["moodle_token"],
-                course_id=req.course_id,
-                auth_type=session.get("auth_type", "token"),
-                sesskey=session.get("sesskey"),
-                base_url=session.get("site_url"),
-            )
-        except Exception:
-            pass
+        acache = get_academic_cache()
+        site_url = session.get("site_url")
+        uid = session["user_id"]
+        sections = acache.get(site_url, uid, "course_contents", str(req.course_id))
+        if sections is None:
+            try:
+                client = MoodleClient(base_url=site_url)
+                sections = await client.get_course_contents(
+                    token=session["moodle_token"],
+                    course_id=req.course_id,
+                    auth_type=session.get("auth_type", "token"),
+                    sesskey=session.get("sesskey"),
+                    base_url=site_url,
+                )
+                if sections:
+                    acache.set(site_url, uid, "course_contents", sections, key=str(req.course_id), ttl_seconds=120.0)
+            except Exception:
+                pass
 
     if not sections and (get_settings().MOODLE_MOCK_MODE or req.authority == "mock"):
         from app.services.mock_data import MOCK_COURSE_CONTENTS
@@ -605,6 +624,7 @@ async def sync_course_from_moodle_backend(
     auth_type = session.get("auth_type", "cookie")
     sesskey = session.get("sesskey")
     client = MoodleClient(base_url=moodle_url)
+    get_academic_cache().invalidate_key(moodle_url, session["user_id"], "course_contents", str(course_id))
 
     course_title = (req_body.course_title or "").strip() or f"Course {course_id}"
     course_short = (req_body.shortname or "").strip() or f"C{course_id}"
@@ -991,26 +1011,27 @@ async def get_workspace_course(
     request: Request,
     owner: WorkspaceOwner = Depends(get_workspace_owner),
 ) -> Dict[str, Any]:
-    """Retrieve complete study workspace bundle owned by the current user."""
+    """Retrieve complete study workspace bundle immediately from SQLite and check upstream updates asynchronously."""
     store = get_workspace_store()
-
-    # Auto-check upstream updates on course entry (debounced to 1 min inside store)
-    session = get_optional_moodle_session(request)
-    client = MoodleClient(base_url=session.get("site_url")) if session and session.get("site_url") else None
-    try:
-        await store.check_and_apply_course_updates(
-            course_id=course_id,
-            owner_id=owner.owner_id,
-            moodle_client=client,
-            session=session,
-            force=False,
-        )
-    except Exception:
-        pass
-
     bundle = store.get_course_bundle(course_id, owner_id=owner.owner_id)
     if not bundle:
         raise HTTPException(status_code=404, detail=f"Workspace course {course_id} not found.")
+
+    # Non-blocking background update check; if changes are found, SSE notifies UI (#workspace-update)
+    session = get_optional_moodle_session(request)
+    if session and session.get("site_url") and not str(session.get("moodle_token", "")).startswith("mock_"):
+        client = MoodleClient(base_url=session.get("site_url"))
+        schedule_background_task(
+            store.check_and_apply_course_updates(
+                course_id=course_id,
+                owner_id=owner.owner_id,
+                moodle_client=client,
+                session=session,
+                force=False,
+            ),
+            dedup_key=(owner.owner_id, course_id),
+        )
+
     organization = get_organization(store, owner.owner_id, course_id)
     return {
         "organization": organization,
