@@ -2,8 +2,10 @@ import asyncio
 import pytest
 from fastapi.testclient import TestClient
 
+from app.config import get_settings
 from app.main import app
 from app.services import build_queue as bq_module
+from app.services import temp_storage as ts_module
 from app.services import workspace_store as ws_module
 from app.services.build_queue import DebouncedBuildQueue
 from app.services.workspace_store import WorkspaceStore
@@ -12,13 +14,19 @@ from app.services.workspace_store import WorkspaceStore
 @pytest.fixture()
 def isolated_store(tmp_path, monkeypatch):
     db_file = tmp_path / "test_workspace.db"
+    staging_dir = tmp_path / "staging"
+    monkeypatch.setattr(get_settings(), "TEMP_STORAGE_DIR", str(staging_dir))
+    monkeypatch.setattr(get_settings(), "AUTH_DEV_GOOGLE_ENABLED", True)
+    monkeypatch.setattr(ts_module, "_temp_storage_instance", None)
     store = WorkspaceStore(db_path=str(db_file))
     fresh_queue = DebouncedBuildQueue()
     monkeypatch.setattr(ws_module, "_store_instance", store)
     monkeypatch.setattr("app.routers.workspace.get_workspace_store", lambda: store)
+    monkeypatch.setattr("app.routers.auth.get_workspace_store", lambda: store)
     monkeypatch.setattr(bq_module, "_build_queue", fresh_queue)
     yield store
     fresh_queue.cancel_all()
+    monkeypatch.setattr(ts_module, "_temp_storage_instance", None)
 
 
 def test_extension_sync_exam_shield_and_note_preserving_diff(isolated_store):
@@ -1034,3 +1042,343 @@ async def test_build_queue_respects_concurrency_limit(isolated_store, monkeypatc
     await asyncio.sleep(0.25)
     assert completed == 5
     assert max_active <= 2
+
+
+def test_google_login_and_extension_cookie_pairing(isolated_store, monkeypatch):
+    """Google platform sign-in registers user without passwords and keeps same owner_id after MoodleSession pairing."""
+    from app.services.moodle_client import MoodleClient
+
+    async def fake_auth_cookie(self, cookie_input: str, target_moodle_url=None):
+        return {
+            "user": {
+                "user_id": 4242,
+                "username": "student.ucu",
+                "fullname": "Olena Koval",
+                "userpictureurl": None,
+                "site_name": "UCU Learn",
+                "site_url": "https://learn.ucu.edu.ua",
+                "role": "student",
+            },
+            "token": cookie_input,
+            "auth_type": "cookie",
+            "sesskey": "sess-xyz",
+        }
+
+    monkeypatch.setattr(MoodleClient, "authenticate_with_cookie", fake_auth_cookie)
+
+    client = TestClient(app)
+    login_res = client.post(
+        "/api/auth/google/dev-login",
+        json={"email": "olena@ucu.edu.ua", "fullname": "Olena Koval"},
+    )
+    assert login_res.status_code == 200, login_res.text
+    g_data = login_res.json()
+    assert g_data["owner_id"].startswith("google:")
+
+    pair_res = client.post(
+        "/api/auth/extension-pair",
+        json={"moodle_url": "https://learn.ucu.edu.ua", "cookie": "MoodleSession=secret_cookie_val_999"},
+    )
+    assert pair_res.status_code == 200, pair_res.text
+    p_data = pair_res.json()
+    assert p_data["owner_id"] == g_data["owner_id"]
+    assert p_data["google_linked"] is True
+    assert p_data["moodle_paired"] is True
+
+    # Verify DB stores linked metadata ONLY — zero raw MoodleSession cookies or passwords
+    db_user = isolated_store.get_platform_user(g_data["owner_id"])
+    assert db_user is not None
+    assert db_user["linked_moodle_user_id"] == 4242
+    assert "secret_cookie_val_999" not in str(db_user)
+
+    status_res = client.get("/api/auth/status")
+    assert status_res.status_code == 200
+    st = status_res.json()
+    assert st["owner_id"] == g_data["owner_id"]
+    assert st["google_linked"] is True
+    assert st["moodle_paired"] is True
+    assert st["moodle_url"] == "https://learn.ucu.edu.ua"
+
+    logout_res = client.post("/api/auth/logout")
+    assert logout_res.status_code == 200
+    st_after = client.get("/api/auth/status").json()
+    assert st_after["google_linked"] is False
+    assert st_after["moodle_paired"] is False
+
+    # Account-switch isolation: User A logs in + pairs Moodle, then User B logs into Google on same browser
+    client.post("/api/auth/google/dev-login", json={"email": "alice@ucu.edu.ua"})
+    client.post(
+        "/api/auth/extension-pair",
+        json={"moodle_url": "https://learn.ucu.edu.ua", "cookie": "alice_cookie"},
+    )
+    client.post("/api/auth/google/dev-login", json={"email": "bob@ucu.edu.ua"})
+    st_bob = client.get("/api/auth/status").json()
+    assert st_bob["email"] == "bob@ucu.edu.ua"
+    assert st_bob["owner_id"] != g_data["owner_id"]
+    assert st_bob["moodle_paired"] is False
+
+    # SSRF & non-HTTPS/unknown host rejection on extension-pair
+    for bad_url in ("http://169.254.169.254", "https://127.0.0.1", "https://evil.example.com"):
+        bad_pair = client.post(
+            "/api/auth/extension-pair",
+            json={"moodle_url": bad_url, "cookie": "test_cookie_val"},
+        )
+        assert bad_pair.status_code == 400
+
+
+def test_per_person_isolated_temp_storage_and_auto_purge(isolated_store, tmp_path):
+    """Temporary staging isolates raw files per owner_id, blocks restricted_exam, and auto-purges after upload."""
+    from app.core.security import owner_storage_slug
+    from app.services.temp_storage import get_temp_storage
+
+    owner_a = "google:alice_sub_1"
+    owner_b = "google:bob_sub_2"
+
+    # Exam Shield: restricted_exam must NEVER be staged
+    with pytest.raises(ValueError, match="Exam Shield"):
+        isolated_store.stage_material(
+            owner_id=owner_a,
+            course_id=101,
+            module_id=9,
+            filename="final_exam.pdf",
+            raw_bytes=b"secret exam answers",
+            safety_status="restricted_exam",
+        )
+
+    staged_a = isolated_store.stage_material(
+        owner_id=owner_a,
+        course_id=101,
+        module_id=1,
+        filename="../evil/notes.txt",
+        raw_bytes=b"Alice private lecture notes",
+        ttl_seconds=10,
+    )
+    expected_prefix = f"{owner_storage_slug(owner_a)}/101/1_{staged_a['sha256_hash'][:12]}_notes.txt"
+    assert staged_a["storage_key"] == expected_prefix
+    assert ".." not in staged_a["storage_key"]
+    assert get_temp_storage().exists(staged_a["storage_key"]) is True
+
+    # Unsupported extension must be rejected
+    with pytest.raises(ValueError, match="Unsupported file extension"):
+        isolated_store.stage_material(
+            owner_id=owner_a,
+            course_id=101,
+            module_id=3,
+            filename="payload.exe",
+            raw_bytes=b"MZ",
+        )
+
+    # Person B cannot read or purge Person A's staged file
+    assert isolated_store.get_staged_material(owner_b, staged_a["staging_id"]) is None
+    assert isolated_store.read_staged_bytes(owner_b, staged_a["staging_id"]) is None
+    assert isolated_store.purge_staged_material(owner_b, staged_a["staging_id"]) is False
+    assert isolated_store.list_staged_materials(owner_b) == []
+
+    # Person A can read, validate, and purge
+    assert isolated_store.read_staged_bytes(owner_a, staged_a["staging_id"]) == b"Alice private lecture notes"
+    assert isolated_store.mark_staged_validated(owner_a, staged_a["staging_id"]) is True
+    assert isolated_store.purge_staged_material(owner_a, staged_a["staging_id"]) is True
+    assert get_temp_storage().exists(staged_a["storage_key"]) is False
+    assert isolated_store.read_staged_bytes(owner_a, staged_a["staging_id"]) is None
+
+    # Expired TTL sweep cleans abandoned staged files
+    expired = isolated_store.stage_material(
+        owner_id=owner_b,
+        course_id=202,
+        module_id=2,
+        filename="abandoned.txt",
+        raw_bytes=b"temporary data",
+        ttl_seconds=1,
+    )
+    with isolated_store._connect() as conn:
+        conn.execute(
+            "UPDATE temp_staging SET expires_at = '2020-01-01T00:00:00+00:00' WHERE staging_id = ?",
+            (expired["staging_id"],),
+        )
+    assert isolated_store.cleanup_expired_staging(owner_id=owner_b) == 1
+    assert get_temp_storage().exists(expired["storage_key"]) is False
+
+    # Upload endpoint uses per-user staging and auto-purges raw file once TopicMix is built
+    client = TestClient(app)
+    client.post("/api/auth/google/dev-login", json={"email": "uploader@ucu.edu.ua"})
+    up_res = client.post(
+        "/api/workspace/courses/upload",
+        data={"course_title": "Linear Algebra", "shortname": "LA101"},
+        files={"file": ("lecture1.txt", b"# Eigenvalues\nAx = lambda x defines eigenvectors.", "text/plain")},
+    )
+    assert up_res.status_code == 200, up_res.text
+    up_json = up_res.json()
+    assert up_json["staging_purged"] is True
+    stg_list = client.get("/api/workspace/storage/staging").json()
+    assert stg_list["items"] == []
+
+
+def test_backend_moodle_sync_fetches_safe_resources_and_purges_staging(isolated_store, monkeypatch):
+    """Backend sync-moodle uses paired MoodleSession cookie, skips quizzes, stages safe files, and purges them."""
+    from app.services.moodle_client import MoodleClient
+    from app.services.temp_storage import get_temp_storage
+
+    async def fake_auth_cookie(self, cookie_input: str, target_moodle_url=None):
+        return {
+            "user": {
+                "user_id": 77,
+                "username": "taras",
+                "fullname": "Taras Shevchenko",
+                "site_name": "UCU Learn",
+                "site_url": "https://learn.ucu.edu.ua",
+            },
+            "token": cookie_input,
+            "auth_type": "cookie",
+            "sesskey": "sess-77",
+        }
+
+    async def fake_get_courses(self, token, user_id, auth_type="token", sesskey=None):
+        return [{"id": 555, "fullname": "Algorithms & Complexity", "shortname": "ALG-555"}]
+
+    current_timemodified = [1700000100]
+
+    async def fake_get_contents(self, token, course_id, auth_type="token", sesskey=None):
+        return [
+            {
+                "section": 1,
+                "name": "Topic 1: Dynamic Programming",
+                "summary": "Memoization and optimal substructure",
+                "modules": [
+                    {
+                        "id": 301,
+                        "name": "DP Lecture Notes",
+                        "modname": "resource",
+                        "url": "https://learn.ucu.edu.ua/mod/resource/view.php?id=301",
+                        "timemodified": current_timemodified[0],
+                    },
+                    {
+                        "id": 302,
+                        "name": "Midterm Exam Quiz",
+                        "modname": "quiz",
+                        "url": "https://learn.ucu.edu.ua/mod/quiz/view.php?id=302",
+                    },
+                ],
+            }
+        ]
+
+    fetched_urls = []
+
+    async def fake_fetch_resource(self, cookie, module_url, modname="resource", max_bytes=10 * 1024 * 1024, http_client=None):
+        fetched_urls.append(module_url)
+        return {
+            "filename": "dp_notes.md",
+            "content_type": "text/markdown",
+            "raw_bytes": b"# Bellman Principle\nAn optimal policy has optimal subpolicies.",
+            "text_excerpt": "Bellman Principle: An optimal policy has optimal subpolicies.",
+        }
+
+    monkeypatch.setattr(MoodleClient, "authenticate_with_cookie", fake_auth_cookie)
+    monkeypatch.setattr(MoodleClient, "get_user_courses", fake_get_courses)
+    monkeypatch.setattr(MoodleClient, "get_course_contents", fake_get_contents)
+    monkeypatch.setattr(MoodleClient, "fetch_module_resource", fake_fetch_resource)
+
+    client = TestClient(app)
+    client.post("/api/auth/google/dev-login", json={"email": "taras@ucu.edu.ua"})
+    client.post(
+        "/api/auth/extension-pair",
+        json={"moodle_url": "https://learn.ucu.edu.ua", "cookie": "live_cookie_abc"},
+    )
+
+    sync_res = client.post("/api/workspace/courses/555/sync-moodle", json={"fetch_files": True})
+    assert sync_res.status_code == 200, sync_res.text
+    sdata = sync_res.json()
+    assert sdata["success"] is True
+    assert sdata["downloaded_files"] == 1
+    assert sdata["staged_count"] == 1
+    assert sdata["staging_purged"] is True
+    assert sdata["blocked_exams"] == 1
+    # Never fetched the quiz URL
+    assert fetched_urls == ["https://learn.ucu.edu.ua/mod/resource/view.php?id=301"]
+
+    bundle = client.get("/api/workspace/courses/555").json()
+    assert bundle["course"]["title"] == "Algorithms & Complexity"
+    assert len(bundle["blocked_quizzes"]) == 1
+    assert any("Bellman" in s["explanation_markdown"] for s in bundle["topic_mixes"][0]["book_sections"])
+
+    # Temporary file bytes were purged after validation & processing
+    stg = client.get("/api/workspace/storage/staging?include_purged=true").json()
+    assert len(stg["items"]) == 1
+    assert stg["items"][0]["status"] == "purged"
+    assert get_temp_storage().exists(stg["items"][0]["storage_key"]) is False
+
+    # 2nd sync with unchanged timemodified MUST skip re-downloading via file_manifest
+    sync_res2 = client.post("/api/workspace/courses/555/sync-moodle", json={"fetch_files": True})
+    assert sync_res2.status_code == 200
+    s2 = sync_res2.json()
+    assert s2["downloaded_files"] == 0
+    assert s2["skipped_unchanged_downloads"] == 1
+    assert len(fetched_urls) == 1
+
+    # Bump timemodified -> re-downloads changed file & purges again
+    current_timemodified[0] = 1700000999
+    sync_res3 = client.post("/api/workspace/courses/555/sync-moodle", json={"fetch_files": True})
+    assert sync_res3.status_code == 200
+    s3 = sync_res3.json()
+    assert s3["downloaded_files"] == 1
+    assert len(fetched_urls) == 2
+
+
+@pytest.mark.asyncio
+async def test_moodle_client_fetch_module_resource_guards():
+    """Real MoodleClient.fetch_module_resource streams safe files and blocks quiz redirects, http downgrades & oversized files."""
+    import httpx
+    from app.services.moodle_client import MoodleClient
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path == "/mod/resource/view.php" and request.url.query == b"id=1&redirect=1":
+            return httpx.Response(302, headers={"Location": "https://learn.ucu.edu.ua/pluginfile.php/10/mod_resource/content/1/slides.txt"})
+        if path == "/pluginfile.php/10/mod_resource/content/1/slides.txt":
+            return httpx.Response(200, headers={"Content-Type": "text/plain"}, content=b"Graph theory lecture slides")
+        if path == "/mod/url/view.php" and request.url.query == b"id=2":
+            return httpx.Response(302, headers={"Location": "https://learn.ucu.edu.ua/mod/quiz/view.php?id=99"})
+        if path == "/mod/resource/view.php" and request.url.query == b"id=3&redirect=1":
+            return httpx.Response(302, headers={"Location": "http://learn.ucu.edu.ua/pluginfile.php/10/secret.pdf"})
+        if path == "/pluginfile.php/big.pdf":
+            return httpx.Response(200, headers={"Content-Type": "application/pdf", "Content-Length": str(20 * 1024 * 1024)}, content=b"x" * 100)
+        return httpx.Response(404)
+
+    mc = MoodleClient(base_url="https://learn.ucu.edu.ua")
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler), follow_redirects=False) as http_client:
+        ok = await mc.fetch_module_resource(
+            cookie="sess123",
+            module_url="https://learn.ucu.edu.ua/mod/resource/view.php?id=1",
+            modname="resource",
+            http_client=http_client,
+        )
+        assert ok is not None
+        assert ok["filename"] == "slides.txt"
+        assert ok["raw_bytes"] == b"Graph theory lecture slides"
+
+        # Redirect to /mod/quiz/ must be blocked by Exam Shield
+        with pytest.raises(ValueError, match="Exam Shield"):
+            await mc.fetch_module_resource(
+                cookie="sess123",
+                module_url="https://learn.ucu.edu.ua/mod/url/view.php?id=2",
+                modname="url",
+                http_client=http_client,
+            )
+
+        # Redirect downgrading to http:// must be rejected (returns None)
+        downgrade = await mc.fetch_module_resource(
+            cookie="sess123",
+            module_url="https://learn.ucu.edu.ua/mod/resource/view.php?id=3",
+            modname="resource",
+            http_client=http_client,
+        )
+        assert downgrade is None
+
+        # Oversized Content-Length must abort before buffering
+        with pytest.raises(ValueError, match="exceeds max allowed staging limit"):
+            await mc.fetch_module_resource(
+                cookie="sess123",
+                module_url="https://learn.ucu.edu.ua/pluginfile.php/big.pdf",
+                modname="file",
+                max_bytes=1024 * 1024,
+                http_client=http_client,
+            )

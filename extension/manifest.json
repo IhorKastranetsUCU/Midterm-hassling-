@@ -5,6 +5,7 @@
   "description": "Sync Moodle courses in 1 click without passwords or F12 cookies, with fail-closed exam privacy protection.",
   "permissions": [
     "activeTab",
+    "cookies",
     "scripting",
     "storage"
   ],

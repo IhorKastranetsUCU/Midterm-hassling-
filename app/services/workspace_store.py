@@ -1,8 +1,10 @@
 import base64
+import hashlib
 import json
 import os
 import sqlite3
-from datetime import datetime, timezone
+import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from app.config import get_settings
@@ -35,6 +37,11 @@ from app.services.mix_generator import (
     get_mix_generator,
     split_text_into_semantic_chunks,
 )
+from app.services.temp_storage import (
+    build_isolated_storage_key,
+    get_temp_storage,
+    is_allowed_staging_filename,
+)
 
 
 def _utc_iso() -> str:
@@ -58,7 +65,6 @@ class WorkspaceStore:
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA busy_timeout=5000")
         return conn
 
@@ -173,11 +179,61 @@ class WorkspaceStore:
             );
             CREATE INDEX IF NOT EXISTS idx_quiz_telemetry_course
                 ON quiz_telemetry (owner_id, course_id);
+
+            CREATE TABLE IF NOT EXISTS platform_users (
+                owner_id TEXT PRIMARY KEY,
+                google_sub TEXT UNIQUE,
+                email TEXT NOT NULL,
+                fullname TEXT NOT NULL,
+                picture_url TEXT,
+                linked_moodle_url TEXT,
+                linked_moodle_user_id INTEGER,
+                linked_moodle_username TEXT,
+                last_paired_at TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS temp_staging (
+                staging_id TEXT PRIMARY KEY,
+                owner_id TEXT NOT NULL,
+                course_id INTEGER NOT NULL,
+                module_id INTEGER NOT NULL DEFAULT 0,
+                filename TEXT NOT NULL,
+                content_type TEXT NOT NULL DEFAULT 'application/octet-stream',
+                size_bytes INTEGER NOT NULL DEFAULT 0,
+                sha256_hash TEXT NOT NULL,
+                storage_backend TEXT NOT NULL DEFAULT 'local',
+                storage_key TEXT NOT NULL,
+                safety_status TEXT NOT NULL DEFAULT 'safe_material',
+                status TEXT NOT NULL DEFAULT 'pending_validation',
+                created_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                purged_at TEXT
+            );
+            CREATE INDEX IF NOT EXISTS idx_temp_staging_owner_course
+                ON temp_staging (owner_id, course_id, status);
+            CREATE INDEX IF NOT EXISTS idx_temp_staging_expiry
+                ON temp_staging (expires_at, purged_at);
+
+            CREATE TABLE IF NOT EXISTS file_manifest (
+                owner_id TEXT NOT NULL,
+                course_id INTEGER NOT NULL,
+                module_id INTEGER NOT NULL,
+                remote_url TEXT NOT NULL DEFAULT '',
+                moodle_timemodified INTEGER NOT NULL DEFAULT 0,
+                sha256_hash TEXT NOT NULL,
+                last_seen_at TEXT NOT NULL,
+                PRIMARY KEY (owner_id, course_id, module_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_file_manifest_course
+                ON file_manifest (owner_id, course_id);
             """
         )
 
     def _init_schema(self) -> None:
         with self._connect() as conn:
+            conn.execute("PRAGMA journal_mode=WAL")
             has_courses_table = (
                 conn.execute(
                     "SELECT 1 FROM sqlite_master WHERE type='table' AND name='workspace_courses'"
@@ -348,15 +404,31 @@ class WorkspaceStore:
         chunks: List[Dict[str, Any]],
     ) -> None:
         now = _utc_iso()
+        rows_to_insert = [
+            (
+                f"{owner_id}:{course_id}:{topic_index}:{ch['chunk_id']}",
+                owner_id,
+                course_id,
+                topic_index,
+                ch["chunk_id"],
+                int(ch.get("module_id", 0)),
+                ch.get("modname", "resource"),
+                ch["heading"],
+                ch["content_text"],
+                ch["module_hash"],
+                ch.get("safety_status", "safe_material"),
+                idx,
+                now,
+            )
+            for idx, ch in enumerate(chunks)
+        ]
         with self._connect() as conn:
             conn.execute(
                 "DELETE FROM module_chunks WHERE owner_id = ? AND course_id = ? AND topic_index = ?",
                 (owner_id, course_id, topic_index),
             )
-            for idx, ch in enumerate(chunks):
-                chunk_id = ch["chunk_id"]
-                chunk_key = f"{owner_id}:{course_id}:{topic_index}:{chunk_id}"
-                conn.execute(
+            if rows_to_insert:
+                conn.executemany(
                     """
                     INSERT INTO module_chunks (
                         chunk_key, owner_id, course_id, topic_index, chunk_id, module_id,
@@ -364,21 +436,7 @@ class WorkspaceStore:
                     )
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
-                    (
-                        chunk_key,
-                        owner_id,
-                        course_id,
-                        topic_index,
-                        chunk_id,
-                        int(ch.get("module_id", 0)),
-                        ch.get("modname", "resource"),
-                        ch["heading"],
-                        ch["content_text"],
-                        ch["module_hash"],
-                        ch.get("safety_status", "safe_material"),
-                        idx,
-                        now,
-                    ),
+                    rows_to_insert,
                 )
 
     def compute_sync_diff(self, req: SyncDiffRequest, owner_id: str) -> SyncDiffResponse:
@@ -817,7 +875,7 @@ class WorkspaceStore:
                     lines_mod = [f"[{mod.modname.upper()}] {mod.name}"]
                     if mod.text_excerpt and mod.text_excerpt.strip():
                         lines_mod.append(mod.text_excerpt.strip())
-                    if mod.attachment_base64:
+                    if mod.attachment_base64 and len(mod.attachment_base64) <= 5_600_000:
                         try:
                             raw_bytes = base64.b64decode(mod.attachment_base64, validate=False)
                             if 0 < len(raw_bytes) <= 4 * 1024 * 1024:
@@ -1800,7 +1858,17 @@ class WorkspaceStore:
 
     def delete_course(self, course_id: int, owner_id: str) -> bool:
         get_build_queue().cancel_job(owner_id, course_id, "exam_mix")
+        storage = get_temp_storage()
+        storage.delete_prefix(owner_id, course_id=course_id)
         with self._connect() as conn:
+            conn.execute(
+                "DELETE FROM temp_staging WHERE owner_id = ? AND course_id = ?",
+                (owner_id, course_id),
+            )
+            conn.execute(
+                "DELETE FROM file_manifest WHERE owner_id = ? AND course_id = ?",
+                (owner_id, course_id),
+            )
             cur = conn.execute(
                 "DELETE FROM workspace_courses WHERE owner_id = ? AND course_id = ?",
                 (owner_id, course_id),
@@ -2020,6 +2088,353 @@ class WorkspaceStore:
                     _utc_iso(),
                 ),
             )
+
+    # ------------------------------------------------------------------
+    # Platform Users (Google OAuth + Moodle Cookie Pairing Metadata)
+    # ------------------------------------------------------------------
+
+    def upsert_google_user(
+        self,
+        owner_id: str,
+        google_sub: str,
+        email: str,
+        fullname: str,
+        picture_url: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        now = _utc_iso()
+        with self._connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO platform_users (
+                    owner_id, google_sub, email, fullname, picture_url, created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(owner_id) DO UPDATE SET
+                    google_sub = excluded.google_sub,
+                    email = excluded.email,
+                    fullname = excluded.fullname,
+                    picture_url = COALESCE(excluded.picture_url, platform_users.picture_url),
+                    updated_at = excluded.updated_at
+                """,
+                (owner_id, google_sub, email, fullname, picture_url, now, now),
+            )
+        return self.get_platform_user(owner_id) or {}
+
+    def link_moodle_account(
+        self,
+        owner_id: str,
+        moodle_url: str,
+        moodle_user_id: int,
+        moodle_username: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Bind verified Moodle site/user identity to a Google user without storing cookies or passwords."""
+        now = _utc_iso()
+        with self._connect() as conn:
+            cur = conn.execute(
+                """
+                UPDATE platform_users
+                SET linked_moodle_url = ?,
+                    linked_moodle_user_id = ?,
+                    linked_moodle_username = ?,
+                    last_paired_at = ?,
+                    updated_at = ?
+                WHERE owner_id = ?
+                """,
+                (moodle_url, int(moodle_user_id), moodle_username, now, now, owner_id),
+            )
+        if cur.rowcount == 0:
+            return None
+        return self.get_platform_user(owner_id)
+
+    def get_platform_user(self, owner_id: str) -> Optional[Dict[str, Any]]:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM platform_users WHERE owner_id = ?",
+                (owner_id,),
+            ).fetchone()
+        return dict(row) if row else None
+
+    # ------------------------------------------------------------------
+    # Per-Person Temporary File Storage (ОБД: Validation & Processing Only)
+    # ------------------------------------------------------------------
+
+    def stage_material(
+        self,
+        owner_id: str,
+        course_id: int,
+        module_id: int,
+        filename: str,
+        raw_bytes: bytes,
+        content_type: str = "application/octet-stream",
+        safety_status: str = "safe_material",
+        ttl_seconds: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """
+        Store raw uploaded/fetched bytes in a strictly per-person isolated directory/S3 prefix
+        strictly for the duration of validation and processing. Never stores restricted_exam items.
+        """
+        if safety_status == "restricted_exam":
+            raise ValueError("Exam Shield: restricted_exam materials cannot be staged.")
+        if not is_allowed_staging_filename(filename):
+            raise ValueError(f"Unsupported file extension for staging: {filename}")
+
+        settings = get_settings()
+        if len(raw_bytes) > settings.TEMP_STORAGE_MAX_FILE_BYTES:
+            raise ValueError("File exceeds maximum allowed staging size.")
+
+        ttl = int(ttl_seconds if ttl_seconds is not None else settings.TEMP_STORAGE_TTL_SECONDS)
+        now_dt = datetime.now(timezone.utc)
+        expires_dt = now_dt + timedelta(seconds=max(1, ttl))
+        staging_id = f"stg-{uuid.uuid4().hex[:16]}"
+        sha256_hash = hashlib.sha256(raw_bytes).hexdigest()
+        storage_key = build_isolated_storage_key(owner_id, course_id, module_id, sha256_hash, filename)
+
+        now_iso = now_dt.isoformat()
+        expires_iso = expires_dt.isoformat()
+        clean_type = content_type or "application/octet-stream"
+        size_bytes = len(raw_bytes)
+
+        backend = get_temp_storage()
+        backend.put_bytes(storage_key, raw_bytes, content_type=clean_type)
+
+        try:
+            with self._connect() as conn:
+                conn.execute(
+                    """
+                    INSERT INTO temp_staging (
+                        staging_id, owner_id, course_id, module_id, filename, content_type,
+                        size_bytes, sha256_hash, storage_backend, storage_key,
+                        safety_status, status, created_at, expires_at, purged_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_validation', ?, ?, NULL)
+                    """,
+                    (
+                        staging_id,
+                        owner_id,
+                        int(course_id),
+                        int(module_id),
+                        filename,
+                        clean_type,
+                        size_bytes,
+                        sha256_hash,
+                        backend.backend_name,
+                        storage_key,
+                        safety_status,
+                        now_iso,
+                        expires_iso,
+                    ),
+                )
+        except Exception:
+            try:
+                backend.delete_bytes(storage_key)
+            except Exception:
+                pass
+            raise
+
+        return {
+            "staging_id": staging_id,
+            "owner_id": owner_id,
+            "course_id": int(course_id),
+            "module_id": int(module_id),
+            "filename": filename,
+            "content_type": clean_type,
+            "size_bytes": size_bytes,
+            "sha256_hash": sha256_hash,
+            "storage_backend": backend.backend_name,
+            "storage_key": storage_key,
+            "safety_status": safety_status,
+            "status": "pending_validation",
+            "created_at": now_iso,
+            "expires_at": expires_iso,
+            "purged_at": None,
+        }
+
+    def get_staged_material(self, owner_id: str, staging_id: str) -> Optional[Dict[str, Any]]:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM temp_staging WHERE staging_id = ? AND owner_id = ?",
+                (staging_id, owner_id),
+            ).fetchone()
+        if not row:
+            return None
+        data = dict(row)
+        if not get_temp_storage().verify_key_ownership(owner_id, data["storage_key"]):
+            return None
+        return data
+
+    def read_staged_bytes(self, owner_id: str, staging_id: str) -> Optional[bytes]:
+        record = self.get_staged_material(owner_id, staging_id)
+        if not record or record.get("purged_at"):
+            return None
+        if record.get("expires_at") and record["expires_at"] <= _utc_iso():
+            return None
+        return get_temp_storage().get_bytes(record["storage_key"])
+
+    def mark_staged_validated(self, owner_id: str, staging_id: str) -> bool:
+        with self._connect() as conn:
+            cur = conn.execute(
+                """
+                UPDATE temp_staging
+                SET status = 'validated'
+                WHERE staging_id = ? AND owner_id = ? AND purged_at IS NULL
+                """,
+                (staging_id, owner_id),
+            )
+        return cur.rowcount > 0
+
+    def mark_staged_processed(self, owner_id: str, staging_id: str) -> bool:
+        return self.mark_staged_processed_batch(owner_id, [staging_id]) > 0
+
+    def mark_staged_processed_batch(self, owner_id: str, staging_ids: List[str]) -> int:
+        clean_ids = [sid for sid in dict.fromkeys(staging_ids) if sid]
+        if not clean_ids:
+            return 0
+        placeholders = ",".join("?" for _ in clean_ids)
+        with self._connect() as conn:
+            cur = conn.execute(
+                f"UPDATE temp_staging SET status = 'processed' WHERE owner_id = ? AND staging_id IN ({placeholders}) AND purged_at IS NULL",
+                [owner_id, *clean_ids],
+            )
+        return cur.rowcount
+
+    def purge_staged_material(
+        self,
+        owner_id: str,
+        staging_id: str,
+        status: str = "purged",
+    ) -> bool:
+        return self.purge_staged_materials_batch(owner_id, [staging_id], status=status) > 0
+
+    def purge_staged_materials_batch(
+        self,
+        owner_id: str,
+        staging_ids: List[str],
+        status: str = "purged",
+    ) -> int:
+        """Delete staged files for one owner in a single batched DB transaction."""
+        clean_ids = [sid for sid in dict.fromkeys(staging_ids) if sid]
+        if not clean_ids:
+            return 0
+
+        placeholders = ",".join("?" for _ in clean_ids)
+        storage = get_temp_storage()
+        now = _utc_iso()
+        deleted_ids: List[Tuple[str, str, str, str]] = []
+        with self._connect() as conn:
+            rows = conn.execute(
+                f"SELECT staging_id, storage_key FROM temp_staging WHERE owner_id = ? AND staging_id IN ({placeholders})",
+                [owner_id, *clean_ids],
+            ).fetchall()
+            for r in rows:
+                if not storage.verify_key_ownership(owner_id, r["storage_key"]):
+                    continue
+                storage.delete_bytes(r["storage_key"])
+                deleted_ids.append((status, now, r["staging_id"], owner_id))
+            if deleted_ids:
+                conn.executemany(
+                    "UPDATE temp_staging SET status = ?, purged_at = ? WHERE staging_id = ? AND owner_id = ?",
+                    deleted_ids,
+                )
+        return len(deleted_ids)
+
+    def list_staged_materials(
+        self,
+        owner_id: str,
+        course_id: Optional[int] = None,
+        include_purged: bool = False,
+    ) -> List[Dict[str, Any]]:
+        query = "SELECT * FROM temp_staging WHERE owner_id = ?"
+        params: List[Any] = [owner_id]
+        if course_id is not None:
+            query += " AND course_id = ?"
+            params.append(int(course_id))
+        if not include_purged:
+            query += " AND purged_at IS NULL"
+        query += " ORDER BY created_at DESC"
+        with self._connect() as conn:
+            rows = conn.execute(query, params).fetchall()
+        return [dict(r) for r in rows]
+
+    def cleanup_expired_staging(self, owner_id: Optional[str] = None) -> int:
+        """Sweep any temporary files whose TTL has expired and delete them from disk/S3."""
+        now_iso = _utc_iso()
+        query = "SELECT staging_id, owner_id, storage_key FROM temp_staging WHERE purged_at IS NULL AND expires_at <= ?"
+        params: List[Any] = [now_iso]
+        if owner_id is not None:
+            query += " AND owner_id = ?"
+            params.append(owner_id)
+
+        storage = get_temp_storage()
+        to_mark: List[Tuple[str, str, str]] = []
+        with self._connect() as conn:
+            rows = conn.execute(query, params).fetchall()
+            for r in rows:
+                try:
+                    storage.delete_bytes(r["storage_key"])
+                except Exception:
+                    continue
+                to_mark.append((now_iso, r["staging_id"], r["owner_id"]))
+            if to_mark:
+                conn.executemany(
+                    "UPDATE temp_staging SET status = 'expired_purged', purged_at = ? WHERE staging_id = ? AND owner_id = ?",
+                    to_mark,
+                )
+        return len(to_mark)
+
+    # ------------------------------------------------------------------
+    # Per-Person File Manifest (Metadata-Only Diff Before Re-Downloading)
+    # ------------------------------------------------------------------
+
+    def get_course_file_manifest(self, owner_id: str, course_id: int) -> Dict[int, Dict[str, Any]]:
+        """Return existing {module_id: manifest_row} for (owner_id, course_id)."""
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM file_manifest WHERE owner_id = ? AND course_id = ?",
+                (owner_id, int(course_id)),
+            ).fetchall()
+        return {int(r["module_id"]): dict(r) for r in rows}
+
+    def upsert_file_manifest_batch(
+        self,
+        owner_id: str,
+        course_id: int,
+        records: List[Dict[str, Any]],
+    ) -> None:
+        if not records:
+            return
+        now = _utc_iso()
+        rows = [
+            (
+                owner_id,
+                int(course_id),
+                int(rec["module_id"]),
+                str(rec.get("remote_url") or ""),
+                int(rec.get("moodle_timemodified") or 0),
+                str(rec.get("sha256_hash") or ""),
+                now,
+            )
+            for rec in records
+        ]
+        with self._connect() as conn:
+            conn.executemany(
+                """
+                INSERT INTO file_manifest (
+                    owner_id, course_id, module_id, remote_url, moodle_timemodified, sha256_hash, last_seen_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(owner_id, course_id, module_id) DO UPDATE SET
+                    remote_url = excluded.remote_url,
+                    moodle_timemodified = excluded.moodle_timemodified,
+                    sha256_hash = excluded.sha256_hash,
+                    last_seen_at = excluded.last_seen_at
+                """,
+                rows,
+            )
+
+    def get_course_module_chunks_map(self, owner_id: str, course_id: int) -> Dict[int, Dict[str, Any]]:
+        """Map {module_id: chunk_row} so unchanged Moodle downloads can reuse prior extracted text."""
+        rows = self._load_topic_chunks(owner_id=owner_id, course_id=course_id)
+        return {int(r["module_id"]): r for r in rows if int(r.get("module_id") or 0) > 0}
 
 
 _store_instance: Optional[WorkspaceStore] = None
