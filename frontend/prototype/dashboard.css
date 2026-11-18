@@ -12,6 +12,24 @@
 .course-dot { width: .5rem; height: .5rem; border-radius: 50%; flex-shrink: 0; border: 1px solid #886a8450; }
 .persistent-timer { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.3rem; padding: .4rem .8rem; border: 1px solid #d9cddd; border-radius: 2rem; background: #f0e8f5; color: #503b59; font-size: .72rem; text-decoration: none; }
 .persistent-timer:hover { background: #e6d9ef; }
+.timer-menu { display: flex; align-items: center; flex: none; gap: .3rem; }
+.persistent-timer { cursor: pointer; font-family: inherit; font-weight: 750; font-variant-numeric: tabular-nums; }
+.timer-menu .timer-quick { width: 2.3rem; height: 2.3rem; background: #f0e8f5; border: 1px solid #d9cddd; border-radius: 50%; }
+.timer-menu[hidden], .timer-quick[hidden], .timer-menu-panel[hidden] { display: none; }
+.timer-menu-panel {
+  position: fixed;
+  z-index: 30;
+  top: var(--timer-menu-top);
+  right: var(--timer-menu-right);
+  width: min(19rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - var(--timer-menu-top) - 1rem);
+  overflow: auto;
+  padding: .6rem .2rem .2rem;
+}
+.timer-menu-panel .pomodoro-card { overflow-wrap: anywhere; }
+@media(max-width:36rem) {
+  .timer-menu-panel { right: 1rem; }
+}
 .running-dot { width: .4rem; height: .4rem; background: #5d7c4c; border-radius: 50%; }
 #workspace-main { max-width: 100rem; padding-top: 2rem; }
 .dashboard-heading { margin-bottom: 1.65rem; }
@@ -509,7 +527,7 @@
 
 #workspace-main .page-heading h1[tabindex="-1"]:focus { outline: 0; }
 .desk-layout { grid-template-areas: "stats stats" "focus side" "work side"; grid-template-rows: auto auto 1fr; }
-.course-desk-layout { grid-template-areas: "stats stats" "work side"; grid-template-rows: auto auto; }
+.compact-desk-layout { grid-template-areas: "stats stats" "work side"; grid-template-rows: auto auto; }
 .paper-course-header { margin-bottom: 1.15rem; }
 .paper-course-header .dashboard-heading > div:first-child { min-width: 0; flex: 1 1 24rem; }
 .paper-course-header .dashboard-heading h1 { font-size: clamp(1.55rem, 1.15rem + 1.1vw, 2.1rem); line-height: 1.16; overflow-wrap: anywhere; }
@@ -528,5 +546,5 @@
 .month-heading .icon-button { background: #f3ebe6; width: 2rem; height: 2rem; }
 @media(max-width:67rem) {
   .desk-layout { grid-template-columns: minmax(0,1fr); grid-template-areas: "focus" "stats" "work" "side"; grid-template-rows: auto; }
-  .course-desk-layout { grid-template-areas: "stats" "work" "side"; }
+  .compact-desk-layout { grid-template-areas: "stats" "work" "side"; }
 }

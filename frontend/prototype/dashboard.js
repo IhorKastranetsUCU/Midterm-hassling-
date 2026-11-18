@@ -16,6 +16,7 @@
   }
   const main = document.querySelector('#workspace-main');
   const today = () => C.dateKey();
+  const timerPhase = t => t.running ? 'running' : t.id || t.remaining < t.duration ? 'paused' : 'ready';
   let saved;
   try { saved = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { saved = {}; }
   const newTimer = (mode = 'focus', course = (H.account ? H.workspace?.courses[0]?.id : H.state.courses[0]) || '') => ({ mode, course, duration: mode === 'focus' ? 1500 : mode === 'short' ? 300 : 900, remaining: mode === 'focus' ? 1500 : mode === 'short' ? 300 : 900, running: false, endsAt: 0, creditedAt: 0, id: '' });
@@ -26,6 +27,7 @@
   H.calendar?.init(state.anchor);
   let reward = null, lastPracticeCourse;
   let selectedDate = today(), month = today().slice(0, 7) + '-01', activePractice = null, lastActivity = Date.now(), toastTimeout;
+  let timerMenu, timerToggle, timerPanel, timerQuick;
   const demoCourses = () => H.exampleCourses.filter(c => H.state.registered && H.state.ready && H.state.courses.includes(c.id));
   const selected = () => H.workspace?.courses || demoCourses();
   const courseById = id => selected().find(c => c.id === id);
@@ -159,7 +161,44 @@
     const title = showHeading ? `<div class="panel-title"><h2>Мої предмети</h2><a href="#courses">Усі предмети ${icon('arrow')}</a></div>` : '';
     return `<div class="subjects-section">${title}<div class="subject-grid">${cards}</div></div>`;
   }
-  function timerCard() { return `<section class="dash-panel pomodoro-card" data-timer-state="${state.timer.running ? 'running' : state.timer.remaining < state.timer.duration ? 'paused' : 'ready'}" aria-label="Pomodoro"><span class="paper-tape" aria-hidden="true"></span><div class="panel-title"><h2>${icon('clock')} Pomodoro</h2><span data-cycle-count>${state.sessions.filter(s => s.day === today()).length} сьогодні</span></div><div class="timer-modes" role="group" aria-label="Режим таймера">${[['focus', 'Фокус'], ['short', '5 хв'], ['long', '15 хв']].map(([mode, label]) => `<button data-timer-mode="${mode}" aria-pressed="${state.timer.mode === mode}">${label}</button>`).join('')}</div><div class="timer-ring" data-timer-ring><div><strong data-timer-display role="timer" aria-label="Залишилось часу">25:00</strong><span data-timer-description>${state.timer.running ? 'Таймер працює' : state.timer.remaining < state.timer.duration ? 'На паузі' : state.timer.mode === 'focus' ? 'Фокус' : 'Перерва'}</span></div></div><label class="timer-course-label" for="timer-course">Предмет</label><select id="timer-course" data-timer-course ${state.timer.running || state.timer.remaining !== state.timer.duration ? 'disabled' : ''}>${!selected().length || !state.timer.course ? '<option value="">Самостійне навчання</option>' : ''}${selected().map(c => `<option value="${c.id}" ${state.timer.course === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select><div class="timer-actions"><button class="primary" data-timer-toggle>${state.timer.running ? 'Пауза' : state.timer.remaining < state.timer.duration ? 'Продовжити' : 'Старт'}<span aria-hidden="true">${state.timer.running ? 'Ⅱ' : '▷'}</span></button><button class="icon-button" data-timer-reset aria-label="Скинути таймер">↻</button></div><p class="timer-feedback" role="status" data-timer-feedback>${state.timer.mode === 'focus' ? '' : 'Перерва не додається до часу навчання'}</p></section>`; }
+  function timerCard(courseInputId = 'timer-course') {
+    const t = state.timer, phase = timerPhase(t);
+    return `<section class="dash-panel pomodoro-card" data-timer-state="${phase}" aria-label="Pomodoro">
+      <span class="paper-tape" aria-hidden="true"></span><div class="panel-title"><h2>${icon('clock')} Pomodoro</h2><span>${state.sessions.filter(s => s.day === today()).length} сьогодні</span></div>
+      <div class="timer-modes" role="group" aria-label="Режим таймера">${[['focus', 'Фокус'], ['short', '5 хв'], ['long', '15 хв']].map(([mode, label]) =>
+        `<button data-timer-mode="${mode}" aria-pressed="${t.mode === mode}">${label}</button>`).join('')}</div>
+      <div class="timer-ring" data-timer-ring><div><strong data-timer-display role="timer" aria-label="Залишилось часу"></strong>
+      <span>${phase === 'running' ? 'Таймер працює' : phase === 'paused' ? 'На паузі' : t.mode === 'focus' ? 'Фокус' : 'Перерва'}</span></div></div>
+      <label class="timer-course-label" for="${courseInputId}">Предмет</label><select id="${courseInputId}" data-timer-course ${phase !== 'ready' ? 'disabled' : ''}>
+        ${!courseById(t.course) ? '<option value="">Самостійне навчання</option>' : ''}${selected().map(c => `<option value="${c.id}" ${t.course === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select>
+      <div class="timer-actions"><button class="primary" data-timer-toggle>${phase === 'running' ? 'Пауза' : phase === 'paused' ? 'Продовжити' : 'Старт'}${icon(phase === 'running' ? 'pause' : 'play')}</button>
+      <button class="icon-button" data-timer-reset aria-label="Скинути таймер">↻</button></div>
+      <p class="timer-feedback" role="status" data-timer-feedback>${t.mode === 'focus' ? '' : 'Перерва не додається до часу навчання'}</p>
+    </section>`;
+  }
+  function paintTimerPanel(focusSelector) {
+    if (!timerPanel || timerPanel.hidden) return;
+    timerPanel.innerHTML = timerCard('timer-menu-course');
+    if (focusSelector) timerPanel.querySelector(focusSelector)?.focus({preventScroll:true});
+  }
+  function closeTimerMenu(restoreFocus = false) {
+    if (!timerPanel || timerPanel.hidden) return;
+    timerPanel.hidden = true;
+    timerToggle.setAttribute('aria-expanded', 'false');
+    if (restoreFocus) timerToggle.focus({preventScroll:true});
+  }
+  function positionTimerMenu() {
+    if (!timerPanel || timerPanel.hidden) return;
+    const {bottom, right} = timerMenu.getBoundingClientRect();
+    if (bottom <= 0) { closeTimerMenu(); return; }
+    timerPanel.style.setProperty('--timer-menu-top', Math.ceil(bottom + 8) + 'px');
+    timerPanel.style.setProperty('--timer-menu-right', Math.max(16, innerWidth - right) + 'px');
+  }
+  function refreshTimerControls(trigger, selector) {
+    paintTimerPanel(timerPanel?.contains(trigger) ? selector : '');
+    if (location.hash === '#focus') refresh(main.contains(trigger) ? selector : '');
+    paintTimer();
+  }
   function calendarGrid(compact = false, course) {
     const days = C.monthDays(month), events = tasks(course?.id).filter(t => !t.course.connected);
     const monthLabel = dateText(month, { month: 'long', year: 'numeric' });
@@ -186,11 +225,12 @@
     const active = list.filter(task => !task.done);
     const next = active[0];
     const compactCourse = course?.connected;
-    const upcoming = compactCourse ? active : active.filter((task, index) => task !== next && (task.course.connected || task.course.id !== next?.course.id &&
+    const compactOverview = !!H.workspace;
+    const upcoming = compactOverview ? active : active.filter((task, index) => task !== next && (task.course.connected || task.course.id !== next?.course.id &&
       active.findIndex(other => other.course.id === task.course.id) === index));
     const queue = upcoming.length ? `<section class="dash-panel deadline-queue">
-      <div class="panel-title"><h2>${compactCourse ? 'Дедлайни' : 'Інші дедлайни'}</h2><a href="#calendar">Календар ${icon('arrow')}</a></div>
-      ${upcoming.map(task => `<a class="deadline-line deadline-surface" href="${esc(compactCourse && task.href ? task.href : '#course/' + task.course.id)}"${compactCourse && task.href && !task.href.startsWith('#') ? ' target="_blank" rel="noopener noreferrer"' : ''}>
+      <div class="panel-title"><h2>${compactOverview ? 'Дедлайни' : 'Інші дедлайни'}</h2><a href="#calendar">Календар ${icon('arrow')}</a></div>
+      ${upcoming.map(task => `<a class="deadline-line deadline-surface" href="${esc(compactOverview && task.href ? task.href : '#course/' + task.course.id)}"${compactOverview && task.href && !task.href.startsWith('#') ? ' target="_blank" rel="noopener noreferrer"' : ''}>
         ${avatar(task.course)}<span class="queue-title"><strong>${esc(task.course.deadline || task.title)}</strong>${compactCourse ? '' : `<small>${esc(task.course.name)}</small>`}</span>
         ${badge(task)}${icon('arrow')}${fire.edge(task.due, task.done)}</a>`).join('')}
     </section>` : '';
@@ -203,7 +243,8 @@
       ${others.length ? `<details class="remaining-tasks"><summary>Інші заняття <span>${others.length}</span></summary>${others.map(t => practiceRow(t, true)).join('')}</details>` : ''}
     </section>`;
     const header = compactCourse ? H.workspace.courseHeader(course) : `${course ? '<a class="back-to-courses" href="#courses">← Усі предмети</a>' : ''}${heading(course ? course.name : 'Мій огляд', course ? (H.paperOral?.button(course) || '') : (H.liveCalendar?.inboxButton() || H.calendar.button()))}`;
-    return `${header}${H.workspace?.notice() || ''}<div class="dashboard-layout desk-layout${compactCourse ? ' course-desk-layout' : ''}">${compactCourse ? '' : focusCard(course, next)}${metrics(course)}<div class="dashboard-main">${queue}${checklist}${course ? `<template><section class="dash-panel course-material-panel"><div class="panel-title"><h2>Матеріали предмета</h2></div>${course.materials.map((m, i) => `<button class="course-material-link" data-material="${i}" data-course="${course.id}" data-focus-id="dash-material-${course.id}-${i}">${icon('files')}<span><strong>${esc(m.title)}</strong><small>${esc(m.type)}</small></span>${icon('arrow')}</button>`).join('')}</section></template>` : ''}${weeklyChart(course)}</div><aside class="dashboard-aside">${timerCard()}${calendarGrid(true, course)}</aside></div>`;
+    const addCourse = compactOverview && !course && !selected().length ? H.workspace.add : '';
+    return `${header}${H.workspace?.notice() || ''}<div class="dashboard-layout desk-layout${compactOverview ? ' compact-desk-layout' : ''}">${compactOverview ? '' : focusCard(course, next)}${metrics(course)}<div class="dashboard-main">${addCourse ? `<div>${addCourse}</div>` : ''}${queue}${checklist}${course ? `<template><section class="dash-panel course-material-panel"><div class="panel-title"><h2>Матеріали предмета</h2></div>${course.materials.map((m, i) => `<button class="course-material-link" data-material="${i}" data-course="${course.id}" data-focus-id="dash-material-${course.id}-${i}">${icon('files')}<span><strong>${esc(m.title)}</strong><small>${esc(m.type)}</small></span>${icon('arrow')}</button>`).join('')}</section></template>` : ''}${weeklyChart(course)}</div><aside class="dashboard-aside">${calendarGrid(true, course)}</aside></div>`;
   }
   function deadlinesView(course) {
     const list = tasks(course?.id).sort((a,b) => deadlineOrder(a,b,Date.now()));
@@ -247,7 +288,7 @@
     }
     if (!['plan', 'courses', 'calendar', 'focus'].includes(hash) && !hash.startsWith('course/')) return false;
     if (hash.startsWith('course/') && !course) { fire.mount(); main.innerHTML = heading('Предмет не знайдено', '<a class="secondary" href="#courses">До предметів</a>'); return true; }
-    if (course && !state.timer.running && state.timer.remaining === state.timer.duration && state.timer.course !== course.id) { state.timer.course = course.id; save(); }
+    if (course && timerPhase(state.timer) === 'ready' && state.timer.course !== course.id) { state.timer.course = course.id; save(); }
     const title = course?.short || ({ plan: 'Мій огляд', courses: 'Мої предмети', calendar: 'Календар', focus: 'Pomodoro' })[hash];
     document.querySelectorAll('[data-nav],.sidebar-course').forEach(a => { if (course ? a.hash === '#course/' + course.id : a.dataset.nav === hash) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     document.querySelector('#view-name').textContent = title; document.title = `${title} — Hustle`;
@@ -292,6 +333,7 @@
       state.timer = newTimer(wasFocus ? (state.sessions.length % 4 === 0 ? 'long' : 'short') : 'focus', course);
       if (activePractice) activePractice.since = now;
       save(); if (!document.querySelector('#study-dialog').open) render();
+      paintTimerPanel();
       announce(wasFocus ? '+25 XP · Pomodoro завершено. Час для перерви.' : 'Перерва завершена. Можна починати наступне заняття.');
       document.querySelectorAll('[data-timer-feedback]').forEach(el => el.textContent = wasFocus ? 'Фокус завершено. Час для перерви.' : 'Перерва завершена. Почати новий фокус?');
     } else save();
@@ -300,8 +342,21 @@
     const t = state.timer, left = C.remaining(t), label = `${Math.floor(left / 60).toString().padStart(2, '0')}:${(left % 60).toString().padStart(2, '0')}`;
     document.querySelectorAll('[data-timer-display]').forEach(el => el.textContent = label);
     document.querySelectorAll('[data-timer-ring]').forEach(el => el.style.setProperty('--timer-progress', `${(1 - left / t.duration) * 100}%`));
-    const pill = document.querySelector('#persistent-timer');
-    if (pill) { pill.dataset.timerState = t.running ? 'running' : left < t.duration ? 'paused' : 'ready'; pill.innerHTML = `${icon('clock')}<span>${t.running || left < t.duration ? label : 'Pomodoro'}</span>${t.running ? '<i class="running-dot"></i>' : ''}`; pill.setAttribute('aria-label', `Pomodoro${t.running ? ', працює, залишилось ' + label : ''}`); }
+    if (timerToggle) {
+      const phase = timerPhase(t);
+      timerToggle.querySelector('span').textContent = phase === 'ready' ? 'Pomodoro' : label;
+      timerToggle.setAttribute('aria-label', phase === 'ready' ? 'Pomodoro' : `Pomodoro, ${phase === 'paused' ? 'на паузі' : 'залишилось'} ${label}`);
+      if (timerToggle.dataset.timerState !== phase) {
+        timerToggle.dataset.timerState = phase;
+        if (phase === 'ready' && document.activeElement === timerQuick) timerToggle.focus({preventScroll:true});
+        timerQuick.hidden = phase === 'ready';
+        timerQuick.innerHTML = icon(phase === 'running' ? 'pause' : 'play');
+        const action = phase === 'running' ? 'Пауза Pomodoro' : 'Продовжити Pomodoro';
+        timerQuick.setAttribute('aria-label', action);
+        timerQuick.title = action;
+        positionTimerMenu();
+      }
+    }
     const id = location.hash.startsWith('#course/') ? location.hash.split('/')[1] : undefined;
     const todaySeconds = C.sum(state.records, { course: id, from: today(), to: today() });
     document.querySelectorAll('[data-stat-today]').forEach(el => el.textContent = C.secondsLabel(todaySeconds));
@@ -342,13 +397,16 @@
       flushPractice(); tickTimer(); const t = state.timer;
       if (t.running) { t.remaining = C.remaining(t); t.running = false; }
       else { t.running = true; t.endsAt = Date.now() + t.remaining * 1000; t.creditedAt = Date.now(); if (!t.id) t.id = crypto.randomUUID(); }
-      save(); refresh('[data-timer-toggle]');
+      save(); refreshTimerControls(el, '[data-timer-toggle]');
     }
-    if (el.hasAttribute('data-timer-reset')) { tickTimer(); state.timer = newTimer(state.timer.mode, state.timer.course); if (activePractice) activePractice.since = Date.now(); save(); refresh('[data-timer-reset]'); }
-    if (el.hasAttribute('data-timer-mode')) { tickTimer(); state.timer = newTimer(el.dataset.timerMode, state.timer.course); if (activePractice) activePractice.since = Date.now(); save(); refresh(`[data-timer-mode="${el.dataset.timerMode}"]`); }
+    if (el.hasAttribute('data-timer-reset')) { tickTimer(); state.timer = newTimer(state.timer.mode, state.timer.course); if (activePractice) activePractice.since = Date.now(); save(); refreshTimerControls(el, '[data-timer-reset]'); }
+    if (el.hasAttribute('data-timer-mode')) { tickTimer(); state.timer = newTimer(el.dataset.timerMode, state.timer.course); if (activePractice) activePractice.since = Date.now(); save(); refreshTimerControls(el, `[data-timer-mode="${el.dataset.timerMode}"]`); }
     if (el.closest('#workspace-nav')) closeMobileMenu();
   }, true);
-  document.addEventListener('change', e => { if (e.target.matches('[data-timer-course]') && !state.timer.running) { state.timer.course = e.target.value; save(); } });
+  document.addEventListener('change', e => { if (e.target.matches('[data-timer-course]') && timerPhase(state.timer) === 'ready') {
+    state.timer.course = e.target.value; save();
+    document.querySelectorAll('[data-timer-course]').forEach(select => select.value = state.timer.course);
+  } });
   document.addEventListener('keydown', e => {
     lastActivity = Date.now();
     if (!e.target.matches('[data-calendar-date]')) return;
@@ -370,14 +428,38 @@
   window.addEventListener('focus', () => { if (activePractice) activePractice.since = Date.now(); lastActivity = Date.now(); tickTimer(); paintTimer(); });
   window.addEventListener('pagehide', () => { flushPractice(); tickTimer(); save(); });
   document.querySelector('#study-dialog').addEventListener('close', () => { flushPractice(); activePractice = null; });
-  window.addEventListener('hashchange', () => { flushPractice(); activePractice = null; closeMobileMenu(); });
+  window.addEventListener('hashchange', () => { flushPractice(); activePractice = null; closeMobileMenu(); closeTimerMenu(); });
   document.addEventListener('DOMContentLoaded', () => {
     const nav = document.querySelector('#workspace-nav');
     nav.querySelector('[data-nav="plan"] span').textContent = 'Мій огляд';
     nav.querySelector('[data-nav="courses"] span').textContent = 'Мої предмети';
     const settings = nav.querySelector('[data-nav="settings"]');
     settings.insertAdjacentHTML('beforebegin', `<a href="#calendar" data-nav="calendar">${icon('calendar')}<span>Календар</span></a><a href="#focus" data-nav="focus">${icon('clock')}<span>Pomodoro</span></a>`);
-    document.querySelector('.topbar-account').insertAdjacentHTML('beforebegin', `<a href="#focus" class="persistent-timer" id="persistent-timer"></a>`);
+    document.querySelector('.topbar-account').insertAdjacentHTML('beforebegin', `<div class="timer-menu">
+      <button type="button" class="persistent-timer" id="persistent-timer" aria-expanded="false" aria-controls="timer-menu-panel">${icon('clock')}<span>Pomodoro</span></button>
+      <button type="button" class="icon-button timer-quick" data-timer-toggle hidden></button>
+      <div class="timer-menu-panel" id="timer-menu-panel" hidden></div>
+    </div>`);
+    timerMenu = document.querySelector('.timer-menu');
+    timerToggle = timerMenu.querySelector('#persistent-timer');
+    timerQuick = timerMenu.querySelector('.timer-quick');
+    timerPanel = timerMenu.querySelector('.timer-menu-panel');
+    timerToggle.addEventListener('click', () => {
+      if (!timerPanel.hidden) { closeTimerMenu(); return; }
+      timerPanel.hidden = false;
+      timerToggle.setAttribute('aria-expanded', 'true');
+      positionTimerMenu();
+      paintTimerPanel();
+      paintTimer();
+    });
+    document.addEventListener('click', e => { if (!e.composedPath().includes(timerMenu)) closeTimerMenu(); });
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape' || timerPanel.hidden || document.querySelector('dialog[open]')) return;
+      e.preventDefault();
+      closeTimerMenu(timerMenu.contains(document.activeElement));
+    });
+    window.addEventListener('resize', positionTimerMenu);
+    window.addEventListener('scroll', positionTimerMenu, {passive:true});
     const label = document.createElement('p'); label.className = 'sidebar-course-label'; label.textContent = 'Предмети';
     nav.insertBefore(label, settings);
     if (H.liveCalendar && !H.workspace) settings.insertAdjacentHTML('beforebegin', `<a href="/hustle/app.html#courses">${icon('link')}<span>Курси Moodle</span></a>`);
@@ -389,13 +471,21 @@
     if (H.liveCalendar?.standalone) {
       nav.innerHTML = `<a href="/hustle/app.html#dashboard">${icon('plan')}<span>Мій огляд</span></a><a href="/hustle/app.html#courses">${icon('courses')}<span>Курси Moodle</span></a><a href="#calendar" data-nav="calendar">${icon('calendar')}<span>Календар</span></a><a href="#oral" data-nav="oral">${icon('practice')}<span>Усний захист</span></a><a href="/hustle/app.html#settings">${icon('settings')}<span>Налаштування</span></a>`;
       document.querySelectorAll('.topbar-account,.sidebar-profile').forEach(a => a.href = '/hustle/app.html#settings');
-      document.querySelector('#persistent-timer').hidden = true;
+      timerMenu.hidden = true;
     }
     tickTimer(); render(); paintTimer();
   });
   window.addEventListener('storage', e => {
     if (e.key !== storageKey || !e.newValue) return;
-    try { const next = JSON.parse(e.newValue); state = next; if (!document.querySelector('#study-dialog').open) render(); } catch {}
+    try {
+      const next = JSON.parse(e.newValue);
+      const changed = timerPhase(state.timer) !== timerPhase(next.timer) || state.timer.mode !== next.timer.mode ||
+        state.timer.course !== next.timer.course || state.sessions.length !== next.sessions.length;
+      state = next;
+      if (!document.querySelector('#study-dialog').open) render();
+      if (changed) paintTimerPanel();
+      paintTimer();
+    } catch {}
   });
   let urgencySignature = '';
   setInterval(() => {
