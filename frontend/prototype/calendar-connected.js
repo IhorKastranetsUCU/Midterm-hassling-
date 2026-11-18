@@ -78,7 +78,7 @@
     button.setAttribute('aria-busy', String(saving));
     button.toggleAttribute('data-calendar-added', added);
     button.title = label;
-    button.innerHTML = icon(added ? 'check' : 'calendar');
+    button.innerHTML = icon(added ? 'close' : 'calendar');
   }
   function paintDeadlineButtons() {
     main.querySelectorAll('[data-deadline-calendar]').forEach(paintDeadlineButton);
