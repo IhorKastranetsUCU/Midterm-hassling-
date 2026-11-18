@@ -7,7 +7,7 @@
   const editor = window.HustleCalendar;
   const main = document.querySelector('#workspace-main');
   const dialog = document.querySelector('#study-dialog');
-  let calendar, courses = [], context, bootstrap, week = false, revision = 0;
+  let calendar, courses = [], context, bootstrap, sessionRequest, week = false, revision = 0;
   let period = '', loading, error = '', weekHost;
   const days = () => core.monthDays(context.month);
   const zone = () => calendar?.settings.timezone || core.zone;
@@ -19,11 +19,14 @@
   const editable = ev => ['ai_study', 'manual'].includes(ev.source_type);
   const refresh = () => H.dashboardRefresh?.();
   const pending = () => calendar?.deadlines.filter(d => d.review === 'pending') || [];
-  function session() {
-    // Bootstrap first so that parallel requests use the same guest cookie.
-    bootstrap ||= UI.api('/api/workspace/session').then(() => UI.api('/api/workspace/courses'))
+  function session(revalidate = false) {
+    // Other tabs can import a course. Serialize the first request that issues a guest cookie.
+    if (sessionRequest) return sessionRequest;
+    if (bootstrap && !revalidate) return bootstrap;
+    bootstrap = UI.api('/api/workspace/session').then(() => UI.api('/api/workspace/courses'))
       .then(result => { courses = result; }).catch(err => { bootstrap = null; throw err; });
-    return bootstrap;
+    sessionRequest = bootstrap.finally(() => { sessionRequest = null; });
+    return sessionRequest;
   }
   function coursesView() {
     if (!courses.length) return '';
@@ -43,9 +46,10 @@
     return `<div data-paper-week>${editor.shell(courses)}</div>`;
   }
   function mount(hash, month, day, course) {
+    const previousHash = context?.hash;
     context = {hash, month, day, course};
     if (hash === 'courses') {
-      if (!bootstrap) session().then(refresh).catch(err => UI.toast(err.message));
+      if (previousHash !== hash) session(true).then(refresh).catch(err => UI.toast(err.message));
       return;
     }
     if (!['plan', 'calendar'].includes(hash) || course) return;
@@ -53,7 +57,7 @@
       const host = main.querySelector('[data-paper-week]');
       if (!host || weekHost === host) return;
       weekHost = host;
-      session().then(() => {
+      session(true).then(() => {
         if (!host.isConnected) return;
         host.innerHTML = editor.shell(courses);
         host.querySelector('h1').tabIndex = -1;
