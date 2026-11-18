@@ -6,7 +6,7 @@ const fs = require('node:fs');
 function loadMath() {
   const context = { window: {} };
   vm.createContext(context);
-  vm.runInContext(fs.readFileSync('app/static/hustle/math.js', 'utf8'), context);
+  vm.runInContext(fs.readFileSync('frontend/hustle/math.js', 'utf8'), context);
   return context.window.HustleMath;
 }
 
@@ -44,7 +44,7 @@ test('inlineHtml escapes HTML safely while wrapping LaTeX spans', () => {
 });
 
 test('bundled KaTeX renders MathML cleanly for extracted TeX', async () => {
-  const katex = await import('../app/static/hustle/vendor/katex-OKZ4SJN2.js');
+  const katex = await import('../../frontend/hustle/vendor/katex-OKZ4SJN2.js');
   const html = katex.renderToString('P(A\\mid B) = \\frac{P(A\\cap B)}{P(B)}', {
     output: 'mathml',
     displayMode: true,

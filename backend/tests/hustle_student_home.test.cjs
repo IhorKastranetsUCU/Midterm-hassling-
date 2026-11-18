@@ -1,6 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 const context={Intl,Date,Map,Set,URL,UI:{escape:String,icon:()=>''},window:{}};
-vm.createContext(context);vm.runInContext(fs.readFileSync('app/static/hustle/student-home.js','utf8'),context);
+vm.createContext(context);vm.runInContext(fs.readFileSync('frontend/hustle/student-home.js','utf8'),context);
 const {classify,buckets,dayKey}=context.window.HustleStudentHome;
 const now=Date.parse('2026-11-18T12:00:00Z')/1000;
 test('a past deadline is not proof of an unsubmitted assignment',()=>{

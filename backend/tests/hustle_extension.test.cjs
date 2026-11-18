@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const {webcrypto} = require('node:crypto');
-const root = path.resolve(__dirname, '../extension');
+const root = path.resolve(__dirname, '../../frontend/extension');
 function harness() {
  const data={}, listeners=[], requests=[], opened=[];
  const hooks={cookie:null};

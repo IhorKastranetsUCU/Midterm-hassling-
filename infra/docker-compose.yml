@@ -1,20 +1,20 @@
 services:
   moodle-portal:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: infra/Dockerfile
     image: moodle-connector-portal:latest
     container_name: moodle_portal
     restart: unless-stopped
     ports:
       - "${PORT_BIND:-127.0.0.1:8000}:8000"
     volumes:
-      - ./data:/app/data
+      - ../data:/app/data
     environment:
       - HOST=0.0.0.0
       - PORT=8000
       - MOODLE_MOCK_MODE=false
       - FORWARDED_ALLOW_IPS=*
     env_file:
-      - path: .env
+      - path: ../.env
         required: false

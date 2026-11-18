@@ -27,9 +27,9 @@ function createHarness() {
   };
   context.window.window=context.window;
   vm.createContext(context);
-  vm.runInContext(fs.readFileSync('app/static/hustle/study-navigation.js','utf8'),context);
+  vm.runInContext(fs.readFileSync('frontend/hustle/study-navigation.js','utf8'),context);
   context.HustleCurriculum=context.window.HustleCurriculum;
-  vm.runInContext(fs.readFileSync('app/static/hustle/learning.js','utf8'),context);
+  vm.runInContext(fs.readFileSync('frontend/hustle/learning.js','utf8'),context);
   return context;
 }
 

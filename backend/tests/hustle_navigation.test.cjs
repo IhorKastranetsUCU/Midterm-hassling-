@@ -4,7 +4,7 @@ const vm=require('node:vm');
 const fs=require('node:fs');
 const context={Intl,Date,Map,URL,URLSearchParams,UI:{escape:v=>String(v??''),icon:()=>''},document:{querySelector:()=>({addEventListener(){}})},window:{addEventListener(){}}};
 vm.createContext(context);
-vm.runInContext(fs.readFileSync('app/static/hustle/study-space.js','utf8'),context);
+vm.runInContext(fs.readFileSync('frontend/hustle/study-space.js','utf8'),context);
 const {groupDeadlines,dateLabel}=context.window.HustleSpace;
 const seconds=value=>Date.parse(value)/1000;
 const now=seconds('2026-11-17T12:00:00Z');

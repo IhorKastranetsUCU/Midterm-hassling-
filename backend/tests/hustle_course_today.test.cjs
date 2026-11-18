@@ -1,6 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 const context={Date,Intl,Set,Map,window:{},UI:{escape:String,icon:()=>'',safeLink:value=>/^https:\/\//.test(value||'')?value:null},HustleCurriculum:{text:String,map:bundle=>bundle.course_map?.nodes||[],find:(bundle,id)=>bundle.course_map.nodes.find(node=>node.id===id)},HustleToday:{linkedNode:(bundle,item)=>bundle.course_map?.nodes.find(node=>node.materials?.some(m=>String(m.id)===String(item.cmid)))},HustleSpace:{overview(){}},HustleLearning:{renderBundle(){}},HustleCourse:{mount(){}}};
-vm.createContext(context);vm.runInContext(fs.readFileSync('app/static/hustle/course-today.js','utf8'),context);
+vm.createContext(context);vm.runInContext(fs.readFileSync('frontend/hustle/course-today.js','utf8'),context);
 const {orderedTopics,chooseTopic,quizFor}=context.window.HustleCourseToday;
 const bundle={course_map:{roots:['general','part','archive'],nodes:[
   {id:'t2',kind:'topic',topic_index:2,title:'Topic 2',learnable:true,materials:[{id:22,modname:'assign'}]},

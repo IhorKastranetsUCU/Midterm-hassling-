@@ -1,9 +1,9 @@
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 const context={Intl,Date,Map,Set,URL,UI:{escape:String,icon:()=>''},window:{},HustleCurriculum:{text:value=>String(value||'')}};
 vm.createContext(context);
-vm.runInContext(fs.readFileSync('app/static/hustle/student-home.js','utf8'),context);
+vm.runInContext(fs.readFileSync('frontend/hustle/student-home.js','utf8'),context);
 context.HustleStudentHome=context.window.HustleStudentHome;
-vm.runInContext(fs.readFileSync('app/static/hustle/focused-home.js','utf8'),context);
+vm.runInContext(fs.readFileSync('frontend/hustle/focused-home.js','utf8'),context);
 const {agenda,taskTitle}=context.window.HustleFocus;
 const now=Date.parse('2026-11-18T12:00:00Z')/1000;
 test('a task appears only once across focus, today, and later',()=>{

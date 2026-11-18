@@ -1,9 +1,9 @@
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 const context={Intl,Date,Map,Set,URL,UI:{escape:String,icon:()=>'',courseLink:(id,section,topic)=>`#course/${id}/${section}/${topic}`},HustleCurriculum:{text:value=>String(value||''),map:bundle=>bundle.course_map?.nodes||[],find:(bundle,id)=>bundle.course_map.nodes.find(n=>n.id===id),link:(bundle,node)=>`#course/${bundle.course.course_id}/reading?node=${node.id}`},window:{}};
 vm.createContext(context);
-vm.runInContext(fs.readFileSync('app/static/hustle/student-home.js','utf8'),context);
+vm.runInContext(fs.readFileSync('frontend/hustle/student-home.js','utf8'),context);
 context.HustleStudentHome=context.window.HustleStudentHome;
-vm.runInContext(fs.readFileSync('app/static/hustle/dashboard-today.js','utf8'),context);
+vm.runInContext(fs.readFileSync('frontend/hustle/dashboard-today.js','utf8'),context);
 const {agenda,taskTitle,studyTopic,target}=context.window.HustleToday;
 const now=Date.parse('2026-11-18T12:00:00Z')/1000;
 const task=(id,offset,status='unknown')=>({id,course_id:9400,duedate:now+offset,submission_status:status});

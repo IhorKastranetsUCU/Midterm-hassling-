@@ -96,12 +96,16 @@ app.include_router(authorities.router)
 app.include_router(workspace.router)
 app.include_router(calendar.router)
 
-# Mount Static & Templates
-current_dir = os.path.dirname(os.path.abspath(__file__))
-static_dir = os.path.join(current_dir, "static")
-templates_dir = os.path.join(current_dir, "templates")
+# Mount Static & Templates from frontend/
+current_dir = Path(__file__).resolve().parent
+repo_root = current_dir.parent.parent
+frontend_dir = repo_root / "frontend"
+static_dir = str(frontend_dir / "static")
+hustle_dir = str(frontend_dir / "hustle")
+templates_dir = str(frontend_dir / "templates")
 
 os.makedirs(static_dir, exist_ok=True)
+os.makedirs(hustle_dir, exist_ok=True)
 os.makedirs(templates_dir, exist_ok=True)
 
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
@@ -122,14 +126,14 @@ async def open_workspace(request: Request):
 
 @app.get("/hustle/tools.html", response_class=HTMLResponse, include_in_schema=False)
 async def course_tools():
-    source = (Path(static_dir) / "hustle" / "app.html").read_text(encoding="utf-8")
+    source = (Path(hustle_dir) / "app.html").read_text(encoding="utf-8")
     return HTMLResponse(source.replace("<head>", '<head><link rel="stylesheet" href="/prototype/course-tools.css">'
                                        '<script defer src="/prototype/course-tools.js"></script>'),
                         headers={"Cache-Control": "no-cache"})
 
 
-app.mount("/hustle", StaticFiles(directory=os.path.join(static_dir, "hustle"), html=True), name="hustle")
-prototype_dir = Path(current_dir).parent / "prototype"
+app.mount("/hustle", StaticFiles(directory=hustle_dir, html=True), name="hustle")
+prototype_dir = frontend_dir / "prototype"
 
 
 @app.get("/prototype/", response_class=HTMLResponse, include_in_schema=False)
