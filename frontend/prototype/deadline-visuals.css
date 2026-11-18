@@ -5,16 +5,17 @@
   --deadline-warmth: 0;
   --fire-height: 3.5rem;
   --paper-base: #fffdf7;
-  --gold-paper: color-mix(in srgb, var(--paper-base), #ffe2a4 calc(100% * var(--deadline-warmth)));
+  --gold-paper: color-mix(in srgb, var(--paper-base), #ffce55 calc(100% * var(--deadline-warmth)));
+  --sunlit-paper: color-mix(in srgb, var(--paper-base), var(--gold-paper) 50%);
   --heated-paper: color-mix(in srgb, var(--gold-paper), #fba58f calc(100% * var(--deadline-heat)));
-  --gold-border: color-mix(in srgb, #e4d9d0, #d9a46a calc(100% * var(--deadline-warmth)));
+  --gold-border: color-mix(in srgb, #e4d9d0, #c19a35 calc(100% * var(--deadline-warmth)));
   --heat-border: color-mix(in srgb, var(--gold-border), #d56a51 calc(100% * var(--deadline-heat)));
   --heat-shadow: color-mix(in srgb, #d8513260 calc(100% * var(--deadline-heat)), transparent);
 }
 
 .deadline-surface[data-heat-stage] {
-  background: linear-gradient(162deg, var(--paper-base) 7%,
-    color-mix(in srgb, var(--paper-base), var(--heated-paper) 48%) 47%, var(--heated-paper));
+  background: linear-gradient(162deg, var(--sunlit-paper) 7%,
+    color-mix(in srgb, var(--sunlit-paper), var(--heated-paper) 48%) 47%, var(--heated-paper));
   border-color: var(--heat-border);
   box-shadow: 0 3px 13px -6px var(--heat-shadow);
 }

@@ -28,13 +28,13 @@
     if (due <= now) return 'overdue';
     return due - now <= deadlineTiming.fire ? 'urgent' : 'upcoming';
   }
-  function deadlineProgress(due, done, now, windowMs) {
+  function deadlineProgress(due, done, now, windowMs, initial = 0) {
     const left = due - now;
-    if (done || !Number.isFinite(left) || left <= 0) return 0;
-    return Math.max(0, 1 - left / windowMs);
+    if (done || !Number.isFinite(left) || left <= 0 || left > windowMs) return 0;
+    return initial + (1 - initial) * (1 - left / windowMs);
   }
   function deadlineWarmth(due, done, now = Date.now()) {
-    return Math.pow(deadlineProgress(due, done, now, deadlineTiming.warmup), 1.2);
+    return deadlineProgress(due, done, now, deadlineTiming.warmup, 0.38);
   }
   function deadlineHeat(due, done, now = Date.now()) {
     // Ease from a faint glow to active flames as the last day passes.
