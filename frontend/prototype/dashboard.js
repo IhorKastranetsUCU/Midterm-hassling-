@@ -230,9 +230,9 @@
       active.findIndex(other => other.course.id === task.course.id) === index));
     const queue = upcoming.length ? `<section class="dash-panel deadline-queue">
       <div class="panel-title"><h2>${compactOverview ? 'Дедлайни' : 'Інші дедлайни'}</h2><a href="#calendar">Календар ${icon('arrow')}</a></div>
-      ${upcoming.map(task => `<a class="deadline-line deadline-surface" href="${esc(compactOverview && task.href ? task.href : '#course/' + task.course.id)}"${compactOverview && task.href && !task.href.startsWith('#') ? ' target="_blank" rel="noopener noreferrer"' : ''}>
+      ${upcoming.map(task => `<article class="deadline-line deadline-surface"><a class="deadline-task-link" href="${esc(compactOverview && task.href ? task.href : '#course/' + task.course.id)}"${compactOverview && task.href && !task.href.startsWith('#') ? ' target="_blank" rel="noopener noreferrer"' : ''}>
         ${avatar(task.course)}<span class="queue-title"><strong>${esc(task.course.deadline || task.title)}</strong>${compactCourse ? '' : `<small>${esc(task.course.name)}</small>`}</span>
-        ${badge(task)}${icon('arrow')}${fire.edge(task.due, task.done)}</a>`).join('')}
+        ${badge(task)}${icon('arrow')}</a>${H.liveCalendar?.deadlineButton(task) || ''}${fire.edge(task.due, task.done)}</article>`).join('')}
     </section>` : '';
     const plan = tasks(course?.id).sort((a, b) => a.scheduled.localeCompare(b.scheduled) || a.due - b.due);
     const visibleRows = course ? plan : plan.filter(task => task.scheduled === today());
@@ -251,7 +251,7 @@
     const records = course ? `<a class="secondary" href="#course/${course.id}/submissions">Статус у Moodle →</a>` : '';
     const rows = list.map(t => `<article class="deadline-line deadline-surface">
       ${avatar(t.course)}<span class="queue-title"><strong>${esc(t.title)}</strong><small>${esc(t.course.name)}</small></span>
-      ${badge(t)}${start(t, 'Відкрити', 'task-open')}${fire.edge(t.due,t.done)}</article>`).join('');
+      ${badge(t)}${start(t, 'Відкрити', 'task-open')}${H.liveCalendar?.deadlineButton(t) || ''}${fire.edge(t.due,t.done)}</article>`).join('');
     const header = course ? H.workspace.courseHeader(course, 'assignments') + `<div class="paper-deadline-actions">${records}</div>` : heading('Дедлайни');
     return header + (H.workspace.notice() || '') +
       '<section class="dash-panel deadline-queue">' + (rows || '<p class="agenda-empty">Найближчих дедлайнів немає.</p>') + '</section>';
@@ -274,7 +274,7 @@
         if (course && a.hash === '#course/' + course.id) a.setAttribute('aria-current','page');
         else a.removeAttribute('aria-current');
       });
-      main.innerHTML = deadlinesView(course); fire.mount(main); return true;
+      main.innerHTML = deadlinesView(course); H.liveCalendar?.mount(hash, month, selectedDate, course); fire.mount(main); return true;
     }
     if (H.workspace?.tools(hash)) { fire.mount(); return true; }
     if (hash === 'oral' && H.paperOral) {

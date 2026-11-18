@@ -389,14 +389,17 @@ def test_paper_deadline_review_is_personal_and_idempotent(cal_env, monkeypatch):
     assert client.put(review, params={"decision": "accepted"}).json()["event"]["event_id"] == event_id
     mine = overview(client)
     assert mine["deadlines"][0]["review"] == "accepted"
+    assert client.get("/api/calendar/deadlines/reviews").json() == {"accepted": ["71/12"]}
     assert len(mine["events"]) == 1
     assert datetime.fromisoformat(mine["events"][0]["start_at"]) == later
     assert datetime.fromisoformat(mine["events"][0]["moodle_due_at"]) == due
     theirs = overview(other)
     assert theirs["deadlines"][0]["review"] == "pending"
+    assert other.get("/api/calendar/deadlines/reviews").json() == {"accepted": []}
     assert theirs["events"] == []
     assert client.delete(event_path).status_code == 200
     assert overview(client)["deadlines"][0]["review"] == "removed"
+    assert client.get("/api/calendar/deadlines/reviews").json() == {"accepted": []}
     assert client.put(review, params={"decision": "accepted"}).status_code == 200
     assert len(overview(client)["events"]) == 1
 

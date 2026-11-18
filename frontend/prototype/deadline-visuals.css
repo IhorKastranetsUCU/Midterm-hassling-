@@ -300,6 +300,12 @@
 .queue-title strong, .queue-title small { display: block; }
 .queue-title strong { font-size: .93rem; }
 .deadline-line > .icon { width: .95rem; flex: none; }
+.deadline-task-link { display:flex; align-items:center; flex:1; min-width:0; gap:inherit; color:inherit; text-decoration:none; }
+.deadline-task-link > .icon { width:.95rem; flex:none; }
+.deadline-line .queue-title { min-width:0; overflow-wrap:anywhere; }
+.deadline-line .deadline-calendar-button { flex:none; width:2rem; height:2rem; border:1px solid #c7b6cc; background:#fffaf2; color:#62496a; }
+.deadline-calendar-button[data-calendar-added] { background:#e9efdf; border-color:#a9b899; color:#465a3c; }
+.deadline-calendar-button[aria-busy="true"] { cursor:progress; opacity:.65; }
 .subject-card.deadline-surface { padding: .95rem 1rem .5rem; }
 .subject-card.deadline-surface h3 { font-size: 1.16rem; }
 .subject-card.deadline-surface > p { font-size: .81rem; }
@@ -314,6 +320,7 @@
   .focus-note .next-session-action { width: auto; }
   .deadline-line { gap: .5rem; padding-inline: .55rem; }
   .deadline-line > .icon { display: none; }
+  .deadline-task-link > .icon { display:none; }
   .deadline-line .course-avatar { width: 1.65rem; height: 1.65rem; min-width: 1.65rem; }
   .queue-title strong { font-size: .85rem; }
 }

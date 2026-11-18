@@ -9,6 +9,8 @@
   const dialog = document.querySelector('#study-dialog');
   let calendar, courses = [], context, bootstrap, sessionRequest, week = false, revision = 0;
   let period = '', loading, error = '', weekHost;
+  let acceptedDeadlines = new Set(), reviewVersion = 0;
+  const addingDeadlines = new Set();
   const days = () => core.monthDays(context.month);
   const zone = () => calendar?.settings.timezone || core.zone;
   const monthPreviewLimit = 2;
@@ -54,9 +56,46 @@
   function weekView() {
     return `<div data-paper-week>${editor.shell(courses)}</div>`;
   }
+  function deadlineButton(task) {
+    if (!task.calendarKey) return '';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'icon-button deadline-calendar-button';
+    button.dataset.deadlineCalendar = task.calendarKey;
+    button.dataset.deadlineTitle = task.title;
+    paintDeadlineButton(button);
+    return button.outerHTML;
+  }
+  function paintDeadlineButton(button) {
+    const key = button.dataset.deadlineCalendar;
+    const added = acceptedDeadlines.has(key);
+    const adding = addingDeadlines.has(key);
+    const label = added ? 'У календарі' : adding ? 'Додаємо в календар…' : 'Додати в календар';
+    button.setAttribute('aria-label', label + ': ' + button.dataset.deadlineTitle);
+    button.setAttribute('aria-disabled', String(added || adding));
+    button.setAttribute('aria-busy', String(adding));
+    button.toggleAttribute('data-calendar-added', added);
+    button.title = label;
+    button.innerHTML = icon(added ? 'check' : 'calendar');
+  }
+  function paintDeadlineButtons() {
+    main.querySelectorAll('[data-deadline-calendar]').forEach(paintDeadlineButton);
+  }
+  async function refreshDeadlineReviews() {
+    const ticket = ++reviewVersion;
+    try {
+      const result = await UI.api('/api/calendar/deadlines/reviews');
+      if (ticket !== reviewVersion) return;
+      acceptedDeadlines = new Set(result.accepted);
+      paintDeadlineButtons();
+    } catch {
+      // Adding remains safe when the read fails because the API accepts duplicate requests.
+    }
+  }
   function mount(hash, month, day, course) {
     const previousHash = context?.hash;
     context = {hash, month, day, course};
+    if (previousHash !== hash && (hash === 'plan' || hash === 'deadlines' || course?.connected)) refreshDeadlineReviews();
     if (hash === 'courses') {
       if (previousHash !== hash) session(true).then(refresh).catch(err => UI.toast(err.message));
       return;
@@ -218,6 +257,25 @@
   });
   document.addEventListener('click', async event => {
     const el = event.target.closest('button'); if (!el) return;
+    const deadlineKey = el.dataset.deadlineCalendar;
+    if (deadlineKey) {
+      if (acceptedDeadlines.has(deadlineKey) || addingDeadlines.has(deadlineKey)) return;
+      addingDeadlines.add(deadlineKey);
+      paintDeadlineButtons();
+      try {
+        await UI.api('/api/calendar/deadlines/' + deadlineKey + '?decision=accepted', {method:'PUT'});
+        reviewVersion++;
+        acceptedDeadlines.add(deadlineKey);
+        UI.toast('Дедлайн додано в календар');
+        if (main.querySelector('.selected-agenda, .mini-agenda')) load(true);
+      } catch (err) {
+        UI.toast(err.message);
+      } finally {
+        addingDeadlines.delete(deadlineKey);
+        paintDeadlineButtons();
+      }
+      return;
+    }
     if (el.dataset.calEvent && el.closest('.calendar-week-grid')) eventFocus = {week:true, trigger:el};
     if (el.dataset.calEvent && el.closest('.planner-spread')) {
       const inAgenda = !!el.closest('.paper-day-events');
@@ -258,6 +316,7 @@
       el.disabled = true;
       try {
         await UI.api('/api/calendar/deadlines/'+el.dataset.reviewKey+'?decision='+el.dataset.choice,{method:'PUT'});
+        refreshDeadlineReviews();
         await load(true);
         if (dialog.open && el.isConnected) review();
       } catch (err) { el.disabled = false; dialog.querySelector('[role="alert"]').textContent = err.message; }
@@ -284,5 +343,5 @@
   });
   window.addEventListener('hashchange', () => { period = ''; });
   window.addEventListener('pageshow', e => { if (e.persisted) { bootstrap = null; period = ''; refresh(); } });
-  H.liveCalendar = {standalone, get week() {return week;}, mount, actions, inboxButton, weekView, viewSwitch, coursesView};
+  H.liveCalendar = {standalone, get week() {return week;}, mount, actions, inboxButton, weekView, viewSwitch, coursesView, deadlineButton};
 })();

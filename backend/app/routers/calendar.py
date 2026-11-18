@@ -216,6 +216,14 @@ async def get_calendar_overview(
     }
 
 
+@router.get("/deadlines/reviews")
+def accepted_deadline_keys(owner: WorkspaceOwner = Depends(get_workspace_owner)):
+    reviews = get_calendar_store().deadline_reviews(owner.owner_id)
+    return {"accepted": [f"{course_id}/{assignment_id}"
+                         for (course_id, assignment_id), decision in reviews.items()
+                         if decision == "accepted"]}
+
+
 @router.put("/deadlines/{course_id}/{assignment_id}")
 async def review_deadline(
     course_id: int, assignment_id: int, request: Request,

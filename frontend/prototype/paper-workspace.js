@@ -45,7 +45,7 @@
         const id = course.id + ':assignment:' + Number(a.id);
         const moodle = UI.safeLink(account.moodle);
         const href = moodle && Number(a.cmid) > 0 ? new URL('/mod/assign/view.php?id=' + Number(a.cmid), moodle).href : '#course/' + course.id + '/submissions';
-        return {id, course, title:a.name, label:'Завдання Moodle', due, dueDay:day, scheduled:day,
+        return {id, course, calendarKey:`${course.id}/${Number(a.id)}`, title:a.name, label:'Завдання Moodle', due, dueDay:day, scheduled:day,
           href, done:status === 'done' || !!completed[id], submitted:status === 'done', status};
       }).filter(t => t.status !== 'check' || t.done);
   }
