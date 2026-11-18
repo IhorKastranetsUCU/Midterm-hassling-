@@ -75,6 +75,15 @@ async def connect_learning(req: KeyRequest, request: Request, response: Response
     return settings.status(owner.owner_id)
 
 
+@router.delete("/learning/settings")
+async def reset_learning_key(request: Request, response: Response, owner: WorkspaceOwner = Depends(get_workspace_owner)):
+    same_origin(request)
+    private_response(response)
+    settings = LearningSettingsStore(get_workspace_store().db_path)
+    settings.delete(owner.owner_id)
+    return settings.status(owner.owner_id)
+
+
 def _archive_mix_version(conn, owner_id: str, mix) -> None:
     conn.execute("""CREATE TABLE IF NOT EXISTS learning_topic_versions (
         owner_id TEXT NOT NULL, mix_id TEXT NOT NULL, saved_at TEXT NOT NULL,

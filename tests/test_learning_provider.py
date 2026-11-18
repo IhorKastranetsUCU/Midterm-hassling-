@@ -204,6 +204,7 @@ def test_vertex_ai_server_mode_uses_metadata_token_and_global_endpoint(context, 
         "provider": "gemini",
         "model": "gemini-3-flash-preview",
         "source": "vertex",
+        "server_default_available": True,
     }
 
     out = asyncio.run(GeminiService().generate_content("Ping"))
@@ -505,3 +506,29 @@ def test_transcribe_video_endpoint_falls_back_to_vertex_gemini(context, monkeypa
     assert body["success"] is True
     assert body["source"] == "gemini_video"
     assert "Короткий конспект відео з Vertex." in body["full_text"]
+
+
+def test_reset_personal_learning_key_reverts_to_server_default(context, monkeypatch):
+    client, _ = context
+    monkeypatch.setattr(get_settings(), "VERTEX_AI_PROJECT", "causal-medium-515110-b2")
+    monkeypatch.setattr(get_settings(), "GEMINI_MODEL", "gemini-3-flash-preview")
+
+    async def valid(key):
+        return "gemini-2.5-flash"
+    monkeypatch.setattr("app.routers.learning.validate_gemini_key", valid)
+
+    initial = client.get("/api/workspace/learning/settings")
+    assert initial.status_code == 200
+    assert initial.json()["source"] == "vertex"
+    assert initial.json()["server_default_available"] is True
+
+    saved = client.put("/api/workspace/learning/settings", json={"api_key": "personal-key-1234567890"})
+    assert saved.status_code == 200
+    assert saved.json()["source"] == "personal"
+    assert saved.json()["model"] == "gemini-2.5-flash"
+
+    reverted = client.delete("/api/workspace/learning/settings")
+    assert reverted.status_code == 200
+    assert reverted.json()["source"] == "vertex"
+    assert reverted.json()["configured"] is True
+    assert reverted.json()["model"] == "gemini-3-flash-preview"

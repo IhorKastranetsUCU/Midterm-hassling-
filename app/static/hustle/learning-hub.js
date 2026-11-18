@@ -13,16 +13,27 @@
     }));
   }
   function keyForm(configured=false) {
-    return `<form class="learning-key-form" data-learning-key-form><label>Gemini API key<input name="gemini_key" type="password" required autocomplete="off" spellcheck="false" autocapitalize="none" placeholder="Встав свій API key" aria-describedby="learning-key-error"></label><button class="primary" type="submit">${configured?'Замінити ключ':'Підключити'} ${icon('arrow')}</button><p id="learning-key-error" class="field-error" role="alert" data-key-error></p></form>`;
+    return `<form class="learning-key-form" data-learning-key-form><label>Gemini API key<input name="gemini_key" type="password" required autocomplete="off" spellcheck="false" autocapitalize="none" placeholder="Встав свій API key" aria-describedby="learning-key-error"></label><button class="primary" type="submit">${configured?'Замінити ключ':'Додати свій ключ'} ${icon('arrow')}</button><p id="learning-key-error" class="field-error" role="alert" data-key-error></p></form>`;
   }
-  function keyPanel(configured=false,model='') {
-    return `<section class="learning-connection ${configured?'is-connected':''}" aria-label="Підключення Gemini"><div class="learning-connection-heading"><div><h2>${configured?'Gemini підключено':'Підключи AI для навчання'}</h2><p>${configured?esc(model):'Додай ключ, щоб створювати конспекти, картки й тести.'}</p></div><a class="text-button" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Отримати ключ ↗</a></div>${configured?`<details><summary>Замінити ключ</summary>${keyForm(true)}</details>`:keyForm()}</section>`;
+  function keyPanel(configured=false,model='',provider=null) {
+    const isPersonal = provider?.source === 'personal';
+    const hasDefault = Boolean(provider?.server_default_available);
+    const subtitle = configured
+      ? `${isPersonal ? 'Власний API-ключ' : 'Дефолтний ключ сервера'} · ${model || ''}`.replace(/ · $/, '')
+      : 'Додай ключ, щоб створювати конспекти, картки й тести.';
+    const controls = configured
+      ? `<div class="learning-key-actions" style="display:flex;flex-wrap:wrap;gap:.65rem;align-items:flex-start;margin-top:.65rem;">
+          <details><summary>${isPersonal ? 'Замінити свій ключ' : 'Додати свій API-ключ'}</summary>${keyForm(isPersonal)}</details>
+          ${isPersonal ? `<button type="button" class="secondary" data-reset-learning-key>${hasDefault ? 'Повернути дефолтний ключ' : 'Видалити свій ключ'}</button>` : ''}
+        </div>`
+      : keyForm(false);
+    return `<section class="learning-connection ${configured?'is-connected':''}" aria-label="Підключення Gemini"><div class="learning-connection-heading"><div><h2>${configured?'Gemini підключено':'Підключи AI для навчання'}</h2><p>${esc(subtitle)}</p></div><a class="text-button" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Отримати ключ ↗</a></div>${controls}</section>`;
   }
   function draw(state) {
     if(!live(state))return;
     const {main,bundle,provider}=state;
     const settings=main.querySelector('[data-learning-settings]');
-    if(settings)settings.innerHTML=keyPanel(provider.configured,provider.model);
+    if(settings)settings.innerHTML=keyPanel(provider.configured,provider.model,provider);
     const connection=main.querySelector('[data-learning-connection]');
     if(connection)connection.innerHTML=provider.configured?'':keyPanel();
     const buildExam=main.querySelector('[data-build-exam]');
@@ -127,9 +138,21 @@
     selected.set(current.account.owner_id+':'+current.bundle.course.course_id,event.target.value);
     current.error='';draw(current);current.main.querySelector('[data-learning-topic]')?.focus({preventScroll:true});
   });
+  async function resetKey(state,button) {
+    if(state.busy||button.disabled)return;
+    button.disabled=true;
+    try{
+      const response=await UI.api('/api/workspace/learning/settings',{method:'DELETE'});
+      if(!live(state))return;
+      state.provider=response;draw(state);
+      UI.toast(response.configured?'Повернуто дефолтний ключ сервера':'Власний ключ видалено');
+    }catch(err){UI.toast(err.message);}
+    finally{if(button.isConnected)button.disabled=false;}
+  }
   document.addEventListener('click',event=>{
     if(!current)return;
     if(event.target.closest('[data-learning-retry]'))load(current);
+    const resetBtn=event.target.closest('[data-reset-learning-key]');if(resetBtn){resetKey(current,resetBtn);return;}
     const clearBtn=event.target.closest('[data-clear-learning]');if(clearBtn&&!clearBtn.disabled){clearTopic(current);return;}
     const button=event.target.closest('[data-prepare-learning]');if(button&&!button.disabled)prepare(current,button.dataset.prepareLearning);
   });

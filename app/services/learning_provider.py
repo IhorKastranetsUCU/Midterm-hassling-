@@ -84,11 +84,22 @@ class LearningSettingsStore:
                 ON CONFLICT(owner_id) DO UPDATE SET credential=excluded.credential,
                 model=excluded.model, updated_at=CURRENT_TIMESTAMP""", (owner_id, encrypted, model))
 
+    def delete(self, owner_id):
+        with self._connect() as conn:
+            cur = conn.execute("DELETE FROM learning_provider_settings WHERE owner_id = ?", (owner_id,))
+        return cur.rowcount > 0
+
     def status(self, owner_id):
+        settings = get_settings()
+        server_default = bool((settings.VERTEX_AI_PROJECT or "").strip() or settings.GEMINI_API_KEY)
         provider = self.get(owner_id)
-        return {"configured": provider is not None, "provider": "gemini",
-                "model": provider.model if provider else None,
-                "source": provider.source if provider else None}
+        return {
+            "configured": provider is not None,
+            "provider": "gemini",
+            "model": provider.model if provider else None,
+            "source": provider.source if provider else None,
+            "server_default_available": server_default,
+        }
 
 
 def provider_http_error(status, source: str = "personal", detail: str = ""):
