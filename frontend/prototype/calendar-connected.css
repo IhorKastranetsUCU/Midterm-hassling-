@@ -48,14 +48,24 @@
 .paper-goal { display:flex; align-items:center; gap:.75rem; margin:0 0 1rem; }
 
 /* The month is an overview. Each week reserves the same space for previews. */
-.planner-spread .calendar-grid { grid-auto-rows: 6.75rem; }
+.planner-spread .calendar-grid { grid-auto-rows: 6.4rem; }
 .planner-spread .calendar-cell { min-height: 0; padding: .2rem; }
 .planner-spread .calendar-day { display: flex; gap: .35rem; align-items: center; min-height: 1.65rem; padding: 0 .3rem; }
+.planner-spread .calendar-day > span { display:grid; place-items:center; min-width:1.45rem; height:1.45rem; border-radius:.4rem; }
+.planner-spread .calendar-day[aria-current="date"], .planner-spread .calendar-day[aria-pressed="true"] { background:transparent; border-color:transparent; color:#58445a; }
+.planner-spread .calendar-day[aria-current="date"] > span { box-shadow:inset 0 0 0 1px #ae8fba; }
+.planner-spread .calendar-day[aria-pressed="true"] > span { background:#684979; color:#fffafa; }
+.planner-spread .calendar-day[aria-pressed="true"] .calendar-dots i { background:#8c699b; }
+.planner-spread .calendar-day[aria-pressed="true"] .calendar-dots .deadline-dot { background:#b86932; }
+.planner-spread .calendar-day[aria-pressed="true"] .calendar-dots .live-dot { background:#59826d; }
+@media (hover: hover) and (pointer: fine) {
+  .planner-spread .calendar-cell:hover:not(:has([aria-pressed="true"])) { background-color:#f9f5fa; }
+}
 .planner-spread .calendar-dots { align-items: center; margin: 0; }
 .month-day-count { display: none; }
 .planner-spread .live-chip {
-  display: flex; align-items: baseline; gap: .26rem; min-height: 1.4rem;
-  padding: .17rem .26rem; margin-top: .12rem; border: 0; border-inline-start: 2px solid #6e9b83;
+  display: flex; align-items: baseline; gap: .26rem; min-height: 1.35rem;
+  padding: .14rem .26rem; margin-top: .12rem; border: 0; border-inline-start: 2px solid #6e9b83;
   border-radius: .28rem; cursor: pointer;
 }
 .planner-spread .live-chip[draggable="true"] { cursor: grab; }
@@ -68,6 +78,7 @@
   background: transparent; color: #654c70; font: inherit; font-size: .72rem; font-weight: 700; cursor: pointer;
 }
 .month-more:hover, .month-return:hover { background: #ece1ef; }
+.month-more { min-height: 1.28rem; line-height: 1.25; }
 .month-return { display: none; }
 .planner-spread > section { min-width: 0; }
 .paper-day-events { max-height: clamp(15rem, calc(100dvh - 18rem), 33rem); overflow-y: auto; scrollbar-color: #c4b2c9 transparent; }

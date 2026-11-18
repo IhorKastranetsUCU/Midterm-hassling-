@@ -68,10 +68,25 @@
     </span>`;
   }
   function avatar(c) { return `<span class="course-avatar ${c.color}">${esc(c.initials)}</span>`; }
+  const deadlineKinds = [
+    {words: /(?:^|[^\p{L}])(?:есе|essay)(?!\p{L})/iu, title: 'Есе', icon: 'files', tone: 'lilac'},
+    {words: /(?:^|[^\p{L}])(?:тест|квіз|quiz|test)(?!\p{L})/iu, title: 'Тест', icon: 'practice', tone: 'sage'},
+    {words: /(?:^|[^\p{L}])(?:дебати|debate)(?!\p{L})/iu, title: 'Дебати', icon: 'speech', tone: 'blush'},
+    {words: /(?:^|[^\p{L}])(?:зустріч|meeting)(?!\p{L})/iu, title: 'Зустріч', icon: 'speech', tone: 'lilac'},
+    {words: /(?:^|[^\p{L}])(?:семінар|seminar)(?!\p{L})/iu, title: 'Семінар', icon: 'speech', tone: 'lilac'},
+    {words: /(?:^|[^\p{L}])(?:лабораторн\p{L}*|lab)(?!\p{L})/iu, title: 'Лабораторна', icon: 'lab', tone: 'sage'},
+    {words: /(?:^|[^\p{L}])(?:домашн\p{L}*|homework)(?!\p{L})/iu, title: 'Домашнє завдання', icon: 'plan', tone: 'neutral'},
+  ];
+  function deadlineIdentity(task, showCourse) {
+    const kind = deadlineKinds.find(item => item.words.test(task.title)) || {title:'Завдання', icon:'plan', tone:'neutral'};
+    const details = [kind.title, showCourse && task.course.name].filter(Boolean).map(esc).join(' · ');
+    return `<span class="deadline-kind" data-kind-tone="${kind.tone}" aria-hidden="true">${icon(kind.icon)}</span>
+      <span class="queue-title"><strong>${esc(task.title)}</strong><small>${details}</small></span>`;
+  }
   function start(task, label = 'Почати заняття', klass = 'primary') {
     if (task.href) return `<a class="${klass}" href="${esc(task.href)}" ${task.href.startsWith('#') ? '' : 'target="_blank" rel="noopener noreferrer"'}>${label}${icon('arrow')}</a>`;
     return `<button class="${klass}" data-start="${task.kind}" data-course="${task.course.id}" data-focus-id="dash-${task.id}">${label}${icon('arrow')}</button>`; }
-  function heading(title, action = '') { return `<div class="page-heading dashboard-heading"><div><h1 tabindex="-1">${esc(title)}</h1><p>${dateText(today(), { weekday: 'long', day: 'numeric', month: 'long' })}</p></div>${action}</div>`; }
+  function heading(title, action = '', showDate = true) { return `<div class="page-heading dashboard-heading"><div><h1 tabindex="-1">${esc(title)}</h1>${showDate ? `<p>${dateText(today(), { weekday: 'long', day: 'numeric', month: 'long' })}</p>` : ''}</div>${action}</div>`; }
   function taskRow(t, showFire = true) { return `<article class="dash-task deadline-surface ${t.done ? 'is-done' : ''} ${hot(t) ? 'is-urgent' : ''}"><button class="task-check" data-dash-complete="${t.id}" aria-pressed="${t.done}" aria-label="${t.done ? 'Позначити невиконаним' : 'Позначити виконаним'}: ${esc(t.title)}, ${esc(t.course.short)}">${t.done ? icon('check') : ''}</button><div class="dash-task-copy"><h3>${t.title}</h3><p><a href="#course/${t.course.id}">${esc(t.course.short)}</a><span>· ${esc(t.course.deadline)}</span><span>· ${t.minutes} хв</span></p></div>${badge(t)}${start(t, t.done ? 'Повторити' : 'Відкрити', 'task-open')}${showFire ? fire.edge(t.due, t.done) : ''}</article>`; }
   function practiceRow(task, showCourse) {
     const meta = [showCourse && task.course.short, task.label, task.minutes && task.minutes + ' хв'].filter(Boolean).map(esc).join(' · ');
@@ -201,12 +216,16 @@
     paintTimer();
   }
   function calendarGrid(compact = false, course) {
-    const days = C.monthDays(month), events = tasks(course?.id).filter(t => !t.course.connected);
+    const monthKey = month.slice(0, 7);
+    const gridDays = C.monthDays(month);
+    const lastDay = gridDays.findLastIndex(day => day.startsWith(monthKey));
+    const days = compact ? gridDays : gridDays.slice(0, Math.ceil((lastDay + 1) / 7) * 7);
+    const events = tasks(course?.id).filter(t => !t.course.connected);
     const monthLabel = dateText(month, { month: 'long', year: 'numeric' });
     const monthControls = `<div class="calendar-month-controls">
-      <button class="icon-button" data-month-step="-1" aria-label="Попередній місяць">‹</button>
+      <button class="icon-button" data-month-step="-1" aria-label="Попередній місяць"><span aria-hidden="true" class="month-chevron"></span></button>
       <strong>${monthLabel[0].toLocaleUpperCase('uk') + monthLabel.slice(1)}</strong>
-      <button class="icon-button" data-month-step="1" aria-label="Наступний місяць">›</button></div>`;
+      <button class="icon-button" data-month-step="1" aria-label="Наступний місяць"><span aria-hidden="true" class="month-chevron"></span></button></div>`;
     return `<section class="dash-panel calendar-panel ${compact ? 'compact-calendar' : ''}">${compact ? `<div class="panel-title"><h2>Календар</h2><a href="#calendar" aria-label="Відкрити календар">${icon('arrow')}</a></div>${monthControls}` : `<div class="month-heading">${monthControls}<button class="calendar-today" data-calendar-today>Сьогодні</button></div>`}<div class="calendar-weekdays" aria-hidden="true">${['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map(d => `<span>${d}</span>`).join('')}</div><div class="calendar-grid" role="group" aria-label="Дні місяця">${days.map(day => {
       const due = H.calendar ? H.calendar.events(course?.id).filter(e => e.day === day) : demoCourses().filter(c => (!course || c.id === course.id) && tasks(c.id)[0].dueDay === day), planned = events.filter(t => t.scheduled === day), urgent = due.some(e => { const c = courseById(e.course || e.id); return c && hot(tasks(c.id)[0]) && !allDone(c); });
       return `<div class="calendar-cell" data-drop-day="${day}"><button data-calendar-date="${day}" aria-pressed="${selectedDate === day}" ${day === today() ? 'aria-current="date"' : ''} class="calendar-day ${day.slice(0, 7) !== month.slice(0, 7) ? 'other-month' : ''} ${urgent ? 'has-urgent' : ''}" aria-label="${dateText(day, { weekday: 'long', day: 'numeric', month: 'long' })}${due.length ? ', дедлайнів: ' + due.length : ''}${planned.length ? ', завдань: ' + planned.length : ''}"><span>${Number(day.slice(-2))}</span><div class="calendar-dots" aria-hidden="true">${due.map(() => '<i class="deadline-dot"></i>').join('')}${planned.length ? '<i></i>' : ''}</div></button>${!compact && H.calendar ? H.calendar.chips(day, course?.id) : ''}</div>`;
@@ -232,7 +251,7 @@
     const queue = upcoming.length ? `<section class="dash-panel deadline-queue">
       <div class="panel-title"><h2>${compactOverview ? 'Дедлайни' : 'Інші дедлайни'}</h2><a href="#calendar">Календар ${icon('arrow')}</a></div>
       ${upcoming.map(task => `<article class="deadline-line deadline-surface"><a class="deadline-task-link" href="${esc(compactOverview && task.href ? task.href : '#course/' + task.course.id)}"${compactOverview && task.href && !task.href.startsWith('#') ? ' target="_blank" rel="noopener noreferrer"' : ''}>
-        ${avatar(task.course)}<span class="queue-title"><strong>${esc(task.course.deadline || task.title)}</strong>${compactCourse ? '' : `<small>${esc(task.course.name)}</small>`}</span>
+        ${task.course.connected ? deadlineIdentity(task, !compactCourse) : `${avatar(task.course)}<span class="queue-title"><strong>${esc(task.course.deadline || task.title)}</strong><small>${esc(task.course.name)}</small></span>`}
         ${badge(task)}${icon('arrow')}</a>${H.liveCalendar?.deadlineButton(task) || ''}${fire.edge(task.due, task.done)}</article>`).join('')}
     </section>` : '';
     const plan = tasks(course?.id).sort((a, b) => a.scheduled.localeCompare(b.scheduled) || a.due - b.due);
@@ -251,7 +270,7 @@
     const list = tasks(course?.id).sort((a,b) => deadlineOrder(a,b,Date.now()));
     const records = course ? `<a class="secondary" href="#course/${course.id}/submissions">Статус у Moodle →</a>` : '';
     const rows = list.map(t => `<article class="deadline-line deadline-surface">
-      ${avatar(t.course)}<span class="queue-title"><strong>${esc(t.title)}</strong><small>${esc(t.course.name)}</small></span>
+      ${deadlineIdentity(t, !course)}
       ${badge(t)}${start(t, 'Відкрити', 'task-open')}${H.liveCalendar?.deadlineButton(t) || ''}${fire.edge(t.due,t.done)}</article>`).join('');
     const header = course ? H.workspace.courseHeader(course, 'assignments') + `<div class="paper-deadline-actions">${records}</div>` : heading('Дедлайни');
     return header + (H.workspace.notice() || '') +
@@ -263,7 +282,7 @@
 
     const dayHeading = dateText(selectedDate, { weekday: 'long', day: 'numeric', month: 'long' });
     const weekStart = C.addDays(selectedDate, -((new Date(selectedDate + 'T12:00:00Z').getUTCDay() + 6) % 7));
-    return heading('Календар', H.liveCalendar?.actions() || H.calendar.button()) + (H.liveCalendar?.viewSwitch() || '') + `<div class="calendar-layout planner-spread">${calendarGrid()}<section class="dash-panel selected-agenda"><div class="panel-title"><h2>${dayHeading[0].toLocaleUpperCase('uk') + dayHeading.slice(1)}</h2><span>${C.secondsLabel(C.sum(state.records, { from: selectedDate, to: selectedDate }))} у фокусі</span></div><div class="agenda-week" role="group" aria-label="Обрати день тижня">${Array.from({ length: 7 }, (_, i) => C.addDays(weekStart, i)).map(day => `<button data-calendar-date="${day}" aria-pressed="${day === selectedDate}"><span>${dateText(day, { weekday: 'short' })}</span><strong>${Number(day.slice(-2))}</strong></button>`).join('')}</div>${agendaItems(selectedDate)}</section></div>`;
+    return heading('Календар', H.liveCalendar?.actions() || H.calendar.button(), false) + (H.liveCalendar?.viewSwitch() || '') + `<div class="calendar-layout planner-spread">${calendarGrid()}<section class="dash-panel selected-agenda"><div class="panel-title"><h2>${dayHeading[0].toLocaleUpperCase('uk') + dayHeading.slice(1)}</h2><span>${C.secondsLabel(C.sum(state.records, { from: selectedDate, to: selectedDate }))} у фокусі</span></div><div class="agenda-week" role="group" aria-label="Обрати день тижня">${Array.from({ length: 7 }, (_, i) => C.addDays(weekStart, i)).map(day => `<button data-calendar-date="${day}" aria-pressed="${day === selectedDate}"><span>${dateText(day, { weekday: 'short' })}</span><strong>${Number(day.slice(-2))}</strong></button>`).join('')}</div>${agendaItems(selectedDate)}</section></div>`;
   }
   function closeMobileMenu() { document.body.classList.remove('menu-open'); document.querySelector('.sidebar-shade').hidden = true; document.querySelector('#menu-toggle').setAttribute('aria-expanded', 'false'); document.querySelector('#sidebar').inert = matchMedia('(max-width: 52rem)').matches; }
   function render() {

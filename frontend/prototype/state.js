@@ -30,6 +30,8 @@
     courses: '<path d="M3 5c3-1 6-1 9 1 3-2 6-2 9-1v15c-3-1-6-1-9 1-3-2-6-2-9-1Z"/><path d="M12 6v15"/>',
     practice: '<rect x="5" y="3" width="15" height="17" rx="3"/><path d="M2 7v13a3 3 0 0 0 3 3M9 11l2 2 5-5"/>',
     files: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
+    speech: '<path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l1.2-3A7.5 7.5 0 1 1 20 11.5Z"/><path d="M9 10h7m-7 3h4"/>',
+    lab: '<path d="M9 3h6m-5 0v6l-5.3 8.2A2.5 2.5 0 0 0 6.8 21h10.4a2.5 2.5 0 0 0 2.1-3.8L14 9V3M8 15h8"/>',
     settings: '<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="currentColor"/><circle cx="15" cy="17" r="3" fill="currentColor"/>',
     arrow: '<path d="M5 12h14m-5-5 5 5-5 5"/>',
     clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',

@@ -174,14 +174,14 @@ async def paper_workspace(request: Request, response: Response):
                         + payload + '</script>')
     calendar_assets = (
         '<link rel="stylesheet" href="/hustle/calendar.css">'
-        '<link rel="stylesheet" href="calendar-connected.css">'
+        '<link rel="stylesheet" href="calendar-connected.css?v=c478c5e2">'
         '<script defer src="/hustle/ui.js"></script>'
         '<script defer src="/hustle/calendar.js"></script>'
         '<script defer src="/hustle/student-home.js"></script>'
         '<script defer src="/hustle/dashboard-today.js"></script>'
         '<link rel="stylesheet" href="/hustle/moodle-picker.css">'
         '<script defer src="/hustle/moodle-picker.js"></script>'
-        '<script defer src="paper-workspace.js?v=105e16ba"></script>'
+        '<script defer src="paper-workspace.js?v=47764a3b"></script>'
         '<script defer src="calendar-connected.js?v=69542340"></script>'
         '<link rel="stylesheet" href="/hustle/oral-defense.css">'
         '<script defer src="/hustle/oral-defense.js"></script>'

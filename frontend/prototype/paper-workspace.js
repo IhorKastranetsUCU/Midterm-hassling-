@@ -45,7 +45,7 @@
         const id = course.id + ':assignment:' + Number(a.id);
         const moodle = UI.safeLink(account.moodle);
         const href = moodle && Number(a.cmid) > 0 ? new URL('/mod/assign/view.php?id=' + Number(a.cmid), moodle).href : '#course/' + course.id + '/submissions';
-        return {id, course, calendarKey:`${course.id}/${Number(a.id)}`, title:a.name, label:'Завдання Moodle', due, dueDay:day, scheduled:day,
+        return {id, course, calendarKey:`${course.id}/${Number(a.id)}`, title:UI.courseName(a.name), label:'Завдання Moodle', due, dueDay:day, scheduled:day,
           href, done:status === 'done' || !!completed[id], submitted:status === 'done', status};
       }).filter(t => t.status !== 'check' || t.done);
   }
@@ -136,15 +136,10 @@
     const sections = [['overview', 'Огляд'], ['topics', 'Теми'], ['practice', 'Практика'], ['assignments', 'Дедлайни'], ['manage', 'Параметри']];
     const active = ({reading:'topics', materials:'topics', topic:'topics', exam:'practice', grades:'assignments', submissions:'assignments'})[section] || section;
     const route = (id, key) => '#course/' + id + (key === 'overview' ? '' : '/' + key);
-    const day = new Intl.DateTimeFormat('uk-UA', {timeZone: core.zone, weekday: 'long', day: 'numeric', month: 'long'}).format(Date.now());
-    const switcher = courses.length > 1 ? `<select class="paper-course-switch" data-paper-course-switch aria-label="Змінити предмет">
-      <option value="" selected disabled>Змінити предмет</option>${courses.filter(c => c.id !== course.id).map(c =>
-        `<option value="${esc(route(c.id, active))}">${esc(c.name)}</option>`).join('')}</select>` : '';
     return `<div class="paper-course-header">
       <div class="paper-course-context">
-        <nav aria-label="Шлях сторінки"><a class="back-to-courses" href="#courses">← Мої предмети</a></nav>
-        <time datetime="${core.dateKey()}">${esc(day)}</time>
-        <div class="paper-course-header-actions">${switcher}${H.paperOral?.button(course) || ''}</div>
+        <nav aria-label="Шлях сторінки"><a class="secondary back-to-courses" href="#courses"><span aria-hidden="true">←</span> До всіх предметів</a></nav>
+        <div class="paper-course-header-actions">${H.paperOral?.button(course) || ''}</div>
       </div>
       <nav class="paper-course-actions" aria-label="Розділи предмета">
         ${sections.map(([key, label]) => `<a class="secondary" href="${esc(route(course.id, key))}"${key === active ? ' aria-current="page"' : ''}>${label}</a>`).join('')}
@@ -152,7 +147,6 @@
   }
   document.addEventListener('change', e => {
     if (e.target.matches('[data-paper-goal]')) H.update({minutes:Number(e.target.value)});
-    if (e.target.matches('[data-paper-course-switch]') && e.target.value) location.hash = e.target.value;
   });
   const add = '<a class="secondary" href="#connect">Додати з Moodle +</a>';
   H.workspace = { get deadlineError() {return deadlineError;}, get courses() {return courses;}, tasks, notice, tools, courseHeader, updateCourses, add };
