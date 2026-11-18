@@ -57,6 +57,22 @@ route() {
 courseLink(id,section='overview',topic) {const from=this.route().from;return `#course/${encodeURIComponent(id)}/${section}${topic!==undefined?'/'+encodeURIComponent(topic):''}${from?'?from='+from:''}`;},
 safeLink(value) {if(!value)return null;try {const url=new URL(value,location.origin);return ['https:','http:'].includes(url.protocol)&&!url.username&&!url.password?url.href:null;}catch{return null;}},
 plain(value) {const doc=new DOMParser().parseFromString(String(value||''),'text/html');return doc.body.textContent||'';},
+courseName(value) {
+ let text = String(value ?? '');
+ if (text.includes('&')) {
+  const decoder = document.createElement('textarea');
+  // Decode entity tokens only. Literal angle brackets in course titles remain text.
+  for (let pass = 0; pass < 2; pass++) {
+   const decoded = text.replace(/&(?:#(?:\d+|x[0-9a-f]+)|[a-z][a-z0-9]*);/gi, entity => {
+    decoder.innerHTML = entity;
+    return decoder.value;
+   });
+   if (text === decoded) break;
+   text = decoded;
+  }
+ }
+ return text.normalize('NFC').replace(/\s+/g, ' ').trim();
+},
 countLabel(value,one,few,many) {const rule=new Intl.PluralRules('uk-UA').select(Number(value));return `${value} ${{one,few,many,other:many}[rule]}`;},
 date(value,withTime=false) {if(!value)return '';const d=new Date(typeof value==='number'?value*1000:value);return Number.isNaN(d.getTime())?'':new Intl.DateTimeFormat('uk-UA',{day:'numeric',month:'short',...(withTime?{hour:'2-digit',minute:'2-digit'}:{})}).format(d);},
 toast(message) {const el=document.querySelector('.toast');if(!el)return;clearTimeout(this.toastTimer);el.textContent=message;el.hidden=false;this.toastTimer=setTimeout(()=>el.hidden=true,5000);},
