@@ -104,6 +104,12 @@ os.makedirs(static_dir, exist_ok=True)
 os.makedirs(templates_dir, exist_ok=True)
 
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
+@app.get("/hustle/", include_in_schema=False)
+@app.get("/hustle/index.html", include_in_schema=False)
+async def open_landing():
+    return RedirectResponse("/prototype/", status_code=307)
+
+
 @app.get("/hustle/app.html", include_in_schema=False)
 async def open_workspace(request: Request):
     # Browsers carry the original fragment through this redirect, including Moodle deep links.
@@ -123,6 +129,14 @@ async def course_tools():
 
 app.mount("/hustle", StaticFiles(directory=os.path.join(static_dir, "hustle"), html=True), name="hustle")
 prototype_dir = Path(current_dir).parent / "prototype"
+
+
+@app.get("/prototype/", response_class=HTMLResponse, include_in_schema=False)
+@app.get("/prototype/index.html", response_class=HTMLResponse, include_in_schema=False)
+async def paper_landing():
+    page = (prototype_dir / "index.html").read_text(encoding="utf-8")
+    return HTMLResponse(page.replace('href="register.html', 'href="/hustle/signin.html'),
+                        headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/prototype/app.html", response_class=HTMLResponse)
@@ -164,7 +178,7 @@ templates = Jinja2Templates(directory=templates_dir)
 @app.get("/", response_class=HTMLResponse)
 async def serve_dashboard(request: Request):
     if get_settings().HUSTLE_PAPER_HOME:
-        return RedirectResponse("/hustle/", status_code=307)
+        return RedirectResponse("/prototype/", status_code=307)
     default_auth = get_authority("ucu")
     settings = get_settings()
     return templates.TemplateResponse(

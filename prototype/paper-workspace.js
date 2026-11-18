@@ -90,5 +90,29 @@
   window.addEventListener('hashchange', () => {
     if (location.hash === '#dashboard') { history.replaceState(null,'','#plan'); }
   });
-  document.addEventListener('DOMContentLoaded', loadDeadlines);
+  let checkingAccount = false;
+  let verifiedAt = 0;
+  async function resumeWorkspace() {
+    if (document.hidden || checkingAccount || Date.now() - verifiedAt < 1000) return;
+    checkingAccount = true;
+    try {
+      const current = await UI.api('/api/auth/status');
+      if (current.owner_id !== account.owner || current.moodle_paired !== account.paired) {
+        location.reload();
+        return;
+      }
+      if (Date.now() - verifiedAt > 60000) {
+        const previous = courses;
+        updateCourses(await UI.api('/api/workspace/courses'));
+        if (courses === previous) loadDeadlines();
+        else H.dashboardRefresh?.();
+      }
+      verifiedAt = Date.now();
+    } catch (err) { UI.toast(err.message); }
+    finally { checkingAccount = false; }
+  }
+  window.addEventListener('focus', resumeWorkspace);
+  window.addEventListener('pageshow', event => { if (event.persisted) resumeWorkspace(); });
+  document.addEventListener('visibilitychange', resumeWorkspace);
+  document.addEventListener('DOMContentLoaded', () => { verifiedAt = Date.now(); loadDeadlines(); });
 })();

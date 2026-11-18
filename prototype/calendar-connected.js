@@ -23,7 +23,10 @@
     // Other tabs can import a course. Serialize the first request that issues a guest cookie.
     if (sessionRequest) return sessionRequest;
     if (bootstrap && !revalidate) return bootstrap;
-    bootstrap = UI.api('/api/workspace/session').then(() => UI.api('/api/workspace/courses'))
+    bootstrap = UI.api('/api/workspace/session').then(owner => {
+      if (H.account && owner.owner_id !== H.account.owner) { location.reload(); return []; }
+      return UI.api('/api/workspace/courses');
+    })
       .then(result => { courses = result; H.workspace?.updateCourses(result); }).catch(err => { bootstrap = null; throw err; });
     sessionRequest = bootstrap.finally(() => { sessionRequest = null; });
     return sessionRequest;

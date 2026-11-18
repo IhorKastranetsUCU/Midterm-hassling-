@@ -402,6 +402,9 @@ def test_paper_deadline_review_is_personal_and_idempotent(cal_env, monkeypatch):
 
 def test_public_workspace_entry_uses_paper_planner_and_same_owner(cal_env):
     client, _, _ = cal_env
+    landing = client.get("/hustle/")
+    assert landing.url.path == "/prototype/"
+    assert 'href="/hustle/signin.html?mode=login"' in landing.text
     entry = client.get("/hustle/app.html?source=signin", follow_redirects=False)
     assert entry.status_code == 307
     assert entry.headers["location"] == "/prototype/app.html?source=signin"
