@@ -111,7 +111,7 @@ jobs:
             cd ~/cms_obgortka
             mkdir -p data/staging
             sudo chown -R 1000:1000 data
-            sudo docker compose -f infra/docker-compose.yml up -d --build
+            sudo docker compose -p cms_obgortka -f infra/docker-compose.yml up -d --build --remove-orphans
             if [ -f infra/Caddyfile ] && ! sudo diff -q infra/Caddyfile /etc/caddy/Caddyfile >/dev/null 2>&1; then
               sudo cp infra/Caddyfile /etc/caddy/Caddyfile
               sudo caddy validate --config /etc/caddy/Caddyfile
