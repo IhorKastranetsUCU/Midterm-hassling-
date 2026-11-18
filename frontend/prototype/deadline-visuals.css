@@ -305,6 +305,7 @@
 .deadline-line .queue-title { min-width:0; overflow-wrap:anywhere; }
 .deadline-line .deadline-calendar-button { flex:none; width:2rem; height:2rem; border:1px solid #c7b6cc; background:#fffaf2; color:#62496a; }
 .deadline-calendar-button[data-calendar-added] { background:#e9efdf; border-color:#a9b899; color:#465a3c; }
+.deadline-calendar-button[data-calendar-added]:hover:not([aria-disabled="true"]) { background:#f4e4dc; border-color:#c89a8e; color:#754239; }
 .deadline-calendar-button[aria-busy="true"] { cursor:progress; opacity:.65; }
 .subject-card.deadline-surface { padding: .95rem 1rem .5rem; }
 .subject-card.deadline-surface h3 { font-size: 1.16rem; }

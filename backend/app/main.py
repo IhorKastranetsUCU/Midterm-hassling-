@@ -182,7 +182,7 @@ async def paper_workspace(request: Request, response: Response):
         '<link rel="stylesheet" href="/hustle/moodle-picker.css">'
         '<script defer src="/hustle/moodle-picker.js"></script>'
         '<script defer src="paper-workspace.js?v=b8c25366"></script>'
-        '<script defer src="calendar-connected.js?v=54a782a1"></script>'
+        '<script defer src="calendar-connected.js?v=3c07a153"></script>'
         '<link rel="stylesheet" href="/hustle/oral-defense.css">'
         '<script defer src="/hustle/oral-defense.js"></script>'
         '<script defer src="oral-practice.js"></script>'

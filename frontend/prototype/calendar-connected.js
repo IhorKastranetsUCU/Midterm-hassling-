@@ -10,7 +10,7 @@
   let calendar, courses = [], context, bootstrap, sessionRequest, week = false, revision = 0;
   let period = '', loading, error = '', weekHost;
   let acceptedDeadlines = new Set(), reviewVersion = 0;
-  const addingDeadlines = new Set();
+  const pendingDeadlineChanges = new Map();
   const days = () => core.monthDays(context.month);
   const zone = () => calendar?.settings.timezone || core.zone;
   const monthPreviewLimit = 2;
@@ -69,11 +69,13 @@
   function paintDeadlineButton(button) {
     const key = button.dataset.deadlineCalendar;
     const added = acceptedDeadlines.has(key);
-    const adding = addingDeadlines.has(key);
-    const label = added ? 'У календарі' : adding ? 'Додаємо в календар…' : 'Додати в календар';
+    const saving = pendingDeadlineChanges.has(key);
+    const label = saving
+      ? pendingDeadlineChanges.get(key) ? 'Додаємо в календар…' : 'Прибираємо з календаря…'
+      : added ? 'Прибрати з календаря' : 'Додати в календар';
     button.setAttribute('aria-label', label + ': ' + button.dataset.deadlineTitle);
-    button.setAttribute('aria-disabled', String(added || adding));
-    button.setAttribute('aria-busy', String(adding));
+    button.setAttribute('aria-disabled', String(saving));
+    button.setAttribute('aria-busy', String(saving));
     button.toggleAttribute('data-calendar-added', added);
     button.title = label;
     button.innerHTML = icon(added ? 'check' : 'calendar');
@@ -259,19 +261,27 @@
     const el = event.target.closest('button'); if (!el) return;
     const deadlineKey = el.dataset.deadlineCalendar;
     if (deadlineKey) {
-      if (acceptedDeadlines.has(deadlineKey) || addingDeadlines.has(deadlineKey)) return;
-      addingDeadlines.add(deadlineKey);
+      if (pendingDeadlineChanges.has(deadlineKey)) return;
+      const add = !acceptedDeadlines.has(deadlineKey);
+      pendingDeadlineChanges.set(deadlineKey, add);
       paintDeadlineButtons();
       try {
-        await UI.api('/api/calendar/deadlines/' + deadlineKey + '?decision=accepted', {method:'PUT'});
+        if (add) {
+          await UI.api('/api/calendar/deadlines/' + deadlineKey + '?decision=accepted', {method:'PUT'});
+          acceptedDeadlines.add(deadlineKey);
+        } else {
+          const eventId = 'moodle-' + deadlineKey.replace('/', '-');
+          await UI.api('/api/calendar/events/' + encodeURIComponent(eventId), {method:'DELETE'});
+          acceptedDeadlines.delete(deadlineKey);
+        }
         reviewVersion++;
-        acceptedDeadlines.add(deadlineKey);
-        UI.toast('Дедлайн додано в календар');
+        UI.toast(add ? 'Дедлайн додано в календар' : 'Дедлайн прибрано з календаря');
         if (main.querySelector('.selected-agenda, .mini-agenda')) load(true);
       } catch (err) {
         UI.toast(err.message);
+        refreshDeadlineReviews();
       } finally {
-        addingDeadlines.delete(deadlineKey);
+        pendingDeadlineChanges.delete(deadlineKey);
         paintDeadlineButtons();
       }
       return;
