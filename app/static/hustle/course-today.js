@@ -52,7 +52,7 @@
     try{sessionStorage.setItem('hustle:course-reading:'+owner,JSON.stringify(history));}catch{}
   }
   function render(bundle) {
-    return `<div class="course-dashboard" data-course-dashboard="${bundle.course.course_id}"><div class="course-now-heading"><h2>Зараз у курсі</h2><a class="text-button" href="${topicsLink(bundle)}">Усі теми ${icon('arrow')}</a></div><div class="course-now-grid"><div data-course-focus><section class="today-focus today-loading" aria-busy="true"><p role="status">Завантажуємо справи курсу…</p><span class="today-skeleton" aria-hidden="true"></span></section></div><aside class="today-study course-now-study" data-course-study aria-label="Навчання в курсі"></aside></div><section class="course-now-queue" data-course-queue hidden></section><div class="course-now-review" data-course-review></div></div>`;
+    return `<div class="course-dashboard" data-course-dashboard="${bundle.course.course_id}"><div class="course-now-heading"><h2>Зараз у курсі</h2><a class="text-button" href="${topicsLink(bundle)}">Усі теми ${icon('arrow')}</a></div><div data-learning-connection></div><div class="course-now-grid"><div data-course-focus><section class="today-focus today-loading" aria-busy="true"><p role="status">Завантажуємо справи курсу…</p><span class="today-skeleton" aria-hidden="true"></span></section></div><aside class="today-study course-now-study" data-course-study aria-label="Навчання в курсі"></aside></div><section data-learning-hub aria-label="Навчальні інструменти"></section><section class="course-now-queue" data-course-queue hidden></section><div class="course-now-review" data-course-review></div></div>`;
   }
   function drawFocus(state) {
     const {bundle,model,selection}=state,item=model.focus,node=selection.node,id=bundle.course.course_id;
@@ -73,14 +73,15 @@
     const node=topics.find(node=>node.id===selectedId)||state.selection.node;
     const host=state.root.querySelector('[data-course-study]');
     if(!node){host.hidden=true;state.root.querySelector('.course-now-grid').classList.add('without-study');return;}
-    const quiz=quizFor(node),internalQuiz=node.quizzes?.length&&node.mix_id,flashcards=node.flashcards?.length&&node.mix_id;
-    const picker=topics.length>1?`<label class="course-practice-topic">Тема<select data-course-study-topic aria-label="Тема для навчання">${topics.map(topic=>`<option value="${esc(topic.id)}" ${topic.id===node.id?'selected':''}>${esc(titleFor(bundle,topic))}</option>`).join('')}</select></label>`:'';
+    const practiceNode=window.HustleLearningHub?(HustleLearningHub.topics(bundle).find(topic=>topic.mix_id===node.mix_id)||{}):node;
+    const quiz=quizFor(node),internalQuiz=practiceNode.quizzes?.length&&node.mix_id,flashcards=practiceNode.flashcards?.length&&node.mix_id;
+    const picker=!window.HustleLearningHub&&topics.length>1?`<label class="course-practice-topic">Тема<select data-course-study-topic aria-label="Тема для навчання">${topics.map(topic=>`<option value="${esc(topic.id)}" ${topic.id===node.id?'selected':''}>${esc(titleFor(bundle,topic))}</option>`).join('')}</select></label>`:'';
     let content;
     if(quiz){
       content=`<h2>Квіз до теми</h2>${picker}<h3>${esc(clean(quiz.name))}</h3><a class="today-study-action" href="${esc(UI.safeLink(quiz.url))}" target="_blank" rel="noopener noreferrer">Відкрити квіз <span aria-hidden="true">↗</span></a>`;
     }else if(internalQuiz||flashcards){
       const type=internalQuiz?'quiz':'cards',label=internalQuiz?'Самоперевірка':'Картки';
-      content=`<h2>${label}</h2>${picker}<h3>${esc(internalQuiz?UI.countLabel(node.quizzes.length,'питання','питання','питань'):UI.countLabel(node.flashcards.length,'картка','картки','карток'))}</h3><button class="today-study-action" data-study="${type}" data-mix="${esc(node.mix_id)}">${internalQuiz?'Почати квіз':'Повторити поняття'} ${icon('arrow')}</button>`;
+      content=`<h2>${label}</h2>${picker}<h3>${esc(internalQuiz?UI.countLabel(practiceNode.quizzes.length,'питання','питання','питань'):UI.countLabel(practiceNode.flashcards.length,'картка','картки','карток'))}</h3><button class="today-study-action" data-study="${type}" data-mix="${esc(node.mix_id)}">${internalQuiz?'Почати квіз':'Повторити поняття'} ${icon('arrow')}</button>`;
     }else{
       const resources=(node.materials||[]).filter(m=>!['assign','quiz','label','forum','subsection'].includes(m.modname)&&m.visible!==false&&m.uservisible!==false&&UI.safeLink(m.url||m.download_url)).slice(0,2);
       content=`<h2>Матеріали теми</h2>${picker}${resources.length?`<div class="course-ready-resources">${resources.map(material=>`<a href="${esc(UI.safeLink(material.url||material.download_url))}" target="_blank" rel="noopener noreferrer">${icon('files')}<span>${esc(clean(material.name))}</span><span aria-hidden="true">↗</span></a>`).join('')}</div>`:`<h3>${esc(titleFor(bundle,node))}</h3>`}<a class="today-study-action" href="${nodeLink(bundle,node)}">До матеріалів ${icon('arrow')}</a>`;

@@ -3,7 +3,7 @@ import json
 from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -15,7 +15,7 @@ from app.core.security import (
     WorkspaceOwner,
     create_workspace_jwt,
     get_current_user_session,
-    get_workspace_owner,
+    get_workspace_owner as resolve_learning_owner,
     get_workspace_session_owner,
     get_optional_moodle_session,
     owner_storage_slug,
@@ -47,8 +47,16 @@ from app.services.mix_generator import (
 from app.services.moodle_client import MoodleClient
 from app.services.temp_storage import is_allowed_staging_filename
 from app.services.workspace_store import get_workspace_store
+from app.services.learning_provider import LearningSettingsStore, learning_provider_scope
 
 router = APIRouter(tags=["Workspace & Extension Sync"])
+
+
+async def get_workspace_owner(request: Request, response: Response):
+    owner = await resolve_learning_owner(request, response)
+    provider = LearningSettingsStore(get_workspace_store().db_path).get(owner.owner_id)
+    with learning_provider_scope(provider):
+        yield owner
 
 
 class NotesUpdateRequest(BaseModel):

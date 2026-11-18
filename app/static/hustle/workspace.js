@@ -93,7 +93,7 @@
         main.innerHTML=HustlePlan.render(courses,addButtons);
       } else if(route.view==='settings') {
         title='Налаштування';
-        main.innerHTML=heading(title)+`<div class="settings-grid"><section class="settings-card"><h2>${esc(name)}</h2><p>${esc(account.email || 'Гостьовий простір')}</p>${!account.google_linked?'<a class="secondary" href="signin.html">Увійти через Google</a>':''}<button class="logout-button" data-logout>${icon('logout')} Вийти</button></section><section class="settings-card"><h2>Moodle</h2><p>${esc(account.moodle_url || 'Не підключено')}</p><div class="page-actions"><button class="primary" data-connect>${account.moodle_paired?'Додати курси':'Підключити LMS'} →</button>${account.moodle_paired?'<a class="text-button" href="connect.html">Перепідключити</a>':''}</div></section></div><section class="topic-card settings-events"><h2>Останні оновлення</h2><div data-events role="status">Завантажуємо…</div></section>`;
+        main.innerHTML=heading(title)+`<div data-learning-settings></div><div class="settings-grid"><section class="settings-card"><h2>${esc(name)}</h2><p>${esc(account.email || 'Гостьовий простір')}</p>${!account.google_linked?'<a class="secondary" href="signin.html">Увійти через Google</a>':''}<button class="logout-button" data-logout>${icon('logout')} Вийти</button></section><section class="settings-card"><h2>Moodle</h2><p>${esc(account.moodle_url || 'Не підключено')}</p><div class="page-actions"><button class="primary" data-connect>${account.moodle_paired?'Додати курси':'Підключити LMS'} →</button>${account.moodle_paired?'<a class="text-button" href="connect.html">Перепідключити</a>':''}</div></section></div><section class="topic-card settings-events"><h2>Останні оновлення</h2><div data-events role="status">Завантажуємо…</div></section>`;
         HustleCourse.events(main.querySelector('[data-events]'));
       } else if(route.view==='deadlines') {
         title='Дедлайни'; main.innerHTML=heading(title)+'<div id="academic-content"></div>';
@@ -113,6 +113,7 @@
       if(window.HustleSpace){HustleSpace.preview(main.querySelector('[data-agenda-preview]'),account);HustleSpace.preview(main.querySelector('[data-course-agenda]'),account,route.courseId);}
       HustleDashboard.loadActivity(main.querySelector('[data-dashboard-activity]'),courses);
       HustlePlan.mount(main,account,courses);
+      window.HustleLearningHub?.mount(main,account,currentBundle);
       window.HustleFrame?.mount(main,account,courses,currentBundle);
       if(navigate) {main.focus({preventScroll:true});window.scrollTo(0,scrolls.get(location.hash)||0);}
       if(route.view==='connect')await showConnect();

@@ -12,6 +12,8 @@ from app.core.exceptions import MoodleException, UnauthorizedError
 from app.core.authorities import get_authority, list_authorities
 from app.routers import auth, courses, assignments, grades, system, events, authorities, workspace
 from app.services.build_queue import get_build_queue
+from app.routers import learning
+from app.services.learning_provider import LearningProviderError
 
 
 @asynccontextmanager
@@ -64,6 +66,12 @@ async def unauthorized_exception_handler(request: Request, exc: UnauthorizedErro
 
 
 # Include API Routers
+@app.exception_handler(LearningProviderError)
+async def learning_provider_error(request: Request, exc: LearningProviderError):
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.message}, headers={"Cache-Control": "no-store"})
+
+
+app.include_router(learning.router)
 app.include_router(hustle_extension.router)
 app.include_router(auth.router)
 app.include_router(courses.router)

@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import httpx
 
 from app.config import get_settings
+from app.services.learning_provider import current_provider, LearningProviderError, provider_http_error
 
 logger = logging.getLogger("gemini_service")
 
@@ -20,8 +21,10 @@ class GeminiService:
 
     def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
         settings = get_settings()
-        self.api_key = (api_key or settings.GEMINI_API_KEY or "").strip()
-        self.model = model or settings.GEMINI_MODEL or "gemini-2.0-flash"
+        provider = current_provider.get()
+        self.api_key = (api_key or (provider.api_key if provider else None) or settings.GEMINI_API_KEY or "").strip()
+        self.model = model or (provider.model if provider else None) or settings.GEMINI_MODEL or "gemini-2.0-flash"
+        self.strict = bool(provider and provider.strict)
 
     @property
     def is_available(self) -> bool:
@@ -39,7 +42,7 @@ class GeminiService:
         if not self.is_available:
             return None
 
-        url = f"{self.BASE_URL}/{self.model}:generateContent?key={self.api_key}"
+        url = f"{self.BASE_URL}/{self.model}:generateContent"
 
         payload: Dict[str, Any] = {
             "contents": [
@@ -60,16 +63,16 @@ class GeminiService:
         if json_mode:
             payload["generationConfig"]["responseMimeType"] = "application/json"
 
-        headers = {"Content-Type": "application/json"}
+        headers = {"Content-Type": "application/json", "x-goog-api-key": self.api_key}
 
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 resp = await client.post(url, json=payload, headers=headers)
 
             if resp.status_code != 200:
-                logger.warning(
-                    f"Gemini API returned HTTP {resp.status_code}: {resp.text[:300]}"
-                )
+                if self.strict:
+                    raise provider_http_error(resp.status_code)
+                logger.warning("Gemini API returned HTTP %s", resp.status_code)
                 return None
 
             data = resp.json()
@@ -77,10 +80,16 @@ class GeminiService:
             if candidates:
                 parts = candidates[0].get("content", {}).get("parts", [])
                 if parts:
-                    return parts[0].get("text", "")
+                    return "\n".join(part.get("text", "") for part in parts if not part.get("thought"))
+            if self.strict:
+                raise LearningProviderError("Gemini не повернув навчальний матеріал. Спробуй ще раз.")
             return None
+        except LearningProviderError:
+            raise
         except Exception as exc:
-            logger.warning(f"Error calling Gemini API: {exc}")
+            if self.strict:
+                raise LearningProviderError("Не вдалося отримати матеріали від Gemini. Спробуй ще раз.") from None
+            logger.warning("Error calling Gemini API (%s)", type(exc).__name__)
             return None
 
     async def structure_syllabus_to_topics(

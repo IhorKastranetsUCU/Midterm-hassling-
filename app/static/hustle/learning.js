@@ -74,7 +74,9 @@
   }
   function examView(bundle) {
     const exam = bundle.exam_mix;
-    return `<section class="exam-intro"><div><h2>Підготовка до іспиту</h2>${bundle.course.exam_mix_stale?'<p>Є нові матеріали або результати практики.</p>':''}</div><button class="primary" data-build-exam>${exam?'Оновити підготовку':'Підготувати матеріали'} →</button></section><p data-exam-status role="status"></p>${exam?`<article class="topic-card">${UI.markdown(exam.master_cheatsheet_markdown)}${exam.concept_map_mermaid?`<figure class="diagram" data-diagram="${esc(exam.concept_map_mermaid)}" aria-label="Карта понять курсу"></figure>`:''}${exam.weak_spots_focus.length?`<h3>На що звернути увагу</h3><ul>${exam.weak_spots_focus.map(point=>`<li>${esc(point)}</li>`).join('')}</ul>`:''}${exam.mock_exam_questions.length?'<button class="primary" data-study="exam">Пробний тест →</button>':''}</article>`:empty('Збери головне з тем курсу в одну підготовку.')}`;
+    const examMarkdown=exam?.master_cheatsheet_markdown.replace(/^# .+ — Exam Prep Master Mix/m,'## Головне з тем')||'';
+    const mistakes=(exam?.weak_spots_focus||[]).filter(point=>point.startsWith('Weak Spot:')).map(point=>point.replace(/^Weak Spot: (.+) \((\d+) missed\)$/,(match,topic,count)=>`${topic} · ${UI.countLabel(count,'помилка','помилки','помилок')}`));
+    return `<section class="exam-intro"><div><h2>Підготовка до іспиту</h2>${bundle.course.exam_mix_stale?'<p>Є нові матеріали або результати практики.</p>':''}</div><button class="primary" data-build-exam>${exam?'Оновити підготовку':'Підготувати матеріали'} →</button></section><p data-exam-status role="status"></p>${exam?`<article class="topic-card">${UI.markdown(examMarkdown)}${exam.concept_map_mermaid?`<figure class="diagram" data-diagram="${esc(exam.concept_map_mermaid)}" aria-label="Карта понять курсу"></figure>`:''}${mistakes.length?`<h3>Помилки в практиці</h3><ul>${mistakes.map(point=>`<li>${esc(point)}</li>`).join('')}</ul>`:''}${exam.mock_exam_questions.length?'<button class="primary" data-study="exam">Пробний тест →</button>':''}</article>`:empty('Збери головне з тем курсу в одну підготовку.')}`;
   }
   function renderBundle(bundle, section='overview') {
     activeBundle=bundle;materialRecords=[];
@@ -104,7 +106,7 @@
   }
   function showPractice(type, mixId) {
     const topic = activeBundle.topic_mixes.find(t=>t.mix_id===mixId);
-    const verified = window.HustleCurriculum?.practiceTopics(activeBundle).find(t=>t.mix_id===mixId)||(!activeBundle.course_map?topic:null);
+    const verified = window.HustleCurriculum?HustleCurriculum.practiceTopics(activeBundle).find(t=>t.mix_id===mixId):topic;
     const items = type==='exam'?activeBundle.exam_mix?.mock_exam_questions:type==='cards'?verified?.flashcards:verified?.quizzes;
     if(!items?.length) return;
     practice = {type,items,topic,index:0,score:0,selected:null,checked:false,revealed:false,saving:false,error:'',epoch:++viewVersion};

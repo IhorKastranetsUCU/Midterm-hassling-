@@ -578,12 +578,20 @@ class GeminiMixGenerator(StructuredPlaceholderMixGenerator):
     def __init__(self, api_key: Optional[str] = None):
         super().__init__()
         self.gemini = GeminiService(api_key=api_key)
+        if self.gemini.strict:
+            self.prompt_version = "gemini-live-" + self.gemini.model
+
+    def require_generated_content(self):
+        if self.gemini.strict:
+            from app.services.learning_provider import LearningProviderError
+            raise LearningProviderError("Gemini повернув неповний результат. Спробуй підготувати тему ще раз.")
 
     async def generate_mermaid_diagram(self, title: str, key_points: List[str]) -> str:
         if self.gemini.is_available:
             diagram = await self.gemini.generate_mermaid_diagram(title, key_points)
             if diagram:
                 return diagram
+        self.require_generated_content()
         return await super().generate_mermaid_diagram(title, key_points)
 
     async def generate_book_section(
@@ -614,6 +622,7 @@ class GeminiMixGenerator(StructuredPlaceholderMixGenerator):
                     key_takeaways = ai_data["key_takeaways"]
 
         if not explanation:
+            self.require_generated_content()
             summary_body = "\n".join(f"- {pt}" for pt in key_points[:6])
             explanation = (
                 f"### {title}\n\n"
@@ -657,6 +666,7 @@ class GeminiMixGenerator(StructuredPlaceholderMixGenerator):
                         )
                 if results:
                     return results
+        self.require_generated_content()
         return await super().generate_practice_quizzes(title, key_points, total_points)
 
     async def generate_flashcards(
@@ -675,13 +685,16 @@ class GeminiMixGenerator(StructuredPlaceholderMixGenerator):
                         cards.append(Flashcard(front=front, back=back, tag=c.get("tag", title[:25])))
                 if cards:
                     return cards
+        self.require_generated_content()
         return await super().generate_flashcards(title, key_takeaways)
 
 
 def get_mix_generator(api_key: Optional[str] = None) -> BaseMixGenerator:
     """Factory hook returning GeminiMixGenerator when an API key is available, else fallback."""
     settings = get_settings()
-    effective_key = (api_key or settings.GEMINI_API_KEY or "").strip()
+    from app.services.learning_provider import current_provider
+    provider = current_provider.get()
+    effective_key = (api_key or (provider.api_key if provider else None) or settings.GEMINI_API_KEY or "").strip()
     if effective_key:
         return GeminiMixGenerator(api_key=effective_key)
     return StructuredPlaceholderMixGenerator()
@@ -710,7 +723,9 @@ async def generate_course_structure_from_syllabus(
 
     # 0. Live Gemini AI Curriculum Architect
     settings = get_settings()
-    effective_gemini_key = (gemini_api_key or settings.GEMINI_API_KEY or "").strip()
+    from app.services.learning_provider import current_provider, LearningProviderError
+    provider = current_provider.get()
+    effective_gemini_key = (gemini_api_key or (provider.api_key if provider else None) or settings.GEMINI_API_KEY or "").strip()
     if effective_gemini_key:
         try:
             gemini = GeminiService(api_key=effective_gemini_key)
@@ -746,8 +761,10 @@ async def generate_course_structure_from_syllabus(
                         if custom_syllabus_text
                         else f"Згенеровано моделлю Gemini 2.0 Flash на основі матеріалів Moodle ({len(sections or [])} секцій)."
                     )
+        except LearningProviderError:
+            raise
         except Exception as exc:
-            logger.warning(f"Gemini syllabus structuring failed: {exc}")
+            logger.warning("Gemini syllabus structuring failed (%s)", type(exc).__name__)
 
     # 1. Canonical Syllabus Topic Extraction and Content-Driven Material Clustering
     if not topics and (sections or custom_syllabus_text):

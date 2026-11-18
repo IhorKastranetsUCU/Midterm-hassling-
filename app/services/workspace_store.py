@@ -2,6 +2,7 @@ import base64
 import hashlib
 import json
 import os
+import re
 import sqlite3
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -50,6 +51,9 @@ from app.services.temp_storage import (
 
 def _utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+from app.services.learning_provider import with_learning_provider
 
 
 class WorkspaceStore:
@@ -964,6 +968,7 @@ class WorkspaceStore:
         }
         return "\n".join(safe_lines), section_dict, blocked, chunks
 
+    @with_learning_provider
     async def sync_extension_payload(
         self, payload: ExtensionSyncPayload, owner_id: str
     ) -> Dict[str, Any]:
@@ -1120,6 +1125,7 @@ class WorkspaceStore:
             "exam_mix_stale": exam_stale,
         }
 
+    @with_learning_provider
     async def create_or_ingest_upload(
         self,
         title: str,
@@ -1242,6 +1248,7 @@ class WorkspaceStore:
             "recomputed_artifacts": recomputed,
         }
 
+    @with_learning_provider
     async def create_course_from_confirmed_structure(
         self,
         owner_id: str,
@@ -1412,6 +1419,7 @@ class WorkspaceStore:
             "recomputed_artifacts": total_recomputed,
         }
 
+    @with_learning_provider
     async def check_and_apply_course_updates(
         self,
         course_id: int,
@@ -1815,6 +1823,7 @@ class WorkspaceStore:
             )
             return cur.rowcount > 0
 
+    @with_learning_provider
     async def regenerate_course_mixes_detailed(
         self, course_id: int, owner_id: str, force_full: bool = False
     ) -> Optional[Dict[str, Any]]:
@@ -2066,6 +2075,7 @@ class WorkspaceStore:
         )
         return res["topic_mixes"] if res is not None else None
 
+    @with_learning_provider
     async def build_exam_mix(
         self, course_id: int, owner_id: str, from_queue: bool = False
     ) -> Optional[ExamMix]:
@@ -2083,6 +2093,21 @@ class WorkspaceStore:
         generator = get_mix_generator()
         pv = generator.prompt_version
         course = bundle["course"]
+        from app.services.learning_provider import current_provider, LearningProviderError
+        provider = current_provider.get()
+        if provider and provider.strict:
+            prepared = []
+            for topic in bundle["topic_mixes"]:
+                questions = [q for q in topic.quizzes if not re.search(
+                    r"Which key concept is explicitly introduced|How many core study items were indexed|AI Engineer will enrich",
+                    q.question + q.explanation)]
+                sections = [s for s in topic.book_sections if not re.search(
+                    r"This interactive unit organizes material from|Опрацювання матеріалу з \*\*", s.explanation_markdown)]
+                if questions or sections:
+                    prepared.append(topic.model_copy(update={"quizzes": questions, "book_sections": sections}))
+            if not prepared:
+                raise LearningProviderError("Спочатку підготуй навчальні матеріали хоча б однієї теми.", 422)
+            bundle["topic_mixes"] = prepared
         prev_exam: Optional[ExamMix] = bundle["exam_mix"]
         prev_digests: Dict[str, TopicDigest] = {
             d.mix_id: d for d in (prev_exam.topic_digests if prev_exam else [])
@@ -2145,6 +2170,9 @@ class WorkspaceStore:
             cached_topics_reused=cached_topics_reused,
             weak_spots=self._get_course_weak_spots(owner_id=owner_id, course_id=course_id),
         )
+        if provider and provider.strict:
+            exam_mix.mock_exam_questions = [q for q in exam_mix.mock_exam_questions
+                if not q.question.startswith("Which mode builds the cross-topic prep sheet")]
         self._save_exam_mix(exam_mix, owner_id=owner_id)
         self._set_exam_mix_stale(owner_id, course_id, False)
 
@@ -2200,6 +2228,7 @@ class WorkspaceStore:
                 )
             return mix
 
+    @with_learning_provider
     async def acknowledge_mix_update(self, mix_id: str, owner_id: str) -> Optional[TopicMix]:
         """Apply updated upstream module chunks to a TopicMix, reusing clean chunks and user_notes."""
         with self._connect() as conn:
