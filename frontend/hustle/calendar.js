@@ -155,6 +155,8 @@
     const todayYmd = dayKey(new Date());
     const courseMap = new Map(courses.map(c => [String(c.course_id), c.title]));
 
+    const expandedDays = new Set([...state.root.querySelectorAll('[data-week-overflow][open]')].map(el => el.dataset.weekOverflow));
+    const previewLimit = 3;
     const gridHtml = `<div class="calendar-week-grid">${days.map(ymd => {
       const dayEvents = (data.events || []).filter(ev => dayKey(ev.start_at) <= ymd && dayKey(new Date(Date.parse(ev.end_at) - 1)) >= ymd);
       const dayDeadlines = (data.deadlines || []).filter(dl => (dl.review || 'pending') === 'pending' && !window.Hustle?.liveCalendar && dayKey(dl.due_at) === ymd);
@@ -169,7 +171,7 @@
         ...dayDeadlines.map(dl => ({sort: dl.due_at, kind: 'deadline', dl})),
       ].sort((a, b) => a.sort.localeCompare(b.sort));
 
-      const cardsHtml = items.map(entry => {
+      const cards = items.map(entry => {
         if (entry.kind === 'deadline') {
           const dl = entry.dl;
           return `<article class="cal-item type-deadline">
@@ -184,10 +186,10 @@
         const courseHref = ev.course_id ? `${courseBase()}#course/${encodeURIComponent(ev.course_id)}/overview` : '';
         const cTitle = ev.course_id ? courseMap.get(String(ev.course_id)) : '';
         return `<article class="cal-item ${ev.created_by === 'moodle' ? 'type-deadline deadline-surface' : ''} type-${esc(ev.source_type)} ${ev.status === 'done' ? 'is-done' : ''}" data-event-id="${esc(ev.event_id)}">
-          <div class="cal-item-top"><span>${ev.all_day ? 'Весь день' : `${esc(fmtTime(ev.start_at))}–${esc(fmtTime(ev.end_at))}`}</span><span class="cal-item-badge">${esc(label)}</span></div>
+          <div class="cal-item-top"><span>${ev.all_day ? 'Весь день' : `${esc(fmtTime(ev.start_at))}–${esc(fmtTime(ev.end_at))}`}</span><button type="button" class="cal-item-badge cal-detail-button" data-cal-event="${esc(ev.event_id)}" aria-label="Деталі події «${esc(ev.title)}»">${esc(label)}</button></div>
           ${courseHref ? `<a class="cal-item-title" href="${courseHref}">${esc(ev.title)}</a>` : `<div class="cal-item-title">${esc(ev.title)}</div>`}
           ${cTitle && !ev.title.includes(cTitle) ? `<div class="cal-item-desc">${esc(cTitle)}</div>` : ''}
-          ${ev.description ? `<div class="cal-item-desc">${esc(ev.description)}</div>` : ''}
+          ${ev.description && ev.description.trim() !== ev.title.trim() ? `<div class="cal-item-desc">${esc(ev.description)}</div>` : ''}
           ${isEditable ? `<div class="cal-item-controls">
             <button type="button" class="cal-mini-btn" data-cal-event="${esc(ev.event_id)}">Редагувати</button>
             <button type="button" class="cal-mini-btn" data-ev-toggle="${esc(ev.event_id)}" data-status="${ev.status === 'done' ? 'planned' : 'done'}">${ev.status === 'done' ? '↩ Повернути' : '✓ Виконано'}</button>
@@ -195,7 +197,13 @@
           </div>` : ''}
           ${ev.moodle_due_at && window.HustleDeadlineVisuals ? HustleDeadlineVisuals.edge(Date.parse(ev.moodle_due_at),ev.status === 'done') : ''}
         </article>`;
-      }).join('');
+      });
+      const extra = cards.length - previewLimit;
+      const cardsHtml = extra > 0 ? cards.slice(0, previewLimit).join('') +
+        `<details class="week-overflow" data-week-overflow="${ymd}" ${expandedDays.has(ymd) ? 'open' : ''}>
+          <summary><span class="week-show">Ще ${UI.countLabel(extra, 'подія', 'події', 'подій')}</span><span class="week-hide">Згорнути</span></summary>
+          <div class="week-extra-list">${cards.slice(previewLimit).join('')}</div>
+        </details>` : cards.join('');
 
       return `<section class="calendar-day-col ${ymd === todayYmd ? 'is-today' : ''}">
         <header class="calendar-day-head"><strong>${esc(fmtDayHead(ymd))}</strong><span>${items.length ? UI.countLabel(items.length, 'подія', 'події', 'подій') : 'Вільно'}</span></header>

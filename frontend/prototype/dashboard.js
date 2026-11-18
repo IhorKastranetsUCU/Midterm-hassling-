@@ -248,7 +248,9 @@
     const title = course?.short || ({ plan: 'Мій огляд', courses: 'Мої предмети', calendar: 'Календар', focus: 'Pomodoro' })[hash];
     document.querySelectorAll('[data-nav],.sidebar-course').forEach(a => { if (course ? a.hash === '#course/' + course.id : a.dataset.nav === hash) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     document.querySelector('#view-name').textContent = title; document.title = `${title} — Hustle`;
-    main.innerHTML = hash === 'calendar' ? calendarView() : hash === 'courses' ? coursesView() : hash === 'focus' ? heading('Pomodoro') + `<div class="dedicated-focus">${timerCard()}${weeklyChart()}</div>` : dashboardView(course);
+    // The weekly planner manages its own refreshes and open days.
+    const mountedWeek = hash === 'calendar' && H.liveCalendar?.week && main.querySelector('[data-paper-week]');
+    if (!mountedWeek) main.innerHTML = hash === 'calendar' ? calendarView() : hash === 'courses' ? coursesView() : hash === 'focus' ? heading('Pomodoro') + `<div class="dedicated-focus">${timerCard()}${weeklyChart()}</div>` : dashboardView(course);
     H.liveCalendar?.mount(hash, month, selectedDate, course);
     fire.mount(main); paintTimer(); return true;
   }

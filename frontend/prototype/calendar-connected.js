@@ -11,10 +11,16 @@
   let period = '', loading, error = '', weekHost;
   const days = () => core.monthDays(context.month);
   const zone = () => calendar?.settings.timezone || core.zone;
-  const dayOf = value => new Intl.DateTimeFormat('en-CA', {
-    timeZone: zone(), year: 'numeric', month: '2-digit', day: '2-digit',
-  }).format(new Date(value));
-  const timeOf = value => new Intl.DateTimeFormat('uk-UA', {timeZone: zone(), hour:'2-digit', minute:'2-digit'}).format(new Date(value));
+  const monthPreviewLimit = 2;
+  let formatZone, dateFormat, timeFormat;
+  function useTimeZone(tz) {
+    if (dateFormat && formatZone === tz) return;
+    dateFormat = new Intl.DateTimeFormat('en-CA', {timeZone:tz, year:'numeric', month:'2-digit', day:'2-digit'});
+    timeFormat = new Intl.DateTimeFormat('uk-UA', {timeZone:tz, hour:'2-digit', minute:'2-digit'});
+    formatZone = tz;
+  }
+  const dayOf = value => { useTimeZone(zone()); return dateFormat.format(new Date(value)); };
+  const timeOf = value => { useTimeZone(zone()); return timeFormat.format(new Date(value)); };
   const label = ev => ev.created_by === 'moodle' ? 'Дедлайн Moodle' : ({google:'Google Calendar', ics:'iCal', ai_study:'Навчання', manual:'Моя подія'})[ev.source_type] || 'Подія';
   const editable = ev => ['ai_study', 'manual'].includes(ev.source_type);
   const refresh = () => H.dashboardRefresh?.();
@@ -133,13 +139,25 @@
     }
     main.querySelectorAll('[data-drop-day]').forEach(cell => {
       const button = cell.querySelector('[data-calendar-date]');
+      if (full) button.tabIndex = cell.dataset.dropDay === context.day ? 0 : -1;
       button.dataset.dayLabel ||= button.getAttribute('aria-label');
       button.setAttribute('aria-label', button.dataset.dayLabel);
       const entries = byDay.get(cell.dataset.dropDay) || [];
       if (!entries.length) return;
-      button.querySelector('.calendar-dots').insertAdjacentHTML('beforeend', '<i class="live-dot" data-live-mark></i>');
+      const dots = button.querySelector('.calendar-dots');
+      if (entries.some(ev => ev.created_by === 'moodle') && !dots.querySelector('.deadline-dot')) {
+        dots.insertAdjacentHTML('beforeend', '<i class="deadline-dot" data-live-mark></i>');
+      }
+      if (entries.some(ev => ev.created_by !== 'moodle')) dots.insertAdjacentHTML('beforeend', '<i class="live-dot" data-live-mark></i>');
       button.setAttribute('aria-label', button.dataset.dayLabel + ', подій календаря: ' + entries.length);
-      if (full) cell.insertAdjacentHTML('beforeend',entries.map(ev => chip(ev)).join(''));
+      if (!full) return;
+      dots.insertAdjacentHTML('beforeend', `<span class="month-day-count" data-live-mark>${entries.length}</span>`);
+      cell.insertAdjacentHTML('beforeend', entries.slice(0, monthPreviewLimit).map(ev => chip(ev, cell.dataset.dropDay)).join(''));
+      const extra = entries.length - monthPreviewLimit;
+      if (extra > 0) {
+        cell.insertAdjacentHTML('beforeend', `<button class="month-more" data-live-mark data-day-agenda="${cell.dataset.dropDay}" tabindex="${button.tabIndex}"
+          aria-label="Показати всі події за ${esc(button.dataset.dayLabel)}">Ще ${extra}</button>`);
+      }
     });
     const entries = byDay.get(context.day) || [];
     const empty = agenda.querySelector('.agenda-empty');
@@ -147,17 +165,31 @@
     if (entries.length) {
       const items = entries.map(ev => row(ev)).join('');
       const target = agenda.querySelector('.agenda-week, :scope > strong');
-      target?.insertAdjacentHTML('afterend', items);
+      if (full) {
+        const summary = UI.countLabel(entries.length, 'подія', 'події', 'подій');
+        agenda.querySelector('.panel-title > span')?.insertAdjacentHTML('afterbegin', `<span data-live-mark>${summary} · </span>`);
+        target?.insertAdjacentHTML('afterend', `<div class="paper-day-events" data-live-mark role="group" aria-label="Події вибраного дня">${items}</div>`);
+      } else target?.insertAdjacentHTML('afterend', items);
     }
+    if (full) agenda.querySelector('.panel-title').insertAdjacentHTML('beforeend', '<button class="month-return" data-live-mark data-month-return>↑ До місяця</button>');
     window.HustleDeadlineVisuals.mount(main);
   }
-  function chip(ev) {
-    return `<button class="calendar-event-chip live-chip" data-live-mark data-cal-event="${esc(ev.event_id)}" ${editable(ev) ? 'draggable="true" data-live-drag' : ''} aria-label="${esc(ev.title)}, ${ev.all_day ? 'весь день' : timeOf(ev.start_at)}"><span>${ev.all_day ? '•' : timeOf(ev.start_at)}</span><strong>${esc(ev.title)}</strong></button>`;
+  const eventKind = ev => ev.created_by === 'moodle' ? 'deadline' : ev.source_type;
+  const dragAttrs = ev => editable(ev) ? 'draggable="true" data-live-drag' : '';
+  function startLabel(ev, day) {
+    if (ev.all_day) return 'Весь день';
+    return dayOf(ev.start_at) < day ? 'Триває' : timeOf(ev.start_at);
+  }
+  function chip(ev, day) {
+    const start = startLabel(ev, day);
+    return `<button class="calendar-event-chip live-chip" tabindex="${day === context.day ? 0 : -1}" data-live-mark data-kind="${esc(eventKind(ev))}" data-cal-event="${esc(ev.event_id)}" ${dragAttrs(ev)} title="${esc(ev.title)}" aria-label="${esc(ev.title)}, ${start}"><span>${ev.all_day ? '•' : start}</span><strong>${esc(ev.title)}</strong></button>`;
   }
   function row(ev) {
     const dl = calendar.deadlines.find(d => ev.created_by === 'moodle' && d.course_id === ev.course_id && String(d.id) === ev.external_id);
     const due = dl?.due_at || ev.moodle_due_at;
-    return `<button class="calendar-agenda-event deadline-surface" data-live-mark data-cal-event="${esc(ev.event_id)}"><span class="calendar-event-time">${ev.all_day ? 'Весь день' : timeOf(ev.start_at)}</span><span class="calendar-event-marker lavender"></span><span class="calendar-agenda-copy"><strong>${esc(ev.title)}</strong><small>${esc(label(ev))}</small></span>${icon('arrow')}${due ? window.HustleDeadlineVisuals.edge(Date.parse(due), ev.status === 'done') : ''}</button>`;
+    const end = context.hash === 'calendar' && !ev.all_day && dayOf(ev.end_at) === context.day && ev.end_at !== ev.start_at
+      ? '<small>до ' + timeOf(ev.end_at) + '</small>' : '';
+    return `<button class="calendar-agenda-event deadline-surface" data-live-mark data-kind="${esc(eventKind(ev))}" data-cal-event="${esc(ev.event_id)}" ${dragAttrs(ev)}><span class="calendar-event-time">${startLabel(ev, context.day)}${end}</span><span class="calendar-event-marker lavender"></span><span class="calendar-agenda-copy"><strong>${esc(ev.title)}</strong><small>${esc(label(ev))}</small></span>${icon('arrow')}${due ? window.HustleDeadlineVisuals.edge(Date.parse(due), ev.status === 'done') : ''}</button>`;
   }
   function review() {
     const list = [...(calendar?.deadlines || [])].sort((a,b) => a.duedate - b.duedate);
@@ -168,8 +200,48 @@
     document.querySelector('#dialog-body').innerHTML = `<h2 id="dialog-title">Події з Moodle</h2><div class="sync-events">${rows || '<p>На вибраний період нових дедлайнів немає.</p>'}</div><div class="paper-inbox-footer"><a class="text-button" href="/hustle/connect.html">Підключення Moodle →</a>${H.calendar ? '<button class="text-button" data-open-example-inbox>Події демопростору →</button>' : ''}</div><p class="field-error" role="alert"></p>`;
     if (!dialog.open) dialog.showModal();
   }
+  let eventFocus;
+  dialog.addEventListener('close', () => {
+    const origin = eventFocus;
+    eventFocus = null;
+    if (!origin) return;
+    // The planner renders again on close. Restore the position in the new day list.
+    requestAnimationFrame(() => {
+      if (location.hash !== '#calendar' || dialog.open) return;
+      if (origin.week) { origin.trigger.focus(); return; }
+      if (week) return;
+      const list = main.querySelector('.paper-day-events');
+      if (list) list.scrollTop = origin.scroll;
+      const target = main.querySelector(origin.selector) || main.querySelector('.calendar-day[aria-pressed="true"]');
+      target?.focus();
+    });
+  });
   document.addEventListener('click', async event => {
     const el = event.target.closest('button'); if (!el) return;
+    if (el.dataset.calEvent && el.closest('.calendar-week-grid')) eventFocus = {week:true, trigger:el};
+    if (el.dataset.calEvent && el.closest('.planner-spread')) {
+      const inAgenda = !!el.closest('.paper-day-events');
+      const parentSelector = inAgenda ? '.paper-day-events' : `[data-drop-day="${el.closest('[data-drop-day]').dataset.dropDay}"]`;
+      eventFocus = {selector: parentSelector + ' [data-cal-event="' + CSS.escape(el.dataset.calEvent) + '"]',
+        scroll: main.querySelector('.paper-day-events')?.scrollTop || 0};
+    }
+    if (el.hasAttribute('data-month-return')) {
+      const date = main.querySelector('.calendar-grid .calendar-day[aria-pressed="true"]');
+      date?.focus({preventScroll:true}); date?.scrollIntoView({block:'center'});
+      return;
+    }
+    if (el.dataset.dayAgenda) {
+      main.querySelector(`[data-drop-day="${el.dataset.dayAgenda}"] .calendar-day`)?.click();
+    }
+    if (el.dataset.dayAgenda || (el.matches('.calendar-day') && context?.hash === 'calendar' && matchMedia('(max-width:40rem)').matches)) {
+      const heading = main.querySelector('.selected-agenda h2');
+      if (heading) {
+        heading.tabIndex = -1;
+        heading.focus({preventScroll:true});
+        heading.scrollIntoView({block: matchMedia('(max-width:70rem)').matches ? 'start' : 'nearest'});
+      }
+      return;
+    }
     if (el.hasAttribute('data-planner-week')) {
       week = el.dataset.plannerWeek === '1';
       if (week) editor.selectWeek(context.day);

@@ -46,3 +46,62 @@
 .paper-course-actions { display:flex; flex-wrap:wrap; gap:.55rem; }
 .paper-hidden-heading { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
 .paper-goal { display:flex; align-items:center; gap:.75rem; margin:0 0 1rem; }
+
+/* The month is an overview. Each week reserves the same space for previews. */
+.planner-spread .calendar-grid { grid-auto-rows: 6.75rem; }
+.planner-spread .calendar-cell { min-height: 0; padding: .2rem; }
+.planner-spread .calendar-day { display: flex; gap: .35rem; align-items: center; min-height: 1.65rem; padding: 0 .3rem; }
+.planner-spread .calendar-dots { align-items: center; margin: 0; }
+.month-day-count { display: none; }
+.planner-spread .live-chip {
+  display: flex; align-items: baseline; gap: .26rem; min-height: 1.4rem;
+  padding: .17rem .26rem; margin-top: .12rem; border: 0; border-inline-start: 2px solid #6e9b83;
+  border-radius: .28rem; cursor: pointer;
+}
+.planner-spread .live-chip[draggable="true"] { cursor: grab; }
+.planner-spread .live-chip span { flex: none; line-height: 1.3; }
+.planner-spread .live-chip strong { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; line-height: 1.3; }
+.planner-spread .live-chip[data-kind="deadline"] { color: #704813; background: #fbefd7; border-color: #c18b3f; }
+.planner-spread .live-chip[data-kind="manual"], .planner-spread .live-chip[data-kind="ai_study"] { color: #5f426e; background: #eee5f2; border-color: #a17fae; }
+.month-more, .month-return {
+  min-height: 1.5rem; padding: .13rem .32rem; border: 0; border-radius: .3rem;
+  background: transparent; color: #654c70; font: inherit; font-size: .72rem; font-weight: 700; cursor: pointer;
+}
+.month-more:hover, .month-return:hover { background: #ece1ef; }
+.month-return { display: none; }
+.planner-spread > section { min-width: 0; }
+.paper-day-events { max-height: clamp(15rem, calc(100dvh - 18rem), 33rem); overflow-y: auto; scrollbar-color: #c4b2c9 transparent; }
+.paper-day-events .calendar-agenda-event { margin: 0; background: transparent; color: var(--ink); border-radius: .4rem; gap: .6rem; padding: .85rem .4rem; }
+.paper-day-events .calendar-agenda-event:not([data-kind="deadline"]) { border: 0; }
+.paper-day-events .calendar-agenda-event + .calendar-agenda-event:not([data-kind="deadline"]) { border-top: 1px solid #e5dce4; }
+.paper-day-events .calendar-agenda-event:hover { background: #f4ebf4; }
+.paper-day-events .calendar-event-time { flex: 0 0 3.6rem; color: #61466f; }
+.paper-day-events .calendar-event-time small { display: block; margin-top: .16rem; font-size: .64rem; font-weight: 500; color: #706270; }
+.paper-day-events .calendar-event-marker { height: 1.65rem; background: #75a18b; }
+.paper-day-events [data-kind="deadline"] .calendar-event-marker { background: #c18b3f; }
+.paper-day-events :is([data-kind="manual"], [data-kind="ai_study"]) .calendar-event-marker { background: #a17fae; }
+.paper-day-events .calendar-agenda-copy { min-width: 0; overflow-wrap: anywhere; }
+.paper-day-events .calendar-agenda-copy strong { font-size: .87rem; line-height: 1.45; }
+.paper-day-events .calendar-agenda-copy small { color: #72616f; }
+.paper-day-events .calendar-agenda-event:focus-visible, .planner-spread .calendar-cell button:focus-visible { outline: 2px solid #795586; outline-offset: -2px; }
+.planner-spread .selected-agenda h2:focus-visible { outline: 2px solid #8b6897; outline-offset: 3px; border-radius: .25rem; }
+@media (min-width: 70rem) {
+  .planner-spread { grid-template-columns: minmax(0, 1fr) minmax(19rem, 31%); }
+  .planner-spread .live-chip :is(span, strong) { font-size: .7rem; }
+}
+@media (max-width: 70rem) {
+  .planner-spread { grid-template-columns: minmax(0, 1fr); }
+  .paper-day-events { max-height: none; overflow: visible; }
+  .month-return { display: inline-block; margin-left: auto; min-height: 2.75rem; }
+}
+@media (max-width: 40rem) {
+  .planner-spread .month-heading { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: .25rem; }
+  .planner-spread .month-heading .calendar-month-controls { display: contents; }
+  .planner-spread .month-heading strong { font-size: clamp(.91rem, 4.3vw, 1.1rem); text-wrap: balance; }
+  .planner-spread .calendar-grid { grid-auto-rows: 2.95rem; }
+  .planner-spread .calendar-cell { padding: .08rem; }
+  .planner-spread .calendar-day { flex-direction: column; justify-content: center; gap: .15rem; height: 100%; }
+  .planner-spread .calendar-day .calendar-dots { height: .75rem; justify-content: center; gap: .2rem; }
+  .planner-spread .live-chip, .planner-spread .month-more { display: none; }
+  .month-day-count { display: inline; font-size: .65rem; line-height: 1; font-variant-numeric: tabular-nums; }
+}

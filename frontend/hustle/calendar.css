@@ -75,3 +75,18 @@
   .calendar-week-grid { grid-template-columns:minmax(0,1fr); }
   .cal-form-row { grid-template-columns:minmax(0,1fr); }
 }
+
+.calendar-week-grid { align-items: start; }
+.cal-detail-button { font-family: inherit; border: 0; cursor: pointer; color: #5f485b; }
+.cal-detail-button:hover { text-decoration: underline; }
+.cal-item[data-event-id] .cal-item-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cal-item-top { flex-wrap: wrap; }
+.week-overflow { min-width: 0; }
+.week-overflow summary { padding: .45rem .25rem; color: #654c70; font-size: .77rem; font-weight: 700; cursor: pointer; }
+.week-overflow summary:hover { text-decoration: underline; }
+.week-overflow:not([open]) .week-hide, .week-overflow[open] .week-show { display: none; }
+.week-extra-list { display: grid; gap: .45rem; max-height: 27rem; overflow-y: auto; scrollbar-color: #c4b2c9 transparent; }
+@media (max-width: 44rem) {
+  .calendar-day-col { min-height: 0; }
+  .week-extra-list { max-height: none; overflow: visible; }
+}
