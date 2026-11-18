@@ -1478,9 +1478,11 @@ class WorkspaceStore:
         total_recomputed = 0
 
         # If no explicit Moodle sections provided, pull mock data if applicable
-        if not moodle_sections and (get_settings().MOODLE_MOCK_MODE or clean_auth == "mock"):
+        if not moodle_sections and get_settings().MOODLE_MOCK_MODE:
             from app.services.mock_data import MOCK_COURSE_CONTENTS
             moodle_sections = MOCK_COURSE_CONTENTS.get(course_id)
+
+        origin = "moodle_api" if moodle_sections else "manual_upload"
 
         # Match real materials to topics and extract key items for each material
         matched_items_by_topic: Dict[int, List[TopicMaterialItem]] = {}
@@ -1521,7 +1523,7 @@ class WorkspaceStore:
                 authority=clean_auth,
                 title=t_title,
                 content_text=content_text,
-                source_type="moodle_extension",
+                source_type=origin,
                 safety_status="safe_material",
                 visibility="private",
             )
@@ -1588,7 +1590,7 @@ class WorkspaceStore:
             title=title,
             shortname=shortname or "COURSE",
             moodle_url="",
-            source_type="moodle_extension",
+            source_type=origin,
             tools=tools,
             sections=moodle_sections if moodle_sections else sections,
             blocked_quizzes=[],
@@ -1687,7 +1689,7 @@ class WorkspaceStore:
             except Exception as exc:
                 logger.warning(f"Failed to fetch Moodle course contents for update check: {exc}")
                 return {"checked": False, "error": str(exc)}
-        elif (get_settings().MOODLE_MOCK_MODE or bundle["course"].authority == "mock") and bundle["course"].source_type != "manual_upload":
+        elif get_settings().MOODLE_MOCK_MODE and bundle["course"].source_type != "manual_upload":
             from app.services.mock_data import MOCK_COURSE_CONTENTS
             fresh_sections = MOCK_COURSE_CONTENTS.get(course_id)
         else:
@@ -1870,15 +1872,22 @@ class WorkspaceStore:
         ).fetchall()
         return self._current_mix_rows(versions)[0]
 
-    def list_courses(self, owner_id: str) -> List[WorkspaceCourseSummary]:
+    def list_courses(self, owner_id: str, *, moodle_only: bool = False) -> List[WorkspaceCourseSummary]:
         with self._connect() as conn:
-            rows = conn.execute(
-                "SELECT * FROM workspace_courses WHERE owner_id = ? ORDER BY updated_at DESC",
-                (owner_id,),
-            ).fetchall()
+            query = "SELECT * FROM workspace_courses WHERE owner_id = ?"
+            if moodle_only:
+                query += " AND source_type IN ('moodle_api', 'moodle_extension') AND authority != 'mock'"
+            rows = conn.execute(query + " ORDER BY updated_at DESC", (owner_id,)).fetchall()
 
             results: List[WorkspaceCourseSummary] = []
             for row in rows:
+                if moodle_only and row["source_type"] == "moodle_extension" and not row["moodle_url"]:
+                    # Older syllabus-only courses also carried the extension label.
+                    sections = json.loads(row["sections_json"] or "[]")
+                    if not any(section.get("moodle_section_id") is not None or
+                               any(module.get("url") for module in section.get("modules", []))
+                               for section in sections):
+                        continue
                 cid = row["course_id"]
                 mix_stats = conn.execute(
                     "SELECT COUNT(*) AS cnt, COALESCE(SUM(has_upstream_update), 0) AS upd "

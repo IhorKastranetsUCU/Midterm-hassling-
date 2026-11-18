@@ -1,5 +1,5 @@
 (() => {
-  const H=window.Hustle, courses=window.HustleCourses, esc=H.escape, icon=H.icon;
+  const H=window.Hustle, courses=H.exampleCourses, esc=H.escape, icon=H.icon;
   if(!H.workspace && !H.liveCalendar?.standalone && !H.requireAccount())return;
   if(!H.workspace && !H.liveCalendar?.standalone && (!H.state.ready||!H.state.courses.length)){location.replace('connect.html');return;}
   const main=document.querySelector('#workspace-main'), dialog=document.querySelector('#study-dialog'), body=document.querySelector('#dialog-body');
@@ -16,7 +16,7 @@
   function heading(title,action=''){return `<div class="page-heading"><h1 tabindex="-1">${title}</h1>${action}</div>`;}
   function toast(message){const el=document.querySelector('.toast');clearTimeout(toastTimer);el.textContent=message;el.hidden=false;toastTimer=setTimeout(()=>el.hidden=true,2600);}
   function profile() {
-    const name = H.account?.name || H.state.name || 'Студент';
+    const name = (H.account ? H.account.name : H.state.name) || 'Студент';
     const avatars = ['owl', 'cat', 'book', 'coffee', 'backpack', 'pencil'];
     let seed = 0;
     for (const letter of name) seed = (Math.imul(seed, 31) + letter.codePointAt(0)) >>> 0;

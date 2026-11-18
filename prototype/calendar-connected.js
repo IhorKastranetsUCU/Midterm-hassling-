@@ -25,7 +25,7 @@
     if (bootstrap && !revalidate) return bootstrap;
     bootstrap = UI.api('/api/workspace/session').then(owner => {
       if (H.account && owner.owner_id !== H.account.owner) { location.reload(); return []; }
-      return UI.api('/api/workspace/courses');
+      return UI.api('/api/workspace/courses?moodle_only=true');
     })
       .then(result => { courses = result; H.workspace?.updateCourses(result); }).catch(err => { bootstrap = null; throw err; });
     sessionRequest = bootstrap.finally(() => { sessionRequest = null; });

@@ -411,6 +411,7 @@ def test_public_workspace_entry_uses_paper_planner_and_same_owner(cal_env):
     page = client.get(entry.headers["location"])
     assert page.status_code == 200
     assert "no-store" in page.headers["cache-control"]
+    assert 'src="data.js' not in page.text and 'src="calendar-sync.js' not in page.text
     for asset in ("paper-workspace.js", "dashboard.js", "deadline-visuals.js",
                   "calendar-connected.js", "oral-practice.js"):
         assert asset in page.text

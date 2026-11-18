@@ -96,6 +96,7 @@ def test_extension_sync_exam_shield_and_note_preserving_diff(isolated_store):
     sync_data = sync_res.json()
     assert sync_data["success"] is True
     assert sync_data["workspace_url"] == "/ucu/courses/1048"
+    assert [c["course_id"] for c in client.get("/api/workspace/courses?moodle_only=true").json()] == [1048]
     assert sync_data["summary"]["new_topics"] == 2
     assert sync_data["summary"]["blocked_exams"] == 2
 
@@ -186,6 +187,7 @@ def test_file_upload_tools_update_and_course_page(isolated_store):
     list_res = client.get("/api/workspace/courses")
     assert list_res.status_code == 200
     assert any(c["course_id"] == cid for c in list_res.json())
+    assert client.get("/api/workspace/courses?moodle_only=true").json() == []
 
     html_res = client.get(f"/custom/courses/{cid}")
     assert html_res.status_code == 200
@@ -1100,6 +1102,7 @@ def test_preview_and_confirm_course_structure(isolated_store):
     assert courses_res.status_code == 200
     courses = courses_res.json()
     assert any(c["course_id"] == 101 for c in courses)
+    assert client.get("/api/workspace/courses?moodle_only=true").json() == []
 
     # 4. Verify course bundle loads
     bundle_res = client.get("/api/workspace/courses/101")

@@ -1,3 +1,4 @@
+from app.config import get_settings
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
@@ -30,7 +31,8 @@ def test_event_bus_publish_and_subscribe():
     assert recent[0].title == "Due Tomorrow"
 
 
-def test_events_api_endpoints():
+def test_events_api_endpoints(monkeypatch):
+    monkeypatch.setattr(get_settings(), "MOODLE_MOCK_MODE", True)
     # Login first
     login_res = client.post(
         "/api/auth/login",

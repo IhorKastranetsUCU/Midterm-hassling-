@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request, Response
@@ -139,13 +140,25 @@ async def paper_landing():
                         headers={"Cache-Control": "no-cache"})
 
 
+@app.get("/prototype/register.html", include_in_schema=False)
+async def open_signin(request: Request):
+    query = "?" + request.url.query if request.url.query else ""
+    return RedirectResponse("/hustle/signin.html" + query, status_code=307)
+
+
+@app.get("/prototype/connect.html", include_in_schema=False)
+async def open_moodle_connection():
+    return RedirectResponse("/hustle/connect.html", status_code=307)
+
+
 @app.get("/prototype/app.html", response_class=HTMLResponse)
 async def paper_workspace(request: Request, response: Response):
     page = (prototype_dir / "app.html").read_text(encoding="utf-8")
+    page = re.sub(r"<script data-standalone\b[^>]*></script>", "", page)
     # Issue the same owner cookie as the API before any parallel calendar or course requests.
     response.headers["Cache-Control"] = "private, no-store"
     account = await auth.get_auth_status(request, response)
-    courses = get_workspace_store().list_courses(owner_id=account.owner_id)
+    courses = get_workspace_store().list_courses(owner_id=account.owner_id, moodle_only=True)
     bootstrap = {
         "owner": account.owner_id, "name": account.fullname or account.moodle_username,
         "paired": account.moodle_paired, "moodle": account.moodle_url,

@@ -1,3 +1,4 @@
+from app.config import get_settings
 import pytest
 from app.services.moodle_client import build_moodle_params, MoodleClient
 
@@ -33,7 +34,8 @@ def test_build_moodle_params_nested_dict():
 
 
 @pytest.mark.asyncio
-async def test_moodle_client_mock_auth():
+async def test_moodle_client_mock_auth(monkeypatch):
+    monkeypatch.setattr(get_settings(), "MOODLE_MOCK_MODE", True)
     client = MoodleClient()
     result = await client.authenticate_user("demo", "anypassword")
     assert result["token"].startswith("mock_moodle_token")
@@ -42,7 +44,8 @@ async def test_moodle_client_mock_auth():
 
 
 @pytest.mark.asyncio
-async def test_moodle_client_mock_courses():
+async def test_moodle_client_mock_courses(monkeypatch):
+    monkeypatch.setattr(get_settings(), "MOODLE_MOCK_MODE", True)
     client = MoodleClient()
     token = "mock_token"
     courses = await client.get_user_courses(token, user_id=42)
@@ -52,9 +55,21 @@ async def test_moodle_client_mock_courses():
 
 
 @pytest.mark.asyncio
-async def test_moodle_client_mock_course_contents():
+async def test_moodle_client_mock_course_contents(monkeypatch):
+    monkeypatch.setattr(get_settings(), "MOODLE_MOCK_MODE", True)
     client = MoodleClient()
     token = "mock_token"
     contents = await client.get_course_contents(token, course_id=101)
     assert len(contents) > 0
     assert "modules" in contents[0]
+
+@pytest.mark.asyncio
+async def test_live_empty_enrolments_stay_empty(monkeypatch):
+    from unittest.mock import AsyncMock
+
+    monkeypatch.setattr(get_settings(), "MOODLE_MOCK_MODE", False)
+    client = MoodleClient()
+    enrolled = AsyncMock(return_value=[])
+    monkeypatch.setattr(client, "call_ws", enrolled)
+    assert await client.get_user_courses("live-token", user_id=42) == []
+    enrolled.assert_awaited_once()

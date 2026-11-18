@@ -331,6 +331,9 @@ def decode_session_jwt(token: str, settings: Optional[Settings] = None) -> Dict[
 
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        mock_session = payload.get("is_mock") or str(payload.get("moodle_token", "")).startswith("mock_")
+        if mock_session and not settings.MOODLE_MOCK_MODE:
+            raise UnauthorizedError("Підключи свій акаунт Moodle.")
         return payload
     except jwt.ExpiredSignatureError:
         raise UnauthorizedError("Session has expired. Please log in again.")
