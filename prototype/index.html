@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Hustle збирає лекції, завдання й дедлайни з LMS у план підготовки.">
+  <meta name="theme-color" content="#f5f2e8">
+  <title>Hustle — Що там на завтра?</title>
+  <link rel="icon" type="image/svg+xml" href="brand-favicon.svg">
+  <link rel="stylesheet" href="landing.css?v=6c29e741">
+  <link rel="stylesheet" href="demo.css?v=f7868a09">
+  <link rel="stylesheet" href="theme.css?v=3246251c">
+  <link rel="stylesheet" href="product.css?v=5fd0a700">
+  <script src="demo.js?v=25d286b7" defer></script>
+</head>
+<body id="top">
+  <a class="skip-link" href="#content">До основного вмісту</a>
+  <header class="site-header container">
+    <a class="wordmark" href="#top" aria-label="Hustle, на початок"><img width="29" height="33" class="folded-h" src="brand-mark.svg" alt="">ustle<span>.</span></a>
+    <nav class="site-nav" aria-label="Навігація"><a class="primary login-link" href="register.html?mode=login">Увійти <span aria-hidden="true">→</span></a></nav>
+  </header>
+
+  <main id="content" tabindex="-1">
+    <section class="hero container" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <h1 id="hero-title">Що там<br> на завтра<span>?</span></h1>
+        <p>Hustle збирає лекції, завдання й дедлайни з університетської LMS у план підготовки.</p>
+        <a class="button" href="register.html">Створити акаунт <span aria-hidden="true">→</span></a>
+      </div>
+
+      <div class="paper-stack" aria-hidden="true">
+        <div class="paper paper--lecture">
+          <span class="paper-label">Лекція 08</span>
+          <strong class="paper-title">Теорія<br> ймовірностей</strong>
+          <div class="paper-lines"><i></i><i></i><i></i><i></i></div>
+          <span class="paper-formula">P(A ∩ B)</span>
+        </div>
+        <div class="paper paper--exam">
+          <span class="paper-label">П’ятниця</span>
+          <strong class="paper-title">Колоквіум</strong>
+          <span class="paper-time">10:30</span>
+        </div>
+        <div class="paper paper--practice">
+          <span class="paper-label">Практика</span>
+          <strong class="paper-title">12 карток<br> до наступної пари</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="how container" id="how" aria-labelledby="how-title">
+      <h2 class="section-title" id="how-title">Як це працює</h2>
+      <ul class="steps" role="list">
+        <li class="step">
+          <span class="step-icon step-icon--materials" aria-hidden="true"></span>
+          <h3>Матеріали курсу</h3>
+          <p>Лекції, завдання й дати з університетської LMS.</p>
+        </li>
+        <li class="step">
+          <span class="step-icon step-icon--plan" aria-hidden="true"></span>
+          <h3>План на день</h3>
+          <p>Теми розподілені по днях з урахуванням дедлайнів.</p>
+        </li>
+        <li class="step">
+          <span class="step-icon step-icon--practice" aria-hidden="true"></span>
+          <h3>Практика за темами</h3>
+          <p>Картки, тести й задачі з матеріалів курсу.</p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="demo container" id="example" aria-labelledby="example-title">
+      <header class="demo-heading">
+        <h2 class="section-title" id="example-title">Демо підготовки</h2>
+        <button class="demo-play" type="button" data-demo-play hidden>
+          <span aria-hidden="true" data-play-icon>▶</span>
+          <span data-play-label>Відтворити демо</span>
+        </button>
+      </header>
+
+      <div class="demo-board">
+        <ol class="demo-progress" aria-label="Етапи підготовки" role="list">
+          <li data-step="lms">LMS</li>
+          <li data-step="analysis">Аналіз ШІ</li>
+          <li data-step="ready" aria-current="step">Підготовка</li>
+        </ol>
+
+        <div class="demo-screen">
+          <div class="demo-scene demo-process" data-scene="lms" hidden>
+            <h3>Підключення LMS</h3>
+            <ul class="demo-files" role="list">
+              <li><span class="demo-file-type">PDF</span> Лекція про умовну ймовірність</li>
+              <li><span class="demo-file-type">Задачі</span> Практичне заняття №4</li>
+              <li><span class="demo-file-type">Дата</span> Колоквіум у п’ятницю</li>
+            </ul>
+            <div class="demo-meter" aria-hidden="true"></div>
+          </div>
+
+          <div class="demo-scene demo-process" data-scene="analysis" hidden>
+            <h3>ШІ аналізує матеріали</h3>
+            <ul class="demo-files analysis-list" role="list">
+              <li><span>Тема</span> <strong>Умовна ймовірність</strong></li>
+              <li><span>Що повторити</span> <strong>Означення й формулу</strong></li>
+              <li><span>Що потренувати</span> <strong>Задачі з лекції</strong></li>
+            </ul>
+            <div class="demo-meter" aria-hidden="true"></div>
+          </div>
+
+          <div class="demo-scene" data-scene="ready">
+            <div class="demo-tabs" role="group" aria-label="Вміст підготовки" hidden>
+              <button type="button" class="demo-tab" data-view="plan" aria-pressed="true" aria-controls="demo-plan">План</button>
+              <button type="button" class="demo-tab" data-view="card" aria-pressed="false" aria-controls="demo-card">Картки</button>
+              <button type="button" class="demo-tab" data-view="quiz" aria-pressed="false" aria-controls="demo-quiz">Мініквіз</button>
+            </div>
+
+            <article class="plan" id="demo-plan" data-panel="plan" aria-labelledby="demo-plan-title">
+              <header class="plan-header">
+                <div>
+                  <h3 id="demo-plan-title">Що вчити сьогодні</h3>
+                  <p>Умовна ймовірність · колоквіум у п’ятницю</p>
+                </div>
+                <span class="plan-total">25 хв</span>
+              </header>
+              <ol class="plan-days" role="list">
+                <li class="plan-day">
+                  <span class="day-label" aria-hidden="true">01</span>
+                  <div><h4>Повторити означення</h4><p>Картки з лекції</p></div>
+                  <span class="day-duration">5 хв</span>
+                </li>
+                <li class="plan-day">
+                  <span class="day-label" aria-hidden="true">02</span>
+                  <div><h4>Розібрати приклад</h4><p>Імовірність при кидку кубика</p></div>
+                  <span class="day-duration">10 хв</span>
+                </li>
+                <li class="plan-day">
+                  <span class="day-label" aria-hidden="true">03</span>
+                  <div><h4>Перевірити себе</h4><p>Мініквіз за темою</p></div>
+                  <span class="day-duration">10 хв</span>
+                </li>
+              </ol>
+            </article>
+
+            <article class="plan demo-practice" id="demo-card" data-panel="card" aria-labelledby="demo-card-title" hidden>
+              <div class="demo-study-card">
+                <h3 id="demo-card-title">Що означає P(A | B)?</h3>
+                <p id="demo-card-answer" hidden>Це ймовірність події A за умови, що подія B вже відбулася.</p>
+                <button class="demo-choice" type="button" data-card-toggle aria-expanded="false" aria-controls="demo-card-answer">Показати відповідь</button>
+              </div>
+            </article>
+
+            <article class="plan demo-practice" id="demo-quiz" data-panel="quiz" aria-labelledby="demo-quiz-title" hidden>
+              <h3 id="demo-quiz-title">На кубику випало парне число. Яка ймовірність, що це шістка?</h3>
+              <div class="demo-choices" role="group" aria-label="Варіанти відповіді">
+                <button class="demo-choice" type="button" data-choice aria-pressed="false">1/6</button>
+                <button class="demo-choice" type="button" data-choice data-correct aria-pressed="false">1/3</button>
+                <button class="demo-choice" type="button" data-choice aria-pressed="false">1/2</button>
+              </div>
+              <p class="demo-feedback" data-feedback role="status"></p>
+            </article>
+          </div>
+        </div>
+      </div>
+      <p class="visually-hidden" data-demo-status role="status"></p>
+    </section>
+  </main>
+
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Створи акаунт Hustle, щоб перейти до підключення університетської LMS.">
+  <meta name="theme-color" content="#f5f2e8">
+  <title>Створити акаунт — Hustle</title>
+  <link rel="icon" type="image/svg+xml" href="brand-favicon.svg">
+  <link rel="stylesheet" href="landing.css?v=6c29e741">
+  <link rel="stylesheet" href="theme.css?v=3246251c">
+  <link rel="stylesheet" href="register.css?v=53a39b9a">
+  <link rel="stylesheet" href="product.css?v=5fd0a700">
+  <script src="state.js?v=7eee52d5" defer></script>
+  <script src="auth.js?v=210b8dc0" defer></script>
+</head>
+<body class="auth-page">
+  <a class="skip-link" href="#registration">До реєстрації</a>
+  <header class="site-header container">
+    <a class="wordmark" href="index.html" aria-label="Hustle, головна"><img width="29" height="33" class="folded-h" src="brand-mark.svg" alt="">ustle<span>.</span></a>
+    <nav class="site-nav" aria-label="Навігація"><a href="index.html"><span aria-hidden="true">←</span> На головну</a></nav>
+  </header>
+
+  <main class="registration-shell container" id="registration" tabindex="-1">
+    <aside class="registration-preview" aria-label="Приклад навчального плану">
+      <h2 class="auth-illustration-title">Від лекції<br>до плану на день.</h2>
+      <div class="registration-art" aria-hidden="true">
+        <div class="art-backdrop"></div>
+        <div class="course-slip"><span class="slip-type">PDF</span><div><strong>Лекція 08</strong><span>Теорія ймовірностей</span></div><span class="slip-check">✓</span></div>
+        <div class="study-sheet">
+          <div class="sheet-heading"><strong>План на сьогодні</strong><span>25 хв</span></div>
+          <div class="sheet-task"><span class="task-number">01</span><div><strong>Повторити означення</strong><span>Картки з лекції</span></div><small>5 хв</small></div>
+          <div class="sheet-task"><span class="task-number">02</span><div><strong>Розібрати приклад</strong><span>Умовна ймовірність</span></div><small>10 хв</small></div>
+          <div class="sheet-task"><span class="task-number">03</span><div><strong>Перевірити себе</strong><span>Мініквіз за темою</span></div><small>10 хв</small></div>
+        </div>
+        <div class="deadline-slip"><span>П’ЯТНИЦЯ · 10:30</span><strong>Колоквіум</strong></div>
+      </div>
+    </aside>
+
+    <div class="registration-card">
+      <ol class="onboarding-steps" aria-label="Створення навчального простору">
+        <li data-onboarding-step="account" aria-current="step"><span>1</span> Акаунт</li>
+        <li data-onboarding-step="lms"><span>2</span> LMS</li>
+        <li data-onboarding-step="plan"><span>3</span> План</li>
+      </ol>
+
+      <section data-registration-screen="account" aria-labelledby="registration-title">
+        <h1 id="registration-title" tabindex="-1">Створити акаунт</h1>
+        <form id="registration-form" novalidate>
+          <div class="form-field">
+            <label for="signup-name">Ім’я</label>
+            <input id="signup-name" name="name" autocomplete="given-name" placeholder="Твоє ім’я" required maxlength="80" aria-describedby="name-error">
+            <p class="field-error" id="name-error" hidden></p>
+          </div>
+          <div class="form-field">
+            <label for="signup-email">Email</label>
+            <input id="signup-email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required maxlength="254" spellcheck="false" autocapitalize="none" aria-describedby="email-error">
+            <p class="field-error" id="email-error" hidden></p>
+          </div>
+          <div class="form-field">
+            <label for="signup-password">Пароль</label>
+            <div class="password-field">
+              <input id="signup-password" name="password" type="password" autocomplete="new-password" placeholder="Щонайменше 8 символів" required minlength="8" maxlength="128" aria-describedby="password-error">
+              <button class="password-toggle" type="button" aria-label="Показати пароль" aria-pressed="false" aria-controls="signup-password">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path data-eye-slash d="m3 3 18 18" hidden/></svg>
+              </button>
+            </div>
+            <p class="field-error" id="password-error" hidden></p>
+          </div>
+          <button class="registration-submit" type="submit" disabled>Підключення LMS <span aria-hidden="true">→</span></button>
+          <p class="form-announcement visually-hidden" role="alert"></p>
+        </form>
+        <a class="auth-mode-link" href="register.html?mode=login" data-auth-mode>Увійти</a>
+        <noscript><p class="field-error">Для перегляду процесу реєстрації увімкни JavaScript.</p></noscript>
+      </section>
+
+
+    </div>
+  </main>
+</body>
+</html>

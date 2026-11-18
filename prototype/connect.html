@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="uk">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f5f2e8"><title>Підключення LMS — Hustle</title><link rel="icon" href="brand-favicon.svg"><link rel="stylesheet" href="landing.css?v=6c29e741"><link rel="stylesheet" href="theme.css?v=3246251c"><link rel="stylesheet" href="register.css?v=53a39b9a"><link rel="stylesheet" href="product.css?v=5fd0a700"><script src="state.js?v=7eee52d5" defer></script><script src="data.js?v=8d074244" defer></script><script src="connect.js?v=2d68654b" defer></script></head>
+<body><a class="skip-link" href="#connection">До підключення</a><header class="site-header container"><a href="index.html" class="wordmark" aria-label="Hustle, головна"><img width="29" height="33" class="folded-h" src="brand-mark.svg" alt="">ustle<span>.</span></a><nav class="site-nav" aria-label="Навігація"><a href="register.html">← Назад</a></nav></header>
+<main class="connect-shell" id="connection">
+  <ol class="onboarding-steps" aria-label="Створення навчального простору"><li><span>✓</span> Акаунт</li><li data-stage="lms" aria-current="step"><span>2</span> LMS</li><li data-stage="plan"><span>3</span> План</li></ol>
+  <section id="connect-step"><h1>Підключити LMS</h1><form id="lms-form" novalidate>
+    <div class="form-field"><label for="provider">Платформа</label><select id="provider" name="provider"><option>Moodle</option><option>Canvas</option><option>Інша LMS</option></select></div>
+    <div class="form-field"><label for="lms-address">Адреса LMS</label><input id="lms-address" type="url" placeholder="https://lms.university.edu" autocomplete="url" required aria-describedby="lms-error"><p id="lms-error" class="field-error" role="alert" hidden></p></div>
+    <button class="registration-submit" type="submit" disabled>Підключити <span aria-hidden="true">→</span></button>
+  </form></section>
+  <section id="sync-step" hidden role="status"><div class="sync-orbit" aria-hidden="true"></div><h1>Завантажуємо курси</h1></section>
+  <section id="courses-step" hidden><h1 tabindex="-1">Обери курси</h1><form id="courses-form"><div id="course-options" class="course-options"></div><fieldset class="time-budget"><legend>Час на день</legend><div class="time-options"><label><input type="radio" name="minutes" value="25" checked><span>25 хв</span></label><label><input type="radio" name="minutes" value="45"><span>45 хв</span></label><label><input type="radio" name="minutes" value="60"><span>60 хв</span></label></div></fieldset><p class="field-error" id="courses-error" role="alert" hidden>Обери хоча б один курс.</p><button class="registration-submit" type="submit">Відкрити мій план <span aria-hidden="true">→</span></button></form><button class="registration-back" type="button" id="change-lms">← Змінити LMS</button></section>
+</main></body></html>

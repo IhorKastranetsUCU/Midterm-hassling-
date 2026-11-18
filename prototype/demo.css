@@ -1,0 +1,243 @@
+.demo {
+  padding-block-end: clamp(2.5rem, 6vw, 5.5rem);
+}
+
+.demo-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-block-end: 1.5rem;
+}
+
+.demo button {
+  color: var(--plum);
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.demo-board {
+  display: grid;
+  grid-template-columns: minmax(10rem, 21%) minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(.875rem, 3vw, 2.5rem);
+  padding: clamp(.65rem, 2.5vw, 2rem);
+  border: 1px solid #ddd0dd;
+  border-radius: clamp(1rem, 2.2vw, 1.75rem);
+  background: #f1e7f1;
+}
+
+.demo-play,
+.demo-tab,
+.demo-choice {
+  min-height: 2.75rem;
+  padding: .4rem .8rem;
+  border: 1px solid #b89eB7;
+  border-radius: .6rem;
+  background: var(--paper);
+}
+
+.demo-play:not([hidden]) {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.demo-play span:first-child {
+  width: 1rem;
+  text-align: center;
+  font-size: .85em;
+}
+
+.demo-play:hover,
+.demo-tab:hover,
+.demo-choice:hover {
+  background: #f2e4f1;
+}
+
+.demo-progress {
+  display: grid;
+  gap: .4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.demo-progress li {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  min-height: 2.75rem;
+  padding: .4rem .65rem;
+  border-radius: .6rem;
+  color: var(--muted);
+  font-size: .875rem;
+  font-weight: 750;
+}
+
+.demo-progress li::before {
+  flex: 0 0 .55rem;
+  height: .55rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  content: "";
+}
+
+.demo-progress li[aria-current="step"] {
+  background: var(--lilac);
+  color: var(--plum);
+}
+
+.demo-progress li[aria-current="step"]::before { background: currentColor; }
+
+.demo-screen {
+  min-height: 19rem;
+  padding: clamp(.7rem, 2vw, 1.25rem);
+  border-radius: 1rem;
+  background: var(--paper);
+}
+
+.demo-scene:not([hidden]) { animation: demo-appear .24s ease-out both; }
+
+@keyframes demo-appear {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.demo-tabs:not([hidden]) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+  margin-block-end: .8rem;
+}
+
+.demo .demo-tab { font-size: .875rem; }
+
+.demo-tab[aria-pressed="true"],
+.demo-tab[aria-pressed="true"]:hover {
+  border-color: var(--plum);
+  background: var(--plum);
+  color: var(--paper);
+}
+
+.demo-tab:focus-visible { outline-color: var(--plum); }
+
+.demo-screen .plan {
+  padding: .65rem 0 0;
+  border-radius: 0;
+}
+
+.demo-screen .plan-header h3,
+.demo-scene h3 {
+  margin: 0;
+  font-size: clamp(1.125rem, 2vw, 1.45rem);
+  line-height: 1.3;
+}
+
+.demo-practice h3 { max-width: 40ch; }
+
+.demo-study-card {
+  display: grid;
+  justify-items: start;
+  gap: .85rem;
+  padding: clamp(.75rem, 3vw, 1.5rem);
+  border-radius: .75rem;
+  background: #f5eaf5;
+}
+
+.demo-study-card p { margin: 0; }
+
+.demo-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-block-start: 1rem;
+}
+
+.demo-choice[aria-pressed="true"] {
+  border-color: var(--plum);
+  background: var(--lilac);
+}
+
+.demo-choice[data-correct][aria-pressed="true"] {
+  border-color: #42684d;
+  background: #e6f0e6;
+  color: #294335;
+}
+
+.demo-feedback { min-height: 1.5em; margin: .75rem 0 0; }
+
+.demo-files {
+  display: grid;
+  gap: .5rem;
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.demo-files li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .2rem .65rem;
+  padding: .65rem .75rem;
+  border-radius: .5rem;
+  background: #f7eef6;
+  font-size: .875rem;
+}
+
+.demo-file-type {
+  padding: .1rem .4rem;
+  border-radius: .3rem;
+  background: var(--lilac);
+  font-size: .75rem;
+  font-weight: 800;
+}
+
+.analysis-list span { color: var(--muted); }
+
+.demo-meter {
+  height: .325rem;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: var(--lilac);
+}
+
+.demo-meter::after {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: left;
+  background: var(--plum);
+  animation: demo-fill 1.35s ease-out both;
+  content: "";
+}
+
+@keyframes demo-fill {
+  from { transform: scaleX(.04); }
+  to { transform: scaleX(1); }
+}
+
+@media (max-width: 43rem) {
+  .demo-board { grid-template-columns: minmax(0, 1fr); }
+
+  .demo-progress {
+    grid-template-columns: repeat(3, minmax(0, auto));
+    gap: .2rem;
+  }
+
+  .demo-progress li {
+    gap: .3rem;
+    padding-inline: .35rem;
+    font-size: .75rem;
+  }
+
+  .demo-progress li::before { flex-basis: .4rem; height: .4rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-scene:not([hidden]),
+  .demo-meter::after { animation: none; }
+}

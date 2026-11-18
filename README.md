@@ -105,3 +105,9 @@ midterm2/
 ```
 
 Good luck on Wednesday and Friday — go get that maximum score! 🚀
+
+## Hustle product prototype — dashboard branch
+
+The cream/lavender product prototype is available at `/prototype/`. From this checkout, run `python3 -m http.server 8081` and open `http://localhost:8081/prototype/`. The workspace includes compact overview and subject dashboards, measured study time, plan progress, XP/streaks, persistent Pomodoro, and an LMS event review queue with an editable month/day calendar.
+
+Account, LMS import and calendar records are browser-local simulations. No credentials are transmitted and no Google integration is connected. See [`prototype/DASHBOARD.md`](prototype/DASHBOARD.md) for state, behavior, adapter boundaries and verification.

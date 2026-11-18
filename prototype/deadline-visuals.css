@@ -1,0 +1,433 @@
+.deadline-surface {
+  position: relative;
+  isolation: isolate;
+  --deadline-heat: 0;
+  --deadline-warmth: 0;
+  --fire-height: 3.5rem;
+  --paper-base: #fffdf7;
+  --gold-paper: color-mix(in srgb, var(--paper-base), #ffe2a4 calc(100% * var(--deadline-warmth)));
+  --heated-paper: color-mix(in srgb, var(--gold-paper), #fba58f calc(100% * var(--deadline-heat)));
+  --gold-border: color-mix(in srgb, #e4d9d0, #d9a46a calc(100% * var(--deadline-warmth)));
+  --heat-border: color-mix(in srgb, var(--gold-border), #d56a51 calc(100% * var(--deadline-heat)));
+  --heat-shadow: color-mix(in srgb, #d8513260 calc(100% * var(--deadline-heat)), transparent);
+}
+
+.deadline-surface[data-heat-stage] {
+  background: linear-gradient(162deg, var(--paper-base) 7%,
+    color-mix(in srgb, var(--paper-base), var(--heated-paper) 48%) 47%, var(--heated-paper));
+  border-color: var(--heat-border);
+  box-shadow: 0 3px 13px -6px var(--heat-shadow);
+}
+
+.deadline-fire {
+  position: absolute;
+  z-index: -1;
+  inset: auto 0 0;
+  width: 100%;
+  height: var(--fire-height);
+  max-height: 72%;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+  pointer-events: none;
+  opacity: min(1, calc(var(--deadline-heat) * 1.75));
+  filter: drop-shadow(0 calc(-4px * var(--deadline-heat)) 8px var(--heat-shadow));
+}
+
+.paper-tape {
+  position: absolute;
+  z-index: 1;
+  top: -.55rem;
+  right: 1.5rem;
+  width: 4.2rem;
+  height: 1.14rem;
+  transform: rotate(8deg);
+  pointer-events: none;
+  background-color: var(--tape-color, #c4acd0);
+  background-image:
+    linear-gradient(92deg, transparent 46%, #fff4d533 49%, #99744215 50%, transparent 53%),
+    repeating-linear-gradient(3deg, #fff9df24 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(112deg, #8e663d15 0 1px, transparent 1px 5px),
+    linear-gradient(180deg, #fff7d630, transparent 40%, #9b75441a);
+  clip-path: polygon(0 0, 100% 0, 97.5% 18%, 100% 32%, 96% 49%, 99% 68%, 96.5% 83%, 100% 100%, 0 100%, 3% 82%, 0 66%, 4% 48%, 1% 29%, 3% 15%);
+}
+
+.subject-butter {
+  --tape-color: #ca9337d9;
+  --paper-base: #f7dfa0;
+  --paper-highlight: #fff5d7;
+  --paper-outline: #c8a36d;
+  --paper-edge: #e5cb93;
+  --book-spine: #aa763b;
+}
+.subject-lilac {
+  --tape-color: #9764b1d9;
+  --paper-base: #e1c9ec;
+  --paper-highlight: #f5e9fb;
+  --paper-outline: #b293c0;
+  --paper-edge: #d9c3e2;
+  --book-spine: #865499;
+}
+.subject-blush {
+  --tape-color: #bd795fd9;
+  --paper-base: #f1c4b0;
+  --paper-highlight: #fbe7de;
+  --paper-outline: #c89988;
+  --paper-edge: #e8bcae;
+  --book-spine: #ac664b;
+}
+.subject-butter .paper-tape { transform: rotate(-7deg); }
+.subject-blush .paper-tape { transform: rotate(-5deg); }
+
+.subject-card.deadline-surface {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  align-content: start;
+  padding: 1.1rem 1.1rem .5rem;
+  background: radial-gradient(ellipse at 6% 0, #ffffff6b 0%, transparent 66%),
+    linear-gradient(141deg,var(--paper-highlight) 3%,var(--paper-base) 92%);
+  border-radius: .68rem 1.04rem .8rem .73rem;
+  border: 1px solid var(--paper-outline);
+  box-shadow: 0 9px 20px -12px #593a3b65;
+}
+
+.subject-card.deadline-surface:hover {
+  border-color: #a78ab4;
+}
+
+.subject-card .subject-card-top { grid-row: auto; }
+.subject-card .subject-card-top > .icon { display: inline-block; }
+.subject-card .course-avatar {
+  transform: rotate(-6deg);
+  border-radius: .32rem .57rem .5rem .36rem;
+  border-left: .22rem solid var(--book-spine);
+  background: linear-gradient(139deg, #fffdf3, var(--paper-highlight));
+  box-shadow: 0 1px 0 #fff inset, 2px 3px 0 -1px var(--paper-edge), 1px 5px 7px -4px #3d214e75;
+  font-family: Georgia, serif;
+  font-size: 1.16rem;
+  font-style: italic;
+}
+
+.subject-card.deadline-surface h3 {
+  font-size: 1rem;
+  line-height: 1.35;
+  min-height: 0;
+  margin: .62rem 0 .32rem;
+}
+
+.subject-card.deadline-surface > p {
+  grid-column: 1;
+  min-height: 0;
+  margin: 0 0 .85rem;
+  color: #624b62;
+  font-size: .71rem;
+}
+
+.subject-card.deadline-surface > .small-progress,
+.subject-card.deadline-surface > .subject-progress { grid-column: 1; }
+
+.subject-card.deadline-surface .subject-card-bottom {
+  grid-column: 1;
+  grid-row: auto;
+  margin-top: .65rem;
+  align-items: flex-start;
+  justify-content: start;
+  gap: .5rem;
+}
+
+.subject-deadline {
+  --fire-height: 3.55rem;
+  --paper-base: #fff9ef;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  margin: .75rem -.6rem 0;
+  min-height: 3.6rem;
+  padding: .5rem .65rem .7rem;
+  gap: .22rem .5rem;
+  border: 1px solid #fff8;
+  border-radius: .52rem .52rem .42rem .42rem;
+  background: #fff7edb3;
+}
+
+.subject-deadline > strong {
+  font-size: .77rem;
+  line-height: 1.25;
+  color: #4d2e31;
+  text-shadow: 0 1px 3px #fff9;
+}
+
+.subject-card.deadline-surface .due-badge { font-size: .6rem; }
+
+.subject-card:has(.subject-deadline[data-heat-stage="approaching"]) {
+  --warmed-cover: color-mix(in srgb, var(--paper-base), #ffe5a8 calc(40% * var(--deadline-warmth)));
+  --heated-cover: color-mix(in srgb, var(--warmed-cover), #f7a18d calc(90% * var(--deadline-heat)));
+  background: radial-gradient(ellipse at 6% 0, #ffffff6b 0%, transparent 66%),
+    linear-gradient(141deg, var(--paper-highlight) 3%, var(--heated-cover) 92%);
+  border-color: color-mix(in srgb, var(--paper-outline), #ca725c calc(100% * var(--deadline-heat)));
+  box-shadow: 0 9px 20px -12px #593a3b65;
+}
+
+.next-session {
+  position: relative;
+  background: radial-gradient(ellipse at 3% 11%, #fff9fc 0%, transparent 62%),
+    linear-gradient(138deg,#f1e4f6,#dcc2ea);
+  border: 1px solid #ba9bc8;
+  border-radius: .74rem 1rem .75rem .92rem;
+  box-shadow: 0 1px 0 #fff8 inset, 2px 3px 0 -1px #f7edf8,
+    3px 4px 0 -1px #dbc6e3, 0 8px 24px -16px #5f3b5673;
+}
+
+.next-session > .course-avatar {
+  border-radius: .35rem .7rem .35rem .4rem;
+  background: linear-gradient(132deg, #fffefb, #f8eadb);
+  box-shadow: 0 1px 0 #fff inset, 2px 3px 0 -1px #e9dbd4, 1px 5px 8px -5px #3d214e72;
+}
+
+.next-session .paper-tape {
+  top: -.47rem;
+  right: 1.15rem;
+  width: 3.15rem;
+  height: .86rem;
+  transform: rotate(-6deg);
+}
+
+.next-session .next-session-copy > a,
+.next-session .next-session-copy > p {
+  color: #745b76;
+}
+
+.dash-task.deadline-surface {
+  --fire-height: 2.4rem;
+  border: 1px solid #e8dfd6;
+  border-radius: .64rem;
+  padding: .65rem .75rem;
+  min-height: 3.85rem;
+  margin: .4rem 0;
+}
+
+.dash-task.deadline-surface + .dash-task { margin-top: .5rem; }
+.dash-task.deadline-surface .task-check { background-color: var(--paper); }
+.dash-task.deadline-surface .task-check[aria-pressed="true"] { background-color: var(--plum); }
+.dash-task.deadline-surface .task-open { min-width: 2.1rem; justify-content: center; }
+.calendar-agenda-event.deadline-surface { --fire-height: 2.35rem; border: 1px solid #eadde9; }
+
+.deadline-surface .due-badge {
+  border: 1px solid #78566220;
+  background: #fffaf1;
+  color: #624a61;
+}
+
+.deadline-surface .due-badge.urgent,
+.deadline-surface .due-badge.overdue { color: #85402a; }
+.deadline-surface .due-badge.overdue { background: #fff2e7; }
+.deadline-surface .due-badge.done { color: #4f6c40; background: #e8eddf; }
+
+@media (min-width: 68rem) {
+  .subject-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 36rem) {
+  .dash-task.deadline-surface { padding: .7rem .65rem .5rem; }
+  .subject-card.deadline-surface .subject-card-bottom { align-items: flex-start; flex-direction: column; }
+  .next-session { padding-top: 1.23rem; }
+}
+
+.due-badge:has(.deadline-countdown:not([hidden])) {
+  display: inline-grid;
+  gap: .13rem;
+  text-align: right;
+}
+
+.deadline-countdown {
+  font-size: .68rem;
+  font-weight: 850;
+  color: #813820;
+}
+
+.subject-deadline .due-badge {
+  position: relative;
+  background: #fffaf0ed;
+}
+
+.subject-deadline[data-heat-stage="approaching"] .deadline-countdown {
+  color: color-mix(in srgb, #624a61, #813820 calc(100% * var(--deadline-heat)));
+}
+
+.deadline-surface[data-heat-stage="overdue"] {
+  --heated-paper: #f9e0d9;
+  --heat-border: #cc9a90;
+  --heat-shadow: #88373115;
+}
+
+.due-badge.upcoming .deadline-countdown {
+  color: inherit;
+}
+
+.due-badge.overdue .deadline-countdown {
+  color: #8b3027;
+}
+
+/* The note holds one next action; warmth belongs to its dated strip. */
+.focus-note { display: block; padding: 0; background: radial-gradient(ellipse at 100% 20%, #decaed, transparent 65%), #f4eafa; }
+.focus-body { padding: clamp(1.05rem,2.1vw,1.7rem); display: grid; grid-template-columns: minmax(0,1fr) minmax(4.4rem,7.4rem); align-items: center; gap: 1rem; }
+.focus-note .next-session-copy > .focus-course { display: inline-flex; gap: .45rem; align-items: center; color: #594362; margin: 0 0 .6rem; font-size: .79rem; font-weight: 700; }
+.focus-course .course-avatar { min-width: 1.5rem; width: 1.5rem; height: 1.5rem; border: 1px solid #b292b4; font: italic bold .93rem Georgia,serif; border-radius: .28rem; }
+.focus-note h2 { font-size: clamp(1.45rem,2.55vw,2.22rem); letter-spacing: -.055em; line-height: 1.12; }
+.focus-note .next-session-copy > p { color: #66536e; font-size: .88rem; }
+.focus-note .next-session-action { flex-direction: row; align-items: center; justify-content: start; flex-wrap: wrap; margin-top: .95rem; gap: .6rem; }
+.focus-note .primary { min-height: 2.65rem; padding-inline: .95rem; color: #fff9fa; background: #442444; border-color: #442444; font-size: .83rem; }
+.focus-reading { display: inline-flex; align-items: center; gap: .4rem; min-height: 2.55rem; border: 0; border-radius: .4rem; color: #593e64; background: transparent; font-weight: 700; font-size: .8rem; }
+.focus-reading:hover { background: #ead9f0; }
+.desk-sticker { position: relative; width: 100%; justify-self: center; transform: rotate(5deg); }
+.desk-sticker img { display: block; width: 100%; height: auto; filter: drop-shadow(1px 4px 2px #4c2a482a); }
+.desk-sticker .paper-tape { width: 38%; height: .8rem; inset: auto 0 .12rem auto; transform: rotate(-16deg); --tape-color: #b99acbbf; }
+.focus-deadline, .deadline-line { --paper-base: #fffaf0; --fire-height: 2.5rem; display: flex; align-items: center; gap: .8rem; padding: .65rem 1.15rem; min-height: 3.75rem; border: 1px solid #dbcfbf; background: var(--paper-base); }
+.focus-deadline { border-width: 1px 0 0;  border-bottom-left-radius: inherit; border-bottom-right-radius: inherit; }
+.focus-deadline-name { display: inline-flex; align-items: center; gap: .65rem; }
+.focus-deadline-name > span { font-size: .69rem; color: #6d5960; }
+.focus-deadline-name strong { display: block; margin-top: .12rem; font-size: .91rem; color: #412e38; }
+.deadline-surface .due-badge { font-size: .73rem; }
+.deadline-surface .due-badge.urgent, .deadline-countdown { color: color-mix(in srgb, #624a61, #852f17 calc(100% * var(--deadline-heat))); }
+.focus-deadline .due-badge, .deadline-line .due-badge { margin-left: auto; }
+.deadline-line { text-decoration: none; border-radius: .55rem; margin-top: .45rem; padding: .55rem .75rem; }
+.deadline-line:hover { outline: 1px solid #bd9ac5; }
+.deadline-line .course-avatar { min-width: 2.2rem; width: 2.2rem; height: 2.2rem; border-radius: .4rem; font: italic bold 1.1rem Georgia,serif; }
+.queue-title strong, .queue-title small { display: block; }
+.queue-title strong { font-size: .93rem; }
+.deadline-line > .icon { width: .95rem; flex: none; }
+.subject-card.deadline-surface { padding: .95rem 1rem .5rem; }
+.subject-card.deadline-surface h3 { font-size: 1.16rem; }
+.subject-card.deadline-surface > p { font-size: .81rem; }
+.subject-card.deadline-surface .due-badge { font-size: .71rem; }
+.subject-deadline { --fire-height: 3.55rem; background: var(--paper-base); border-color: #dfd0be; }
+.subject-deadline > strong { font-size: .85rem; }
+@media(max-width:40rem) {
+  .focus-body { grid-template-columns: minmax(0,1fr) 4.5rem; gap: .4rem; padding: 1rem; }
+  .desk-sticker { align-self: start; margin-top: .7rem; }
+  .focus-deadline { padding: .6rem .85rem; }
+  .focus-note .next-session-copy > p { font-size: .8rem; }
+  .focus-note .next-session-action { width: auto; }
+  .deadline-line { gap: .5rem; padding-inline: .55rem; }
+  .deadline-line > .icon { display: none; }
+  .deadline-line .course-avatar { width: 1.65rem; height: 1.65rem; min-width: 1.65rem; }
+  .queue-title strong { font-size: .85rem; }
+}
+
+.subject-minutes { display: inline-flex; gap: .28rem; align-items: center; }
+.subject-minutes .icon { width: .83rem; height: .83rem; }
+
+.focus-body { row-gap: .8rem; }
+.focus-body > .next-session-copy { grid-area: 1/1; }
+.focus-body > .next-session-action { grid-area: 2/1; margin: 0; }
+.focus-body > .desk-sticker { grid-area: 1/2/3/3; }
+.focus-deadline, .deadline-line, .subject-deadline, .calendar-agenda-event[data-heat-stage] { padding-bottom: calc(.65rem + .65rem * var(--deadline-heat)); }
+@media(max-width:40rem) {
+  .focus-body > .next-session-action { grid-column: 1 / -1; }
+  .focus-body > .desk-sticker { grid-area: 1/2; margin: 0; align-self: center; }
+  .subject-card.deadline-surface { grid-template-columns: auto minmax(0,1fr) auto; column-gap: .65rem; padding-top: .85rem; }
+  .subject-card.deadline-surface .subject-card-top { display: contents; }
+  .subject-card .subject-card-top .course-avatar { grid-area: 1/1/3/2; align-self: center; }
+  .subject-card .subject-card-top > .icon { grid-area: 1/3/3/4; align-self: center; }
+  .subject-card.deadline-surface > h3 { grid-area: 1/2; margin: 0; }
+  .subject-card.deadline-surface > p { grid-area: 2/2; margin: .1rem 0 0; }
+  .subject-card.deadline-surface > .subject-progress { grid-column: 1/-1; margin-top: .8rem; }
+  .subject-card.deadline-surface > .small-progress, .subject-deadline { grid-column: 1/-1; }
+}
+.calendar-agenda-copy .deadline-countdown { margin-top: .25rem; font-size: .75rem; }
+
+/* A dated subject is one sheet. Its lower edge owns the glow and the fire. */
+.subject-card .subject-deadline, .focus-note .focus-deadline {
+  position: static;
+  isolation: auto;
+  margin-inline: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.subject-card .subject-deadline { margin-top: .45rem; padding-inline: 0; min-height: 2.9rem; }
+.subject-card > .small-progress[aria-valuenow="0"] { height: 0; }
+.subject-card .subject-deadline .deadline-fire, .focus-note .deadline-fire { border-radius: 0 0 .7rem .7rem; }
+.subject-card .subject-deadline .deadline-fire { height: 2.35rem; }
+.deadline-surface .due-badge, .subject-deadline .due-badge, .focus-note .due-badge {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.due-badge time { font-variant-numeric: tabular-nums; }
+.due-badge:has(.deadline-countdown:not([hidden])) time { font-weight: 650; }
+.subject-deadline > strong { text-shadow: none; }
+.focus-note {
+  position: relative;
+  isolation: isolate;
+  --deadline-warmth: 0;
+  --deadline-heat: 0;
+  --warm-note: color-mix(in srgb, #f6e8c5, #f2d791 calc(100% * var(--deadline-warmth)));
+  --note-edge: color-mix(in srgb, var(--warm-note), #ee9277 calc(100% * var(--deadline-heat)));
+  background: radial-gradient(ellipse at 6% 0%, #fffcf1b8, transparent 65%), linear-gradient(163deg,#fcf0d1 6%,#f8e7b9 58%,var(--note-edge));
+  border-color: color-mix(in srgb, #dbc38d, #cb7358 calc(100% * var(--deadline-heat)));
+  box-shadow: 0 2px 4px #6b4c290b, 0 16px 28px -25px #69472880;
+}
+.focus-note .focus-deadline { min-height: 0; padding-inline: clamp(1.05rem,2.1vw,1.7rem); padding-top: .2rem; padding-bottom: calc(.85rem + .8rem * var(--deadline-heat)); }
+.focus-note .next-session-copy > .focus-course, .focus-note .next-session-copy > p { color: #69533f; }
+.focus-note .desk-sticker .paper-tape { --tape-color: #baa2c7d9; }
+.pomodoro-card { position: relative; background: linear-gradient(145deg,#f4eaf5,#e9daec); border-color: #cfb9d4; border-radius: .55rem .9rem .7rem .55rem; }
+.pomodoro-card > .paper-tape { right: 1.4rem; width: 4.7rem; height: 1.05rem; --tape-color: #c4acd0; transform: rotate(7deg); }
+.profile-avatar[data-avatar] { background: transparent; }
+.profile-avatar img { display: block; width: 100%; height: 100%; border-radius: 50%; }
+
+/* Respond to the hand on the paper. Warm urgency stays tied to the clock. */
+.subject-card::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse 14rem 9rem at var(--light-x, 35%) var(--light-y, 25%), #fffefaad, transparent);
+  opacity: 0;
+  pointer-events: none;
+}
+.subject-card:focus-visible { outline: .16rem solid #714786; outline-offset: .2rem; }
+.subject-card:focus-visible::before { opacity: .8; }
+.subject-card:focus-visible .subject-card-top > .icon { color: #54335d; }
+@media (hover: hover) and (pointer: fine) {
+  .subject-card.deadline-surface:hover { box-shadow: 0 8px 19px -8px #66497157; border-color: #96779d; }
+  .subject-card:hover::before { opacity: 1; }
+  .subject-card:hover .subject-card-top > .icon { color: #54335d; }
+  .practice-line:hover, .practice-line:focus-within { background-color: #efe5f17d; }
+  .calendar-cell:hover:not(:has([aria-pressed="true"])) { background-color: #f1e9f2; }
+  .practice-mode:hover { border-color: #af8abb; }
+}
+.practice-line { border-radius: .38rem; padding-inline: .35rem; }
+.practice-line.is-done .task-check { color: #fffdf4; background: #586c48; border-color: #586c48; }
+.pomodoro-card[data-timer-state="running"] { border-color: #8d709d; }
+.pomodoro-card[data-timer-state="running"] .timer-ring strong { color: #613d79; }
+.pomodoro-card[data-timer-state="paused"] .timer-ring span { color: #80562d; font-weight: 750; }
+.pomodoro-card[data-timer-state="ready"] .timer-ring::after { visibility: hidden; }
+.persistent-timer[data-timer-state="running"] { background: #e8efda; border-color: #b7c69a; color: #425642; }
+.persistent-timer[data-timer-state="paused"] { border-style: dashed; }
+@media(prefers-reduced-motion: no-preference) {
+  .subject-card, .subject-card::before, .subject-card .course-avatar, .subject-card .subject-card-top > .icon,
+  .deadline-line > .icon, .practice-mode > .icon:last-child, .focus-note .desk-sticker img,
+  .workspace :is(.primary,.secondary,.sync-decision,.task-open,.calendar-day,.task-check) {
+    transition: transform 155ms cubic-bezier(.2,.65,.3,1), opacity 150ms ease-out, box-shadow 150ms ease-out, background-color 120ms ease-out;
+  }
+  .workspace :is(.primary,.secondary,.sync-decision,.task-open,.calendar-day,.task-check):active,
+  .subject-card:active { transform: translateY(1px) scale(.987); }
+  .practice-line.just-completed { animation: task-ink 430ms ease-out; }
+  .practice-line.just-completed .task-check .icon { animation: check-stamp 220ms ease-out; }
+  .day-changed > :is(.practice-line,.calendar-agenda-event,.agenda-empty,.mini-agenda-task) { animation: day-ink 150ms ease-out; }
+}
+@media(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .subject-card:hover .subject-card-top > .icon, .deadline-line:hover > .icon,
+  .practice-mode:hover > .icon:last-child { transform: translateX(.22rem); }
+  .subject-card:hover .course-avatar { transform: rotate(-2deg) translateY(-2px); }
+  .focus-note:has(.primary:hover) .desk-sticker img { transform: rotate(-4deg); transform-origin: 60% 88%; }
+}
+@keyframes task-ink { from { background-color: #e2ebd4; } to { background-color: transparent; } }
+@keyframes check-stamp { 0% { transform: scale(.65); } 65% { transform: scale(1.12); } 100% { transform: scale(1); } }
+@keyframes day-ink { from { opacity: .55; transform: translateY(2px); } to { opacity: 1; transform: none; } }
