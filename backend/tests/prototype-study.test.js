@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const C = require('../prototype/study-core.js');
+const C = require('../../frontend/prototype/study-core.js');
 test('study days follow Kyiv midnight', () => {
   assert.equal(C.dateKey('2026-11-18T22:30:00Z'), '2026-11-19');
   assert.equal(C.dateKey('2026-07-18T21:30:00Z'), '2026-07-19');

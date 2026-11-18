@@ -26,7 +26,7 @@ jobs:
           for f in frontend/static/js/*.js frontend/hustle/*.js frontend/prototype/*.js; do
             node -c "$f"
           done
-          node --test backend/tests/*.test.cjs
+          node --test backend/tests/*.test.cjs backend/tests/prototype-study.test.js
 
       - name: Set up Python
         uses: actions/setup-python@v5
