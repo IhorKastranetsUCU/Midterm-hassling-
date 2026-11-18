@@ -2,7 +2,7 @@
 (() => {
   const H = window.Hustle, core = window.HustleStudy;
   const standalone = !H.state.registered || !H.state.ready || !H.state.courses.length;
-  if (standalone && location.hash !== '#calendar') return;
+  if (standalone && !['#calendar', '#oral'].includes(location.hash)) return;
   const {escape: esc, icon} = H;
   const editor = window.HustleCalendar;
   const main = document.querySelector('#workspace-main');

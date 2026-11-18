@@ -179,7 +179,7 @@
       <div class="dash-task-list">${visibleRows.map(t => practiceRow(t, !course)).join('') || '<p class="agenda-empty">На сьогодні занять не заплановано.</p>'}</div>
       ${others.length ? `<details class="remaining-tasks"><summary>Інші заняття <span>${others.length}</span></summary>${others.map(t => practiceRow(t, true)).join('')}</details>` : ''}
     </section>`;
-    return `${course ? '<a class="back-to-courses" href="#courses">← Усі предмети</a>' : ''}${heading(course ? course.name : 'Мій огляд', course ? '' : (H.liveCalendar?.inboxButton() || H.calendar.button()))}<div class="dashboard-layout desk-layout">${focusCard(course, next)}${metrics(course)}<div class="dashboard-main">${queue}${checklist}${course ? `<template><section class="dash-panel course-material-panel"><div class="panel-title"><h2>Матеріали предмета</h2></div>${course.materials.map((m, i) => `<button class="course-material-link" data-material="${i}" data-course="${course.id}" data-focus-id="dash-material-${course.id}-${i}">${icon('files')}<span><strong>${esc(m.title)}</strong><small>${esc(m.type)}</small></span>${icon('arrow')}</button>`).join('')}</section></template>` : ''}${weeklyChart(course)}</div><aside class="dashboard-aside">${timerCard()}${calendarGrid(true, course)}</aside></div>`;
+    return `${course ? '<a class="back-to-courses" href="#courses">← Усі предмети</a>' : ''}${heading(course ? course.name : 'Мій огляд', course ? (H.paperOral?.button(course) || '') : (H.liveCalendar?.inboxButton() || H.calendar.button()))}<div class="dashboard-layout desk-layout">${focusCard(course, next)}${metrics(course)}<div class="dashboard-main">${queue}${checklist}${course ? `<template><section class="dash-panel course-material-panel"><div class="panel-title"><h2>Матеріали предмета</h2></div>${course.materials.map((m, i) => `<button class="course-material-link" data-material="${i}" data-course="${course.id}" data-focus-id="dash-material-${course.id}-${i}">${icon('files')}<span><strong>${esc(m.title)}</strong><small>${esc(m.type)}</small></span>${icon('arrow')}</button>`).join('')}</section></template>` : ''}${weeklyChart(course)}</div><aside class="dashboard-aside">${timerCard()}${calendarGrid(true, course)}</aside></div>`;
   }
   function coursesView() { return heading('Мої предмети', '<a class="secondary" href="connect.html?edit=1">Обрати предмети +</a>') + metrics() + (H.liveCalendar?.coursesView() || '') + courseCards(false, true); }
   function calendarView() {
@@ -192,6 +192,15 @@
   function closeMobileMenu() { document.body.classList.remove('menu-open'); document.querySelector('.sidebar-shade').hidden = true; document.querySelector('#menu-toggle').setAttribute('aria-expanded', 'false'); document.querySelector('#sidebar').inert = matchMedia('(max-width: 52rem)').matches; }
   function render() {
     const hash = location.hash.slice(1) || 'plan', course = hash.startsWith('course/') ? courseById(hash.split('/')[1]) : null;
+    if (hash === 'oral' && H.paperOral) {
+      main.innerHTML = heading('Усний захист') + H.paperOral.shell();
+      H.paperOral.mount(main.querySelector('[data-oral-picker]'));
+      document.title = 'Усний захист — Hustle';
+      document.querySelector('#view-name').textContent = 'Усний захист';
+      document.querySelectorAll('[data-nav],.sidebar-course').forEach(a => a.removeAttribute('aria-current'));
+      document.querySelector('[data-nav="practice"],[data-nav="oral"]')?.setAttribute('aria-current','page');
+      return true;
+    }
     if (!['plan', 'courses', 'calendar', 'focus'].includes(hash) && !hash.startsWith('course/')) return false;
     if (hash.startsWith('course/') && !course) { fire.mount(); main.innerHTML = heading('Предмет не знайдено', '<a class="secondary" href="#courses">До предметів</a>'); return true; }
     if (course && !state.timer.running && state.timer.remaining === state.timer.duration && state.timer.course !== course.id) { state.timer.course = course.id; save(); }
@@ -324,7 +333,7 @@
     if (H.liveCalendar) settings.insertAdjacentHTML('beforebegin', `<a href="/hustle/app.html#courses">${icon('link')}<span>Курси Moodle</span></a>`);
     selected().forEach(c => settings.insertAdjacentHTML('beforebegin', `<a class="sidebar-course" href="#course/${c.id}"><i class="course-dot ${c.color}"></i><span>${esc(c.short)}</span></a>`));
     if (H.liveCalendar?.standalone) {
-      nav.innerHTML = `<a href="/hustle/app.html#dashboard">${icon('plan')}<span>Мій огляд</span></a><a href="/hustle/app.html#courses">${icon('courses')}<span>Курси Moodle</span></a><a href="#calendar" data-nav="calendar">${icon('calendar')}<span>Календар</span></a><a href="/hustle/app.html#settings">${icon('settings')}<span>Налаштування</span></a>`;
+      nav.innerHTML = `<a href="/hustle/app.html#dashboard">${icon('plan')}<span>Мій огляд</span></a><a href="/hustle/app.html#courses">${icon('courses')}<span>Курси Moodle</span></a><a href="#calendar" data-nav="calendar">${icon('calendar')}<span>Календар</span></a><a href="#oral" data-nav="oral">${icon('practice')}<span>Усний захист</span></a><a href="/hustle/app.html#settings">${icon('settings')}<span>Налаштування</span></a>`;
       document.querySelectorAll('.topbar-account,.sidebar-profile').forEach(a => a.href = '/hustle/app.html#settings');
       document.querySelector('#persistent-timer').hidden = true;
     }

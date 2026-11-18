@@ -115,6 +115,9 @@ async def paper_workspace():
         '<script defer src="/hustle/ui.js"></script>'
         '<script defer src="/hustle/calendar.js"></script>'
         '<script defer src="calendar-connected.js"></script>'
+        '<link rel="stylesheet" href="/hustle/oral-defense.css">'
+        '<script defer src="/hustle/oral-defense.js"></script>'
+        '<script defer src="oral-practice.js"></script>'
     )
     return HTMLResponse(page.replace("<!-- connected-calendar -->", calendar_assets),
                         headers={"Cache-Control": "no-cache"})
