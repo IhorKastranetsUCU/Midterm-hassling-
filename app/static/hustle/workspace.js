@@ -87,6 +87,9 @@
         if(window.HustleSpace)main.innerHTML=HustleSpace.courseHeader(bundle,courses,`<button class="secondary" data-add>Додати матеріали +</button><a class="icon-button course-options" href="${UI.courseLink(route.courseId,'manage')}" aria-label="Параметри курсу" title="Параметри курсу">${icon('settings')}</a>`)+HustleLearning.renderBundle(bundle,route.section);
         else main.innerHTML=`<nav class="breadcrumbs" aria-label="Шлях сторінки"><a href="#${back}">${esc(backLabel)}</a><span aria-hidden="true">/</span><span>${esc(title)}</span></nav>` + heading(title,`<button class="secondary" data-add>Додати матеріали +</button><a class="icon-button course-options" href="${UI.courseLink(route.courseId,'manage')}" aria-label="Параметри курсу" title="Параметри курсу">${icon('settings')}</a>`) + HustleLearning.renderBundle(bundle,route.section);
         HustleCourse.mount(bundle,route.section,account);
+      } else if (['new-course','connect'].includes(route.view) && location.pathname.endsWith('/tools.html')) {
+        title = 'Додати предмет';
+        main.innerHTML = heading(title) + '<section class="settings-card"><div class="page-actions">' + addButtons + '</div></section>';
       } else if(route.view==='dashboard') {
         courses=await UI.api('/api/workspace/courses'); if(turn!==generation)return;
         title='Мій план';
@@ -119,6 +122,7 @@
       window.HustleLearningHub?.mount(main,account,currentBundle);
       window.HustleCalendar?.mount(main,account,courses);
       window.HustleFrame?.mount(main,account,courses,currentBundle);
+      window.HustleDeadlineVisuals?.mount(main);
       if(navigate) {main.focus({preventScroll:true});window.scrollTo(0,scrolls.get(location.hash)||0);}
       if(route.view==='connect')await showConnect();
     } catch(err) {if(turn===generation){main.innerHTML=errorMarkup(err.message);main.removeAttribute('aria-busy');main.inert=false;}}
@@ -133,7 +137,7 @@
     const all=body.querySelector('[data-select-visible]');all.disabled=!visible.length;all.checked=!!visible.length && visible.every(el=>el.checked);all.indeterminate=visible.some(el=>el.checked)&&!all.checked;
   }
   async function showConnect() {
-    if(!account?.moodle_paired){location.assign('connect.html');return;}
+    if(!account?.moodle_paired){window.top.location.assign('/hustle/connect.html');return;}
     if(batchJob?.running){drawBatchModal();return;}
     const operation=++connectVersion;
     showDialog('Додати з Moodle','<p role="status">Завантажуємо курси…</p>');
@@ -212,7 +216,7 @@
     if(event.target.closest('[data-connect]'))showConnect();
     if(event.target.closest('[data-retry]'))render();
     const logout=event.target.closest('[data-logout]');
-    if(logout){logout.disabled=true;try{await UI.post('/api/auth/logout',{});location.assign('index.html');}catch(err){UI.toast(err.message);logout.disabled=false;}}
+    if(logout){logout.disabled=true;try{await UI.post('/api/auth/logout',{});window.top.location.assign('/hustle/');}catch(err){UI.toast(err.message);logout.disabled=false;}}
   });
   body.addEventListener('input',event=>{if(event.target.matches('[data-moodle-search]'))selectionRows();});
   body.addEventListener('change',event=>{

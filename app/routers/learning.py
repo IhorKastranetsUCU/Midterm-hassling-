@@ -3,8 +3,9 @@ import asyncio
 from datetime import datetime, timezone
 import json
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from pydantic import BaseModel, SecretStr
+from typing import List, Literal, Optional
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile
+from pydantic import BaseModel, Field, SecretStr
 
 from app.core.security import WorkspaceOwner, get_workspace_owner
 from app.models.mix import RawTopicSnapshot
@@ -12,6 +13,7 @@ from app.services.academic_cache import schedule_background_task
 from app.services.course_structure import build_course_map
 from app.services.learning_provider import LearningProviderError, LearningSettingsStore, learning_provider_scope, validate_gemini_key
 from app.services.mix_generator import split_text_into_semantic_chunks
+from app.services.oral_defense_service import MAX_AUDIO_BYTES, evaluate_oral_answer, generate_oral_question, last_oral_attempt
 from app.services.workspace_store import get_workspace_store
 
 router = APIRouter(prefix="/api/workspace", tags=["Learning"])
@@ -19,6 +21,31 @@ router = APIRouter(prefix="/api/workspace", tags=["Learning"])
 
 class KeyRequest(BaseModel):
     api_key: SecretStr
+
+
+# The paper course is a separate namespace for the prototype's three reading topics.
+OralCourse = int | Literal["paper"]
+
+
+class PaperReading(BaseModel):
+    course_title: str = Field(min_length=1, max_length=160)
+    topic_title: str = Field(min_length=1, max_length=160)
+    lecture_context: str = Field(min_length=25, max_length=18000)
+
+
+def oral_course_id(course: OralCourse) -> int:
+    if course == "paper":
+        return -1
+    if course < 0:
+        raise HTTPException(404, "Курс не знайдено.")
+    return course
+
+
+class OralQuestionRequest(BaseModel):
+    reading: Optional[PaperReading] = None
+    node_id: Optional[str] = None
+    previous_questions: List[str] = Field(default_factory=list)
+    difficulty: str = "standard"
 
 
 def private_response(response):
@@ -185,3 +212,83 @@ async def clear_course_generated(course_id: int, request: Request, owner: Worksp
     store._set_exam_mix_stale(owner.owner_id, course_id, False)
     fresh = store.get_course_bundle(course_id, owner.owner_id)
     return {"success": True, "cleared_topics": cleared_count, "course_map": build_course_map(fresh)}
+
+
+@router.post("/courses/{course_id}/topics/{topic_index}/oral-defense/question")
+async def oral_defense_question(
+    course_id: OralCourse,
+    topic_index: int,
+    req: OralQuestionRequest,
+    request: Request,
+    response: Response,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+):
+    same_origin(request)
+    private_response(response)
+    store = get_workspace_store()
+    provider = LearningSettingsStore(store.db_path).get(owner.owner_id)
+    if not provider:
+        raise LearningProviderError("Підключи Gemini API key, щоб розпочати усний захист.", 424)
+    with learning_provider_scope(provider):
+        reading = None
+        if course_id == "paper":
+            if req.reading is None or topic_index not in (1, 2, 3):
+                raise HTTPException(422, "Обери тему з навчальними матеріалами.")
+            reading = {**req.reading.model_dump(), "source_names": [req.reading.topic_title]}
+        return await generate_oral_question(
+            store=store,
+            owner_id=owner.owner_id,
+            course_id=oral_course_id(course_id),
+            topic_index=topic_index,
+            node_id=req.node_id,
+            previous_questions=req.previous_questions,
+            difficulty=req.difficulty,
+            reading=reading,
+        )
+
+
+@router.post("/courses/{course_id}/topics/{topic_index}/oral-defense/evaluate")
+async def oral_defense_evaluate(
+    course_id: OralCourse,
+    topic_index: int,
+    request: Request,
+    response: Response,
+    question_id: str = Form(...),
+    transcript: Optional[str] = Form(None),
+    audio: Optional[UploadFile] = File(None),
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+):
+    same_origin(request)
+    private_response(response)
+    store = get_workspace_store()
+    provider = LearningSettingsStore(store.db_path).get(owner.owner_id)
+    if not provider:
+        raise LearningProviderError("Підключи Gemini API key, щоб перевірити відповідь.", 424)
+
+    audio_bytes: Optional[bytes] = None
+    audio_mime: Optional[str] = None
+    if audio is not None:
+        audio_bytes = await audio.read(MAX_AUDIO_BYTES + 1)
+        if len(audio_bytes) > MAX_AUDIO_BYTES:
+            raise HTTPException(413, "Аудіозапис завеликий (максимум 15 МБ).")
+        audio_mime = audio.content_type
+
+    with learning_provider_scope(provider):
+        return await evaluate_oral_answer(
+            store=store,
+            owner_id=owner.owner_id,
+            course_id=oral_course_id(course_id),
+            topic_index=topic_index,
+            question_id=question_id,
+            audio_bytes=audio_bytes,
+            audio_mime=audio_mime,
+            transcript=transcript,
+        )
+
+
+@router.get("/courses/{course_id}/topics/{topic_index}/oral-defense/latest")
+async def latest_oral_defense(course_id: OralCourse, topic_index: int, response: Response,
+                              node_id: Optional[str] = None, owner: WorkspaceOwner = Depends(get_workspace_owner)):
+    private_response(response)
+    return {"attempt": last_oral_attempt(get_workspace_store().db_path, owner.owner_id,
+                                         oral_course_id(course_id), topic_index, node_id)}

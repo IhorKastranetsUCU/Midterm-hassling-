@@ -1,0 +1,6198 @@
+5
+Random Vectors: Independence
+and Dependence
+
+Wherever there is wealth there will be dependence and expectation.
+Samuel Johnson [The Rambler, 189]
+
+5.1 Joint Distributions
+
+Commonly, each outcome of an experiment generates two (or more) real numbers of
+interest. We can treat these as individual random variables (X i ; 1 ≤ i ≤ n), but it is often
+important to consider their joint behaviour. For example, if the experiment is your visit to
+your doctor, you may ﬁnd out your height H and weight W . These are separate random variables, but are often informative when considered jointly. Thus, the outcome H = 150 cm
+and W = 150 kg might disturb your physician, whereas the outcome H = 190 cm and
+W = 80 kg probably would not. Likewise, the random vector comprising height, weight,
+age, sex, blood pressure, and heart rate is of more use considered jointly than separately.
+As another example, complicated systems (e.g., space shuttles) have several on-board
+computers that work together to run the system. If one fails or makes an error, the others
+can override it; thus, the system fails only when a majority of the computers fail. If
+X i is the time until the ith processor fails, then the time until the system fails depends
+jointly on the collection of random variables, X 1 , . . . , X n . It is natural to refer to such a
+collection as a random vector, and write X = (X 1 , X 2 , . . . , X n ). Formally, as before, we
+have X = X (ω); ω ∈  and A x = {ω : X (ω) = x} ∈ F, but we do not often refer to the
+underlying sample space . Because X maps  into a countable subset S of R n , we think
+of S as the sample space. (You may well have already been doing this instinctively in
+Chapter 4.)
+For simplicity, we summarize the properties of random vectors in two dimensions; the
+appropriate generalizations in more dimensions are straightforward.
+Deﬁnition
+Let X and Y be two discrete random variables taking values (xi ; i ≥ 1)
+and (y j ; i ≥ 1), respectively. Their joint probability mass function f (x, y) is deﬁned
+by
+f (x, y) = P(X = x, Y = y)
+as x and y range over all possible values xi and y j of X and Y .
+158
+
+
+
+5.1 Joint Distributions
+
+159
+
+The mass function f (x, y) is zero, except at a countable set of points in R2 . In fact,
+(1)
+
+(2)
+
+f (x, y) ≥ 0
+
+for all x and y,
+
+
+and further if i, j f (xi , y j ) = 1, then the joint distribution f (x, y) is not defective. Most
+important is the Key Rule:
+
+P((X, Y ) ∈ C) =
+f (x, y).
+(x,y)∈C
+
+(3)
+
+Example
+Suppose that a coin is tossed twice; let X be the total number of heads shown
+and Y the total number of tails. Then, (X, Y ) takes values in
+S = {0, 1, 2} × {0, 1, 2} = {(i, j) : i ∈ {0, 1, 2}, j ∈ {0, 1, 2}}.
+Clearly, f (x, y) is zero, except at the points (0, 2), (1, 1), and (2, 0). Furthermore,
+f (0, 2) + f (1, 1) + f (2, 0) = (1 − p)2 + 2 p(1 − p) + p 2 = 1,
+where we have denoted the probability of a head by p, as usual.
+
+(4)
+
+s
+
+Any real function g(X, Y ) of two such jointly distributed random variables is itself a
+random variable. If we set Z = g(X, Y ), then Z has a probability mass function given by
+using the Key Rule (2) above:
+
+f (x, y),
+f Z (z) = P(g(X, Y ) = z) =
+where the summation is over all x and y, such that g(x, y) = z.
+In particular, if g(x, y) = x, we have
+f X (x) =
+
+(5)
+
+
+
+f (x, y),
+
+y
+
+and if g(x, y) = y, we have
+(6)
+
+f Y (y) =
+
+
+
+f (x, y).
+
+x
+
+Thus, we have shown the important result that, if we know the joint mass function of
+several random variables, we can ﬁnd all their separate mass functions. When obtained in
+this way, f X (x) and f Y (y) are sometimes called marginal mass functions.
+Here are some examples illustrating joint mass functions.
+(7)
+
+Example
+A row of n numbered machines are producing components that are identical,
+except for the serial number. On any day, the kth component produced by the jth machine
+bears the serial number ( j, k). On the day in question, the r th machine produces cr (1 ≤
+r ≤ n) components, and at the end of the day one component C is picked at random from
+all those produced. Let its serial number be (X, Y ). Find f (x, y), f X (x) and f Y (y).
+
+160
+
+5 Random Vectors: Independence and Dependence
+
+Solution
+
+
+Because C is picked at random from all rn=1 cr components, we have
+−1
+n
+
+f (x, y) =
+cr
+, 1 ≤ x ≤ n; 1 ≤ y ≤ cx ,
+1
+
+=a
+
+(say).
+
+Then, by (5),
+f X (x) =
+
+1
+0
+
+Now deﬁne the function H (i, j) =
+
+
+
+f (x, y) = acx .
+
+y
+
+if ci ≥ c j ,
+otherwise.
+
+Then, by (6),
+f Y (y) =
+
+
+x
+
+(8)
+
+f (x, y) = a
+
+n
+
+
+H (x, y).
+
+x=1
+
+s
+
+Example: Cutting for the Deal
+It is customary, before engaging in a card game, to
+cut for the deal; each player removes a portion of the deck in turn, and then each reveals
+the bottom card of his segment. The highest card wins. For these to be random variables,
+we need to assign numerical values to the court cards, so we set J = 11, Q = 12, K = 13,
+A = 14, when aces are high.
+(a) Art and Bart cut for deal, aces high. Let X be Art’s card, and Y be Bart’s card. Find
+the joint mass function of X and Y . Does it make any difference how many cards Art
+removes from the deck?
+(b) Let V be the loser’s card, and W the dealer’s (winning) card. Find the joint mass
+function of V and W , and the separate mass functions of V and W .
+(c) Find the mass function of the dealer’s winning margin (namely, W − V ).
+(d) What is the mass function of the dealer’s card when three players cut for deal?
+Note that in the event of a tie, the deck is shufﬂed and the players cut again to choose the
+dealer.
+Solution
+(a) Each random variable takes values in {2, 3 . . . , 14}. Cutting the deck
+twice amounts to selecting two cards at random, and because ties are not allowed, X = Y .
+By symmetry, any two unequal values are equally likely to occur, so
+
+
+ 1 . 1 x = y 
+2 ≤ x, y ≤ 14.
+f X,Y (x, y) = P(X = x, Y = y) = 12 13
+
+
+0
+x=y
+It makes no difference how many cards Art removes with his cut.
+(b) Of course, W > V , so
+f V,W (v, w) = P(V = v, W = w) = P(X = v, Y = w) + P(X = w, Y = v)
+
+ 2 · 1 = 1 ; 2 ≤ v < w ≤ 14
+= 12 13
+78
+
+0·
+; otherwise.
+
+5.1 Joint Distributions
+
+161
+
+This is otherwise obvious, because the experiment amounts to choosing an unordered
+pair of unequal cards at random, with equal probability of choosing any pair. Hence, for
+)−1 , as above. Now, by (5),
+v < w, f (v, w) = ( 13
+2
+14
+
+14 − v
+1
+=
+;
+f V (v) =
+78
+78
+w=v+1
+
+2 ≤ v ≤ 13.
+
+Then by (6),
+f W (w) =
+
+w−1
+
+2
+
+w−2
+1
+=
+;
+78
+78
+
+3 ≤ w ≤ 14.
+
+(c) By (4),
+f Z (z) = P(W − V = z) =
+
+ 1
+78
+
+,
+
+where the summation is over all v and w such that w − v = z. Because z ≤ v < w ≤ 14,
+there are exactly 13 − z terms in this sum, so
+P(W − V = z) =
+
+13 − z
+;
+78
+
+1 ≤ z ≤ 12.
+
+(d) Arguing as we did for (b), where now u < v < w, we have
+ −1
+13
+P(U = u, V = v, W = w) =
+.
+3
+Hence,
+ −1
+13
+f W (w) =
+; 4 ≤ w ≤ 14,
+3
+2≤u<v<w
+ −1
+ −1
+
+1
+13
+13
+=
+(v − 2)
+= (w − 3)(w − 2)
+.
+3
+3
+2
+3≤v<w
+
+
+(9)
+
+Example
+
+For what value of c is the function
+
+
+x +y−1 x y
+f (x, y) = c
+λ µ , x ≥ 0; y ≥ 1; 1 > 1 − λ > µ > 0
+x
+
+a joint mass function? For this value of c, ﬁnd the mass functions of X and Y .
+Solution
+
+By (2),
+c
+
+−1
+
+=
+
+
+∞ 
+∞ 
+
+x +y−1
+y=1 x=0
+
+=
+
+µ
+.
+1−λ−µ
+
+x
+
+λx µ y =
+
+∞
+
+
+µy
+(1 − λ) y
+y=1
+
+by (3.6.12),
+
+s
+
+162
+
+5 Random Vectors: Independence and Dependence
+
+Then, by (5),
+f X (x) = c
+
+∞
+
+
+
+µλx
+
+y=1
+
+
+x + 1 + y − 2 y−1 (1 − λ − µ)λx
+=
+,
+µ
+y−1
+(1 − µ)x+1
+
+x ≥ 0.
+
+Likewise,
+
+∞ 
+
+(1 − λ − µ)µ y−1
+x +y−1 x y
+λ µ =
+f Y (y) = c
+,
+x
+(1 − λ) y
+x=0
+
+y ≥ 1.
+
+µ
+λ
+Thus, X + 1 and Y are both geometric, with parameters 1−µ
+and 1−λ
+, respectively, X
+taking values in the nonnegative integers and Y in the positive integers.
+
+s
+
+(10) Example
+Leif and Rolf are bored with fair games. They want to play a game in which
+the probability of winning (for Leif) is λ, where λ is an arbitrary number in [0, 1]. Also,
+they want the game to be of ﬁnite duration with probability 1. Unfortunately, the only
+gaming aid they have is a fair coin. Can you supply them with a game?
+Solution
+
+Let λ have binary expansion
+λ = 0.b1 b2 b3 . . . =
+
+∞
+
+
+bn 2−n .
+
+n=1
+
+Now toss the coin repeatedly and let In be the indicator of the event that the nth toss is
+a head. Let T be the ﬁrst toss such that In = bn , T = min{n: In = bn }. If IT < bT , then
+Leif wins; otherwise, Rolf wins. Now, P(T = n) = ( 12 )n so that
+∞  n
+
+1
+=1
+P(T < ∞) =
+2
+1
+and indeed E(T ) = 2. Also, Leif can only win at the nth toss if bn = 1 so
+
+
+P(Leif wins) =
+bn P(T = n) =
+bn 2−n = λ,
+n
+
+n
+
+as required.
+
+s
+
+5.2 Independence
+
+Given the joint mass function of X and Y , equations (5.1.5) and (5.1.6) yield the marginal
+mass functions of X and Y . However, to be given the marginal distributions does not in
+general uniquely determine a joint distribution.
+(1)
+
+Example
+
+Let X and Y have joint mass function given by
+1
+1
+5
+1
+, f (1, 1) =
+,
+f (0, 0) = , f (0, 1) = , f (1, 0) =
+6
+3
+12
+12
+and let U and V have joint mass function given by
+f (0, 0) =
+
+1
+1
+1
+, f (0, 1) = , f (1, 0) = 0, f (1, 1) = .
+4
+4
+2
+
+5.2 Independence
+
+163
+
+Then, summing to get the marginal mass functions shows that:
+f X (0) = fU (0) =
+
+1
+1
+, f X (1) = fU (1) = ;
+2
+2
+
+f Y (0) = f V (0) =
+
+1
+3
+, f Y (1) = f V (1) = .
+4
+4
+
+and
+
+These marginal mass functions are the same, but the joint mass functions are different.
+
+s
+
+There is one exceptionally important special case when marginal mass functions do
+determine the joint mass function uniquely.
+(2)
+
+Deﬁnition
+
+Random variables X and Y are independent if, for all x and y,
+f (x, y) = f X (x) f Y (y).
+
+This is equivalent to P(A ∩ B) = P(A)P(B), where A = {ω: X (ω) = x} and B =
+{ω: X (ω) = y}, which is the deﬁnition of independence for the events A and B. More
+generally, a collection (X i ; 1 ≤ i ≤ n) with mass function f is independent if for all
+x = (x1 , . . . , xn )
+f (x) =
+
+(3)
+
+n
+
+
+f X i (xi ).
+
+
+
+i=1
+
+Note that if X or Y (or both) are improper random variables [so that f (x, y) is defective],
+then to say they are independent is interpreted as meaning
+P(X = x, Y = y) = P(X = x)P(Y = y)
+
+(4)
+
+for all ﬁnite x and y. This may seem odd, but such random variables occur quite naturally
+in simple random walks and other topics.
+Example 5.1.7 Revisited
+Recall that n machines produce components. Suppose that
+all the machines produce the same number c of components, and as before we pick one at
+random and let its serial number be (X, Y ), where X is the machine number and Y is the
+component index. Then,
+f (x, y) = (nc)−1 ;
+
+1 ≤ x ≤ n; 1 ≤ y ≤ c
+
+1
+;
+n
+
+and
+
+and
+f X (x) =
+
+1≤x ≤n
+
+f Y (y) =
+
+1
+;
+c
+
+1 ≤ y ≤ c.
+
+Obviously, f (x, y) = f X (x) f Y (y) and so X and Y are independent in this case.
+
+s
+
+164
+
+(5)
+
+5 Random Vectors: Independence and Dependence
+
+Example 1 Revisited
+Observe that the mass functions of X and Y , and of U and
+V , do not satisfy Deﬁnition 2. Let W and Z be independent random variables such that
+f W (0) = 12 , f W (1) = 12 and f Z (0) = 14 , f Z (1) = 34 .
+Then, by Deﬁnition 2, their joint mass function is
+f (0, 0) =
+
+(6)
+
+3
+1
+3
+1
+, f (0, 1) = , f (1, 0) = , f (1, 1) = .
+8
+8
+8
+8
+
+s
+
+Example 5.1.9 Revisited
+Observe that X and Y are not independent because
+x y
+)λ
+µ
+cannot
+be
+expressed
+in the form f X (x) f Y (y). If X + 1 and Y were inde( x+y−1
+x
+µ
+λ
+pendent geometric random variables with parameters 1−µ
+and 1−λ
+, then the joint mass
+function would be
+
+
+x 
+ y−1
+
+µ
+λ
+µ
+λ
+1−
+, x ≥ 0; y ≥ 1.
+f (x, y) = 1 −
+1−µ
+1−λ
+1−µ
+1−λ
+
+s
+
+The apparently simple Deﬁnition 2 implies a great deal more about independent random
+variables, as the following result shows.
+(7)
+
+Theorem
+Let X and Y be independent random variables. Then:
+(a) For arbitrary countable sets A and B,
+P(X ∈ A, Y ∈ B) = P(X ∈ A)P(Y ∈ B),
+
+(8)
+
+and
+(b) For any real functions g(·) and h(·), g(X ) and h(Y ) are independent.
+
+Proof (a) The left-hand side of (8) is
+
+
+P(X = x, Y = y) =
+P(X = x)P(Y = y)
+x∈A y∈B
+
+x∈A y∈B
+
+=
+
+
+x∈A
+
+P(X = x)
+
+
+
+by independence
+
+P(Y = y) = P(X ∈ A)P(Y ∈ B),
+
+y∈B
+
+as required. For (b), let A = {x: g(X ) = ξ } and B = {y: h(Y ) = η}. Then, by part (a), for
+any ξ and η,
+P(g(X ) = ξ, h(Y ) = η) = P(X ∈ A, Y ∈ B) = P(X ∈ A)P(Y ∈ B)
+= P(g(X ) = ξ )P(h(Y ) = η),
+as required.
+
+(9)
+
+
+
+Example
+Independent random variables X and Y take the values −1 or +1 only, and
+P(X = 1) = a, P(Y = 1) = α. A third random variable Z is deﬁned by Z = cos((X +
+Y ) π2 ). If 0 < a, α < 1, show that there are unique values of a and α such that X and Z are
+independent, and Y and Z are independent. In this case, are X, Y , and Z independent?
+
+5.3 Expectation
+
+Solution
+
+165
+
+First, for Z ,
+P(Z = 1) = P(X + Y = 0) = a(1 − α) + α(1 − a)
+
+and, likewise, P(Z = −1) = aα + (1 − a)(1 − α). Now,
+P(Z = 1, X = 1) = P(X = 1, Y = −1) = a(1 − α).
+Hence, if
+a(1 − α) = a(a(1 − α) + α(1 − a))
+
+(10)
+
+we have P(Z = 1, X = 1) = P(Z = 1)P(X = 1). Simplifying (10) yields α = 12 . Now,
+plodding through three similar constraints shows that X and Z are independent iff α =
+a = 12 . By symmetry, the same condition holds iff Y and Z are independent.
+However, X, Y , and Z are not independent because
+
+s
+
+P(X = 1, Y = 1, Z = −1) = 0 = P(X = 1)P(Y = 1)P(Z = −1).
+Independent random variables often have interesting and useful properties.
+
+(11) Example
+Let X and Y be independent geometric random variables having respective
+mass functions f X (x) = (1 − λ)λx and f Y (y) = (1 − µ)µ y for x ≥ 0 and y ≥ 0. What is
+the mass function of Z = min{X, Y }?
+Solution
+
+By independence,
+
+P(Z > n) = P(X > n ∩ Y > n) = P(X > n)P(Y > n) = λn+1 µn+1 = (λµ)n+1 .
+Hence,
+P(Z = n) = P(Z > n − 1) − P(Z > n) = (1 − λµ)(λµ)n
+
+s
+
+and Z is also geometric with parameter λµ.
+5.3 Expectation
+
+Let the random variable Z = g(X, Y ) be a function of X and Y . Using (5.1.4) and the
+deﬁnition of expectation (4.3.1), we have
+
+
+z f Z (z) =
+zP(g(X, Y ) = z).
+E(Z ) =
+z
+
+z
+
+This expression for E(Z ) is not always simple or convenient for use in calculation. The
+following generalization of Theorem 4.3.4 is therefore very useful.
+(1)
+
+Theorem
+Let X and Y have joint mass function f (x, y). Whenever the sum on
+the right-hand side is absolutely convergent, we have
+
+E(g(X, Y )) =
+g(x, y) f (x, y).
+x,y
+
+Proof The proof is essentially the same as that of Theorem 4.3.4.
+
+
+
+166
+
+(2)
+
+Corollary
+
+5 Random Vectors: Independence and Dependence
+
+For any real numbers a and b,
+E(a X + bY ) = aE(X ) + bE(Y )
+
+when both sides exist and are ﬁnite.
+
+Proof Because the sum is absolutely convergent, by (1),
+
+
+
+(ax + by) f (x, y) =
+ax f (x, y) +
+by f (x, y)
+E(a X + bY ) =
+x,y
+
+=
+
+
+
+ax f X (x) +
+
+
+
+x
+
+x,y
+
+x,y
+
+by f Y (y)
+
+by (5.1.5) and (5.1.6)
+
+y
+
+= aE(X ) + bE(Y ).
+(3)
+
+
+
+Example: Coupons
+Recall Example 4.3.15 in which you were collecting coupons;
+we can now ﬁnd E(R) more quickly. Let T1 be the number of packets required to obtain the
+ﬁrst coupon, T2 the further number of packets required to obtain a second type of coupon,
+T3 the further number required for the third type and so on. Then,
+R=
+
+n
+
+
+Tk .
+
+k=1
+
+Obviously, T1 = 1. Also,
+
+
+ r −1 
+1
+1
+1−
+P(T2 = r ) =
+n
+n
+
+n
+so that T2 is geometric with mean n−1
+. Likewise, Tk is geometric with mean
+
+E(Tk ) =
+
+n
+;
+n−k+1
+
+1 ≤ k ≤ n.
+
+Hence, by (2),
+E(R) =
+
+n
+
+
+E(Tk ) =
+
+k=1
+
+n
+
+
+n
+,
+n−k+1
+k=1
+
+the same as the answer obtained with somewhat more effort in Example 4.3.15.
+
+s
+
+Corollary (2) is often useful when considering sums of indicators. For example, let
+{A1 , A2 , . . . , An } be any collection of events, and let
+
+1 if Ai occurs
+Ii =
+0 if Ai does not occur
+be the
+indicator of Ai . Now, let X be the number of the Ai that occur. Then, by construction
+n
+Ii , and by (2)
+X = i=1
+E(X ) =
+
+n
+
+
+E(Ii ) =
+
+i=1
+
+We use this result in the following example.
+
+n
+
+i=1
+
+P(Ai ).
+
+5.3 Expectation
+
+167
+
+Example: Binomial Distribution
+Let X be binomial with parameters n and p. Show
+that the factorial moments of X are given by
+µ(k) = p k n(n − 1) . . . (n − k + 1).
+Solution
+Suppose a coin that shows heads with probability p is tossed n times. Then,
+the number of heads has the mass function of X . Let Y be the number of distinct sets
+of k such that all k tosses show heads. Then, Y = ( Xk ). However, each of the ( nk ) distinct
+sets of k tosses shows k heads with probability p k . Hence, E(Y ) = ( nk ) p k . Therefore, we
+have
+   
+X
+n k
+E
+=
+p ,
+k
+k
+
+s
+
+which is the desired result.
+
+We single certain expectations out for special notice. Just as random variables have moments, jointly distributed random variables have joint moments.
+(4)
+
+Deﬁnition
+
+The joint moments of X and Y are
+µi j = E(X i Y j );
+
+(5)
+
+Deﬁnition
+
+
+
+i, j ≥ 1.
+
+The covariance of X and Y is
+
+cov (X, Y ) = E[(X − E(X ))(Y − E(Y ))] = E(X Y ) − E(X )E(Y ).
+
+
+
+This is the most important of the central joint moments, which are
+σi j = E[(X − E(X ))i (Y − E(Y )) j ];
+
+i, j ≥ 1.
+
+Here are two interesting properties of cov (X, Y ).
+(6)
+
+Theorem
+we have:
+
+For jointly distributed random variables X and Y, and constants a, b, c, d,
+
+(i) cov (a X + b, cY + d) = ac cov (X, Y )
+(ii) var (X + Y ) = var (X ) + var (Y ) + 2 cov (X, Y )
+Proof
+(i) cov (a X + b, cY + d) = E[(a X + b − aE(X ) − b)(cY + d − cE(Y ) − d)]
+= E[ac(X − E(X ))(Y − E(Y ))] = ac cov(X, Y )
+(ii) var (X + Y ) = E(X + Y − E(X ) − E(Y ))2
+= E[(X − E(X ))2 + (Y − E(Y ))2 + 2(X − E(X ))(Y − E(Y ))],
+as required.
+Let us ﬁnd cov (X, Y ) for the simple examples we have met above.
+
+
+
+168
+
+(1)
+
+5 Random Vectors: Independence and Dependence
+
+Examples 5.2.1 and 5.2.5 Revisited
+Find the covariance for each of the three joint
+mass functions given in these two examples.
+Solution
+
+In every case,
+E(X Y ) = 12 f (1, 1)
+
+and E(X ) = f (1, 0) + f (1, 1), and E(Y ) = f (0, 1) + f (1, 1).
+Hence,
+cov (X, Y ) = f (1, 1) − ( f (1, 0) + f (1, 1))( f (0, 1) + f (1, 1)).
+Evaluating this in the three given instances shows that:
+
+
+
+5
+1
+5
+1
+5
+1
+cov (X, Y ) =
+−
++
++
+=
+(i)
+12  3 12
+12 12
+24
+
+1 1
+1
+1
+1
++
+. =
+cov (U, V ) = −
+(ii)
+2  4 2  2
+8
+3 3
+1 3
+3
++
++
+= 0.
+cov (W, Z ) = −
+(iii)
+8
+8 8
+8 8
+(7)
+
+Example 5.1.8 Revisited
+(X, Y ) and cov (V, W ).
+
+s
+
+Recall that Art and Bart are cutting for the deal. Find cov
+
+Solution
+E(X ) = E(Y ) =
+
+14
+
+x
+2
+
+13
+
+= 8.
+
+Also, using (1),
+E(X Y ) =
+=
+
+1 1 
+x y
+(105 − y − 1)y
+.
+=
+.
+12 13
+12 13 y
+2≤x= y≤14
+
+
+7
+1 1
+. (105 × 104 − 1118) = 64 − .
+12 13
+6
+
+Hence, cov (X, Y ) = − 76 .
+Likewise, using the expressions in Example 5.1.8 for the marginal mass functions of V
+and W , we ﬁnd
+E(V ) =
+
+13
+
+v(14 − v)
+v=2
+
+=+
+
+78
+
+13 
+
+
+1
+78 v=2
+
+=
+
+
+1 13
+(13v − v(v − 1))
+78 v=2
+
+13
+[v(v + 1) − v(v − 1)]
+2
+
+
+
+1
+− [(v + 1)v(v − 1) − v(v − 1)(v − 2)]
+3
+17
+=
+3
+after successive cancellation of the terms in the sum.
+
+5.3 Expectation
+
+169
+
+Similarly, we ﬁnd E(W ) = 31
+.
+3
+Now for all ω, X (ω)Y (ω) = V (ω)W (ω), so E(V W ) = E(X Y ), and ﬁnally,
+cov (V, W ) = 62 +
+
+77
+5 17 31
+−
+.
+=+ .
+6
+3 3
+18
+
+s
+
+Just as joint mass functions have a simple form when random variables are independent,
+so too do joint moments simplify.
+(8)
+
+Theorem
+If X and Y are independent random variables with ﬁnite expectations, then
+E(X Y ) exists, and E(X Y ) = E(X )E(Y ). It follows that cov (X, Y ) = 0 in this case.
+Proof By independence and Theorem 5.3.1,
+E(|X Y |) =
+
+
+
+|x y| f X (x) f Y (y) =
+
+x,y
+
+
+x
+
+|x| f X (x)
+
+
+
+|y| f Y (y) = E(|X |)E(|Y |)
+
+y
+
+so E(|X Y |) < ∞. Thus, E(X Y ) exists, and the same argument shows that E(X Y ) =
+E(X )E(Y ).
+
+
+(9)
+
+Deﬁnition
+If cov (X, Y ) = 0, then X and Y are said to be uncorrelated. If
+
+E(X Y ) = 0, then X and Y are said to be orthogonal.
+It follows that independent random variables are uncorrelated, but the converse is not true,
+as the following example shows.
+
+(10) Example
+A random variable X is said to be symmetric if P(X = −x) = P(X = x)
+for all x. Let X be symmetric with E(X 3 ) < ∞, and let Y = X 2 . Then, because X has an
+expectation it is zero, by symmetry, and
+E(X Y ) = E(Y 3 ) =
+
+
+
+x 3 ( f (x) − f (−x)) = 0 = E(X )E(Y ).
+
+x>0
+
+Thus, cov(X, Y ) = 0, even though X and Y are not independent. In this case, X and Y are
+uncorrelated and orthogonal, but dependent.
+
+s
+
+Thus, up to a point, and in a way that we carefully leave unspeciﬁed, cov (X, Y ) can be an
+indication of the dependence of X and Y . It has the drawback that it depends on the scale
+of X and Y . Thus, if a is a constant, a X and Y have the same “dependence” as X and Y
+
+170
+
+5 Random Vectors: Independence and Dependence
+
+(whatever we mean by that), but cov (a X, Y ) = a cov (X, Y ). For this reason, statisticians
+more commonly use the following.
+(11)
+
+Deﬁnition
+
+The correlation coefﬁcient of random variables X and Y is
+ρ(X, Y ) =
+
+cov (X, Y )
+1
+
+(var (X ) var (Y )) 2
+
+,
+
+
+
+whenever the right-hand side exists.
+
+Example 5.1.3 Revisited
+Here, X and Y are the number of heads and tails, respectively, when a coin is tossed twice. What are cov (X, Y ) and ρ(X, Y )?
+Solution
+
+Trivially,
+E(X Y ) = 12 P(X = 1, Y = 1) = 2 p(1 − p).
+
+Likewise, E(X ) = 2 p, E(Y ) = 2(1 − p), var (X ) = 2 p(1 − p) and var (Y ) = 2 p(1 − p).
+Hence,
+cov (X, Y ) = 2 p(1 − p) − 4 p(1 − p) = −2 p(1 − p)
+and
+ρ(X, Y ) =
+
+−2 p(1 − p)
+1
+
+(4 p 2 (1 − p)2 ) 2
+
+= −1.
+
+s
+
+The correlation coefﬁcient ρ has the following interesting properties; we assume that
+X and Y are not constant, and have ﬁnite variance.
+(12) Theorem
+
+If X and Y have correlation ρ(X, Y ), then:
+
+(i) −1 ≤ ρ(X, Y ) ≤ 1.
+(ii) |ρ| = 1 if and only if P(X = aY ) = 1 for some constant a.
+(iii) ρ(a X + b, cY + d) = sgn (ac)ρ(X, Y ), where sgn(x) denotes the sign of x.
+(iv) ρ = 0 if X and Y are independent.
+The proof of this theorem relies on the following important and useful result.
+(13) Lemma: Cauchy–Schwarz Inequality
+(14)
+
+If E(X 2 )E(Y 2 ) < ∞, then
+
+(E(X Y ))2 ≤ E(X 2 )E(Y 2 ).
+Proof Suppose 0 < E(X 2 )E(Y 2 ). By Theorem 4.3.6 (iii),
+
+(15)
+
+0 ≤ E[(X E(Y 2 ) − Y E(X Y ))2 ]
+= E(X 2 )(E(Y 2 ))2 − 2E(X Y )2 E(Y 2 ) + E(Y 2 )[E(X Y )]2
+= E(Y 2 )[E(X 2 )E(Y 2 ) − (E(X Y ))2 ].
+
+5.3 Expectation
+
+171
+
+Because E(Y 2 ) > 0, (14) follows. Of course, (14) is trivially true if E(Y 2 ) = 0,
+
+for then Y = X Y = 0 with probability one.
+Proof of (12) (i) Applying Lemma 13 to the random variables X − E(X ) and Y − E(Y )
+shows that (ρ(X, Y ))2 ≤ 1, and so −1 ≤ ρ ≤ 1, as required.
+(ii) If |ρ| = 1, then from (15),
+E[(X E(Y 2 ) − Y E(X Y ))2 ] = 0,
+and so from Example 4.6.10, with probability one X = (E(X Y )/E(Y 2 ))Y .
+(iii) Expanding, and using Theorem 6(i),
+ρ(a X + b, cY + d) =
+
+ac cov (X, Y )
+1
+
+(a 2 var (X )c2 var (Y )) 2
+
+ac
+=%
+ρ(X, Y ),
+(ac)2
+
+as required
+(iv) This follows immediately from Theorem 8.
+
+
+
+(16) Example (5.1.9) Revisited
+
+Recall that X and Y have joint mass function
+
+
+1−λ−µ x +y−1 x y
+f (x, y) =
+λ µ .
+x
+µ
+
+
+Show that ρ(X, Y ) =
+Solution
+
+λµ
+(1 − λ)(1 − µ)
+
+ 12
+.
+
+First, we calculate E(X Y ) as
+
+
+∞
+1−λ−µ
+1−λ−µ
+x +y−1 x y
+xy
+y2µy λ
+λ µ =
+x
+µ
+µ
+x,y
+y=1
+
+y
+
+∞ 
+∞
+
+
+µ
+x + y − 1 x−1 (1 − λ − µ)λ
+=
+y2
+×
+λ
+x −1
+(1 − λ)µ y=1
+1−λ
+x=1
+=
+
+λ(1 − λ + µ)
+.
+(1 − λ − µ)2
+
+Now we have already discovered in Example 5.1.9 that X and Y have geometric mass
+functions, so by Example 4.3.13
+1−λ
+1−µ
+− 1, E(Y ) =
+1−λ−µ
+1−λ−µ
+λ(1 − µ)
+µ(1 − λ)
+, var (Y ) =
+var (X ) =
+(1 − λ − µ)2
+(1 − λ − µ)2
+E(X ) =
+
+and plugging all this into (11) yields
+ρ=
+as required.
+
+λ(1 − λ + µ) − λ(1 − λ)
+1
+
+(µ(1 − λ)λ(1 − µ)) 2
+
+,
+
+s
+
+172
+
+5 Random Vectors: Independence and Dependence
+
+Finally, we remark that cov (X, Y ) and ρ(X, Y ) are not the only functions used to measure
+dependence between X and Y . Another such function is
+
+
+
+
+
+
+f (X, Y )
+f (x, y)
+(17)
+= E log
+.
+f (x, y) log
+I (X, Y ) =
+f X (x) f Y (y)
+f X (X ) f Y (Y )
+x
+y
+See Example 5.16 for more on this.
+5.4 Sums and Products of Random Variables: Inequalities
+
+These arise in many ways. For example, it is often useful to write a random variable as a
+sum of simpler random variables.
+(1)
+
+Example: Binomial Random Variable
+The random variable X with mass function
+ 
+n k
+f X (k) =
+p (1 − p)n−k
+k
+has arisen in many ways; classically, it is the number of heads in n tosses of a biased coin.
+We now see that we can think about X in a different way. Let Ik be the indicator of the
+event that the kth toss of the coin shows a head. Then,
+X = I1 + I2 + · · · + In =
+
+n
+
+
+Ik .
+
+k=1
+
+We have written X as a sum of Bernoulli trials or indicators. Hence,
+
+n
+n
+
+
+Ik =
+E(Ik ) = np.
+E(X ) = E
+k=1
+
+k=1
+
+Likewise,
+E(X ) = E
+2
+
+n
+
+k=1
+
+2
+Ik
+
+=
+
+n
+
+  
+E Ik2 +
+E(I j Ik ) = np + n(n − 1) p 2 .
+j=k
+
+k=1
+
+Hence, var (X ) = np(1 − p). You should compare this with your earlier methods using
+n
+n
+ n 
+
+n!
+2
+E(X ) =
+p k (1 − p)n−k
+k2
+(k(k − 1) + k)
+p k (1 − p)n−k =
+k
+k!(n
+−
+k)!
+k=1
+k=1
+and so on.
+(2)
+
+s
+
+Theorem
+Any discrete random variable X can be written as a linear combination of
+indicator random variables; thus,
+
+ai I (Ai )
+X=
+i
+
+for some collection of events (Ai ; i ≥ 1) and real numbers (ai ; i ≥ 1).
+
+5.4 Sums and Products of Random Variables: Inequalities
+
+173
+
+Proof Just let (ai ; i ≥ 1) include the set of possible values of X , and set Ai = {ω:X (ω) =
+
+ai }.
+(3)
+
+Example: Matching
+Suppose that n distinct numbered keys ordinarily hang on n
+hooks bearing corresponding distinct numbers. On one occasion an inebriated turnkey
+hangs the keys at random on the hooks (one to each hook). Let X be the number of keys,
+which are then on the correct hooks. Find E(X ) and var (X ).
+Solution
+Let I j be the indicator of the event that the jth key does hang on the jth
+hook. Then,
+X=
+
+n
+
+
+Ij.
+
+j=1
+
+Now by symmetry P(I j = 1) = 1/n and for j = k,
+P(I j Ik = 1) =
+
+(4)
+Hence,
+E(X ) = E
+
+n
+
+
+
+Ij
+
+=
+
+j=1
+
+n
+
+
+1
+.
+n(n − 1)
+
+E(I j ) =
+
+j=1
+
+n
+
+
+Also,
+E(X 2 ) = E
+
+n
+
+
+I j2 +
+
+j=1
+
+P(I j = 1) = 1.
+
+j=1
+
+
+
+
+I j Ik
+
+= 1 + 1,
+
+j=k
+
+s
+
+using (4), and the fact that I j2 = I j . Hence, var (X ) = 1.
+Indicators can also be useful when multiplied together; here is an illustration.
+(5)
+
+Example
+Let us prove (1.4.8). Recall that we have events A1 , . . . , An , and we seek
+the probability that at least one of them occurs, namely,
+
+n
+
+A j = tn (say).
+P
+j=1
+
+(6)
+
+For economy of notation, we set
+
+sr =
+
+
+
+P Ai 1 ∩ . . . ∩ Air ;
+
+1 ≤ r ≤ n.
+
+i 1 <i 2 <···<ir
+
+We let I j be the indicator of the event that A j occurs, and set
+
+Ii 1 Ii 2 . . . Ii r .
+Sr =
+i 1 <i 2 <···<ir
+
+174
+
+5 Random Vectors: Independence and Dependence
+
+Next, observe that
+1−
+
+(7)
+
+n
+
+
+
+(1 − I j ) =
+
+j=1
+
+1 if at least one A j occurs
+0 otherwise
+
+Hence, this is the indicator of the event whose probability we seek, and
+
+
+n
+n
+
+
+A j = E 1 − (1 − I j )
+P
+j=1
+
+j=1
+
+= E(S1 − S2 + · · · + (−)n+1 Sn )
+= s1 − s2 + · · · + (−)n+1 sn
+
+on multiplying out,
+by (6), as required.
+
+s
+
+The same expansion (7) can be used to prove the following interesting inequalities.
+TheoremTheorem: Inclusion–Exclusion Inequalities
+With the notation of Example 5, for 1 ≤ r ≤ n,
+
+
+n
+
+r
+r
+(−) P
+A j − s1 + s2 − · · · (−) sr ≥ 0.
+j=1
+
+(8)
+
+Proof First, we prove a simple identity. Obviously, (1 + x)k (1 + x1 )−1 = x(1 + x)k−1 .
+Hence, equating the coefﬁcient of x r +1 on each side gives
+  
+
+ 
+
+
+k
+k
+k−1
+k
+=
+−
+≥ 0.
++ · · · + (−)k−r +1
+k
+r +1
+r
+r +2
+Furthermore, we have
+1−
+
+n
+
+(1 − I j ) − S1 + S2 − · · · + (−)r Sr
+1
+
+= (−)r (Sr +1 − Sr +2 + · · · + (−)n−r +1 Sn ).
+
+(9)
+
+Now suppose exactly k of A1 , . . . , An occur. If k ≤ r, the right-hand side of (9) is zero. If
+k > r , the contribution in the bracket on the right-hand side is
+  
+
+ 
+
+
+k
+k−1
+k
+k−r +1 k
+=
+−
+by (8),
++ · · · + (−)
+k
+r +1
+r
+r +2
+> 0.
+Hence, no matter how many A j s occur
+(−)r E 1 −
+
+n
+
+
+
+
+(1 − I j ) − S1 + S2 + · · · + (−)r Sr
+
+1
+
+= (−)2r E(Sr +1 − · · · + (−)t−r +1 Sn ) ≥ 0,
+as required.
+
+
+
+5.4 Sums and Products of Random Variables: Inequalities
+
+175
+
+It can similarly be shown (or deduced from the above) that if
+
+
+
+P Ai 1 ∪ · · · ∪ Air ,
+tr =
+then tn =
+
+i 1 <i 2 <···<ir
+
+n
+
+r −1
+
+r =1 (−)
+
+sr , and
+r
+
+(−)
+
+P
+
+n
+
+
+
+Ai
+
+
+− t1 + t2 − · · · + (−) tr
+r
+
+≥ 0.
+
+1
+
+Often, it is natural and important to consider the sum Z of two variables X and Y . This
+is itself a random variable, and so we may require the distribution of Z = X + Y . This is
+given by Example 5.1.3, so we have proved that
+
+(10)
+f X,Y (x, z − x).
+f Z (z) =
+x
+
+One special case of this result must be singled out.
+(11)
+(12)
+
+Theorem
+If X and Y are independent discrete random variables, then Z = X + Y
+has probability mass function
+
+f Z (z) =
+f X (x) f Y (z − x).
+x
+
+Proof Substitute Deﬁnition 5.2.2 into (10). A summation of this form is called a
+convolution.
+
+(13) Example: Sum of Geometric Random Variables
+(a) Let X 1 and X 2 be independent
+random variables, each having a geometric distribution
+P(X i = k) = (1 − p)k p;
+
+(14)
+
+k ≥ 0.
+
+Show that the mass function of X 1 + X 2 is f (z) = (z + 1)(1 − p)z p 2 ; z ≥ 0.
+(b) If (X i ; i > 1) are independent random
+variables, each having the geometric distribution (14), ﬁnd the mass function of Z = n1 X i .
+Solution
+
+(a) Using (12),
+
+f (z) =
+
+z
+z
+
+
+(1 − p)k p(1 − p)z−k p =
+p 2 (1 − p)z = (z + 1) p 2 (1 − p)z .
+k=0
+
+k=0
+
+Alternatively, suppose we have a coin that, when tossed, shows a head with probability
+p. Toss this coin repeatedly until a head ﬁrst appears, and let T1 be the number of tails
+shown up to that point. Continue tossing the coin until the second head appears and let T2
+be the further number of tails shown up to that point. Then, T1 and T2 are independent and
+have the geometric distribution (14), and T1 + T2 is the number of tails shown before the
+second head appears. But we know from Example 4.2.8 that
+
+
+z+1 2
+P(T1 + T2 = z) =
+p (1 − p)z .
+1
+Thus, X 1 + X 2 also has this mass function.
+
+176
+
+5 Random Vectors: Independence and Dependence
+
+
+(b) Extending the second argument above, we see that n1 X i has the same distribution
+as the number of tails shown upto the point where n heads have ﬁrst appeared in successive
+tosses of our biased coin. But the probability that z tails have appeared is just
+
+
+z+n−1 n
+(15)
+p (1 − p)z
+n−1
+and so this is the mass function of Z . It is negative binomial.
+Now that we
+ are in possession of the answer, we can use (12) to verify it byinduction.
+X i is
+Assume that n1 X i has mass function (15). Then, by (12), the mass function of n+1
+1
+
+
+
+n+1
+z
+
+
+k z+n−k −1
+Xi = z =
+p(1 − p)
+P
+(1 − p)z−k p n
+n−1
+i=1
+k=0
+
+
+
+
+z
+
+n+1
+z z+n−k −1
+n+1
+z z+n
+=
+p (1 − p)
+= p (1 − p)
+,
+n−1
+k
+k=0
+
+as required, where we have used the identity
+z
+ n − 1 + r  n + z 
+=
+(16)
+.
+n−1
+n
+r =0
+
+Because (15) holds for n = 1, the result follows by induction. Note that (16) can be
+derived immediately by equating the coefﬁcient of x z on both sides of the trivial identity
+1
+1
+1
+=
+.
+.
+1 + x (1 + x)n
+(1 + x)n+1
+Example: Sum of Binomial Random Variables
+dom variables with respective mass functions
+ 
+m x
+f X (x) =
+p (1 − p)m−x , and
+x
+
+s
+
+Let X and Y be independent ran 
+n y
+f Y (y) =
+p (1 − p)n−y .
+y
+
+Show that X + Y has a binomial distribution.
+Solution
+The 
+expeditious method of doing this is to use Example 5.4.1 to write X =
+m
+m+n
+I
+and
+Y
+=
+i
+i=1
+i=m+1 Ii . Hence,
+X +Y =
+
+m+n
+
+
+Ii ;
+
+i=1
+
+this has the B(m + n, p) mass function by Example 5.4.1.
+Alternatively, this may be shown by using (5.4.12); this is an exercise for you.
+
+s
+
+Turning to expected values, we recall that from Deﬁnition 5.2.2, for any random
+variables (X i ; i ≥ 1) with ﬁnite expectation, whether they are independent or not,
+
+n
+n
+
+
+E
+(17)
+Xi =
+E(X i ).
+i=1
+
+i=1
+
+5.5 Dependence: Conditional Expectation
+
+177
+
+If in addition the X i are independent, then
+
+n
+n
+
+
+E
+(18)
+Xi =
+E(X i ).
+i=1
+
+i=1
+
+Many inequalities for probabilities and moments are useful when dealing with random
+vectors. Most of them are beyond our scope at this stage, but we give a few simple examples
+with some applications.
+(19) Basic Inequality
+
+If X ≤ Y with probability one, then E(X ) ≤ E(Y ).
+
+Proof This follows immediately from Theorem 4.3.6.
+Corollary
+
+
+
+(a) For 1 < r < s,
+E(|X |r ) ≤ (E(|X |s )) + 1.
+
+(20)
+(b) For r ≥ 1,
+
+E(|X + Y |r ) ≤ 2r (E(|X |r ) + E(|Y |r )).
+
+(21)
+
+Proof (a) If |x| ≤ 1, then |x|r ≤ 1; and if |x| > 1 and r < s, then |x|r ≤ |x|s . Hence, in
+any case, when r ≤ s, |x|r ≤ |x|s + 1. Thus,
+
+
+|x|r f (x) ≤
+|x|s f (x) + 1 = E(|X |s ) + 1.
+E(|X |r ) =
+x
+
+x
+
+(b) For any real numbers x and y, if k ≤ r, |x|k |y|r −k ≤ |x r + |y|r , because either
+(|x|k /|y|k ) ≤ 1 or (|y|r −k /|x|r −k ) < 1. Hence,
+r
+ r 
+r
+r
+|x + y| ≤ (|x| + |y|) ≤
+|x|k |y|r −k
+k
+k=0
+r
+ r 
+≤
+(|x|r + |y|r ) = 2r (|x|r + |y|r ),
+k
+k=0
+
+
+
+and (3) follows.
+(22) Corollary
+
+These inequalities show that:
+
+(a) If E(X s ) < ∞, then for all 1 ≤ r ≤ s, E(X r ) < ∞.
+(b) If E(X r ) and E(Y r ) are ﬁnite then E((X + Y )r ) < ∞.
+
+
+
+5.5 Dependence: Conditional Expectation
+
+Let X and Y be jointly distributed random variables. We may be given the value of Y ,
+either in fact, or as a supposition. What is the effect on the distribution of X ?
+
+178
+
+(1)
+
+5 Random Vectors: Independence and Dependence
+
+Deﬁnition
+If X and Y have joint probability mass function f (x, y), then given
+Y = y, the random variable X has a conditional probability mass function given by
+f X |Y (x|y) =
+
+f (x, y)
+f Y (x)
+
+
+
+for all y such that f Y (y) > 0.
+
+Example
+Let X and Y be independent geometric random variables each having mass
+function f (x) = (1 − λ)λx ; x ≥ 0, 0 < λ < 1. Let Z = X + Y . Show that for 0 ≤ x ≤
+z, f X |Z (x|z) = 1/(z + 1).
+Solution
+From Example 5.4.13, we know that Z has mass function f Z (z) =
+(z + 1)(1 − λ)2 λz and so
+f X |Z (x|z) =
+(2)
+
+P(X = x, Z = z)
+(1 − λ)2 λx λz−x
+= (z + 1)−1 .
+=
+(z + 1)(1 − λ)2 λz
+(1 − λ)2 λz (z + 1)
+
+s
+
+Example 5.1.8 Revisited: Cutting for the Deal
+Find the conditional mass function
+of the loser’s card conditional on W = w; ﬁnd also f W |V (w|v).
+Solution
+
+1
+; 2 ≤ v < w ≤ 14, and
+According to Example 5.1.8, f (v, w) = 78
+
+f W (w) =
+
+w−2
+;
+78
+
+3 ≤ w ≤ 14.
+
+Hence, using Deﬁnition 1,
+f V |W (v|w) =
+
+1
+;
+w−2
+
+2 ≤ v < w.
+
+The loser’s score is uniformly distributed given W . Likewise,
+
+14 − v
+1
+1
+f W |V (w|v) =
+=
+; v < w ≤ 14,
+78
+78
+14 − v
+also a uniform distribution.
+(3)
+
+s
+
+Example
+Let X and Y be independent. Show that the conditional mass function of X
+given Y is f X (x), the marginal mass function.
+Solution
+Because X and Y are independent, f (x, y) = f X (x) f Y (y). Hence, applying
+Deﬁnition 1,
+f X |Y (x|y) = f (x, y)/ f Y (y) = f X (x).
+
+(4)
+
+Theorem
+
+f X |Y (x|y) is a probability mass function, which is to say that
+
+(i) 
+f X |Y (x|y) ≥ 0 and
+(ii) x f X |Y (x|y) = 1.
+
+s
+
+5.5 Dependence: Conditional Expectation
+
+179
+
+
+Proof Part (i) is trivial. Part (ii) follows immediately from (5.1.5).
+
+Recall that two events A and B are said to be conditionally independent given C, if
+P(A ∩ B|C) = P(A|C)P(B|C). Likewise, it is possible for two random variables X and
+Y to be conditionally independent given Z , if
+f X,Y |Z = f X |Z f Y |Z .
+Example: Cutting for the Deal (Example 5.1.8 Revisited)
+Suppose three players
+cut for the deal (with ties not allowed, as usual). Let X be the lowest card, Y the highest
+card and Z the intermediate card. Clearly, X and Y are dependent. However, conditional
+on Z = z, X and Y are independent. The mass function f X |Z is uniform on {2, . . . , z − 1}
+and f Y |Z is uniform on {z + 1, . . . , 14}.
+
+s
+
+Being a mass function, f X |Y may have an expectation; it has a special name and importance.
+
+(5)
+
+The conditional expectation of X , given that Y = y where f Y (y) > 0,
+
+Deﬁnition
+is
+
+E(X |{Y = y}) =
+
+
+
+x f (x, y)/ f Y (y),
+
+x
+
+
+
+when the sum is absolutely convergent.
+
+As y varies over the possible values of Y , this deﬁnes a function of Y , denoted by E(X |Y ).
+Because it is a function of Y , it is itself a random variable, which may have an expectation.
+
+(6)
+
+Theorem
+
+If both sides exist,
+E(E(X |Y )) = E(X ).
+
+(7)
+
+Proof Assuming the sums are absolutely convergent we have, by Theorem 4.3.4,
+E(E(X |Y )) =
+
+
+
+E(X |{Y = y}) f Y (y) =
+
+y
+
+=
+
+
+
+  x f (x, y)
+y
+
+x f X (x)
+
+x
+
+f Y (y)
+
+f Y (y)
+
+by Example 2
+by (5.1.4)
+
+x
+
+= E(X ).
+
+
+
+This is an exceptionally important and useful result. Judicious use of Theorem 6 can
+greatly simplify many calculations; we give some examples.
+
+180
+
+(8)
+
+5 Random Vectors: Independence and Dependence
+
+Example: Eggs
+A hen lays X eggs where X is Poisson with parameter λ. Each hatches
+with probability p, independently of the others, yielding Y chicks. Show that ρ(X, Y ) =
+√
+p.
+Solution
+kp. Hence,
+
+Conditional on X = k, the number of chicks is binomial B(k, p), with mean
+E(X Y ) = E(E(X Y |X )) = E(X 2 p) = (λ2 + λ) p.
+
+Likewise,
+E(Y 2 ) = E(E(Y 2 |X )) = E(X p (1 − p) + X 2 p 2 )
+= λp(1 − p) + (λ + λ2 ) p 2 = λp + λ2 p 2 .
+Hence,
+ρ(X, Y ) =
+(9)
+
+E(X Y ) − E(X )E(Y )
+(var (X ) var (Y ))
+
+1
+2
+
+=
+
+λ2 p + λp − λ.λp
+1
+
+(λ(λp + λ2 p 2 − λ2 p 2 )) 2
+
+=
+
+√
+
+p.
+
+s
+
+Example: Variance of a Random Sum
+Let X 1 , X 2 , . . . be a collection of independent
+identically distributed random variables,
+and
+let Y be an integer valued random variable
+Y
+X i . Show that
+independent of all the X i . Let SY = i=1
+ 2
+var (SY ) = E X 1 var (Y ) + E(Y )var (X 1 ).
+Solution
+
+By (7),
+
+E(SY ) = E(E(SY |Y )) = E E
+
+Y
+
+
+
+X i |Y
+
+= E(Y E(X 1 )) = E(Y )E(X 1 ).
+
+1
+
+Likewise,
+
+ 
+
+
+  
+ 
+E SY2 = E E SY2 |Y = E Y E X 12 + Y (Y − 1)[E(X 1 )]2
+  
+
+= E(Y ) E X 12 − [E(X 1 )]2 + E(Y 2 )[E(X 1 )]2 ,
+
+and so substituting into var (SY ) = E(SY2 ) − (E(SY ))2 , gives the result.
+
+s
+
+(10) Example 4.12 Revisited: Gamblers’ Ruin
+Two gamblers, A and B, have n coins.
+They divide this hoard by tossing each coin; A gets those that show heads, X say, B gets
+the rest, totalling n − X .
+They then play a series of independent fair games; each time A wins he gets a coin from
+B, each time he loses he gives a coin to B. They stop when one or other has all the coins.
+Let D X be the number of games played. Find E(D X ), and show that, when the coins
+are fair, ρ(X, D X ) = 0.
+Solution
+
+Conditional on X = k, as in Example 4.12,
+Dk =
+
+1
+1
+Dk+1 + Dk−1 + 1
+2
+2
+
+5.5 Dependence: Conditional Expectation
+
+181
+
+with solution Dk = k(n − k). Hence, observing that X is B(n, p) (where p is the chance
+of a head), we have
+E(D X ) = E(E(D X |X )) = E(X (n − X )) = n(n − 1) p(1 − p).
+Finally,
+cov(X, D X ) = E(X 2 (n − X )) − EX ED X = n(n − 1) p( p − 1)(2 p − 1),
+whence ρ = 0, when p = 12
+(11)
+
+Example
+
+Partition Rule: Show that if X and Y are jointly distributed, then
+
+f X (x) =
+f Y (y) f X |Y (x|y).
+
+s
+
+y
+
+Solution
+This is just Theorem 6 in the special case when we take X to be Ix , the
+indicator of the event {X = x}. Then, E(Ix ) = f X (x), and E(Ix |Y = y) = f X |Y (x|y).
+The result follows from (7). Alternatively, you can substitute from Deﬁnition 1.
+Essentially this is the Partition Rule applied to discrete random variables.
+
+s
+
+Recall that we have already deﬁned E(X |B) for any event B in Chapter 4. It is convenient
+occasionally to consider quantities, such as E(X |Y ; B). This is deﬁned to be the expected
+value of the conditional distribution
+(12)
+
+P(X = x|{Y = y} ∩ B) =
+
+P({X = x} ∩ {Y = y} ∩ B)
+P({Y = y} ∩ B)
+
+for any value y of Y such that P({Y = y} ∩ B) > 0.
+We give some of the more important properties of conditional expectation.
+(13) Theorem
+Let a and b be constants, g(.) an arbitrary function, and suppose that X, Y,
+and Z are jointly distributed. Then (assuming all the expectations exist),
+(i) E(a|Y ) = a
+(ii) E(a X + bZ |Y ) = aE(X |Y ) + bE(Z |Y )
+(iii) E(X |Y ) ≥ 0 if X ≥ 0
+(iv) E(X |Y ) = E(X ), if X and Y are independent
+(v) E(Xg(Y )|Y ) = g(Y )E(X |Y )
+(vi) E(X |Y ; g(Y )) = E(X |Y )
+(vii) E(E(X |Y ; Z )|Y ) = E(X |Y ).
+Property (v) is called the pull-through property, for obvious reasons.
+Property (vii) is called the tower property. It enables us to consider multiple conditioning
+by taking the random variables in any convenient order.
+
+182
+
+5 Random Vectors: Independence and Dependence
+
+Proof We prove the odd parts of Theorem 13, the even parts are left as exercises for you.
+(i) f (a, y) = f Y (y), so
+E(a|Y ) = a f Y (y)/ f Y (y) = a.
+(iii) If X ≥ 0, then every term in the sum in Theorem 6 is nonnegative. The result follows.
+
+
+xg(y) f (x, y)/ f Y (y) = g(y)
+f (x, y)/ f Y (y)
+E(Xg(Y )|Y = y) =
+(v)
+x
+
+= g(y)E(X |Y = y).
+
+x
+
+(vii) For
+ arbitrary values, Y = y and Z = z of Y and Z , we have E(X |Y ; Z ) =
+x x f (x, y, z)/ f Y,Z (y, z). Hence, by deﬁnition,
+
+
+(14)
+E(X |Y ; Z ) f Y,Z (y, z)/ f Y (y) =
+x f (x, y, z)/ f Y (y)
+E(E(X |Y ; Z )|Y ) =
+z
+z
+x
+
+=
+x f (x, y)/ f Y (y) = E(X |Y ).
+
+x
+
+(15) Example
+Three children (Aelhyde, Beowulf, and Canute) roll a die in the order
+A, B, C, A, . . . , etc. until one of them rolls a six and wins. Find the expected number of
+rolls, given that Canute wins.
+Solution
+We use a form of the tower property, (14). Let C be the event that Canute
+wins, let X be the duration of the game, and let Y denote the ﬁrst roll to show a six in the
+ﬁrst three rolls, with Y = 0 if there is no six. Then,
+E(X |C) = E(E(X |Y ; C)|C).
+
+(16)
+
+Now if Y = 0, then with the fourth roll the game stands just as it did initially, except that
+three rolls have been made. So
+E(X |Y = 0; C) = 3 + E(X |C).
+Obviously, Y is otherwise 3, and
+E(X |Y = 3; C) = 3.
+Therefore, substituting in (16), we have
+E(X |C) = 3 + E(X |C)P(Y = 0|C)
+and so
+E(X |C) =
+
+3
+648
+.
+ 3 =
+91
+5
+1−
+6
+
+Of course, there are other ways of doing this.
+Finally, we remark that conditional expectation arises in another way.
+(17) Theorem
+(18)
+
+Let h(Y ) be any function of Y such that E(h(Y )2 ) < ∞. Then,
+E((X − h(Y ))2 ) ≥ E((X − E(X |Y ))2 ).
+
+s
+
+5.6 Simple Random Walk
+
+183
+
+Further, if h(Y ) is any function of Y such that
+E((X − h(Y ))2 ) = E((X − E(X |Y ))2 ),
+
+(19)
+then
+
+E((h(Y ) − E(X |Y ))2 ) = 0.
+Proof
+(20)
+
+E((X − h(Y ))2 ) = E((X − E(X |Y ) + E(X |Y ) − h(Y ))2 )
+= E((X − E(X |Y ))2 ) + E((E(X |Y ) − h(Y ))2 )
++2E((X − E(X |Y )) + (E(X |Y ) − h(Y ))).
+However, by (7), we can write
+E((X − E(X |Y ))(E(X |Y ) − h(Y ))) = E(E((X − E(X |Y ))(E(X |Y ) − h(Y ))|Y ))
+= E(E(X |Y ) − h(Y ))E((X − E(X |Y ))|Y )
+by Theorem 13(v)
+= 0,
+because E((X − E(X |Y ))|Y ) = 0. The result (18) follows because E((E(X |Y ) −
+h(Y ))2 ) ≥ 0. Finally, if (19) holds then from (20), we have
+E((E(X |Y ) − h(Y ))2 ) = 0,
+
+
+as required to complete the proof of Theorem 17.
+
+Recall that if E(X 2 ) = 0, then P(X = 0) = 1; hence, if E((X − Y )2 ) = 0, then X = Y
+with probability one. This suggests that the smaller E((X − Y )2 ) is, then the “closer” X is
+to Y , in some sense. The point of the theorem is then that among all functions of Y, E(X |Y )
+is the one which is “closest” to X .
+It is thus possible, and in later work desirable, to deﬁne E(X |Y ) by this property.
+However, to explore all these ideas would take us too far aﬁeld.
+5.6 Simple Random Walk
+
+The ideas above now enable us to consider an exceptionally famous and entertaining
+collection of random variables.
+(1)
+
+Deﬁnition
+Let (X i ; i ≥ 1) be a collection of independent identically distributed random variables with mass function
+P(X 1 = 1) = p; P(X 1 = −1) = q = 1 − p.
+Then the collection (Sn ; n ≥ 0), where
+
+(2)
+
+Sn = S0 +
+
+n
+
+
+Xi ,
+
+i=1
+
+is called a simple random walk. If p = q, it is called a symmetric simple random walk.
+
+
+
+184
+
+5 Random Vectors: Independence and Dependence
+
+Figure 5.1 A path (or realization) of a simple random walk. The points represent successive
+positions (or values) of the walk; these are joined by steps of the walk. In this case,
+S0 = 2, S1 = 3, S2 = 2, and so on. The walk visits the origin at the fourth step.
+
+The nomenclature follows from the visualization of Sn as representing the position of a
+particle that is initially at S0 , and then takes a series of independent unit steps; each step
+being positive with probability p or negative with probability q.
+It is conventional to display the walk in Cartesian coordinates as the sequence of points
+(n, Sn ) for n ≥ 0. Any particular such sequence is called a path of the random walk; see
+Figure 5.1 for an illustration.
+Much of the effort of the ﬁrst probabilists (Fermat, Pascal, Bernoulli, de Moivre,
+Laplace) was devoted to discovering the properties of the simple random walk, and more
+general random walks are still being investigated by modern probabilists.
+It is easy to see that the celebrated gambler’s ruin problem of Example 2.11 is just a
+simple random walk in which S0 is interpreted as the initial capital of the gambler, and the
+walk stops on the ﬁrst occasion D when either Sn = 0 (the gambler is ruined) or Sn = K
+(his opponent is ruined). That is, the random variable
+D = min{n : {Sn = 0} ∪ {Sn = K }}
+
+(3)
+
+is the duration of the game. In the context of random walks, D is called the ﬁrst passage
+time of the walk to {0, K }.
+The ﬁrst thing to ﬁnd is the mass function of Sn (when it is not stopped).
+(4)
+
+Theorem
+
+
+P(Sn − S0 = k) =
+
+
+1
+1
+n
+p 2 (n+k) q 2 (n−k) .
+1
+(n
++
+k)
+2
+
+Proof Consider a path of the walk from (0, S0 ) to (n, Sn ) with r positive steps and s
+negative steps. If Sn − S0 = k, then r − s = k and r + s = n. Hence, r = 12 (n + k) and
+s = 12 (n − k). There are (nr) such paths, and each has the same probability, namely, pr q s .
+Hence,
+ 
+n r s
+P(Sn − S0 = k) =
+p q ,
+r
+which is (4).
+
+5.6 Simple Random Walk
+
+185
+
+Alternatively, we can simply observe that 12 (Sn − S0 + n) is a binomial random variable
+with parameters n and p, and (4) follows.
+
+As suggested by the gambler’s ruin problem, we are interested in the ﬁrst passage times
+of random walks.
+(5)
+
+Deﬁnition
+Let (Sn ; n ≥ 0) be a simple random walk with S0 = i. Then, the ﬁrst passage
+time from i to k is the random variable
+Tik = min{n > 0; Sn = k}.
+
+
+
+When i = k, the random variable Tkk is called the recurrence time of k. We often denote
+Tkk by Tk . One obvious but important property of a ﬁrst passage time Tik is that steps after
+the ﬁrst passage to k are independent of those before. It follows that we can write, for
+example,
+T02 = T01 + T12 ,
+
+(6)
+
+where T01 and T12 are independent. Furthermore, T12 and T01 have the same distribution
+because the X i are identically distributed. These simple remarks are of great importance
+in examining the properties of the walk.
+Our ﬁrst result is striking.
+(7)
+
+Theorem
+If p ≥ q, then T01 is certainly ﬁnite. If p < q, then T01 is ﬁnite with probability p/q.
+Proof Let P(T jk < ∞) = r jk . Now let us condition on the ﬁrst step of the walk from
+S0 = 0, giving
+
+(8)
+
+r01 = P(T01 < ∞) = pP(T01 < ∞|X 1 = 1) + qP(T01 < ∞|X 1 = −1).
+On the one hand, if X 1 = 1, then T01 = 1. On the other hand, if X 1 = −1, then the walk
+has to go from −1 to 0 and then from 0 to +1 in a ﬁnite number of steps for T01 < ∞.
+Hence, as r01 = r−10 ,
+2
+r01 = p + qr01
+.
+
+(9)
+
+This has two roots r01 = 1 and r01 = p/q. It follows that if p ≥ q, then the only root that
+is a probability is r01 = 1, as required.
+If p < q, then it certainly seems plausible that r01 = p/q, but a little work is needed
+to prove it. This can be done in several ways. We choose to use the following interesting
+fact; that is, for all i,
+ +1
+ −1
+ Xi 
+q
+q
+q
+=p
+(10)
++q
+= 1.
+E
+p
+p
+p
+Hence, if S0 = 0,
+(11)
+
+ Xi 
+  Sn  
+n
+q
+q
+=
+= 1.
+E
+E
+p
+p
+i=1
+
+186
+
+5 Random Vectors: Independence and Dependence
+
+Now denote T01 by T , and suppose that
+p<q
+
+(12)
+
+and r01 = 1.
+
+Then conditioning on whether T ≤ n or T > n gives
+  Sn 
+q
+1=E
+(13)
+p
+
+
+  Sn $
+  Sn $
+$
+$
+q
+q
+$
+$
+=E
+$T ≤ n P(T ≤ n) + E p
+$T > n P(T > n).
+p
+Now if T ≤ n, then ST = 1 and Sn = 1 + X T +1 + · · · + X n . Hence,
+
+  Sn $
+  X T +1 +···+X n 
+$
+q
+q
+q
+q
+$T ≤ n = E
+E
+by (10).
+=
+$
+p
+p
+p
+p
+Furthermore, if T > n, then Sn ≤ 0, and so
+
+  Sn $
+$
+q
+$T > n ≤ 1.
+E
+$
+p
+Hence, allowing n → ∞ in (13) gives 1 = q/ p + 0. But this is impossible when
+
+p < q, so (12) must be impossible. Hence, when p < q, we must have r01 = p/q.
+In the case when p > q, so that T01 is ﬁnite, it is natural to ask what is E(T01 )? If we knew
+that E(T01 ) < ∞, then we could write
+E(T01 ) = E(E(T01 |X 1 )) = pE(T01 |X 1 = 1) + qE(T01 |X 1 = −1)
+= p + q(1 + E(T−1.1 )) = 1 + 2qE(T01 )
+
+by (6).
+
+Hence,
+E(T01 ) =
+
+(14)
+
+1
+;
+p−q
+
+p > q,
+
+as required.
+It is not too difﬁcult to show that E(T01 ) < ∞, as we now demonstrate.
+(15) Theorem
+
+E(T01 ) < ∞ when p > q.
+
+Proof
+P(T01 > n) = P(Si ≤ 0 for 0 ≤ i ≤ n)
+
+
+1
+n
+≤ P(Sn ≤ 0) = P (Sn + n) ≤
+2
+2
+
+5.6 Simple Random Walk
+
+187
+
+  12 (Sn +n)  n/2 
+q
+q
+=P
+≥
+since p > q,
+p
+p
+  12 (Sn +n)   −n/2
+q
+q
+≤E
+p
+p
+by the basic inequality, Theorem 4.6.1.
+Now we recall the observation in Theorem 4 that 12 (Sn + n) has the B(n, p) mass
+function. Hence,
+
+  12 (Sn +n)  
+q
+q n
+E
+= q + p.
+(16)
+= (2q)n .
+p
+p
+Therefore, ﬁnally,
+E(T01 ) =
+
+∞
+
+
+P(T01 > n) ≤
+
+n=0
+
+∞
+
+n=0
+
+(2q)n
+
+ n/2
+p
+1
+=
+1
+q
+1 − 2( pq) 2
+
+This establishes (14), as required.
+
+since pq <
+
+1
+4
+
+
+There are one or two gaps in the above; for example, we do not yet know either the mass
+function of T01 or E(T01 ) in the case p = q = 12 . Both of these can be ﬁlled by the following
+beautiful theorem.
+(17) Hitting Time Theorem
+Let (Sn ; n ≥ 0) be a simple random walk with S0 = 0. Let
+T0b be the ﬁrst passage time from 0 to b > 0, with mass function f 0b (n). Then
+
+
+b
+b
+1
+1
+n
+p 2 (n+b) q 2 (n−b) .
+f 0b (n) = P(T0b = n) = P(Sn = b) =
+1
+(n
++
+b)
+n
+n 2
+The proof of (17) relies on the following lemma, which is of considerable interest in its own
+right. First, we observe that the number of paths of the walk from (0, 0) to (n − 1, b + 1)
+is denoted by Nn−1 (0, b + 1), and we have
+
+
+n−1
+Nn−1 (0, b + 1) = 1
+(18)
+.
+(n − b) − 1
+2
+b
+(19) Lemma: The Reﬂection Principle
+Let Nn−1
+(0, b − 1) be the number of paths from
+(0, 0) to (n − 1, b − 1) that pass through b at least once. Then
+
+(20)
+
+b
+(0, b − 1) = Nn−1 (0, b + 1).
+Nn−1
+
+s
+
+Proof Let π be a path that visits b on its journey from (0, 0) to (n − 1, b − 1). Let
+L be the occasion of its last visit. Now reﬂect that part of the walk after L in the line
+y = b. This yields a path π  from (0, 0) to (n − 1, b + 1). Conversely, for any path
+from (0, 0) to (n − 1, b + 1), we may reﬂect the segment in y = b after its last visit
+
+188
+
+5 Random Vectors: Independence and Dependence
+
+Figure 5.2 The solid line is the path of the walk: the dashed line is the reﬂection in y = b of that
+part of the walk after its last visit to b before n, at time L.
+
+to b, to give a path π from (0, 0) to (n − 1, b − 1). These two sets are thus in one–
+
+one correspondence, and (20) follows. Figure 5.2 illustrates the reﬂection.
+Proof of (17): Hitting Time Theorem If T0b = n, then we must have X n = +1 and
+Sn−1 = b − 1. Now there are Nn−1 (0, b − 1) paths from (0, 0) to (n − 1, b − 1) of which
+1
+1
+b
+Nn−1
+(0, b − 1) visit b on route. Each such path has probability p 2 (n+b)−1 q 2 (n−b) . Hence,
+using the reﬂection principle,
+1
+
+1
+
+P(T0b = n) = p(Nn−1 (0, b − 1) − Nn−1 (0, b + 1)) p 2 (n+b)−1 q 2 (n−b)
+ 
+
+
+1
+1
+n−1
+n−1
+− 1
+p 2 (n+b) q 2 (n−b)
+=
+1
+(n
++
+b)
+−
+1
+(n
++
+b)
+2
+
+2
+b
+1
+1
+n
+p 2 (n+b) q 2 (n−b)
+=
+1
+(n
++
+b)
+n 2
+b
+= P(Sn = b), by (4).
+n
+
+
+
+Because a similar argument works for negative values of b, we have
+P(T0b = n) =
+
+(21)
+and E(T0b ) =
+
+∞
+
+|b|
+P(Sn = b)
+n
+
+n=1 |b|P(Sn = b).
+
+(22) Example: Symmetric Random Walk
+to be symmetric. In this case,
+E(T01 ) =
+
+∞
+
+m=0
+∞
+
+
+When p = q, the simple random walk is said
+
+P(S2m+1 = 1) =
+
+
+∞ 
+
+2m + 1
+m=0
+
+m+1
+
+2−(2m+1)
+
+∞
+2m(2m − 2) . . . 2.1 −m 
+1
+2 =
+= ∞.
+≥
+(m + 1)(m) . . . 1
+m+1
+m=0
+m=0
+
+5.6 Simple Random Walk
+
+189
+
+Hence, the symmetric random walk has the interesting property that P(T01 < ∞) = 1, but
+
+s
+
+E(T01 ) = ∞.
+
+(23)
+
+(24) Example: Conditioned Random Walk
+Now, of course, when p < q we know that
+P(T01 < ∞) = p/q < 1, so T01 has no expectation. But consider Sn conditional on the
+event that T01 < ∞. In this case, by conditional probability,
+ 
+P(T01 < ∞|X 1 = 1)P(X 1 = 1)
+p
+= p/
+= q.
+P(X 1 = +1|T01 < ∞) =
+P(T01 < ∞)
+q
+Likewise, P(X 1 = −1|T01 < ∞) = p. Hence, if we knew that E(T01 |T01 < ∞) were ﬁnite,
+then by conditioning on the ﬁrst step,
+E(T01 |T01 < ∞) = q + pE(T01 |X 1 = −1; T01 < ∞)
+= 1 + p2E(T01 |T01 < ∞),
+
+by (6).
+
+Hence, when q > p,
+1
+.
+q−p
+
+E(T01 |T01 < ∞) =
+
+(25)
+
+It is straightforward to use Theorem 17 to establish that E(T01 |T01 < ∞) < ∞ (an exercise
+for you) and (25) is proved. Together with (14) and Example 22, this shows that for any
+value of p and b > 0,
+E(T0b |T0b < ∞) =
+
+(26)
+
+b
+.
+| p − q|
+
+s
+
+We may also consider recurrence times.
+(27) Example
+and
+
+Let T0 be the recurrence time of 0. Show that P(T0 < ∞) = 1 − | p − q|
+E(T0 |T0 < ∞) = 1 +
+
+1
+.
+| p − q|
+
+Solution
+Just consider T0 conditional on the outcome of the ﬁrst step, and then use
+what we know about T01 and T10 . You ﬁll in the details.
+
+s
+
+Finally, we prove a famous result, the so-called
+
+(28) Ballot Theorem
+Let Sn = n1 X i be a simple random walk with S0 = 0. Then
+
+2n−1
+
+r
+P
+Si = 0|S2n = 2r = .
+n
+1
+Proof We count paths as we did in the hitting time theorem. What is the number
+0
+N2n−1
+(1, 2r ) of paths from (1, 1) to (2n, 2r ) that visit the origin? We can reﬂect the
+
+190
+
+5 Random Vectors: Independence and Dependence
+
+Figure 5.3 The ballot theorem The solid line is a path of the walk; the dashed line is the
+reﬂection in the x-axis of that part of the walk before its ﬁrst visit to zero.
+0
+walk before its ﬁrst zero in the x-axis, see Figure 5.3, and this shows that N2n−1
+(1, 2r ) =
+N2n−1 (−1, 2r ). Because all N2n (0, 2r ) paths from (0, 0) to (2n, 2r ) are equally likely, it
+follows that the required probability is
+0
+(1, 2r )
+N2n−1 (1, 2r ) − N2n−1
+N2n−1 (1, 2r ) − N2n−1 (−1, 2r )
+=
+N2n (0, 2r )
+N2n (0, 2r )
+
+ 
+
+2n − 1
+2n − 1
+−
+n +r −1
+n +r
+2r
+
+
+.
+=
+=
+2n
+2n
+n +r
+
+
+
+The following application explains the name of the theorem.
+Example: Ballot In an election, candidate A secures a votes and candidate B secures b
+votes. What is the probability that A is ahead throughout the count? By the above argument,
+this probability is (a − b)/(a + b) when a > b.
+
+s
+
+5.7 Martingales
+
+In this section, we consider a remarkably useful class of random processes called martingales. They arise naturally as general models for fair games, but turn up in all kinds of
+unexpected places. In particular, they are used extensively in modern ﬁnancial mathematics, but it is beyond our scope to explore this area in great detail. We begin with this:
+(1)
+
+Deﬁnition
+all n,
+
+A collection (Sn ; n ≥ 0) of random variables is a martingale if, for
+
+(a) E|Sn | < ∞.
+(b) E(Sn+1 |S0 , S1 , . . . , Sn ) = Sn .
+
+
+
+6
+Generating Functions and Their Applications
+
+Everything future is to be estimated by a wise man, in proportion to the
+probability of attaining it, and its value when attained.
+Samuel Johnson, [The Rambler, 20]
+
+This chapter deals with a special subject and may be omitted on a ﬁrst reading. Its contents
+are important and useful, but are not a prerequisite for most of the following chapters.
+
+6.1 Introduction
+
+In Chapter 3, we found that generating functions can provide elegant and concise methods
+for handling collections of real numbers. The mass function of an integer valued random
+variable is such a collection, and so we may anticipate (correctly as it turns out) that the
+following generating function will be useful.
+(1)
+
+Deﬁnition
+The probability generating function G(s) of the integer valued random
+variable X is deﬁned by
+
+G(s) =
+P(X = k)s k .
+
+k
+
+Because all random variables in this chapter are integer valued, this is not again mentioned
+explicitly.
+(2)
+
+Example
+Let X be uniformly distributed in {−a, −a + 1, . . . , b − 1, b}, where a, b >
+0. Then provided s = 1,
+G(s) =
+
+b
+
+
+1
+s −a − s b+1
+sk =
+.
+a+b+1
+(a + b + 1)(1 − s)
+k=−a
+
+Notice that, by Theorem 4.3.4, we have from Deﬁnition 1 of G(s) that
+(3)
+
+G(s) = E(s X );
+232
+
+s
+
+6.1 Introduction
+
+233
+
+this is a particularly useful representation of G(s), and we use it a great deal in what
+follows.
+For example, suppose we seek the probability generating function of Y = X + a, where
+a is constant. Using (3), we can write
+G Y (s) = E(s Y ) = E(s X +a ) = s a G X (s).
+We will see many other applications of (3) later. When X is defective (that is, when
+P(|X | < ∞) < 1), the representation (3) can still be used, provided that we remember
+that the expectation is taken over the ﬁnite part of the distribution of X .
+We write G X (s) when we want to stress the role of X ; and for brevity, G X (s) is sometimes
+known as the p.g.f. of X .
+Obviously, if P(|X | < ∞) = 1, then
+
+P(X = k) = 1.
+G X (1) =
+k
+
+To sum up, if X is ﬁnite with probability 1, then G X (s) is a power series in s with
+nonnegative coefﬁcients such that G X (1) = 1.
+Conversely, if G(s) is a power series with nonnegative coefﬁcients such that G(1) =
+1, then G is the p.g.f. of some integer valued random variable X , which is ﬁnite with
+probability 1.
+(4)
+
+Example
+Let G(s) = (a + bs)/(1 − cs). When is G the p.g.f. of a ﬁnite integer valued
+random variable X ?
+Solution
+First, we note that if X is ﬁnite then G(1) = 1, and so a + b + c = 1. Now
+we need to consider various cases.
+(i) If 0 ≤ c < 1, then we can write, for any n,
+G(s) = (a + bs)(1 + cs + · · · + (cs)n ) +
+
+a + bs
+(cs)n+1
+1 − cs
+
+= a + (b + ac)s + (b + ac)cs 2 + · · · + (b + ac)cn−1 s n + bcn s n+1 +
+
+a + bs
+(cs)n+1 .
+1 − cs
+
+For |s| < c−1 , we can let n → ∞ to obtain a series expansion of G(s). This has the
+required properties of a p.g.f. if 1 ≥ a ≥ 0 and 1 ≥ b + ac ≥ 0. In this case, X is a
+nonnegative random variable.
+(ii) If c = 1, then a = −b = 1. In this case X is zero with probability 1.
+(iii) If c > 1, then we can use a method similar to that of (i) to obtain a different series
+expansion of G(s), that is:
+b ac + b ac + b
+− 3 2 − ...
+G=− −
+c
+c2 s
+c s
+This is a p.g.f. if −c ≤ b ≤ 0 and −c2 ≤ b + ac ≤ 0. In this case, X is nonpositive.
+(iv) If c < 0, then a = 1 and b = c. In this case, X is zero with probability 1.
+
+234
+
+6 Generating Functions and Their Applications
+
+See Example 14 for more insight into the nature of this probability generating
+function.
+
+s
+
+Another useful theorem is 3.6.7, which we restate here.
+(5)
+
+Theorem
+Let X be a random variable with mass function f (k), and suppose that
+a ≤ X ≤ b. Let
+tn = P(X > n) =
+
+b
+
+
+f (k).
+
+k =n+1
+
+Deﬁne the tail generating function
+b−1
+ n
+T (s) =
+s tn . Then, whenever both sides exist,
+a
+
+(1 − s)T (s) = s a − G(s).
+
+(6)
+In particular, if X ≥ 0, then
+
+(1 − s)T (s) = 1 − G(s).
+
+(7)
+
+Proof The left-hand side of (7) may be written as
+(1 − s)
+
+b−1
+
+
+P(X > n)s n =
+
+n=a
+
+=
+
+b−1
+
+
+s n P(X > n) −
+
+n=a
+b−1
+
+
+b−1
+
+
+s n+1 P(X > n)
+
+n=a
+
+s n (P(X > n) − P(X > n − 1)) + s a P(X > a)
+
+n = a+1
+b
+
+− s P(X > b − 1)
+b
+
+a
+P(X = n)s n = s a − G(s),
+=s −
+a
+
+
+
+as required.
+(8)
+
+Example 2 Revisited
+
+Here X is uniform on {−a, . . . , b}, and so
+(s −a − s b−1 )
+s −a
+−
+1−s
+(a + b + 1)(1 − s)2
+(1 − s)(a + b)s −a + s b+1 − s −a+1
+=
+.
+(a + b + 1)(1 − s)2
+
+TX (s) =
+
+s
+
+More generally, we can show that the identity (7) holds for unbounded nonnegative random
+variables. One way of doing this is to observe that the coefﬁcients of s n on each side are
+equal for all n, and then use a standard theorem about power series.
+(9)
+
+Example
+Let X be geometric with mass function f (k) = (1 − q)q k−1 ; k ≥ 1, 0 <
+q < 1. Then
+G(s) =
+
+∞
+
+k =1
+
+(1 − q)q k−1 s k =
+
+(1 − q)s
+,
+1 − qs
+
+6.1 Introduction
+
+235
+
+and
+(1 − s)T (s) = 1 −
+
+(1 − q)s
+1−s
+=
+.
+1 − qs
+1 − qs
+
+Thus,
+T (s) =
+
+1
+.
+1 − qs
+
+s
+
+For future reference, we record the following trivial corollary of (7); that is, if P(0 ≤ X <
+∞) = 1, then
+∞
+
+G X (s)
+(10)
+.
+s j P(X ≤ j) =
+1−s
+j =0
+It is useful to bear in mind that conditional probability mass functions also have generating
+functions. Thus, if A is some event, we can write P(X = k|A) = f (k|A) and deﬁne the
+generating function
+
+f (k|A)s k = E(s X |A),
+G X |A (s) =
+k
+
+in the usual notation.
+If (Ai ; i ≥ 1) is a collection of disjoint events with i Ai = , then it is easy to show
+that
+
+(11)
+E(s X |Ai )P(Ai ).
+E(s X ) =
+i
+
+This result is often useful in ﬁnding E(s X ).
+If the random variables X and Y are jointly distributed, then in like manner we have
+
+ f (k, y)
+(12)
+s k P(X = k|Y = y) =
+sk
+; f Y (y) > 0.
+E(s X |Y = y) =
+f Y (y)
+k
+k
+As y runs over all the possible values of Y , this yields the conditional p.g.f. of X given Y
+(13)
+
+G X |Y (s) = E(s X |Y ).
+We therefore have the useful result:
+G X (s) = E(G X |Y (s)) = E(E(s X |Y )).
+
+(14) Example 4 Revisited
+Suppose we have two biased coins; the ﬁrst shows a head with
+probability a, and the second shows a head with probability 1 − c. The ﬁrst coin is tossed
+and, if it shows a tail then the second coin is tossed repeatedly until a head is shown. Let
+X be the number of times the second coin is tossed. What is G X (s)?
+Solution
+Let H be the event that the ﬁrst coin shows a head. If H occurs then
+X = 0, so E(s X |H ) = 1. If H c occurs, then X is geometric with f X (k) = (1 − c)ck−1 ;
+k ≥ 1. Hence, by Example 9,
+E(s X |H c ) =
+
+(1 − c)s
+.
+1 − cs
+
+236
+
+6 Generating Functions and Their Applications
+
+Therefore, by (11),
+a + (1 − a − c)s
+(1 − a)(1 − c)s
+=
+.
+1 − cs
+1 − cs
+Looking back, we see that this is the generating function considered in Example 4, case (i).
+It follows that we can think of (a + bs)/(1 − cs) as being the p.g.f. of a random variable
+X , which is either zero with probability a, or with probability 1 − a is a geometric random
+variable with parameter c. Such random variables arise quite naturally in applications.
+E(s X ) = a +
+
+s
+
+(15) Example
+A biased coin is tossed repeatedly until the ﬁrst occasion when r consecutive
+heads have resulted. Let X be the number of tosses required. Find E(s X ).
+Solution
+We suppose that the chance of a head is p, and note that if the ﬁrst i tosses
+are i − 1 heads followed by a tail, then the further number of tosses required has the same
+mass function as X . Hence, with an obvious notation:
+E(s X |H i−1 T ) = s i E(s X );
+
+1 ≤ i ≤ r.
+
+Also, E(s |H ) = s . It follows that
+X
+
+r
+
+r
+
+E(s X ) =
+
+r
+
+
+qpi−1 s i E(s X ) + pr s r
+
+i=1
+
+and so
+r −1
+
+E(s ) 1 − qs
+( ps)i
+
+
+
+X
+
+= pr s r .
+
+i =0
+
+Hence,
+E(s X ) =
+
+pr s r (1 − ps)
+.
+1 − s + q pr s r +1
+
+s
+
+We discover different methods for proving this later.
+6.2 Moments and the Probability Generating Function
+
+For the remainder of this chapter, random variables are assumed to be nonnegative unless
+stated otherwise. In this case, whenever |s| ≤ 1,
+$ ∞
+$ 
+∞
+∞
+
+$
+$
+k$
+$
+f (k)s $ ≤
+f (k)|s k | ≤
+f (k) = 1.
+|G X (s)| = $
+0
+
+0
+
+0
+
+This simple property has enormous consequences for the p.g.f. G(s). These are fully
+explored in textbooks on calculus and analysis, so we merely state the most important
+relevant results here. First, we state without proof:
+(1)
+
+Theorem
+
+The function G(s) is differentiable for |s| < 1 and its derivative is
+∞
+
+n f (n)s n−1 < ∞.
+G  (s) =
+n=1
+
+6.2 Moments and the Probability Generating Function
+
+237
+
+At s = 1,
+G  (1) = lim
+
+(2)
+
+(3)
+
+∞
+
+
+s↑1
+
+n f (n)s n−1
+
+n=1
+
+whether the limit is ﬁnite or not. More generally, it follows that for k ≥ 1,
+∞
+
+n!
+f (n)s n−k , |s| < 1
+G (k) (s) =
+(n
+−
+k)!
+n=k
+and
+∞
+
+
+n!
+f (n)s n−k .
+s↑1
+(n
+−
+k)!
+n=k
+
+G (k) (1) = lim
+
+(4)
+
+Second, it follows that G(s) determines the collection ( f (k); k ≥ 0).
+(5)
+
+Theorem (Uniqueness)
+for some G(s), we have
+
+Let X and Y have generating functions G X (s) and G Y (s). If
+G X (s) = G Y (s) = G(s) for |s| < 1,
+
+then X and Y have the same mass function.
+Proof This follows from (3) because both f X (k) and f Y (k) are given by
+f X (k) =
+
+G (k) (0)
+= f Y (k)
+k!
+
+
+for all k.
+Third, it follows that we can obtain all the moments of X from G(s).
+(6)
+
+Theorem
+
+If X has p.g.f. G(s), then
+E(X ) = G  (1);
+
+(7)
+
+more generally, the kth factorial moment is
+µ(k) = E(X (X − 1) . . . (X − k + 1)) = G (k) (1);
+
+(8)
+and, in particular,
+
+var (X ) = G  (1) + G  (1) − (G  (1))2 .
+
+(9)
+
+Proof Equation (7) is a trivial consequence of (2), and (8) follows from (4). To see (9),
+write
+var (X ) = E(X − E(X ))2 = E(X 2 ) − (G  (1))2
+= E(X (X − 1) + X ) − (G  (1))2 ,
+
+(10)
+as required.
+
+
+
+238
+
+6 Generating Functions and Their Applications
+
+Just as (10) gives the second moment and second central moment in terms of the ﬁrst
+two factorial moments; likewise, σk and µk may be obtained in principle in terms of
+(µ(k) ; k ≥ 1).
+(11) Example: Binomial p.g.f.
+Let X have a binomial distribution with parameters n and
+p. Then, with q = 1 − p as usual,
+G(s) =
+
+n 
+
+n
+0
+
+Now using (8), we have
+µ
+
+q n−k p k s k = (q + ps)n .
+
+k
+
+
+
+
+n!
+pk
+= (n − k)!
+
+0
+
+(k)
+
+1 ≤ k ≤ n,
+k > n.
+
+Hence, by (9), var (X ) = n(n − 1) p 2 + np − (np)2 ) = npq.
+
+Let X have a Poisson distribution with parameter λ.
+
+(12) Example: Poisson p.g.f.
+Then
+
+G(s) =
+
+∞
+
+
+e−λ
+
+0
+
+Hence, we ﬁnd that µ
+
+(k)
+
+s
+
+λk k
+s = e+λ(s−1) .
+k!
+
+= λ , for k ≥ 1.
+k
+
+s
+
+Moments can also be obtained from the tail generating function T (s) deﬁned in Theorem 6.1.5.
+(13) Theorem
+
+Let X be a random variable with
+∞
+
+s k P(X > k).
+T (s) =
+0
+
+Then
+E(X ) = T (1)
+
+(14)
+and, if E(X ) < ∞,
+
+var (X ) = 2T  (1) + T (1) − T (1)2 .
+
+(15)
+Proof By L’Hôpital’s rule,
+
+1 − G(s)
+= G  (1) = E(X ), by (7).
+1−s
+Likewise, differentiating (6.1.7) yields
+
+
+G  (1)
+1
+−
+G(s)
+G
+(s)
+=
+, by L’Hôpital’s rule,
+−
+T  (1) = lim
+s↑1
+(1 − s)2
+1−s
+2
+T (1) = lim
+s↑1
+
+and the result follows using Theorem 6.
+
+
+
+6.3 Sums of Independent Random Variables
+
+239
+
+More generally, a straightforward extension of this theorem shows that
+µ(k) = kT (k−1) (1).
+
+(16)
+
+(17) Example: Geometric p.g.f.
+Let X have a geometric distribution with mass function
+f (k) = (1 − q)q k−1 , k ≥ 1; 0 < q < 1. Then, by Example 6.1.9,
+T (s) =
+
+1
+.
+1 − qs
+
+Hence, by Theorem 13,
+E(X ) = T (1) =
+
+1
+,
+1−q
+
+and likewise
+var (X ) = 2T  (1) + T (1) − T (1)2 =
+
+q
+.
+(1 − q)2
+
+From (16),
+µ(k) =
+
+kq k−1
+.
+(1 − q)k
+
+s
+
+We conclude this section with a note aboutdefective probability mass functions.
+∞
+If X is a nonnegative random variable such
+k = 0 f (k) < 1, then it still
+ makes sense
+that
+∞
+k
+s
+f
+(k).
+Furthermore,
+if
+to deﬁne the generating
+function
+G(s)
+=
+k =0
+k k f (k) < ∞,
+
+then G  (1) = k k f (k). However, this is not now the expectation E(X ), but rather the
+“defective” expectation
+E(X I {X < ∞}) = E(X ; X < ∞) = E(X |X < ∞)P(X < ∞),
+where I {X < ∞} is the indicator of the event that X is ﬁnite.
+In the general case, we have likewise
+G  (1) = E(X ||X | < ∞)P(|X | < ∞)
+when the expectation exists. In such cases, it can be of interest to calculate
+E(X |X < ∞) =
+
+G  (1)
+.
+G(1)
+
+6.3 Sums of Independent Random Variables
+
+(1)
+
+If X and Y are independent, then the mass function of their sum Z = X + Y is
+
+f X ( j) f Y (k − j).
+f Z (k) =
+j
+
+Practical folk (such as statisticians and the like) are frequently interested in the sum of n
+independent random variables:
+(2)
+
+S=
+
+n
+
+1
+
+Xi .
+
+240
+
+6 Generating Functions and Their Applications
+
+The prospect of performing the summation in (1) on n − 1 occasions to ﬁnd
+f S (k) is not an attractive one. The next theorem renders it unnecessary in many important
+cases.
+(3)
+
+Theorem
+(a) Let X 1 and X 2 be independent with generating functions G 1 (s) and
+G 2 (s), respectively. Then the sum Z = X 1 + X 2 has generating function
+
+(4)
+
+G(s) = G 1 (s)G 2 (s).
+(b) More generally, if (X i ; 1 ≤ i ≤ n)are independent with generating functions
+(G i (s); 1 ≤ i ≤ n), then the sum Z = n1 X i has generating function
+G Z (s) =
+
+n
+
+
+G i (s).
+
+i =1
+
+Proof (a) Because X 1 and X 2 are independent, s X 1 and s X 2 are also independent. Hence,
+G Z (s) = E(s X 1 +X 2 ) = E(s X 1 )E(s X 2 )
+= G 1 (s)G 2 (s).
+
+by Theorem 5.3.8
+
+
+
+Part (b) is proved similarly.
+
+Example: Binomial Sum
+Let X and Y be independent and binomially distributed
+with parameters (m, p) and (n, p), respectively. Then recalling Example 6.2.11, we have
+G X +Y (s) = E(s X +Y ) = E(s X )E(s Y )
+= (1 − p + ps)
+
+m+n
+
+by independence
+
+.
+
+Hence, X + Y is binomially distributed with parameters m + n and p, using
+Theorem 6.2.5, the uniqueness theorem.
+
+s
+
+(5)
+
+Example
+Let (X i ; i ≥ 1) be independent Poisson random
+n variables having respective
+parameters (λi ; i ≥ 1). Find the mass function of Z = i=1 X i .
+Solution
+
+Reproducing the argument of the above theorem, we have:
+G Z (s) = E(s Z ) =
+
+n
+
+i=1
+
+= exp
+
+n
+
+
+E(s X i )
+
+by independence
+
+
+
+λi (s − 1)
+
+by Example 6.2.12.
+
+i=1
+
+Thus, Z is Poisson with parameter
+
+n
+
+i=1 λi , by the uniqueness theorem.
+
+s
+
+6.3 Sums of Independent Random Variables
+
+(6)
+
+241
+
+Example  Let (X i ; i ≥ 1) be independently and uniformly distributed on {1, 2, . . . , n}.
+k
+X i , and deﬁne
+Let Sk = i=1
+Tn = min {k: Sk > n}.
+(Thus, Tn is the smallest number of the X i required to achieve a sum exceeding n.) Find
+the mass function and p.g.f. of Tn , and hence calculate E(Tn ) and var (Tn ).
+Solution
+
+First, we observe that Tn ≥ j + 1 if and only if S j ≤ n. Therefore,
+P(Tn ≥ j + 1) = P(S j ≤ n).
+
+(7)
+Now, by independence,
+
+1
+E(z ) = (E(z )) = j
+n
+Sj
+
+X1
+
+
+
+j
+
+z − z n+1
+1−z
+
+j
+by Example 6.1.2.
+
+Hence, by Example 6.1.9,
+∞
+
+
+(8)
+
+z k P(S j ≤ k) =
+
+z
+n
+
+k= j
+
+(9)
+
+Equating coefﬁcients of z n on each side of (8) gives
+ 
+1 n
+P(S j ≤ n) = j
+= P(Tn ≥ j + 1) by (7).
+j
+n
+Hence,
+P(Tn = j) =
+
+1
+
+
+
+n j−1
+
+n
+j −1
+
+From (9), Tn has tail generating function
+n
+
+
+z P(Tn > j) =
+j
+
+j =0
+
+z
+n
+
+
+
+j
+
+
+
+and
+
+1
+− j
+n
+
+ 
+n
+.
+j
+
+  
+n
+z
+= 1+
+n
+j
+
+1
+E(Tn ) = 1 +
+n
+
+(10)
+
+n
+
+.
+
+n
+
+
+
+
+
+
+
+1 n−1
+1 n
+1 2n
+var (Tn ) = 2 1 +
++ 1+
+− 1+
+.
+n
+n
+n
+
+Finally, Tn has p.g.f.
+(12)
+
+n
+
+j =0
+
+Hence, from Theorem 6.2.13,
+
+(11)
+
+(1 − z n ) j
+.
+(1 − z) j+1
+
+j
+
+
+z
+G(z) = 1 + (z − 1) 1 +
+n
+
+n
+
+.
+
+s
+
+Generating functions become even more useful when you are required to consider the sum
+of a random number of random variables.
+
+242
+
+6 Generating Functions and Their Applications
+
+(13)
+
+Theorem: Random Sum
+Let N and (X i ; i ≥ 1) be independent random variables,
+and suppose that N is nonnegative and that for all i
+
+(14)
+
+E(s X i ) = G(s).
+
+Then the sum Z =
+
+N
+
+i=1 X i has generating function
+
+G Z (s) = G N (G(s)).
+Proof By conditional expectation,
+E(s Z ) = E(E(s Z |N )) = E(E(s X 1 ) . . . E(S X N )) by independence
+= E(G(s) N )
+by (14)
+= G N (G(s))
+
+
+by Deﬁnition 6.1.3, and the result follows.
+
+(15) Example
+You toss a fair coin repeatedly. Each time it shows a tail you roll a fair die,
+when the coin ﬁrst shows a head you stop. What is the p.g.f. of the total sum of the scores
+shown by the rolls of the die?
+Solution
+As you know by now, the number N of tails shown has mass function
+f N (k) = ( 12 )k+1 ; k ≥ 0, with generating function
+G N (s) =
+
+1
+.
+2−s
+
+The score shown by each die has p.g.f.
+G X (s) =
+
+1 s(1 − s 6 )
+,
+6 1−s
+
+and so the p.g.f. of the total is given by Theorem 13 as
+−1
+
+1 s(1 − s 6 )
+.
+G(s) = 2 −
+6 1−s
+(16) Example
+
+Let Z =
+
+s
+
+N
+
+i=1 X i , where
+
+f X (k) =
+
+−k −1 p k
+;
+log(1 − p)
+
+k ≥ 1, 0 < p < 1
+
+and f N (k) = λk e−λ /k!; k ≥ 1, 0 < λ. Show that Z has a negative binomial mass function.
+Solution
+
+It is easy to show that
+G X (s) =
+
+log(1 − sp)
+;
+log(1 − p)
+
+G N (s) = eλ(s−1) .
+
+6.3 Sums of Independent Random Variables
+
+243
+
+Z10 = 0
+Z9 = 1
+Z8 = 2
+Z7 = 1
+Z6 = 1
+Z5 = 3
+Z4 = 1
+Z3 = 2
+Z2 = 2
+Z1 = 1
+Z0 = 1
+
+Figure 6.1 A realization of a branching process. The orientation of the diagram explains
+the name.
+
+Hence,
+G Z (s) = e
+
+−λ
+
+
+exp(λG X (s)) =
+
+1− p
+1 − ps
+
+−λ(log(1− p))−1
+
+,
+
+s
+
+which is the p.g.f. of a negative binomial mass function.
+
+(17) Example: Branching
+A collection of particles behaves in the following way. At
+time n = 0, there is one particle. At time n = 1, it is replaced by a random number X of particles, where X has mass function f (k), k ≥ 0. At every subsequent time
+n = 2, 3, . . . , each particle in existence at that time is replaced by a random number of new particles, called its family. All family sizes are independent, and they
+all have the same mass function as the ﬁrst family X . [An example is given in Figure 6.1.]
+Let the number of particles in existence at time n be Z n . Find E(s Z n ) and lim P(Z n = 0).
+n→∞
+
+Solution
+Let G(s) = E(s X ) and G n (s) = E(s Z n ). Let the family sizes of the particles existing at time n be (X j ; 0 ≤ j ≤ Z n ). Then we obtain the attractive and useful
+representation
+Z n+1 =
+
+Zn
+
+
+Xj
+
+j=0
+
+and, by Theorem 13,
+G n+1 (s) = G n (G(s)).
+
+244
+
+6 Generating Functions and Their Applications
+
+(This basic argument is used repeatedly in the theory of branching processes.) Hence,
+G n+1 (s) is the (n + 1)th iterate of G(.), that is to say:
+G n+1 (s) = G(G(. . . G(s) . . .)),
+
+(18)
+
+n ≥ 0.
+
+Now let P(Z n = 0) = ηn , and deﬁne η to be the smallest nonnegative root of the equation
+G(s) = s
+
+(19)
+We now show that
+
+lim ηn = η.
+
+(20)
+
+n→∞
+
+First, we consider three trivial cases:
+(i) If f (0) = 0 then ηn = G n (0) = 0 = η.
+(ii) If f (0) = 1 then ηn = G n (0) = 1 = η.
+(iii) If f (0) + f (1) = 1, with f (0) f (1) = 0, then
+ηn = G n (0) = 1 − ( f (1))n → 1 = η.
+Thus, (20) is true in each case. In what follows, we exclude these cases by requiring that
+0 < f (0) < f (0) + f (1) < 1.
+Now note that {Z n = 0} ⊆ {Z n+1 = 0} and so, by Example 1.4.11,
+ηn ≤ ηn+1 ≤ 1.
+Hence, limn→∞ ηn exists; let us denote it by λ. By (18), G n+1 (0) = G(G n (0)); now letting
+n → ∞ and using the continuity of G(s), we ﬁnd that λ is a root of (19):
+λ = G(λ).
+However, if for some n, ηn < η then, because G(s) is increasing,
+ηn+1 = G(ηn ) ≤ G(η) = η.
+But η0 = G(0) ≤ G(η) = η, and so ηn < η for all n. Hence, λ ≤ η and so λ = η.
+
+s
+
+Once again, we conclude with a note about defective random variables. If X and Y are
+defective, then they are independent if P(X = i, Y = j) = P(X = i)P(Y = j) for all ﬁnite
+X and Y . Hence, we can still write
+G X +Y (s) = G X (s)G Y (s),
+and we can denote this by
+E(s X +Y ) = E(s X )E(s Y ).
+if we remember that the expectation is taken only over the ﬁnite part of the distribution.
+
+6.4 Moment Generating Functions
+
+245
+
+6.4 Moment Generating Functions
+
+The moments (µk ; k ≥ 1) of a random variable X also form a collection of real numbers,
+so we may also expect their generating functions to be useful. In this case, it is convenient
+to use the exponential generating function of the collection (µk ; k ≥ 1).
+(1)
+
+Deﬁnition
+Let the random variable X have ﬁnite moments µk = E(X k ) for all
+k ≥ 1. Then the moment generating function (or m.g.f.) of X is the function M X (t)
+given by
+M X (t) =
+
+(2)
+
+∞
+
+µk t k
+k=0
+
+(3)
+
+k!
+
+.
+
+
+
+If X takes only a ﬁnite number of values, then we easily obtain the convenient representation
+
+∞
+∞
+
+
+(X t)k
+(X k )t k
+=E
+= E(e X t ).
+E
+M X (t) =
+k!
+k!
+k=0
+k=0
+More generally, 
+(3) holds provided the moments µk do not get too large as k increases.
+For example, if ∞
+k=0 |µk |/k! < ∞, then M X (t) exists for |t| < 1, and we can use the
+equivalent of Theorem 6.2.1. This yields
+µk = M X(k) (0).
+
+(4)
+From (3), we ﬁnd that
+
+M X (t) = G X (et ),
+
+(5)
+where G X (s) is the p.g.f. of X .
+(6)
+
+Example
+Let X have a negative binomial distribution with mass function f (k) =
+k n
+( n+k−1
+)q
+p
+,
+k
+≥ 0. By the negative binomial expansion,
+k
+
+n
+
+
+∞
+
+p
+n n+k −1
+k k
+q s =
+p
+, |s| < q −1 .
+G(s) =
+k
+1
+−
+qs
+k=0
+Then X has moment generating function
+n
+
+p
+, t < − log q.
+M(t) =
+1 − qet
+Let us consider an example in which X may take negative integer values.
+
+(7)
+
+Example
+
+Let X have mass function
+f (k) =
+
+1 |k|−1
+(1 − q);
+q
+2
+
+k = ±1, ±2, . . . ,
+
+s
+
+246
+
+6 Generating Functions and Their Applications
+
+where 0 < q < 1. Then X has p.g.f.
+
+
+1
+s k q |k|−1 (1 − q)
+2
+k=0
+
+
+s
+1
+1
++
+,
+= (1 − q)
+2
+1 − qs
+s−q
+
+G(s) =
+
+q < |s| < q −1 .
+
+Hence, X has m.g.f.
+
+
+et
+1
+1
+,
++ t
+M(t) = (1 − q)
+2
+1 − qet
+e −q
+
+log q < t < − log q.
+
+In this case, M(t) exists in an interval including the origin, and (4) holds.
+
+s
+
+The factorial moments (µ(k) ; k ≥ 1) also have a generating function, which is related to
+the probability generating function as follows:
+ µ(k) t k
+
+(8)
+
+k
+
+k!
+
+ (X (X − 1) . . . (X − k + 1))t k
+E
+k!
+k
+∞
+
+n! P(X = n) k
+t
+=
+(n − k)!
+k!
+k n=k
+∞
+n 
+
+
+n k
+=
+P(X = n)
+t
+k
+n=0
+k=0
+
+=
+P(X = n)(1 + t)n = G X (1 + t).
+=
+
+n
+
+The change in the order of summation is justiﬁed because the terms in the sum are all
+nonnegative.
+Now let us make the important observation that both of these moment generating functions are useful for dealing with sums of independent random variables for essentially the
+same reasons that made the p.g.f. so useful. To see this, let X and Y be independent, and
+set Z = X + Y . Then
+M Z (t) = E(et(X +Y ) ) = M X (t)MY (t)
+
+(9)
+
+by independence.
+
+Likewise,
+G Z (1 + t) = E((1 + t) Z ) = G X (1 + t)G Y (1 + t).
+
+(10)
+
+Finally, we record the existence of yet another function that generates the moments of X ,
+albeit indirectly.
+(11) Deﬁnition
+
+If the function
+κ(t) = log(E(e X t )) = log(M X (t))
+
+6.5 Joint Generating Functions
+
+247
+
+can be expanded in powers of t, in the form
+κ(t) =
+
+(12)
+
+∞
+
+
+κr t r /r !,
+
+r =1
+
+
+
+then it is called the generating function of the cumulants (κr ; r ≥ 1).
+(13) Example
+
+If X is Poisson with parameter λ, then
+log (M X (t)) = log (exp[λ(et − 1)]) = λ(et − 1) =
+
+∞
+
+λ
+
+r!
+r =1
+
+Hence, for all r, κr = λ.
+
+tr .
+
+s
+
+6.5 Joint Generating Functions
+
+Generating functions can be equally useful when we want to consider the joint behaviour
+of a number of random variables. Not surprisingly, we need a joint generating function.
+(1)
+
+Deﬁnition
+A random vector (X 1 , . . . , X n ), with joint mass function f (x1 , . . . , xn ),
+has a joint probability generating function
+
+
+s x1 s x2 . . . s xn f (x1 , . . . , xn ).
+G X (s) = G X 1 , . . . , X n (s1 , . . . , sn ) =
+x1 ,x2 ,...,xn
+
+By Theorem 5.3.1, we obtain the following useful representation of G,
+
+n
+
+ X
+X1 X2
+Xn
+G X (s) = E s1 s2 . . . sn = E
+si i .
+i=1
+
+(2)
+
+Example
+A coin shows heads with probability p or tails with probability q = 1 − p.
+If it is tossed n times, then the joint p.g.f. of the number X of heads and the number of
+tails is
+
+
+
+s X
+s n
+X Y
+n
+G(s, t) = E(s t ) = t E
+= tn q + p
+because X is binomial,
+t
+t
+= (qt + ps)n .
+
+s
+
+The fact that G is the nth power of (qt + ps) suggests that independence could have been
+used to get this result. We use this idea in the next example.
+(3)
+
+Example: de Moivre trials
+Each of a sequence of n independent trials results in a
+win, loss, or draw, with probabilities α, β, and γ respectively. Find the joint p.g.f. of the
+wins, losses, and draws, the so-called trinomial p.g.f.
+Solution
+Let Wi , L i , and Di be the respective indicators on the ith trial of a win, loss,
+or draw. Then
+E(x Wi y L i z Di ) = αx + βy + γ z.
+
+248
+
+6 Generating Functions and Their Applications
+
+But the required joint p.g.f. is
+ n
+n
+n
+G(x, y, z) = E x 1 Wi y 1 L i z 1 Di = [E(x Wi y L i z Di )]n
+
+by independence,
+
+= (αx + βy + γ z)n .
+
+s
+
+Knowledge of the joint p.g.f. entails knowledge of all the separate p.g.f.s because, for
+example, if X and Y have joint p.g.f. G(s, t), then
+G X (s) = E(s X ) = E(s X 1Y ) = G(s, 1).
+
+(4)
+Likewise,
+
+G Y (t) = G(1, t).
+
+(5)
+
+Indeed, we can quickly obtain the p.g.f. of any linear combination of X and Y ; for example,
+let Z = a X + bY , then
+E(s Z ) = E(s a X +bY ) = E(s a X s bY ) = G(s a , s b ).
+
+(6)
+
+Further, the joint generating function also provides us with the joint moments when they
+exist, in the same way as G X (s) provides the moments of X .
+(7)
+
+Example
+Let X and Y have joint p.g.f. G(s, t) and suppose that X and Y have ﬁnite
+variance. Then E(X Y ) exists (by the Cauchy–Schwarz inequality) and
+∂2G
+∂2
+=
+E(s X s Y ) = E(X Y s X −1 t Y −1 ).
+∂s∂t
+∂s∂t
+Hence,
+E(X Y ) =
+
+(8)
+Likewise,
+
+$
+∂G $$
+,
+E(X ) =
+∂s $s=t=1
+
+$
+∂ 2 G $$
+.
+∂s∂t $s=t=1
+$
+∂G $$
+and E(Y ) =
+.
+∂t $s=t=1
+
+Quite often, we write G st (s, t) for ∂ 2 G/∂s∂t, and so on; in this form, the covariance of X
+and Y is given by
+
+s
+
+cov (X, Y ) = G st (1, 1) − G s (1, 1)G t (1, 1).
+
+(9)
+
+(10) Example 5.11 Revisited: Golf
+Recall that you play n holes of golf, each of which you
+independently win, lose, or tie, with probabilities p, q, and r , respectively. The numbers
+of wins, losses, and ties are X , Y , and Z , respectively, with X + Y + Z = n.
+(a) Find ρ(X, Y ).
+Solution
+
+(b) Find var (X − Y ).
+
+(a) By Example 3 above, we calculate
+E(x X y Y z Z ) = ( px + qy + r z)n = G(x, y, z)
+
+say.
+
+6.5 Joint Generating Functions
+
+249
+
+Hence,
+E(X ) = G x (1, 1, 1) = np,
+and
+var (X ) = G x x (1, 1, 1) + G x (1) − (G x (1))2 = np(1 − p),
+and
+E(X Y ) = G x y (1, 1, 1) = n(n − 1) pq.
+Therefore, the correlation between X and Y is
+(11)
+
+ρ(X, Y ) =
+
+cov (X, Y )
+1
+
+(var (X )var (Y )) 2
+n(n − 1) pq − n 2 pq
+
+
+
+pq
+=
+1 = −
+(1 − p)(1 − q)
+(n 2 p(1 − p)q(1 − q)) 2
+
+ 12
+
+.
+
+You should compare the labour in this calculation with the more primitive techniques of
+Example 5.11.
+(b) Using (6) with a = 1, b = −1, we have, on setting W = X − Y ,
+G W (s) = E(s X −Y ) = G(s, s −1 , 1) = ( ps + qs −1 + r )n .
+2
+
+Hence, dG W /ds = n( p − qs −2 )( ps + qs −1 + r )n−1 , and d dsG2W = n(n − 1)( p − qs −2 )2
+( ps + qs −1 + r )n−2 + 2nqs −3 ( ps + qs −1 + r )n−1 .
+Therefore,
+var (W ) = n(n − 1)( p − q)2 + 2nq + n( p − q) − n 2 ( p − q)2
+= n( p + q − ( p − q)2 ).
+
+s
+
+Finally, we record that joint generating functions provide a useful characterization of
+independence.
+
+(12)
+(13)
+
+Theorem
+and only if
+
+Let X and Y have joint p.g.f. G(s, t). Then X and Y are independent if
+G(s, t) = G(s, 1)G(1, t).
+
+Proof If (13) holds, then equating coefﬁcients of s j t k gives
+P(X = j, Y = k) = P(X = j)P(Y = k),
+as required. The converse is immediate by Theorem 5.3.8.
+
+
+
+(14) Example 5.5.8 Revisited: Eggs
+Recall that the number X of eggs is Poisson with
+parameter λ, and eggs hatch independently with probability p. Let Y be the number that
+do hatch, and Z the number that do not. Show that Y and Z are independent, and also that
+√
+ρ(X, Y ) = p.
+
+250
+
+Solution
+
+6 Generating Functions and Their Applications
+
+Conditional on X = x, the number Y of hatchings is binomial with p.g.f.
+E(s Y |X = x) = ( ps + 1 − p)x .
+
+(15)
+
+Hence, by conditional expectation,
+
+
+
+
+y Y
+|X
+E(y Y z Z ) = E(y Y z X −Y ) = E z X E
+z
+ 
+
+X
+py
++1− p
+= E zX
+by (15)
+z
+= exp (λ( py + (1 − p)z − 1)) since X is Poisson,
+= eλp(y−1) eλ(1− p)(z−1) .
+
+Hence, Y and Z are independent by Theorem 12. Furthermore, we see immediately that
+Y is Poisson with parameter λp.
+To ﬁnd ρ(X, Y ), we ﬁrst ﬁnd the joint p.g.f. of X and Y , again using conditional
+expectation. Thus,
+E(s X y Y ) = E(s X E(y Y |X )) = E(s X ( py + 1 − p) X ) = exp (λ(s( py + 1 − p)− 1)).
+√
+Hence, using (7), E(X Y ) = λ2 p + λp, and so, using the ﬁrst part, ρ(X, Y ) = p. You
+should compare this with the method of Example 5.5.8.
+
+s
+
+(16) Example: Pairwise Independence
+Independent random variables X and Y each take
+the values +1 or −1 only, and P(X = 1) = a, with P(Y = 1) = b. Let Z = X Y . Show
+that there are values of a and b such that X, Y, and Z are pairwise independent.
+(17) Solution
+
+Consider the joint probability generating function of X and Z .
+G(s, t) = E(s X t Z ) = E(s X t X Y ) = E(E(s X t X Y |X ))
+
+sX
+X X
+= E bs t + (1 − b) X
+t
+
+
+
+b
+t
+s
++ (1 − b)
+= a bst + (1 − b) + (1 − a)
+t
+st
+s
+abs 2 t 2 + a(1 − b)s 2 + (1 − a)(1 − b)t 2 + b(1 − a)
+st
+
+1
+(1 − a)(1 − b) 2
+=
+as 2 (bt 2 + 1 − b) +
+(bt + 1 − b)
+st
+b
+
+2
+−1
+,
++ b(1 − a) − (1 − b) (1 − a)b
+
+=
+
+which factorizes into a product of a function of s and a function of t if
+b2 − (1 − b)2 = 0,
+that is if b = 12 . In this case, X and Z are independent. If a = 12 then Y and Z are independent, and a = b = 12 entails the pairwise independence of X, Y , and Z .
+
+s
+
+6.6 Sequences
+
+251
+
+6.6 Sequences
+
+In Section 4.5, we deﬁned the convergence of a sequence of mass functions. This can be
+usefully connected to the convergence of corresponding sequences of generating functions.
+For sequences of probability generating functions, we have the following result, which we
+give without proof.
+(1)
+
+Theorem
+
+Let f (k) be a probability mass function with generating function
+G(s) =
+
+∞
+
+
+s k f (k),
+
+0
+
+and suppose that for each n ≥ 1, f n (k) is a probability mass function with generating
+function
+G n (s) =
+
+∞
+
+
+s k f n (k).
+
+0
+
+Then, as n → ∞, f n (k) → f (k) for all k, if and only if G n (s) → G(s) for all 0 < s < 1.
+We now use this to prove a result, which we have already shown by more primitive methods.
+(2)
+
+Example
+Let (X n ; n ≥ 1) be a sequence of random variables such that X n has a
+binomial distribution with parameters n and λ/n, λ > 0. Then
+
+
+λ λ n
+Xn
+E(s ) = 1 − + s → eλ(s−1) as n → ∞.
+n
+n
+This is the p.g.f. of a Poisson random variable, and so as n → ∞,
+P(X n = k) → e−λ λk /k!
+
+s
+
+It is often convenient to work with distributions and moment generating functions. In this
+case the following result (for which we give no proof) is useful.
+(3)
+
+Theorem Continuity
+Let {Fn (x); n ≥ 1} be a sequence of distribution functions with
+corresponding moment generating functions {Mn (t) : n ≥ 1}. If F(x) is a distribution
+having corresponding moment generating function M(t), then, as n → ∞, Mn (t) → M(t)
+for all t, if and only if Fn (x) → F(x), whenever F(x) is continuous.
+
+s
+
+Additional conditions are required to link the convergence of a sequence of mass functions
+or distributions and the convergence of their moments. The following theorem (for which
+again we offer no proof) is for a sequence of distributions.
+(4)
+
+Theorem
+Suppose that for each n ≥ 1, the distribution Fn (x) has moments
+{µ j (n); j ≥ 1}, such that |µ j (n)| < a j < ∞.
+
+252
+
+6 Generating Functions and Their Applications
+
+(i) Let Fn (x) → F(x), as n → ∞, wherever F(x) is continuous. Then as n → ∞, for
+each j,
+µ j (n) → µ j < ∞,
+and (µ j ; j ≥ 1) are the moments of F(x).
+(ii) Conversely, for each j ≥ 1, as n → ∞, suppose that
+µ j (n) → µ j < ∞,
+where {µ j ; 1 ≤ j} are the moments of a unique distribution F(x). Then, as n → ∞,
+Fn (x) → F(x) wherever F(x) is continuous.
+There is a corresponding result for sequences of mass functions.
+These theorems ﬁnd applications (for example) in the theory of random graphs, and other
+combinatorial problems where moments are more tractable than distributions.
+(5)
+
+Example
+Let X n have the binomial distribution with parameters n and λ/n. Then, by
+Example 6.2.11,
+
+
+ λ k
+n!
+1≤k≤n
+(k)
+(n−k)! n
+→ λk ,
+µ =
+k>n
+0
+as n → ∞. But, by Example 6.2.12, these are the factorial moments of the Poisson distribution. Hence, as n → ∞, P(X n = k) → e−λ λk /k!, which we proved directly in Example
+6.6.2, and earlier in Example 4.10.
+
+s
+
+(6)
+
+Example: Matching Again
+Recall that we are assigning n distinct letters randomly
+to n matching envelopes, and X is the number of matched pairs (of letter and envelope)
+that result. Consider the kth factorial moment of X .
+µ(k) = E(X (X − 1) . . . (X − k + 1);
+
+(7)
+
+1 ≤ k ≤ n.
+
+Let I j be the indicator of the event that the jth envelope contains the matching letter. Then
+the sum
+
+S=
+I j1 . . . I jk
+j1 < j2 <...< jk
+
+is just the number of ways of choosing a set of size k from the set of matching pairs.
+Another way of writing this is as ( Xk ). Hence,
+(8)
+
+(X (X − 1) . . . (X − k + 1))
+µ(k)
+=E
+k!
+k!
+ 
+X
+=E
+k
+= E(S)
+
+n
+=
+E(I j1 . . . I jk )
+k
+
+6.6 Sequences
+
+253
+
+
+n
+=
+P (a given set of k all match)
+k
+
+n 1
+1
+1
+1
+=
+·
+...
+= .
+k
+n n−1
+n−k+1
+k!
+Hence,
+
+
+µ
+
+(k)
+
+=
+
+1;
+0;
+
+k≤n
+k > n,
+
+!
+→1
+
+for all k
+
+as n → ∞. But these are the factorial moments of the Poisson distribution with parameter
+1, and so as n → ∞
+(9)
+
+1
+.
+ek!
+We conclude with an example that leads into the material of Chapter 7.
+P(X = k) →
+
+s
+
+(10) Example 6.3.6 Revisited
+Recall that the p.g.f. of Tn (where Tn is the number of
+uniform random variables required to give a sum greater than n) is
+n
+s
+.
+G(s) = 1 + (s − 1) 1 +
+n
+What happens as n → ∞? How do you interpret this?
+Solution
+
+From (6.3.12), as n → ∞,
+E(s Tn ) → 1 + (s − 1)es
+
+or, equivalently,
+t
+
+E(et Tn ) → 1 + (et − 1)ee .
+It follows that
+P(Tn = k) →
+
+1
+1
+− .
+(k − 1)! k!
+
+The limiting factorial moments have a simple form for
+E((1 + t) ) → 1 + te
+Tn
+
+1+t
+
+=1+
+
+∞
+
+
+e
+tk.
+(k
+−
+1)!
+k=1
+
+Hence, in the limit µ(k) = ek, k ≥ 1.
+To interpret this, we return to the original deﬁnition
+
+
+
+
+
+n
+n 
+
+
+Xi
+X i > n = min k :
+>1 ,
+Tn = min k :
+n
+1
+1
+where each X i /n is uniformly distributed on {1/n, 2/n, . . . , 1}. However, the limit of
+this sequence of uniform mass functions as n → ∞ is not the mass function of a discrete
+random variable.
+
+254
+
+6 Generating Functions and Their Applications
+
+Intuitively, you may feel that it is approaching the distribution of a variable that is
+uniformly distributed over the interval [0, 1]. This vague remark can in fact be given a
+meaning if we introduce new objects – namely, continuous random variables. This is the
+subject of the next two chapters; after much technical development, it can be shown that
+the limit of Tn above is indeed the number of independent random variables, each uniform
+on [0, 1], required to produce a sum greater than 1.
+6.7 Regeneration
+
+Many interesting and important sequences of random variables arise as some process
+evolves in time. Often, a complete analysis of the process may be too difﬁcult, and we
+seek simplifying ideas. One such concept, which recurs throughout probability, is the idea
+of regeneration. Here is an illustration:
+(1)
+
+Example: Maze
+You are trying to traverse an unknown labyrinth. You set off at a
+constant speed from the clock by the portal, and each time a decision is required you
+choose at random from the alternatives. It is dark, and you have no pencil and paper, so a
+description of the process (i.e., your route) is impossible.
+However, each time you arrive back at the portal, you can look at the clock and record Tr ,
+the time at which you return to the clock for the r th time; T0 = 0 say. Now it is clear from
+the setup that, when you set off for a second time (at time T1 ), your chance of following
+any given route around the maze is the same as when you set off for the ﬁrst time. Thus,
+the time until your second return, which is T2 − T1 , has the same distribution as T1 and is
+independent of T1 . The same is true of every subsequent interval between successive visits
+to the portal. These times (Tn ; n ≥ 0) are regenerative in the sense that the distribution
+of your paths starting from Tn is the same as the distribution starting from Tm , for all m
+and n.
+Of course, if you leave pebbles at junctions, or take a ball of string, or make a map, then
+this is no longer true.
+
+s
+
+Here is another archetypal illustration.
+(2)
+
+Example: Renewal
+A machine started at T0 = 0 uses a bit that wears out. As soon
+as it wears out, at time T1 , it is replaced by a similar bit, which in turn is replaced at T2 .
+Assuming that the machine performs much the same tasks as time passes, it seems reasonable to assume that the collection (X n ; n ≥ 1), where X n = Tn − Tn−1 , are independent
+and identically distributed. The replacement (or renewal) times are regenerative.
+
+s
+
+In fact, we have already used this idea of restarting from scratch; see, for example, Examples 4.4.9, 4.19, and 5.4.13.
+Here is another elementary illustration.
+Example
+Three players A, B, and C take turns rolling a fair die in the order
+ABC AB . . . until one of them rolls a 5 or a 6. Let X 0 be the duration of the game
+(i.e., the number of rolls). Let A0 be the event that A wins, and let Ar be the event that
+A wins after the r th roll. Let Wi , i ≥ 1 be the event that the game is won on the ith roll.
+
+6.7 Regeneration
+
+255
+
+Of course,
+1
+.
+3
+Now, as usual, we denote the indicator of any event E by I (E), and so
+A0 = W1 ∪ {W1c ∩ W2c ∩ W3c ∩ A3 }, where P(W1 ) =
+
+1
+s.
+3
+Next we observe that if the ﬁrst three rolls fail to yield 5 or 6, then the process regenerates
+(in the sense discussed above), so X 0 = 3 + X 3 , where X 3 has the same distribution as
+X 0 . Hence,
+E(s X 0 I (W1 )) =
+
+E(s X 0 I (A3 )) = E(s 3+X 3 I (A3 )) = s 3 E(s X 0 I (A0 )).
+Therefore, we can write
+
+ 2
+
+3
+E(s X 0 I (A0 )) = E s X 0 I (W1 ) + I W1c ∩ W2c ∩ W3c ∩ A3
+1
+8
+= s + s 3 E(s X 0 I (A0 )).
+3
+27
+
+Hence,
+1
+s
+3
+.
+E(s X 0 I (A0 )) =
+8
+1 − s3
+27
+Likewise, in an obvious notation,
+2 2
+s
+9
+,
+E(s X 0 I (B0 )) =
+8
+1 − s3
+27
+and
+4 3
+s
+.
+E(s X 0 I (C0 )) = 27
+8
+1 − s3
+27
+Hence,
+E(s X 0 ) = E(s X 0 (I (A0 ) + I (B0 ) + I (C0 ))) =
+
+4s 3 + 6s 2 + 9s
+.
+27 − 8s 3
+
+s
+
+Now we consider a more general case.
+Let H be some phenomenon (or happening) that may occur or not at any time n =
+1, 2, 3, . . . Let Hn be the event that H occurs at time n, and deﬁne X n to be the time
+interval between the (n − 1)th and nth occurrences of H . Thus,
+X 1 = min {n > 0: Hn occurs}
+X 1 + X 2 = min {n > X 1 : Hn occurs}
+
+256
+
+6 Generating Functions and Their Applications
+
+Figure 6.2 A delayed renewal process. Here, X 1 = T1 = 3; X 2 = 2, X 3 = 5, X 4 = 1, . . .
+
+and so on. We suppose that (X n ; n ≥ 2) are independent and identically distributed random variables with mass function ( f (k); k ≥ 1) and p.g.f. G(s). The ﬁrst interval X 1 is
+independent of (X n ; n ≥ 2), but its mass function may or may not be the same as that of
+X 2 . This gives rise to two cases:
+Case (O) The ordinary case. The mass function of X 1 is ( f (k); k ≥ 1), the same as X 2 .
+Case (D) The delayed case. The mass functions of X 1 is (d(k); k ≥ 1), and
+E(s X 1 ) = D(s).
+These two cases admit a conventional interpretation: in the ordinary case, we suppose
+that H0 occurred, so X 1 has the same mass function as the other intervals; in the delayed
+case, H0 did not occur, so X 1 may have a different mass function.
+The mathematical structure described above is known as a recurrent event process, or
+alternatively as a discrete renewal process. The important point about such a process is that
+each time H occurs, the process regenerates itself, in the sense discussed above. Figure 6.2
+displays a realization of a renewal process.
+Now Examples 1 and 2 make it clear that there are two essentially different types of
+renewal process. In Example 1, there is always a chance that you do traverse the maze (or
+encounter the Minotaur), and so do not return to the entrance. That is,
+P(X 2 < ∞) < 1.
+Such a process is called transient. However, all machine bits wear out eventually, so in
+(2) we have
+P(X 2 < ∞) = 1.
+Such a process is called persistent (or recurrent).
+Now deﬁne the probabilities u n = P(Hn ), n ≥ 1. A natural question is to ask whether
+this distinction between persistence and transience can also be observed in the properties
+of u n . (The answer is yes, as we will see.)
+It is customary to make a further distinction between two different types of persistent
+renewal process.
+Deﬁnition
+If E(X 2 ) = ∞, then the process is said to be null; if E(X 2 ) < ∞, then the
+process is said to be nonnull.
+Note that E(X 2 ) is sometimes known as the mean recurrence time of the process. 
+Ordinary renewal is just a special case of delayed renewal, of course, but it is convenient to keep them separate. We therefore deﬁne u 0 = 1 and u n = P(Hn ), in the ordinary
+case; and v0 = 0, and vn = P(Hn ), in the delayed case. These have respective generating
+
+6.7 Regeneration
+
+257
+
+
+∞
+n
+n
+functions, U (s) = ∞
+0 u n s and V (s) =
+1 vn s . [Remember that U (s) and V (s) are
+not probability generating functions in the sense in which we use that term.]
+Now we have the following:
+(3)
+
+Theorem
+
+(i)
+
+(ii)
+
+U (s) =
+
+1
+1 − G(s)
+
+V (s) =
+
+D(s)
+.
+1 − G(s)
+
+Proof By conditional probability, in Case (O),
+un =
+
+n
+
+
+P(Hn |X 1 = k)P(X 1 = k).
+
+k=1
+
+However, given Hk , the probability of any later occurrence of H is as if the process started
+at k. That is to say
+P(Hn |X 1 = k) = P(Hn |Hk ) = P(Hn−k ) = u n−k , n ≥ k.
+
+(4)
+Hence,
+
+un =
+
+n
+
+
+u n−k f (k).
+
+k=1
+
+Because the right-hand sum is a convolution, its generating function is the product of the
+two generating functions U (s) and G(s), whence
+U (s) − 1 = U (s)G(s).
+
+(5)
+Likewise, in Case (D),
+vn =
+=
+
+n
+
+k=1
+n
+
+
+P(Hn |X 1 = k)P(X 1 = k) =
+
+n
+
+
+P(Hn |X 1 = k) d(k)
+
+k =1
+
+u n−k d(k)
+
+by (4).
+
+k=1
+
+Hence,
+V (s) = U (s)D(s) =
+
+(6)
+
+D(s)
+1 − G(s)
+
+by (5).
+
+
+
+Thus, given G(s) [and D(s) in the delayed case] we can in principle ﬁnd P(Hn ), the
+probability that H occurs at time n, by expanding U (s) in powers of s.
+Conversely, given V (s) [and U (s) in the delayed case] we can ﬁnd G(s) and D(s), and
+also decide whether the process is transient or persistent.
+(7)
+
+Corollary
+
+If U (1) < ∞, then the process is transient. Otherwise, it is persistent.
+
+Proof This follows immediately from Theorem 3(i).
+
+
+
+258
+
+(8)
+
+6 Generating Functions and Their Applications
+
+Example: Coincidences
+Suppose that a number c of independent simple symmetric
+random walks are started simultaneously from the origin. Let H be the “happening” that
+they are all at the origin, so H2n is the event that all the c walks are at 0 on the 2nth step.
+Show that H is persistent when c = 2, but H is transient for c ≥ 3.
+Solution For c = 2, we recall that
+  2
+1 2n
+2
+P(H2n ) = (u 2n ) =
+4n n
+
+
+ 
+
+
+1 2
+1 2
+1 2
+= 1−
+··· 1 −
+1−
+2
+4
+2n
+
+2 
+
+ 
+
+
+1
+1
+1
+1
+1
+> 1−
+1−
+1−
+... 1 −
+1−
+2
+3
+4
+2n − 1
+2n
+1
+on successive cancellation.
+=
+4n
+
+Hence, H is persistent as n P(H2n ) diverges.
+For c ≥ 3, we have similarly that
+  c
+
+
+ 
+
+ c/2
+1 2
+1 2n
+1 2
+1 2
+P(H2n ) =
+1−
+=
+1−
+··· 1 −
+4n n
+2
+4
+2n
+c/2 
+c/2
+
+1 2 3 4
+1
+2n − 1 2n
+. . . ···
+.
+<
+=
+.
+2 3 4 5
+2n 2n + 1
+2n + 1
+
+Hence, H is transient as n (1/(2n + 1))c/2 < ∞.
+
+(9)
+
+Example: Stationary Renewal
+then
+
+s
+
+Let X > 0 have p.g.f. G(s). Show that if E(X ) < ∞,
+H (s) =
+
+1 − G(s)
+1
+E(X ) 1 − s
+
+is the p.g.f. of a nonnegative random variable.
+Now consider the delayed case of a recurrent event process in which E(s X 2 ) = G(s)
+and E(s X 1 ) = H (s). Show that for all n
+(10)
+
+P(Hn ) =
+
+1
+G  (1)
+
+.
+
+Solution
+From (6.1.6), we have that H (s) is a power series with nonnegative coefﬁcients. Furthermore, by L’Hôpital’s rule,
+−G  (s)
+=1
+s↑1 −E(X )
+
+H (1) = lim
+
+6.8 Random Walks
+
+Hence, H (s) is a p.g.f. Finally, if D(s) = H (s) in (6), then
+1
+,
+V (s) =
+E(X 2 )(1 − s)
+and the result follows.
+
+259
+
+s
+
+6.8 Random Walks
+
+Recall that if (X i ; i ≥ 1) are independent and identically distributed, then Sn = So +
+
+n
+1 X i is a random walk. Because generating functions have been so useful in handling
+sums of random variables, we may expect them to be exceptionally useful in analysing
+random walks. If X has p.g.f. G(z), then trivially we have, when S0 = 0.
+G n (z) = E(z Sn ) = (G(z))n .
+
+(1)
+
+It follows that we can deﬁne the function H by
+∞
+
+H (z, w) =
+wn G n (z) = (1 − wG(z))−1 .
+n=0
+
+This bivariate generating function tells us everything about Sn in principle, as P(Sn = r )
+is the coefﬁcient of z r wn in H (z, w). However, the analytical effort required to work at
+this level of generality is beyond our scope. We proceed by considering simple examples.
+(2)
+
+
+Example: Simple Symmetric Random Walk
+Let (Sn = n1 X i ; n ≥ 0) be a simple
+symmetric random walk, with S0 = 0. Let Hn be the event that Sn = 0. Because steps
+of the walk are independent and identically distributed, it follows that visits to the origin
+form an ordinary renewal process. Here, u n = P(Sn = 0).
+Deﬁne the ﬁrst passage times,
+T j = min {n > 0 : Sn = j|S0 = 0},
+
+n
+Tj
+and the generating functions, U (s) = ∞
+0 u n s and G j (s) = E(s ).
+Find U (s) and G 0 (s), and show that the simple symmetric random walk is persistent
+null.
+Solution
+
+We give two methods of ﬁnding U (s) and G j (s). For the ﬁrst, deﬁne
+T j∗ = min {n: Sn = j − 1|S0 = −1}
+
+and let T̂1 be a random variable having the same distribution as T1 , but independent of
+T1 . Because the steps of the walk are independent, and symmetrically and identically
+distributed, it follows that
+(3)
+
+E(s T1 ) = E(s T−1 ),
+
+(4)
+
+T2 = T1 + T̂1 ,
+and
+∗
+
+(5)
+
+E(s T2 ) = E(s T2 ) = E(s T1 +T̂1 )
+
+(6)
+
+= (G 1 (s))2 ,
+
+by independence.
+
+260
+
+6 Generating Functions and Their Applications
+
+Hence, by conditional expectation,
+1
+1
+E(s T1 |X 1 = 1) + E(s T1 |X 1 = −1)
+2
+2
+1
+1
+1
+1
+∗
+= s + E(s 1+T2 ) = s + s(G 1 (s))2 by (6).
+2
+2
+2
+2
+
+G 1 (s) = E(E(s T1 |X 1 )) =
+
+(7)
+
+One root of (7) is a probability generating function, so this root is G 1 (s), namely,
+1
+
+G 1 (s) = (1 − (1 − s 2 ) 2 )/s.
+Now, using conditional expectation again,
+G 0 (s) = E(E(s T0 |X 1 ))
+1
+1
+= E(s T0 |X 1 = 1) + E(s T0 |X 1 = −1)
+2
+2
+1
+1
+= sE(s T1 ) + sE(s T−1 ) = sG 1 (s) by (3)
+2
+2
+
+(8)
+
+1
+
+= 1 − (1 − s 2 ) 2 .
+Hence,
+(9)
+
+U (s) = (1 − s 2 )−1/2
+
+by Theorem 6.7.3.
+
+Alternatively, we could observe that S2n = 0 if and only if the walk has taken n steps
+in each direction. They may be taken in any order so
+  2n
+2n
+1
+u 2n =
+(10)
+.
+n
+2
+Now recall that by the negative binomial theorem
+  2n
+∞ 
+
+2n
+1
+−1
+(11)
+x n = (1 − x) 2 ,
+2
+n
+0
+and (9) and (8) follow.
+Setting s = 1 shows that G 0 (1) = 1 (and U (1) = ∞) so H is persistent. However,
+s
+d
+G 0 (s) =
+1 ,
+ds
+(1 − s 2 ) 2
+and setting s = 1 shows that H is null; the expected number of steps to return to the origin
+is inﬁnite as we know already, recall Example 5.6.27.
+
+s
+
+Now that we have the generating functions U (s) and G 0 (s), we can provide slicker derivations of earlier results. For example,
+1
+
+G 0 (s) = 1 − (1 − s 2 ) 2 = 1 − (1 − s 2 )U (s).
+
+6.8 Random Walks
+
+261
+
+Hence, equating coefﬁcients of s 2k gives (5.18.1)
+f 2k = u 2k−2 − u 2k .
+
+(12)
+Also,
+s
+
+d
+1
+G 0 (s) = s 2 (1 − s 2 )− 2 = s 2 U (s)
+ds
+
+and so equating coefﬁcients again gives (5.18.6)
+2k f 2k = u 2k−2 .
+
+(13)
+
+See Problem 41 for another simple application of this. Here is a trickier application.
+(14) Example: Truncated Walk
+Let (Sn ; n ≥ 1) be a simple symmetric random walk with
+S0 = 0, and let T = min {n > 0 : Sn = 0}. Let T ∧ 2m = min {T, 2m} and show that
+E(T ∧ 2m) = 4mu 2m = 2E(|S2m |).
+
+(15)
+
+Solution
+We establish (15) by showing that all three terms have the same generating
+function. Equality then follows by the uniqueness theorem. First,
+∞
+
+
+4mu 2m s 2m = 2s
+
+0
+
+∞
+
+
+2ms 2m−1 u 2m = 2s
+
+1
+
+2s 2
+d
+U (s) =
+.
+ds
+(1 − s 2 )3/2
+
+Second, recalling (13) and (5.18.2),
+E(T ∧ 2m) =
+
+m
+
+
+2k f 2k + 2mP(T > 2m) =
+
+k=1
+
+m
+
+
+u 2k−2 + 2mu 2m .
+
+k=1
+
+Hence,
+
+
+s 2m E(T ∧ 2m) =
+
+
+
+s 2m
+
+m
+2
+
+m−1
+
+
+u 2k + s
+
+k=0
+
+s U (s)
+=
++ sU  (s)
+1 − s2
+2s 2
+=
+3 .
+(1 − s 2 ) 2
+
+
+
+2ms 2m−1 u 2m
+
+m
+
+using (6.1.10)
+
+Finally, using the hitting time theorem (5.6.17),
+
+
+s 2m E(|S2m |) = 2
+
+
+
+m
+
+s 2m
+
+m
+
+=2
+
+
+m
+
+= 2s
+
+s 2m
+
+m
+
+k=1
+m
+
+
+2kP(S2m = 2k)
+2m f 2k (2m)
+
+k=1
+
+m
+d  2m 
+s
+f 2k (2m)
+ds m
+k=1
+
+262
+
+6 Generating Functions and Their Applications
+
+d
+(G 2 (s) + G 4 (s) + G 6 (s) + . . .)
+ds
+(G 1 (s))2
+d
+by Example (2)
+= 2s
+ds (1 − (G 1 (s))2 )
+s2
+d
+1
+= s ((1 − s 2 )− 2 − 1) =
+3 .
+ds
+(1 − s 2 ) 2
+= 2s
+
+s
+
+As a ﬁnal example of the use of generating functions in random walks, we establish yet
+another arc-sine law.
+(16) Example: Arc-Sine Law for Leads
+Let (Sn ; n ≥ 0) be a simple symmetric random
+walk with S0 = 0. Of the ﬁrst 2n steps, let L 2n denote the number that do not enter the
+negative half-line. Show that
+
+ 
+2n − 2k
+−n 2k
+(17)
+.
+P(L 2n = 2k) = 4
+n−k
+k
+Solution
+(18)
+
+Deﬁne the generating functions
+G 2n (s) = E(s L 2n )
+
+and
+
+H (s, t) =
+
+∞
+
+
+t 2n G 2n (s).
+
+n=0
+
+Let T be the number of steps until the walk ﬁrst revisits zero, and recall that
+∞
+
+1
+(19)
+s 2r f (2r ) = 1 − (1 − s 2 ) 2 .
+F(s) = E(s T ) =
+1
+
+Now using conditional expectation
+E(s L 2n ) = (E(E(s L 2n |T )
+n
+∞
+
+
+E(s L 2n |T = 2r ) f (2r ) + E(s L 2n |T > 2n)
+f (2r ).
+=
+r =1
+
+r = n+1
+
+Now, depending on the ﬁrst step,
+1
+= P(L T = 0),
+2
+and visits to zero constitute regeneration points for the process L 2n . Hence, we may rewrite
+(18) as
+
+
+
+
+n
+∞
+
+
+1 2r
+1 2n
+(s + 1) f (2r ) +
+(s + 1) .
+G 2n−2r
+f (2r )
+G 2n (s) =
+2
+2
+r =1
+r =n+1
+P(L T = T ) =
+
+Multiplying by t 2n and summing over n yields
+H (s, t) =
+
+1
+1 1 − F(st) 1 1 − F(t)
+H (s, t)(F(st) + F(t)) + .
++ .
+,
+2
+2 1 − t 2s2
+2 1 − t2
+
+by the convolution theorem. Now substituting for F(.) from (19) gives
+H (s, t) = ((1 − s 2 t 2 )(1 − t 2 ))− 2 .
+1
+
+6.9 Review and Checklist for Chapter 6
+
+263
+
+The coefﬁcient of t 2n s 2k in this is (17). Now use Exercise 5.18.8 to produce the arc-sine
+distribution.
+
+s
+
+6.9 Review and Checklist for Chapter 6
+
+All random variables have a probability distribution, and many of them also have moments.
+In this chapter, we introduced two miraculous devices to help us with many of the chores
+involved in handling and using probabilities and moments.
+Probability generating function of X: p.g.f.
+
+G X (s) =
+P(X = n)s n = Es X .
+n
+
+Moment generating function of X: m.g.f.
+
+M X (t) =
+P(X = n)ent = Eet X .
+n
+
+You can think of these functions as organizers that store a collection of objects that
+they will regurgitate on demand. Remarkably, they will often produce other information if
+suitably stimulated; thus, the p.g.f. will produce the moments (if any exist), and the m.g.f.
+will produce the probability distribution (in most cases). We used them to study sums of
+independent random variables, branching processes, renewal theory, random walks, and
+limits. They have these properties:
+Connections:
+M X (t) = G X (et )
+Tails:
+T (s) =
+
+∞
+
+
+and
+
+s n P(X > n) =
+
+n=0
+
+G X (s) = M X (log s).
+1 − G X (s)
+,
+1−s
+
+when X ≥ 0.
+
+Uniqueness:
+f X (k) = G (k)
+X (0)/k!.
+Moments:
+(k)
+k
+µ(k) = G (k)
+X (1) and EX = M X (0)
+µ(k) = kT (k−1) (1).
+
+[Where µ(k) is the kth factorial moment.]
+Sums and random sums:
+For independent (X n ; n ≥ 1),
+n
+n
+
+
+G X r (s); E exp(t(X 1 + · · · X n )) =
+M X r (t).
+Es X 1 +···X n =
+r =1
+
+r =1
+
+For independent (X n ; n ≥ 1) and independent nonnegative integer valued N ,
+Es X 1 +···X N = G N (G X (s));
+
+E exp (t(X 1 + · · · + X N )) = G N (M X (t)).
+
+264
+
+6 Generating Functions and Their Applications
+
+Joint generating functions:
+G X (s) = E
+
+n
+
+
+srX r
+
+r =1
+)
+
+MX (t) = E exp
+
+n
+
+
+*
+tr X r
+
+r =1
+
+Independence:
+
+X and Y are independent if and only if
+E(x X y Y ) = G X (x)G Y (y), for all x, y, or
+E[exp(s X + tY )] = M X (s)MY (t),
+
+Branching:
+
+for all s, t.
+
+If the family size p.g.f. is G(s), then
+G m+n (s) = Es Z m+n = G m (G n (s)) = G n (G m (s)).
+
+The probability η of ultimate extinction is the smallest positive root of G(x) = x.
+Special generating functions:
+Binomial distribution (q + ps)n
+1−s n+1
+Uniform distribution on {0, 1, . . . , n} (n+1)(1−s)
+ps
+Geometric distribution 1−qs
+Poisson distribution eλ(s−1)
+ps n
+Negative binomial distribution ( 1−qs
+)
+Logarithmic distribution log(1−sp)
+log(1− p)
+Checklist of Terms for Chapter 6
+
+6.1 probability generating function
+tail generating function
+6.2 uniqueness theorem
+factorial moments
+6.3 sums and random sums
+branching process
+extinction probability
+6.4 moment generating function
+cumulant generating function
+6.5 joint probability generating function
+factorization and independence
+6.6 continuity theorem
+6.7 renewal process
+persistent
+transient
+null, nonnull
+6.8 simple random walk
+arc-sine law for leads
+
+

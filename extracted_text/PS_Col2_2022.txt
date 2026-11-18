@@ -1,0 +1,545 @@
+APPS @ UCU
+
+Probability and Statistics: colloquium II
+
+Probability & Statistics: colloquium II
+Random variables
+1
+
+Basic definitions and notions
+
+1. Discrete random variable
+2. Probability mass function (p.m.f.)
+3. Cumulative distribution function (c.d.f.)
+4. Binomial distribution
+5. Geometric distribution
+6. Poisson distribution
+7. Continuous random variable
+8. Probability density function (p.d.f.)
+9. Uniform distribution
+10. Exponential distribution
+11. Normal distribution
+12. Expectation and moments
+13. Variance and covariance
+14. Correlation and its properties
+15. Random vectors and their joint distributions
+16. Marginal distributions
+17. Conditional distributions
+18. Distribution of a transformed random variable
+19. Distribution of the sum of r.v.
+20. Probability generating function (p.g.f.)
+21. Moment generating function (m.g.f.)
+
+1
+
+Autumn 2022
+
+APPS @ UCU
+
+2
+
+Probability and Statistics: colloquium II
+
+Autumn 2022
+
+List of questions
+1. Discrete random variables; probability mass function and cumulative distribution function
+and their properties; examples
+2. Binomial distribution; Geometric distribution; Poisson distribution; examples
+3. Joint and marginal distributions; conditional distribution; examples
+4. Expectation of a random variables and its properties; examples
+5. Moments and variance; properties of variance
+6. Covariance and correlation
+7. Probability generating functions and their properties
+8. Continuous random variables; their properties
+9. Independent random variables; examples and properties
+
+10. Normal distribution and its properties
+11. Exponential distribution and its properties
+12. Independent random variables
+
+3
+
+Seminar 4
+
+Problem 1 (Discrete r.v. and their p.m.f.). Five men and five women are ranked according
+to their scores on an examination. Assume that no two scores are alike and all 10! possible
+rankings are equally likely. Let X denote the highest ranking achieved by a woman and let Y
+denote their lowest ranking. (For instance, X = 1 if the top-ranked person is a female.)
+(a) Find the probability mass function (p.m.f.) of a random variable X;
+(b) explain how to find the joint p.m.f. of a random vector (X, Y ), i.e., how to calculate the
+values p(X,Y ) (x, y) := P(X = x, Y = y) for all pairs of x and y;
+(c) what is the marginal distribution of X? Calculate the value of the marginal distribution
+of X for x = 3 and compare to the value found in part (a);
+(d) are the random variables X and Y independent?
+Problem 2 (Discrete r.v. and their p.m.f.). Suppose that a fair die is rolled twice. What is
+the probability mass function of the following random variables:
+(a) X = ‘‘the maximum value to appear in the two rolls’’;
+(b) Y = ‘‘the minimum value to appear in the two rolls’’. Give a short explanation
+why pX (j) = pY (7 − j) for j = 1, 2, . . . , 6.
+
+2
+
+APPS @ UCU
+
+Probability and Statistics: colloquium II
+
+Autumn 2022
+
+(c) Find the joint p.m.f of the random vector (X, Y ); calculate the marginal distribution of X
+and compare to part (a).
+(d) Are random variables X and Y independent?
+Problem 3 (Binomial distribution). A communications channel transmits the digits 0 and
+1. However, due to noise, the digit transmitted is incorrectly received with probability 0.2.
+Suppose that we want to transmit an important message consisting of n binary digits. To
+reduce the chance of error, we transmit 00000 instead of 0 and 11111 instead of 1. If the
+receiver of the message uses the “majority” rule for decoding, what is the probability that
+(a) the message will be wrong when decoded?
+(b) at most two binary digits of the original message will be wrongly decoded?
+(c) what is the most probable number of correctly decoded binary digits?
+What independence assumptions are you making?
+Problem 4 (Binomial distribution). When coin A is flipped, it lands on Heads with probability
+0.4; when coin B is flipped, it lands on Heads with probability 0.6. One of these coins is
+randomly chosen and flipped 10 times; let X denote the total number of Heads.
+(a) Is it true that a r.v. X has a binomial distribution?
+(b) Find the p.m.f. of the random variable X.
+(c) Given that the first of these ten flips lands Heads, what is the conditional distribution of
+the total number of Heads? (Hint: condition on the coin chosen)
+(d) Assuming that X = k, what is the (conditional) probability that coin A is tossed? For
+what k is it larger than 0.5?
+Problem 5 (Binomial distribution). Suppose that a biased coin that lands on Heads with
+probability p is flipped 10 times. Given that a total of 6 Heads results, find the conditional
+probability that the first 3 outcomes
+(a) are HTT (meaning that the first flip results in Heads, the second in Tails, and the third in
+Tails);
+(b) include precisely k Heads; k = 0, 1, 2, 3.
+Assume now that there are 2 Heads in the first three tosses of the coin.
+(c) What is the conditional probability that there are k Heads in all 10 tosses?
+(d) What is the most probable number of Heads in all 10 tosses?
+Problem 6 (Poisson distribution). Suppose that the number of new COVID-19 positive tested
+patients in the city A on day i is a Poisson random variable Xi of parameter λ = 10; assume
+also that the random variables X1 , X2 , . . . are independent.
+(a) Assume that by this noon, 5 new cases were reported. Find the probability that k newly
+COVID-19 infected patients will be reported today in total.
+3
+
+APPS @ UCU
+
+Probability and Statistics: colloquium II
+
+Autumn 2022
+
+(b) Find the probability that the number of newly COVID-19 infected patients tomorrow will
+be larger than today’s count.
+Assume that the number of new COVID-19 positive tested patients in the city B on day i is
+a Poisson random variable Yi of parameter µ = 20; assume also that all random variables Xi
+and Yj , i, j = 1, 2, . . . are independent.
+(c) Show that the random variable Xi + Yi has Poisson distribution of parameter 30.
+(d) Assume that 30 new COVID-19 infected patients were reported yesterday in the cities A
+and B in total. What is the probability that k of them come from A, k = 0, 1, . . . , 30?
+Problem 7 (Joint probability distribution). A fair coin is tossed three times. Denote by X
+the number of Heads in the first two tosses and by Y the number of Tails in the last two tosses
+of the coin.
+(a) Find the joint probability mass function pX,Y of X and Y :
+Events X = 0 X = 1 X = 2
+prob. X = 0 X = 1 X = 2
+Y =0
+...
+...
+...
+Y =0
+...
+...
+...
+Y =1
+
+...
+
+...
+
+...
+
+Y =1
+
+...
+
+...
+
+...
+
+Y =2
+
+...
+
+...
+
+...
+
+Y =2
+
+...
+
+...
+
+...
+
+(b) Calculate the marginal pmf’s of X and Y
+(c) What distributions do X and Y have?
+(d) Are X and Y independent?
+(e) Calculate the conditional pmf of X given that Y = 1
+Problem 8 (Joint probability distribution). You roll two fair dice, and they show X and Y ,
+respectively. Let U = min{X, Y }, V = max{X, Y }.
+(a) Write down the joint distributions of:
+(a) {U, X};
+
+(b) {U, V };
+
+(c) {X, Y, V }
+
+(b) Which of the above r.v. are independent?
+(c) Find the conditional p.m.f. of the r.v. X | U = u and Y | V = v.
+
+4
+
+Seminar 5
+
+Problem 9. If E(X) = 1, E(Y ) = −1, Var(X) = 4, and Var(Y ) = 3, find
+
+(a) E (X −1) ln 2 ;
+(b) E(3X 2 −5X);
+(c) E((−4−Y )Y );
+X)X).
+Problem 10. If E(X) = 2, E(Y ) = −1, E(X 2 ) = 5, and E(Y 2 ) = 4, find
+√
+
+(a) E X − eY + e2 ;
+(b) Var(π + 3Y );
+(c) E((5 − X)Y );
+4
+
+(d) Var(( 21 −
+
+(d) Var( 21 X + 13 Y ).
+
+APPS @ UCU
+
+Probability and Statistics: colloquium II
+
+Autumn 2022
+
+Problem 11. An urn contains 10 balls numbered 1 to 10. Two balls are sampled in turn
+without replacement and their numbers are denoted as X1 and X2 respectively. Let Y be the
+minimum of X1 and X2 .
+(a) Show that the distributions of X1 and X2 coincide.
+(b) Find expectation and variance of X1 .
+(c) Find covariance of X1 and X2 . Can you guess the sign before calculations? Are X1 and X2
+independent?
+(d) Find expectation and variance of Y .
+(e) Find the conditional distribution of X1 given that Y = y.
+Hint: the case X1 = y is special
+
+(f) Find expectation and variance of X1 given that Y = y.
+Problem 12. A fair coin is tossed repeatedly and independently until two consecutive heads
+or two consecutive tails appear. Denote by N the r.v. equal to the number of tosses made.
+(a) Find the p.m.f. of the r.v. N .
+(b) Find the expected value of the r.v. N .
+(c) Find the variance of the r.v. N .
+Assume now that the coin is tossed until we obtain a tail that is immediately preceded by a
+head; let a r.v. N1 denote the corresponding number of tosses.
+(d) Find the p.m.f. and the expected value of the r.v. N1 .
+Problem 13. A die with 6 faces, numbered 1, . . . , 6, is rolled a fixed number of times n. The
+probability that the ith face comes up on each roll is denoted pi and the results of different rolls
+are assumed independent. Let Xi be the number of times that the ith face comes up.
+(a) Find the joint p.m.f. pX1 ,...Xr (k1 , . . . , kr ) = P(X1 = k1 , . . . , Xr = kr ) for r = 1, 2, and 6.
+(b) Find the expected value of Xi .
+(c) Find the variance of Xi .
+(d) Find E[Xi Xj ] for i 6= j.
+Problem 14. Assume that X is a r.v. with geometric distribution G (p).
+(a) Calculate the probability generating function (p.g.f.) GX of X.
+(b) Use GX to find E(X), the second factorial moment µ(2) (X) and Var(X)
+
+5
+
+APPS @ UCU
+
+Probability and Statistics: colloquium II
+
+Autumn 2022
+
+Assume further that X1 , X2 , . . . are r. v.’s with geometric distribution G (p) and N is a r. v. with
+Poisson distribution P(λ). Assume that the r. v.’s N, X1 , X2 , . . . , are independent and set
+S := X1 + · · · + XN .
+(c) Calculate the p.g.f. GS of the r. v. S.
+Hint: condition on the event {N = n}, n ∈ Z+
+
+Problem 15. The number of people that enter an elevator at a certain time is a Poisson
+random variable with parameter λ = 10. The weight of each person (rounded to integer lbs) is
+independent of every other person’s weight, and is uniformly distributed between 100 and 200
+lb. Let Xi be the fraction of 100 by which the ith person exceeds 100 lb, e.g., if the 7th person
+weighs 175 lb, then X7 = 0.75. Let Y be the sum of the Xi .
+(a) Find the p.g.f. GY of the r. v. Y .
+(b) Use GY to compute the expected value of Y .
+(c) Verify your answer to part (b) by using the total probability law for expectations.
+Problem 16. Two balls are chosen randomly from an urn containing 8 white, 4 black, and 2
+orange balls. Suppose that we win $2 for each black ball selected and we lose $1 for each white
+ball selected. Let X denote our winnings. Find the expected value and variance of the random
+variable X.
+Problem 17. Suppose that a fair die is rolled twice. Find expectation and variance for the
+following random variables:
+(a) the maximum value to appear in the two rolls;
+(b) the minimum value to appear in the two rolls;
+(c) the value of the first roll minus the value of the second roll.
+Problem 18. Assume X and Y have joint probability mass function
+p(x, y)
+x=0
+x=1
+x=3
+
+y = −1 y = 1 y = 2 y = 3
+1/12
+1/4
+0
+0
+1/12
+1/12 1/12 1/12
+0
+0
+1/4
+1/12
+
+(a) Find E(X), E(Y ), E(S), E(D), and E(M ), where S = X + Y , D = X − Y , and M =
+max{X, Y }.
+(b) Find whether X is independent of Y .
+(c) Find variance of the random variables S and M .
+(d) Find covariance of X and D.
+(e) Find E(Y | X = x) for x = 0, 1, 3.
+6
+
+APPS @ UCU
+
+5
+
+Probability and Statistics: colloquium II
+
+Autumn 2022
+
+Seminar 6
+
+Problem 19. Assume that Z is a standard normal r.v. Find the p.d.f. of the following r.v.’s:
+(a) 2Z − 3;
+(b) |Z|;
+(c) Z 2 .
+Problem 20. (2pts) Assume that X1 , X2 , . . . , Xn are independent r.v.’s with distribution U (0, a). Find distribution (c.d.f. and p.d.f.) of the r.v.’s
+(d) U ∼ max{X1 , . . . , Xn };
+(e) V ∼ min{X1 , . . . , Xn }
+
+Problem 21. Suppose that X and Y have joint probability density function
+(
+9e−3x−3y
+x ≥ 0, y ≥ 0;
+fX,Y (x, y) =
+0
+otherwise
+(a) Find the marginal p.d.f.’s of X and Y ; prove that X and Y are independent.
+(b) find the joint distribution of the r.v.’s S := X + Y and Y ;
+(c) find the distribution of S
+(d) find the joint distribution of the r.v.’s D := X − Y and Y ;
+(e) find the distribution of D.
+Hint: in (b) and (d), use the formula for the p.d.f. of a transformed random vector (X ± Y, Y )
+
+Problem 22. Calculate the moment generating function (m.g.f.) gX (t) := E(etX ) of a r.v. X
+with the
+(a) uniform distribution U (a, b);
+(b) exponential distribution E (λ);
+(c) normal distribution N (µ, σ 2 )
+Problem 23. Alice and Bob enter simultaneously the grocery shop. Assume that their shopping times are independent r.v.’s X and Y respectively with exponential distribution of mean
+value 15 minutes.
+(a) What is the distribution of the r.v. M := min(X, Y ) for the smaller of the two shopping
+times? What is the expected value for the smaller shopping time?
+(b) What is the distribution of the time W := |X − Y | that the first to finish shopping will
+wait for his/her friend?
+(c) Check that E(M ) + E(W ) is larger than 15 min; is not there any contradiction there?
+(d) Justify the strong memorylessness property: given that Alice is the second to finish her
+shopping, the difference X − Y has the same distribution as X.
+7
+
+APPS @ UCU
+
+Probability and Statistics: colloquium II
+
+Autumn 2022
+
+Problem 24. The joint probability density function of random variables X and Y is given by
+the formula
+(
+a,
+x, y > 0, x + y < 1
+fX,Y (x, y) =
+0,
+otherwise
+(a) Find the value of a
+(b) Calculate the marginal p.d.f.’s fX and fY and decide whether X and Y are independent
+(c) Find E(X), E(Y ) and the covariance Cov(X, Y )
+(d) Calculate E(XY )
+(e) Calculate the probability density function fX|Y (x | 0.5) of X given that Y = 0.5
+(f) Find the conditional expectation E(X | Y = 0.5)
+
+6
+
+New problems
+
+Problem 1. A fair die is rolled n times. Let Xk denote the number of rolls that give k points,
+k = 1, . . . , 6. Find
+(a) the expectation E(Xk ) and variance Var(Xk );
+(b) the conditional distribution of Xj given that {Xk = m} (k 6= j); is it any of the standard
+distributions? If so, can you give an explanation for that?
+(c) the covariance Cov(Xj , Xk ); can you predict the sign of the covariance without calculations?
+Are the r.v. Xj and Xk independent?
+Hint: in (c), you may condition on {Xk = m} to calculate E(Xj Xk ). Alternatively, calculate Var(Xj +Xk )
+and use it to determine Cov(Xj , Xk ). Another approach can use the fact that the joint distribution of
+(Xk , Xj , n − Xk − Xj ) is multinomial M (n; 61 , 61 , 46 )
+
+Problem 2. Assume that X has a Poisson distribution P(λ) and that, conditioned on {X =
+k}, a r.v. Y is binomially distributed B(k, p).
+(a) Find the distribution of Y ;
+(b) find the distribution of X − Y and then prove that the r.v. Y and X − Y are independent;
+(c) find the conditional distribution of X given the event {Y = n}.
+Hint: in (c), you may start with P(X = k | Y = n) = P(X − Y = k − n | Y = n) and use part (b)
+
+Problem 3. A number λ ∈ (0, 1) has binary expansion
+λ = 0.b1 b2 b3 · · · =
+
+∞
+X
+
+bn 2−n .
+
+n=1
+
+Alice and Bob toss a fair coin repeatedly. Denote by In the indicator of the event that the nth
+toss is a Head. Let T be the first toss such that In 6= bn , T = min{n : In 6= bn }. If IT < bT ,
+then Alice wins; otherwise, Bob wins.
+8
+
+APPS @ UCU
+
+Probability and Statistics: colloquium II
+
+Autumn 2022
+
+(a) Find the probability that Alice wins on the nth toss;
+(b) show that the probability that Alice wins is equal to λ;
+(c) find the expected number of tosses in this game.
+Hint: in (c), you may derive and then use the formula E(T ) =
+
+P
+
+k≥1 P(T ≥ k)
+
+Problem 4. Alice and Bob have a and b gold coins, respectively. They play a series of
+independent games in which the loser gives a gold coin to the winner; they stop when one
+of them has no coins remaining. Assume that Alice wins each game with probability p 6= 12 ,
+(a) find the probability that Alice wins;
+(b) find the expected number of games played.
+Hint: condition on the event W1 that Alice wins the first game and use the total probability rule (for
+probabilities or expectations) to derive the difference equation for the winning probability pk or average
+number mk of games played when Alice starts with k coins. Find two solutions in (a); in (b), look in
+addition for a partial solution for mk in the form mk = ck; then use the boundary conditions to find all
+the constants.
+
+Problem 5. (a) A fair coin is tossed repeatedly. Let T be the number of tosses required until
+three consecutive Heads appear for the first time. Find P{T = n} and E(T ).
+(b) A biased coin (showing Heads with probability p) is tossed repeatedly. Let X be the number
+of tosses required for the first occurrence of HHH. Find the probability generating function
+E(sX ) and then show that
+1
+1
+1
+E(X) = + 2 + 3 .
+p p
+p
+Hint: partition the sample space into A1 =“first toss T”, A2 =“first two tosses HT”, A3 =“first three
+tosses HHT” and the complement and use the total probability rule for expectations
+
+Problem 6. Alice flips a biased coin (with probability p of showing Heads) 5 times, and if Tail
+shows up on the last toss, then she continues tossing until the first Head appears. Let N be
+the total number of tosses made and X be the total number of Heads.
+(a) Find the distributions of r.v.’s N and X;
+(b) find the expected values of N and X;
+(c) what is the covariance of N and X? are these r.v.’s independent?
+(d) find the conditional distribution of N given X = 3 and the expected value E(N | X = 3).
+Problem 7. Consider a game, in which a fair coin is flipped, and if it shows Heads, a standard
+normal random variable X ∼ N (0, 1) is sampled; otherwise, X ∼ N (10, 1) is used. The value
+of X is reported to the player, who should then guess the face of the coin, Heads or Tails. The
+player decides for the following strategy: if X ≤ c, she reports Heads, otherwise she guesses
+Tails.
+9
+
+APPS @ UCU
+
+Probability and Statistics: colloquium II
+
+Autumn 2022
+
+(a) Determine the probability to guess correctly. For what c is that probability maximal?
+(b) Assume that the coin is biased and shows Heads with probability p. Determine the probability to guess correctly. For what value of c is that probability maximal?
+(c) In part (b), find the value of c so that the probability of a wrong guess of Heads equals the
+probability of a wrong guess of Tails.
+Problem 8. The field hospital is located at the centre of a circle of radius 100 km. If an accident
+occurs within this circle, then the hospital sends out an ambulance helicopter. Assuming that
+an accident occurs at a point that is uniformly distributed in the circle,
+(a) find the distribution of the travel distance D to the accident point, its expected value and
+variance;
+(b) find the distribution of the abscissa X of the accident point (X, Y ), its expected value and
+variance.
+Hint: in (a), start with finding the c.d.f. of D
+
+Problem 9. Suppose stop lights at an intersection alternately show green for one minute,
+red for one minute (ignore yellow). Suppose a car arrives at the lights at a time distributed
+uniformly at random relative to this cycle. Let X be the delay of the car at the lights, neglecting
+any delay due to traffic congestion.
+(a) Find a formula for the c.d.f. of X and sketch its graph.
+(b) Is X discrete, continuous, or neither?
+(c) Find E(X) and Var(X).
+Problem 10. Suppose that two points A and B are independently chosen at random on the
+unit interval. We identify the points and their (random) abscissa, so that A and B are random
+variables with distribution U (0, 1). Find the distributions of the following random variables:
+(a) the distance D := |A − B| between these points;
+(b) M := max{A, B};
+(c) N := min{A, B};
+(d) which among the random variables A, B, D, M, N are pairwise independent?
+(e) reconsider part (a) for the case when the points A and B are chosen at random on a unit
+circle.
+Problem 11. Assume that X1 and X2 are independent r.v.’s with exponential distribution E (λ). Set Y1 = X1 − X2 and Y2 = X2 . Find the joint distribution of the r.v.’s Y1
+and Y2 and marginal distribution of Y1 .
+Hint: use formula (7.1), Section 6.7 of Ross. Y1 has a double exponential, or Laplace distribution
+
+10
+
+APPS @ UCU
+
+Probability and Statistics: colloquium II
+
+Autumn 2022
+
+Problem 12. Assume that X and Y are non-negative r.v.’s with a joint distribution given by
+the density
+(
+ce−λx ,
+if 0 ≤ y ≤ x < ∞
+fX,Y (x, y) =
+0
+otherwise
+for some λ > 0.
+(a) Find the constant c;
+(b) determine the marginal distributions of X and Y and identify them;
+(Hint: one of them is a Gamma distribution)
+
+(c) calculate E(X), E(Y ), E(X 2 ), E(Y 2 );
+(d) calculate Var(X), Var(Y ), Cov(X, Y );
+(e) determine the conditional distribution of Y given that X = x and identify it.
+(Hint: using the gamma-functions eliminates almost all calculations)
+
+11
+
+

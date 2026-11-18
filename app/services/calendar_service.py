@@ -460,6 +460,15 @@ class CalendarStore:
                     updated_at TEXT NOT NULL
                 );
 
+                CREATE TABLE IF NOT EXISTS calendar_deadline_reviews (
+                    owner_id TEXT NOT NULL,
+                    course_id INTEGER NOT NULL,
+                    assignment_id INTEGER NOT NULL,
+                    decision TEXT NOT NULL,
+                    due_at TEXT NOT NULL,
+                    PRIMARY KEY(owner_id, course_id, assignment_id)
+                );
+
                 CREATE TABLE IF NOT EXISTS calendar_sources (
                     source_id TEXT PRIMARY KEY,
                     owner_id TEXT NOT NULL,
@@ -704,7 +713,14 @@ class CalendarStore:
                     "SELECT * FROM calendar_events WHERE owner_id = ? ORDER BY start_at ASC",
                     (owner_id,),
                 ).fetchall()
-        return [self._row_to_event(r) for r in rows]
+            events = [self._row_to_event(r) for r in rows]
+            if any(ev["created_by"] == "moodle" for ev in events):
+                due_dates = {(r["course_id"], str(r["assignment_id"])): r["due_at"] for r in conn.execute(
+                    "SELECT course_id, assignment_id, due_at FROM calendar_deadline_reviews WHERE owner_id = ?", (owner_id,))}
+                for ev in events:
+                    if ev["created_by"] == "moodle":
+                        ev["moodle_due_at"] = due_dates.get((ev["course_id"], ev["external_id"]))
+        return events
 
     def get_event(self, owner_id: str, event_id: str) -> Optional[Dict[str, Any]]:
         with self._connect() as conn:
@@ -713,6 +729,37 @@ class CalendarStore:
                 (f"{owner_id}:{event_id}",),
             ).fetchone()
         return self._row_to_event(row) if row else None
+
+    def deadline_reviews(self, owner_id: str) -> dict:
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT course_id, assignment_id, decision FROM calendar_deadline_reviews WHERE owner_id = ?", (owner_id,))
+            return {(r["course_id"], r["assignment_id"]): r["decision"] for r in rows}
+
+    def review_deadline(self, owner_id, course_id, assignment_id, deadline, decision):
+        event_id = f"moodle-{course_id}-{assignment_id}"
+        key = f"{owner_id}:{event_id}"
+        # Commit the decision and calendar entry together, including on concurrent retries.
+        with self._connect() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            existing = conn.execute("SELECT * FROM calendar_events WHERE event_key = ?", (key,)).fetchone()
+            if existing:
+                if decision == "declined":
+                    raise CalendarServiceError("Спочатку прибери подію зі свого календаря.", 409)
+                return self._row_to_event(existing), False
+            start = datetime.fromtimestamp(deadline["duedate"], tz=timezone.utc)
+            conn.execute("""INSERT INTO calendar_deadline_reviews VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(owner_id, course_id, assignment_id) DO UPDATE SET decision = excluded.decision""",
+                (owner_id, course_id, assignment_id, decision, to_utc_iso(start)))
+            if decision == "declined":
+                return None, False
+            conn.execute("""INSERT INTO calendar_events
+                (event_key, event_id, owner_id, external_id, source_type, title, description, start_at, end_at,
+                 course_id, created_by, updated_at) VALUES (?, ?, ?, ?, 'manual', ?, ?, ?, ?, ?, 'moodle', ?)""",
+                (key, event_id, owner_id, str(assignment_id), deadline["name"], deadline.get("course_name") or "",
+                 to_utc_iso(start), to_utc_iso(start + timedelta(minutes=1)), course_id, self._now_iso()))
+            row = conn.execute("SELECT * FROM calendar_events WHERE event_key = ?", (key,)).fetchone()
+            return self._row_to_event(row), True
 
     def expand_forbidden_intervals(
         self,
@@ -949,6 +996,10 @@ class CalendarStore:
             return None
         with self._connect() as conn:
             conn.execute("DELETE FROM calendar_events WHERE event_key = ?", (f"{owner_id}:{event_id}",))
+            if existing["created_by"] == "moodle":
+                conn.execute("""UPDATE calendar_deadline_reviews SET decision = 'removed'
+                    WHERE owner_id = ? AND course_id = ? AND assignment_id = ?""",
+                    (owner_id, existing["course_id"], existing["external_id"]))
         return existing
 
     def _row_to_source(self, row: sqlite3.Row) -> Dict[str, Any]:

@@ -1,0 +1,127 @@
+APPS @ UCU
+
+Probability and Statistics: Seminar 6
+
+Autumn 2026
+
+Probability and Statistics
+Topic 6. Continuous Random Variables
+• Continuous random variable
+• Probability density function
+• Expectation of a continuous random variable
+• Moment generating functions and their properties
+• Uniform distribution
+• Normal (Gaussian) distribution
+• Exponential distribution
+• Joint and marginal cumulative distribution function
+• Joint and marginal probability density function
+• Independent random variables
+• Distribution of transformed random variables
+
+Seminar 6
+Problem 1. Assume that Z is a standard normal r.v. Find the p.d.f. of the following r.v.’s:
+(a) −Z
+
+(b) 2Z − 3;
+
+(c) 3 − 2Z;
+
+.
+(d) Z−1
+4
+
+(e) |Z|;
+
+(f) Z 2 .
+
+Problem 2. Assume that X1 , X2 , . . . , Xn are independent r.v.’s with distribution U (0, a). Find distribution (c.d.f. and p.d.f.) of the r.v.’s
+(a) U ∼ max{X1 , . . . , Xn };
+
+(b) V ∼ min{X1 , . . . , Xn }
+
+Problem 3. Suppose that X and Y have joint probability density function
+(
+9e−3x−3y
+x ≥ 0, y ≥ 0;
+fX,Y (x, y) =
+0
+otherwise
+(a) Find the marginal p.d.f.’s of X and Y ; prove that X and Y are independent.
+(b) find the joint distribution of the r.v.’s S := X + Y and Y ;
+(c) find the distribution of S
+(d) find the joint distribution of the r.v.’s D := X − Y and Y ;
+(e) find the distribution of D.
+Hint: in (b) and (d), use the formula for the p.d.f. of a transformed random vector (X ± Y, Y )
+
+APPS @ UCU
+
+Probability and Statistics: Seminar 6
+
+Autumn 2026
+
+Problem 4. Calculate the moment generating function (m.g.f.) gX (t) := E(etX ) of a r.v. X with the
+(a) uniform distribution U (a, b);
+(b) exponential distribution E (λ);
+(c) normal distribution N (µ, σ 2 )
+Problem 5. Alice and Bob enter simultaneously the grocery shop. Assume that their shopping times are
+independent r.v.’s X and Y respectively with exponential distribution of mean value 15 minutes.
+(a) What is the distribution of the r.v. M := min(X, Y ) for the smaller of the two shopping times? What
+is the expected value for the smaller shopping time?
+(b) What is the distribution of the time W := |X − Y | that the first to finish shopping will wait for his/her
+friend?
+(c) Check that E(M ) + E(W ) is larger than 15 min; is not there any contradiction there?
+(d) Justify the strong memorylessness property: given that Alice is the second to finish her shopping, the
+difference X − Y has the same distribution as X.
+Problem 6. The joint probability density function of random variables X and Y is given by the formula
+(
+a,
+x, y > 0, x + y < 1
+fX,Y (x, y) =
+0,
+otherwise
+(a) Find the value of a
+(b) Calculate the marginal p.d.f.’s fX and fY and decide whether X and Y are independent
+(c) Find E(X), E(Y ) and the covariance Cov(X, Y )
+(d) Calculate E(XY )
+(e) Calculate the probability density function fX|Y (x | 0.5) of X given that Y = 0.5
+(f) Find the conditional expectation E(X | Y = 0.5)
+Problem 7. Let Z ∼ N (0, 1), and let X be a random variable independent of Z with P (X = 1) = P (X =
+−1) = 21 . Define Y = XZ.
+(a) Show that Y ∼ N (0, 1). Hint: Condition on the value of X.
+(b) Show that Z and Y are dependent. Hint: Compare P (|Z| < 1, |Y | > 1) with P (|Z| < 1) P (|Y | > 1).
+Note that |Y | = |Z| always.
+(c) Show that Z and Y are uncorrelated, i.e. Cov(Z, Y ) = 0. Hint: Cov(Z, Y ) = E[XZ 2 ]. Use the
+independence of Z and X.
+(d) Find P (Z + Y = 0) and conclude that Z + Y is not normally distributed, even though Z and Y are each
+normal. Hint: Write Z + Y = (1 + X)Y and consider the two cases X = ±1.
+
+APPS @ UCU
+
+Probability and Statistics: Seminar 6
+
+Autumn 2026
+
+Extra problems
+Problem 8. Random variables X and Y are distributed according to the joint PDF
+(
+ax,
+if 1 ≤ x ≤ 2 and 0 ≤ y ≤ x,
+fX,Y (x, y) =
+0,
+otherwise
+(a) Evaluate the constant a.
+(b) Determine the marginal PDF fY (y).
+(c) Find E(X), E(Y ) and the covariance Cov(X, Y )
+(d) Calculate E(XY )
+(e) Determine the conditional expectation of X given that Y = 3/2.
+(f) Random variable Z is defined by Z = Y − X. Determine the PDF fZ (z)
+Problem 9. The metro train arrives at the station near your home every quarter hour starting at 6:00 a.m.
+You walk into the station every morning between 7:10 and 7:30 a.m., with the time in this interval being a
+random variable with given PDF. Let X be the elapsed time, in minutes, between 7:10 and the time of your
+arrival. Let Y be the time that you have to wait until you board a train. Calculate the c.d.f. of Y in terms
+of the c.d.f. of X and differentiate to obtain a formula for the p.d.f. of Y .
+Problem 10. Romeo and Juliet have a date at a given time, and each, independently, will be late by an
+amount of time that is exponentially distributed with parameter α. What is the PDF of the difference
+between their times of arrival?
+
+

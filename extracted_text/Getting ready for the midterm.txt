@@ -1,0 +1,43 @@
+R.H.
+
+Probability and Statistics: Midterm 2 preparation @ UCU
+
+Spring 2018
+
+I am ready for Midterm 2 if
+• I remember the definitions of:
+ discrete random variable
+ probability mass function (p.m.f.)
+ cumulative distribution function (c.m.f.)
+ continuous random variable
+ probability density function (p.m.f.)
+ expectation, moments, variance, covariance
+ probability generating function (p.g.f.) and moment generating function (m.g.f.) and their properties
+• I know the following distributions (p.m.f./p.d.f.) and their basic properties:
+ binomial B(n, p)
+ Poisson B(λ)
+ geometric G (p)
+ uniform U (a, b)
+ normal N (µ, σ 2 )
+ exponential E (λ)
+• I understand the following notions:
+ joint distribution of r.v.’s (joint p.m.f./p.d.f., joint c.d.f.)
+ marginal distribution
+ independence of r.v.’s
+ covariance and correlation
+ conditional distribution of X given that Y = y (conditional p.m.f./p.d.f.)
+ distribution of transformed r.v.’s (or random vectors)
+• I can:
+ recognise standard discrete and continuous distributions
+ construct random variables corresponding to given experiments
+ calculate distributions of random variables
+ calculate expectation, variance, and moments of a r.v.
+ calculate joint and marginal distributions of r.v.’s and their covariance
+ determine whether r.v.’s are independent
+ determine the conditional distribution of a r.v. given the value of the other r.v.
+ determine distribution of transformations of r.v.’s (e.g. of the sum X + Y )
+ solve standard problems about r.v.’s and their distributions (e.g. from the problem sets 4–6)
+
+Yes, I am now ready for Midterm 2!
+
+

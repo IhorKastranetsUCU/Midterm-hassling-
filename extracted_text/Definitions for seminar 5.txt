@@ -1,0 +1,131 @@
+• Random variable
+A random variable X is a measurable function that maps the sample
+space Ω into the real numbers R:
+X : Ω → R,
+
+such that ∀a ∈ R, {ω ∈ Ω : X(ω) ≤ a} ∈ F
+
+• Discrete random variable
+A random variable X is called discrete if its range SX ⊂ R is finite or
+countably infinite, i.e., SX = {x1 , x2 , . . . }.
+• Probability mass function (pmf )
+The probability mass function pX (x) for a discrete random variable X
+is a function pX : R → R such that :
+pX (a) = P (X = a)
+• Cumulative distribution function (cdf ) for a random variable X
+is a function FX : R → R such that :
+FX (a) = P (X ≤ a)
+• Bernoulli distribution
+X ∼ B(1, p) with p ∈ (0, 1) iff it’s pmf is :
+(
+p,
+k=1
+pX (k) =
+1 − p, k = 0
+• Binomial distribution
+X ∼ B(n, p) with p ∈ (0, 1), n ∈ N iff it’s pmf is :
+ 
+n k
+pX (k) =
+p (1 − p)n−k , k ∈ {0, 1, 2, . . . , n}
+k
+• Geometric distribution
+X ∼ G (p) with parameter p ∈ (0, 1) iff it’s pmf is :
+pX (k) = (1 − p)k−1 p,
+
+k ∈ {1, 2, 3, . . . }
+
+• Poisson distribution
+X ∼ P(λ) with parameter λ > 0 iff it’s pmf is :
+λk e−λ
+,
+pX (k) =
+k!
+
+k ∈ {0, 1, 2, . . . }
+
+• Joint probability mass function
+The joint pmf for two discrete random variables X and Y gives the
+probability of their simultaneous occurrence:
+pX,Y (x, y) = P (X = x and Y = y) = P (X = x, Y = y)
+• Marginal probability mass function
+The marginal pmf of a random variable X is obtained by summing the
+joint pmf over all possible values of Y :
+X
+pX (x) = P (X = x) =
+pX,Y (x, y)
+y
+
+• Conditional distribution
+The conditional probability mass function of X given that Y = y (where
+pY (y) > 0) is defined as:
+pX|Y (x | y) = P (X = x | Y = y) =
+
+pX,Y (x, y)
+pY (y)
+
+• Independent random variables
+Random variables X and Y are independent if
+P (X ≤ x, Y ≤ y) = P (X ≤ x)P (Y ≤ y))
+• Expected value
+The expected value (mean) of a discrete random variable X is defined
+as:
+X
+E[X] = µX =
+x · pX (x)
+x∈SX
+
+(provided that
+
+P
+
+x |x|pX (x) < ∞).
+
+• Properties of expectation
+
+1. Linearity: E[aX + bY + c] = aE[X] + bE[Y ] + c, for constants
+a, b, c ∈ R
+P
+2. E[g(X)] = x∈SX g(x) · pX (x)
+• Variance
+The variance Var(X) of a random variable X:
+
+
+Var(X) = E (X − E[X])2 = E[X 2 ] − (E[X])2
+• Properties of variance
+1. Non-negativity: Var(X) ≥ 0; Var(c) = 0 for any constant c
+2. Shift and scale: Var(aX + b) = a2 Var(X)
+3. Sum of variables: Var(X + Y ) = Var(X) + Var(Y ) + 2Cov(X, Y )
+4. For independent variables X, Y : Var(X + Y ) = Var(X) + Var(Y )
+• Covariance
+Covariance of X and Y :
+Cov(X, Y ) = E [(X − E[X])(Y − E[Y ])] = E[XY ] − E[X]E[Y ]
+• Correlation coefficient
+Correlation coefficient between X and Y is:
+Cov(X, Y )
+Corr(X, Y ) = ρ(X, Y ) = p
+Var(X)Var(Y )
+• Probability generating function (p.g.f.)
+The probability generating function GX (s) for an integer-valued random
+variable X is the function of real variable defined by:
+X
+X
+GX (s) = E[s ] =
+pX (k)sk , s ∈ R
+k
+
+• Properties of p.g.f.
+
+(k)
+
+1. pX (k) =
+
+GX (0)
+k!
+(k)
+
+2. µ(k) = E[X(X − 1) . . . (X − k + 1)] = GX (1)
+3. Sum of independent variables: If X and Y are independent, then
+GX+Y (s) = GX (s) · GY (s)
+
+

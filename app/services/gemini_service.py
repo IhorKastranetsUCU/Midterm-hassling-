@@ -78,24 +78,29 @@ class GeminiService:
 
     async def generate_content(
         self,
-        prompt: str,
+        prompt: str = "",
         system_instruction: Optional[str] = None,
         json_mode: bool = False,
         temperature: float = 0.2,
         timeout: float = 30.0,
         extra_parts: Optional[List[Dict[str, Any]]] = None,
+        parts: Optional[List[Dict[str, Any]]] = None,
+        raise_on_error: bool = False,
     ) -> Optional[str]:
         """Send prompt to Gemini API (Vertex AI or AI Studio) and return raw response text."""
         if not self.is_available:
             return None
 
-        parts: List[Dict[str, Any]] = list(extra_parts or [])
-        parts.append({"text": prompt})
+        req_parts: List[Dict[str, Any]] = list(extra_parts or parts or [])
+        if prompt:
+            req_parts.append({"text": prompt})
+        if not req_parts:
+            return None
         payload: Dict[str, Any] = {
             "contents": [
                 {
                     "role": "user",
-                    "parts": parts,
+                    "parts": req_parts,
                 }
             ],
             "generationConfig": {
@@ -111,6 +116,7 @@ class GeminiService:
         if json_mode:
             payload["generationConfig"]["responseMimeType"] = "application/json"
 
+        should_raise = self.strict or raise_on_error
         try:
             if self.vertex_project:
                 host = (
@@ -126,7 +132,7 @@ class GeminiService:
                 for attempt in range(2):
                     tok = await self._get_vertex_token(force_refresh=(attempt == 1))
                     if not tok:
-                        if self.strict:
+                        if should_raise:
                             raise LearningProviderError("Не вдалося отримати токен Vertex AI на сервері.")
                         return None
                     headers = {
@@ -160,34 +166,34 @@ class GeminiService:
                     safe_detail = safe_detail[:160]
                 provider_kind = "vertex" if self.vertex_project else "studio"
                 logger.warning("Gemini API (%s) returned HTTP %s%s", provider_kind, code, f": {safe_detail}" if safe_detail else "")
-                if self.strict:
+                if should_raise:
                     raise provider_http_error(code, source=provider_kind, detail=safe_detail if code == 400 else "")
                 return None
 
             data = resp.json()
             candidates = data.get("candidates", [])
             if candidates:
-                parts = candidates[0].get("content", {}).get("parts", [])
-                if parts:
-                    return "\n".join(part.get("text", "") for part in parts if not part.get("thought"))
+                resp_parts = candidates[0].get("content", {}).get("parts", [])
+                if resp_parts:
+                    return "\n".join(part.get("text", "") for part in resp_parts if not part.get("thought"))
                 finish_reason = candidates[0].get("finishReason")
                 if finish_reason:
                     logger.warning("Gemini returned empty parts with finishReason=%s", finish_reason)
-                    if self.strict:
+                    if should_raise:
                         raise LearningProviderError(f"Gemini не зміг згенерувати матеріал ({finish_reason}).", 422)
             elif data.get("promptFeedback", {}).get("blockReason"):
                 block_reason = data["promptFeedback"]["blockReason"]
                 logger.warning("Gemini blocked prompt with blockReason=%s", block_reason)
-                if self.strict:
+                if should_raise:
                     raise LearningProviderError(f"Gemini заблокував запит ({block_reason}).", 422)
-            if self.strict:
+            if should_raise:
                 raise LearningProviderError("Gemini не повернув навчальний матеріал. Спробуй ще раз.")
             return None
         except LearningProviderError:
             raise
         except Exception as exc:
             logger.warning("Error calling Gemini API (%s)", type(exc).__name__)
-            if self.strict:
+            if should_raise:
                 if isinstance(exc, httpx.TimeoutException):
                     raise LearningProviderError("Gemini занадто довго обробляє запит. Спробуй ще раз.") from None
                 raise LearningProviderError("Не вдалося отримати матеріали від Gemini. Спробуй ще раз.") from None

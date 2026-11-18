@@ -56,3 +56,12 @@
   .course-tabs:has(a[href$="/topics"]) { display:flex; flex-wrap:wrap; row-gap:.2rem; }
   .course-tabs:has(a[href$="/topics"]) a { flex:1 1 auto; font-size:.7rem; padding:.65rem .5rem; }
 }
+
+.course-now-grid :is(.today-focus, .today-study) {
+  min-height: auto;
+  padding: clamp(1rem, 2vw, 1.65rem);
+}
+.course-now-grid .today-focus h2 { font-size: clamp(1.25rem, 2vw, 1.9rem); margin: .65rem 0; }
+.course-now-grid .today-focus-actions { padding-top: .8rem; }
+.course-now-grid .today-study-icon { margin-bottom: .55rem; }
+.course-now-grid .today-study { gap: .3rem; }

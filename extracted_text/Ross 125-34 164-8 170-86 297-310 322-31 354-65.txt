@@ -1,0 +1,6753 @@
+Section 4.3
+
+Expected Value
+
+125
+
+the value of F is constant in the intervals [xi−1 , xi ) and then takes a step (or jump) of
+size p(xi ) at xi . For instance, if X has a probability mass function given by
+p(1) =
+
+1
+4
+
+p(2) =
+
+1
+2
+
+p(3) =
+
+1
+8
+
+p(4) =
+
+1
+8
+
+then its cumulative distribution function is
+⎧
+⎪
+0 a < 1
+⎪
+⎪
+⎪
+⎪
+1
+⎪
+1 … a < 2
+⎪
+⎪
+⎨4
+F(a) = 34 2 … a < 3
+⎪
+⎪
+⎪
+7
+⎪
+⎪
+⎪
+8 3 … a < 4
+⎪
+⎪
+⎩1 4 … a
+This function is depicted graphically in Figure 4.3.
+F(a)
+1
+7–
+8
+3–
+4
+
+1–
+4
+
+1
+
+2
+
+3
+
+4
+
+a
+
+FIGURE 4.3
+
+Note that the size of the step at any of the values 1, 2, 3, and 4 is equal to the
+probability that X assumes that particular value.
+4.3
+
+EXPECTED VALUE
+One of the most important concepts in probability theory is that of the expectation
+of a random variable. If X is a discrete random variable having a probability mass
+function p(x), then the expectation, or the expected value, of X, denoted by E[X], is
+deﬁned by
+
+E[X] =
+xp(x)
+x:p(x)>0
+
+In words, the expected value of X is a weighted average of the possible values that
+X can take on, each value being weighted by the probability that X assumes it. For
+instance, on the one hand, if the probability mass function of X is given by
+p(0) =
+then
+
+1
+= p(1)
+2
+
+ 
+ 
+1
+1
+1
++ 1
+=
+E[X] = 0
+2
+2
+2
+
+126
+
+Chapter 4
+
+Random Variables
+
+is just the ordinary average of the two possible values, 0 and 1, that X can assume.
+On the other hand, if
+p(0) =
+then
+
+1
+3
+
+p(1) =
+
+2
+3
+
+ 
+ 
+2
+2
+1
++ 1
+=
+E[X] = 0
+3
+3
+3
+
+is a weighted average of the two possible values 0 and 1, where the value 1 is given
+twice as much weight as the value 0, since p(1) = 2p(0).
+Another motivation of the deﬁnition of expectation is provided by the frequency
+interpretation of probabilities. This interpretation (partially justiﬁed by the strong
+law of large numbers, to be presented in Chapter 8) assumes that if an inﬁnite sequence
+of independent replications of an experiment is performed, then, for any event E,
+the proportion of time that E occurs will be P(E). Now, consider a random variable X that must take on one of the values x1 , x2 , . . . xn with respective probabilities
+p(x1 ), p(x2 ), . . . , p(xn ), and think of X as representing our winnings in a single game of
+chance. That is, with probability p(xi ) we shall win xi units i = 1, 2, . . . , n. By the frequency interpretation, if we play this game continually, then the proportion of time
+that we win xi will be p(xi ). Since this is true for all i, i = 1, 2, . . . , n, it follows that our
+average winnings per game will be
+n
+
+
+xi p(xi ) = E[X]
+
+i=1
+
+EXAMPLE 3a
+Find E[X], where X is the outcome when we roll a fair die.
+Solution. Since p(1) = p(2) = p(3) = p(4) = p(5) = p(6) = 16 , we obtain
+ 
+ 
+ 
+ 
+ 
+ 
+1
+1
+1
+1
+1
+1
+7
++ 2
++ 3
++ 4
++ 5
++ 6
+=
+E[X] = 1
+6
+6
+6
+6
+6
+6
+2
+
+.
+
+EXAMPLE 3b
+We say that I is an indicator variable for the event A if
+%
+1 if A occurs
+I=
+0 if Ac occurs
+Find E[I].
+Solution. Since p(1) = P(A), p(0) = 1 − P(A), we have
+E[I] = P(A)
+That is, the expected value of the indicator variable for the event A is equal to the
+probability that A occurs.
+.
+
+Section 4.3
+
+Expected Value
+
+127
+
+EXAMPLE 3c
+A contestant on a quiz show is presented with two questions, questions 1 and 2, which
+he is to attempt to answer in some order he chooses. If he decides to try question i
+ﬁrst, then he will be allowed to go on to question j, j Z i, only if his answer to question
+i is correct. If his initial answer is incorrect, he is not allowed to answer the other question. The contestant is to receive Vi dollars if he answers question i correctly, i = 1, 2.
+For instance, he will receive V1 + V2 dollars if he answers both questions correctly.
+If the probability that he knows the answer to question i is Pi , i = 1, 2, which question
+should he attempt to answer ﬁrst so as to maximize his expected winnings? Assume
+that the events Ei , i = 1, 2, that he knows the answer to question i are independent
+events.
+Solution. On the one hand, if he attempts to answer question 1 ﬁrst, then he will win
+0
+V1
+V1 + V2
+
+with probability 1 − P1
+with probability P1 (1 − P2 )
+with probability P1 P2
+
+Hence, his expected winnings in this case will be
+V1 P1 (1 − P2 ) + (V1 + V2 )P1 P2
+On the other hand, if he attempts to answer question 2 ﬁrst, his expected winnings
+will be
+V2 P2 (1 − P1 ) + (V1 + V2 )P1 P2
+Therefore, it is better to try question 1 ﬁrst if
+V1 P1 (1 − P2 ) Ú V2 P2 (1 − P1 )
+or, equivalently, if
+V2 P2
+V1 P1
+Ú
+1 − P1
+1 − P2
+For example, if he is 60 percent certain of answering question 1, worth $200, correctly
+and he is 80 percent certain of answering question 2, worth $100, correctly, then he
+should attempt to answer question 2 ﬁrst because
+400 =
+
+(200)(.6)
+(100)(.8)
+>
+= 300
+.2
+.4
+
+.
+
+EXAMPLE 3d
+A school class of 120 students is driven in 3 buses to a symphonic performance. There
+are 36 students in one of the buses, 40 in another, and 44 in the third bus. When the
+buses arrive, one of the 120 students is randomly chosen. Let X denote the number
+of students on the bus of that randomly chosen student, and ﬁnd E[X].
+Solution. Since the randomly chosen student is equally likely to be any of the 120
+students, it follows that
+P{X = 36} =
+
+36
+120
+
+
+
+
+
+Hence,
+E[X] = 36
+
+3
+10
+
+P{X = 40} =
+
++ 40
+
+40
+120
+
+P{X = 44} =
+
+44
+120
+
+ 
+ 
+1
+11
+1208
++ 44
+=
+= 40.2667
+3
+30
+30
+
+128
+
+Chapter 4
+
+Random Variables
+
+However, the average number of students on a bus is 120/3 = 40, showing that the
+expected number of students on the bus of a randomly chosen student is larger than
+the average number of students on a bus. This is a general phenomenon, and it occurs
+because the more students there are on a bus, the more likely it is that a randomly
+chosen student would have been on that bus. As a result, buses with many students
+are given more weight than those with fewer students. (See Self-Test Problem 4.) .
+Remark. The probability concept of expectation is analogous to the physical concept of the center of gravity of a distribution of mass. Consider a discrete random
+variable X having probability mass function p(xi ), i Ú 1. If we now imagine a weightless rod in which weights with mass p(xi ), i Ú 1, are located at the points xi , i Ú 1
+(see Figure 4.4), then the point at which the rod would be in balance is known as the
+center of gravity. For those readers acquainted with elementary statics, it is now a
+.
+simple matter to show that this point is at E[X].†
+
+–1
+
+0
+
+p(–1) = .10, p(0) = .25,
+
+^1
+
+2
+
+p(1) = .30,
+
+p(2) = .35
+
+^ = center of gravity = .9
+FIGURE 4.4
+
+4.4
+
+EXPECTATION OF A FUNCTION OF A RANDOM VARIABLE
+Suppose that we are given a discrete random variable along with its probability mass
+function and that we want to compute the expected value of some function of X,
+say, g(X). How can we accomplish this? One way is as follows: Since g(X) is itself a
+discrete random variable, it has a probability mass function, which can be determined
+from the probability mass function of X. Once we have determined the probability
+mass function of g(X), we can compute E[g(X)] by using the deﬁnition of expected
+value.
+EXAMPLE 4a
+Let X denote a random variable that takes on any of the values −1, 0, and 1 with
+respective probabilities
+P{X = −1} = .2
+
+P{X = 0} = .5 P{X = 1} = .3
+
+Compute E[X 2 ].
+Solution. Let Y = X 2 . Then the probability mass function of Y is given by
+P{Y = 1} = P{X = −1} + P{X = 1} = .5
+P{Y = 0} = P{X = 0} = .5
+Hence,
+
+E[X 2 ] = E[Y] = 1(.5) + 0(.5) = .5
+
+† To prove this, we must show that the sum of the torques tending to turn the point around E[X]
+
+is equal to 0. That is, we must show that 0 =
+i
+
+(xi − E[X])p(xi ), which is immediate.
+
+Section 4.4
+
+Expectation of a Function of a Random Variable
+
+129
+
+Note that
+.5 = E[X 2 ] Z (E[X])2 = .01
+
+.
+
+Although the preceding procedure will always enable us to compute the expected
+value of any function of X from a knowledge of the probability mass function of X,
+there is another way of thinking about E[g(X)]: Since g(X) will equal g(x) whenever
+X is equal to x, it seems reasonable that E[g(X)] should just be a weighted average of
+the values g(x), with g(x) being weighted by the probability that X is equal to x. That
+is, the following result is quite intuitive:
+Proposition 4.1.
+If X is a discrete random variable that takes on one of the values xi , i Ú 1, with
+respective probabilities p(xi ), then, for any real-valued function g,
+
+g(xi )p(xi )
+E[g(X)] =
+i
+
+Before proving this proposition, let us check that it is in accord with the results of
+Example 4a. Applying it to that example yields
+E{X 2 } = (−1)2 (.2) + 02 (.5) + 12 (.3)
+= 1(.2 + .3) + 0(.5)
+= .5
+which is in agreement with the result given in Example 4a.
+Proof of Proposition 4.1: The proof of Proposition 4.1 proceeds, as in the preceding
+veriﬁcation, by grouping together all the terms in g(xi )p(xi ) having the same value
+i
+
+of g(xi ). Speciﬁcally, suppose that yj , j Ú 1, represent the different values of g(xi ), i Ú 1.
+Then, grouping all the g(xi ) having the same value gives
+ 
+
+g(xi )p(xi ) =
+g(xi )p(xi )
+i
+
+=
+=
+
+j
+
+i:g(xi )=yj
+
+j
+
+i:g(xi )=yj
+
+
+
+j
+
+=
+
+
+
+
+
+yj p(xi )
+
+
+
+yj
+
+p(xi )
+
+i:g(xi )=yj
+
+yj P{g(X) = yj }
+
+j
+
+= E[g(X)]
+
+
+
+EXAMPLE 4b
+A product that is sold seasonally yields a net proﬁt of b dollars for each unit sold and
+a net loss of  dollars for each unit left unsold when the season ends. The number of
+units of the product that are ordered at a speciﬁc department store during any season
+is a random variable having probability mass function p(i), i Ú 0. If the store must
+stock this product in advance, determine the number of units the store should stock
+so as to maximize its expected proﬁt.
+
+130
+
+Chapter 4
+
+Random Variables
+
+Solution. Let X denote the number of units ordered. If s units are stocked, then the
+proﬁt—call it P(s)—can be expressed as
+P(s) = bX − (s − X)
+= sb
+
+if X … s
+if X > s
+
+Hence, the expected proﬁt equals
+E[P(s)] =
+
+s
+
+
+[bi − (s − i)]p(i) +
+
+i=0
+
+q
+
+
+sbp(i)
+
+i=s+1
+
+= (b + )
+= (b + )
+
+s
+
+i=0
+s
+
+
+ip(i) − s
+
+s
+
+
+⎡
+
+p(i) + sb ⎣1 −
+
+i=0
+
+ip(i) − (b + )s
+
+s
+
+
+⎤
+p(i)⎦
+
+i=0
+s
+
+
+i=0
+
+p(i) + sb
+
+i=0
+
+= sb + (b + )
+
+s
+
+
+(i − s)p(i)
+
+i=0
+
+To determine the optimum value of s, let us investigate what happens to the proﬁt
+when we increase s by 1 unit. By substitution, we see that the expected proﬁt in this
+case is given by
+E[P(s + 1)] = b(s + 1) + (b + )
+= b(s + 1) + (b + )
+
+s+1
+
+(i − s − 1)p(i)
+i=0
+s
+
+
+(i − s − 1)p(i)
+
+i=0
+
+Therefore,
+E[P(s + 1)] − E[P(s)] = b − (b + )
+
+s
+
+
+p(i)
+
+i=0
+
+Thus, stocking s + 1 units will be better than stocking s units whenever
+s
+
+i=0
+
+p(i) <
+
+b
+b + 
+
+(4.1)
+
+Because the left-hand side of Equation (4.1) is increasing in s while the right-hand
+side is constant, the inequality will be satisﬁed for all values of s … s∗ , where s∗ is the
+largest value of s satisfying Equation (4.1). Since
+E[P(0)] < · · · < E[P(s∗ )] < E[P(s∗ + 1)] > E[P(s∗ + 2)] > · · ·
+it follows that stocking s∗ + 1 items will lead to a maximum expected proﬁt.
+
+.
+
+EXAMPLE 4c Utility
+Suppose that you must choose one of two possible actions, each of which can result
+in any of n consequences, denoted as C1 , . . . , Cn . Suppose that if the ﬁrst action is
+
+Section 4.4
+
+Expectation of a Function of a Random Variable
+
+131
+
+chosen, then consequence Ci will result with probability pi , i = 1, . . . , n, whereas
+if the second action is chosen, then consequence Ci will result with probability qi ,
+i = 1, . . . , n, where
+
+n
+
+i=1
+
+pi =
+
+n
+
+qi = 1. The following approach can be used to deter-
+
+i=1
+
+mine which action to choose: Start by assigning numerical values to the different
+consequences in the following manner: First, identify the least and the most desirable consequences—call them c and C, respectively; give consequence c the value 0
+and give C the value 1. Now consider any of the other n − 2 consequences, say, Ci . To
+value this consequence, imagine that you are given the choice between either receiving Ci or taking part in a random experiment that either earns you consequence C
+with probability u or consequence c with probability 1 − u. Clearly, your choice will
+depend on the value of u. On the one hand, if u = 1, then the experiment is certain
+to result in consequence C, and since C is the most desirable consequence, you will
+prefer participating in the experiment to receiving Ci . On the other hand, if u = 0,
+then the experiment will result in the least desirable consequence—namely, c—so in
+this case you will prefer the consequence Ci to participating in the experiment. Now,
+as u decreases from 1 to 0, it seems reasonable that your choice will at some point
+switch from participating in the experiment to the certain return of Ci , and at that
+critical switch point you will be indifferent between the two alternatives. Take that
+indifference probability u as the value of the consequence Ci . In other words, the
+value of Ci is that probability u such that you are indifferent between either receiving the consequence Ci or taking part in an experiment that returns consequence C
+with probability u or consequence c with probability 1 − u. We call this indifference
+probability the utility of the consequence Ci , and we designate it as u(Ci ).
+To determine which action is superior, we need to evaluate each one. Consider the
+ﬁrst action, which results in consequence Ci with probability pi , i = 1, . . . , n. We can
+think of the result of this action as being determined by a two-stage experiment. In the
+ﬁrst stage, one of the values 1, . . . , n is chosen according to the probabilities p1 , . . . , pn ;
+if value i is chosen, you receive consequence Ci . However, since Ci is equivalent to
+obtaining consequence C with probability u(Ci ) or consequence c with probability
+1 − u(Ci ), it follows that the result of the two-stage experiment is equivalent to an
+experiment in which either consequence C or consequence c is obtained, with C being
+obtained with probability
+n
+
+pi u(Ci )
+i=1
+
+Similarly, the result of choosing the second action is equivalent to taking part in an
+experiment in which either consequence C or consequence c is obtained, with C being
+obtained with probability
+n
+
+qi u(Ci )
+i=1
+
+Since C is preferable to c, it follows that the ﬁrst action is preferable to the second
+action if
+n
+n
+
+
+pi u(Ci ) >
+qi u(Ci )
+i=1
+
+i=1
+
+In other words, the worth of an action can be measured by the expected value of the
+utility of its consequence, and the action with the largest expected utility is the most
+preferable.
+.
+
+132
+
+Chapter 4
+
+Random Variables
+
+A simple logical consequence of Proposition 4.1 is Corollary 4.1.
+Corollary 4.1. If a and b are constants, then
+E[aX + b] = aE[X] + b
+Proof.
+
+
+E[aX + b] =
+
+(ax + b)p(x)
+
+x:p(x)>0
+
+=a
+
+
+
+xp(x) + b
+
+x:p(x)>0
+
+
+
+p(x)
+
+x:p(x)>0
+
+= aE[X] + b
+
+The expected value of a random variable X, E[X], is also referred to as the mean
+or the ﬁrst moment of X. The quantity E[X n ], n Ú 1, is called the nth moment of X.
+By Proposition 4.1, we note that
+
+xn p(x)
+E[X n ] =
+x:p(x)>0
+
+4.5
+
+VARIANCE
+Given a random variable X along with its distribution function F, it would be
+extremely useful if we were able to summarize the essential properties of F by certain suitably deﬁned measures. One such measure would be E[X], the expected value
+of X. However, although E[X] yields the weighted average of the possible values of
+X, it does not tell us anything about the variation, or spread, of these values. For
+instance, although random variables W, Y, and Z having probability mass functions
+determined by
+W = 0 with probability 1
+⎧
+⎨−1 with probability 1
+2
+Y=
+⎩+1 with probability 1
+2
+⎧
+⎨−100 with probability 1
+2
+Z=
+⎩+100 with probability 1
+2
+
+all have the same expectation—namely, 0—there is a much greater spread in the possible values of Y than in those of W (which is a constant) and in the possible values
+of Z than in those of Y.
+Because we expect X to take on values around its mean E[X], it would appear that
+a reasonable way of measuring the possible variation of X would be to look at how
+far apart X would be from its mean, on the average. One possible way to measure this
+variation would be to consider the quantity E[|X − μ|], where μ = E[X]. However,
+it turns out to be mathematically inconvenient to deal with this quantity, so a more
+tractable quantity is usually considered—namely, the expectation of the square of the
+difference between X and its mean. We thus have the following deﬁnition.
+
+Section 4.5
+
+Variance
+
+133
+
+Deﬁnition
+If X is a random variable with mean μ, then the variance of X, denoted by Var(X),
+is deﬁned by
+Var(X) = E[(X − μ)2 ]
+
+An alternative formula for Var(X) is derived as follows:
+Var(X) = E[(X − μ)2 ]
+
+(x − μ)2 p(x)
+=
+x
+
+
+(x2 − 2μx + μ2 )p(x)
+=
+x
+
+=
+
+
+
+x2 p(x) − 2μ
+
+x
+
+
+
+xp(x) + μ2
+
+x
+
+
+
+p(x)
+
+x
+
+= E[X 2 ] − 2μ2 + μ2
+= E[X 2 ] − μ2
+That is,
+Var(X) = E[X 2 ] − (E[X])2
+In words, the variance of X is equal to the expected value of X 2 minus the square
+of its expected value. In practice, this formula frequently offers the easiest way to
+compute Var(X).
+EXAMPLE 5a
+Calculate Var(X) if X represents the outcome when a fair die is rolled.
+Solution. It was shown in Example 3a that E[X] = 72 . Also,
+ 
+ 
+ 
+ 
+ 
+ 
+1
+1
+1
+1
+1
+1
++ 22
++ 32
++ 42
++ 52
++ 62
+E[X 2 ] = 12
+6
+6
+6
+6
+6
+6
+ 
+1
+=
+(91)
+6
+Hence,
+91
+Var(X) =
+−
+6
+
+ 2
+35
+7
+=
+2
+12
+
+A useful identity is that, for any constants a and b,
+Var(aX + b) = a2 Var(X)
+
+.
+
+134
+
+Chapter 4
+
+Random Variables
+
+To prove this equality, let μ = E[X] and note from Corollary 4.1 that E[aX + b] =
+aμ + b. Therefore,
+Var(aX + b) = E[(aX + b − aμ − b)2 ]
+= E[a2 (X − μ)2 ]
+= a2 E[(X − μ)2 ]
+= a2 Var(X)
+Remarks. (a) Analogous to the means being the center of gravity of a distribution of mass, the variance represents, in the terminology of mechanics, the moment
+of inertia.
+(b) The square root of the Var(X) is called the standard deviation of X, and we
+denote it by SD(X). That is,
+.
+SD(X) = Var(X)
+Discrete random variables are often classiﬁed according to their probability mass
+functions. In the next few sections, we consider some of the more common types.
+4.6
+
+THE BERNOULLI AND BINOMIAL RANDOM VARIABLES
+Suppose that a trial, or an experiment, whose outcome can be classiﬁed as either a
+success or a failure is performed. If we let X = 1 when the outcome is a success and
+X = 0 when it is a failure, then the probability mass function of X is given by
+p(0) = P{X = 0} = 1 − p
+p(1) = P{X = 1} = p
+
+(6.1)
+
+where p, 0 … p … 1, is the probability that the trial is a success.
+A random variable X is said to be a Bernoulli random variable (after the Swiss
+mathematician James Bernoulli) if its probability mass function is given by Equations (6.1) for some p ∈ (0, 1).
+Suppose now that n independent trials, each of which results in a success with probability p and in a failure with probability 1 − p, are to be performed. If X represents
+the number of successes that occur in the n trials, then X is said to be a binomial
+random variable with parameters (n, p). Thus, a Bernoulli random variable is just a
+binomial random variable with parameters (1, p).
+The probability mass function of a binomial random variable having parameters
+(n, p) is given by
+ 
+n
+pi (1 − p)n−i
+i = 0, 1, . . . , n
+(6.2)
+p(i) =
+i
+The validity of Equation (6.2) may be veriﬁed by ﬁrst noting that the probability of
+any particular sequence of n outcomes containing i successes and n − i failures is,
+by the assumed independence
+of trials, pi (1 − p)n−i . Equation (6.2) then follows,
+
+n
+since there are
+different sequences of the n outcomes leading to i successes and
+i
+ 
+n
+n − i failures. This perhaps can most easily be seen by noting that there are
+i
+different choices
+of
+the
+i
+trials
+that
+result
+in
+successes.
+For
+instance,
+if
+n
+=
+4,
+i
+=
+2,
+ 
+4
+then there are
+= 6 ways in which the four trials can result in two successes,
+2
+
+164
+
+Chapter 4
+
+Random Variables
+
+The zeta distribution owes its name to the fact that the function
+ s
+ s
+ s
+1
+1
+1
+ζ (s) = 1 +
++
++ ··· +
++ ···
+2
+3
+k
+is known in mathematical disciplines as the Riemann zeta function (after the German
+mathematician G. F. B. Riemann).
+The zeta distribution was used by the Italian economist V. Pareto to describe the
+distribution of family incomes in a given country. However, it was G. K. Zipf who
+applied zeta distribution to a wide variety of problems in different areas and, in doing
+so, popularized its use.
+4.9
+
+EXPECTED VALUE OF SUMS OF RANDOM VARIABLES
+A very important property of expectations is that the expected value of a sum of
+random variables is equal to the sum of their expectations. In this section, we will
+prove this result under the assumption that the set of possible values of the probability experiment—that is, the sample space S—is either ﬁnite or countably inﬁnite.
+Although the result is true without this assumption (and a proof is outlined in the
+theoretical exercises), not only will the assumption simplify the argument, but it will
+also result in an enlightening proof that will add to our intuition about expectations.
+So, for the remainder of this section, suppose that the sample space S is either a ﬁnite
+or a countably inﬁnite set.
+For a random variable X, let X(s) denote the value of X when s ∈ S is the outcome
+of the experiment. Now, if X and Y are both random variables, then so is their sum.
+That is, Z = X + Y is also a random variable. Moreover, Z(s) = X(s) + Y(s).
+EXAMPLE 9a
+Suppose that the experiment consists of ﬂipping a coin 5 times, with the outcome
+being the resulting sequence of heads and tails. Suppose X is the number of heads in
+the ﬁrst 3 ﬂips and Y is the number of heads in the ﬁnal 2 ﬂips. Let Z = X + Y. Then,
+for instance, for the outcome s = (h, t, h, t, h),
+X(s) = 2
+Y(s) = 1
+Z(s) = X(s) + Y(s) = 3
+meaning that the outcome (h, t, h, t, h) results in 2 heads in the ﬁrst three ﬂips, 1 head
+in the ﬁnal two ﬂips, and a total of 3 heads in the ﬁve ﬂips.
+.
+Let p(s) = P({s}) be the probability that s is the outcome of the experiment.
+Because we can write any event A as the ﬁnite or countably inﬁnite union of the
+mutually exclusive events {s}, s ∈ A, it follows by the axioms of probability that
+
+P(A) =
+p(s)
+s∈A
+
+When A = S, the preceding equation gives
+
+p(s)
+1=
+s∈S
+
+Section 4.9
+
+Expected Value of Sums of Random Variables
+
+165
+
+Now, let X be a random variable, and consider E[X]. Because X(s) is the value of X
+when s is the outcome of the experiment, it seems intuitive that E[X]—the weighted
+average of the possible values of X, with each value weighted by the probability that
+X assumes that value—should equal a weighted average of the values X(s), s ∈ S,
+with X(s) weighted by the probability that s is the outcome of the experiment. We
+now prove this intuition.
+Proposition 9.1.
+E[X] =
+
+
+
+X(s) p(s)
+
+s∈S
+
+Proof. Suppose that the distinct values of X are xi , i Ú 1. For each i, let Si be the
+event that X is equal to xi . That is, Si = {s : X(s) = xi }. Then,
+
+E[X] =
+xi P{X = xi }
+i
+
+=
+
+
+
+xi P(Si )
+
+i
+
+=
+
+
+i
+
+=
+=
+=
+
+xi
+
+
+s∈Si
+
+
+i
+
+s∈Si
+
+i
+
+s∈Si
+
+
+
+
+p(s)
+
+xi p(s)
+X(s)p(s)
+
+X(s)p(s)
+
+s∈S
+
+where the ﬁnal equality follows because S1 , S2 , . . . are mutually exclusive events
+whose union is S.
+EXAMPLE 9b
+Suppose that two independent ﬂips of a coin that comes up heads with probability p
+are made, and let X denote the number of heads obtained. Because
+P(X = 0) = P(t, t) = (1 − p)2 ,
+P(X = 1) = P(h, t) + P(t, h) = 2p(1 − p)
+P(X = 2) = P(h, h) = p2
+it follows from the deﬁnition of expected value that
+E[X] = 0 · (1 − p)2 + 1 · 2p(1 − p) + 2 · p2 = 2p
+which agrees with
+E[X] = X(h, h)p2 + X(h, t)p(1 − p) + X(t, h)(1 − p)p + X(t, t)(1 − p)2
+= 2p2 + p(1 − p) + (1 − p)p
+= 2p
+
+.
+
+We now prove the important and useful result that the expected value of a sum of
+random variables is equal to the sum of their expectations.
+
+166
+
+Chapter 4
+
+Random Variables
+
+Corollary 9.2. For random variables X1 , X2 , . . . , Xn ,
+⎡
+⎤
+n
+n
+
+
+⎣
+⎦
+E
+Xi =
+E[Xi ]
+i=1
+
+Proof. Let Z =
+E[Z] =
+
+i=1
+
+n
+i=1 Xi . Then, by Proposition 9.1,
+
+
+
+Z(s)p(s)
+
+s∈S
+
+=
+
+
+
+X1 (s) + X2 (s) + . . . + Xn (s) p(s)
+s∈S
+
+=
+
+
+
+X1 (s)p(s) +
+
+
+
+s∈S
+
+X2 (s)p(s) + . . . +
+
+s∈S
+
+
+
+Xn (s)p(s)
+
+s∈S
+
+= E[X1 ] + E[X2 ] + . . . + E[Xn ]
+
+.
+
+EXAMPLE 9c
+Find the expected value of the sum obtained when n fair dice are rolled.
+Solution. Let X be the sum. We will compute E[X] by using the representation
+X=
+
+n
+
+
+Xi
+
+i=1
+
+where Xi is the upturned value on die i. Because Xi is equally likely to be any of the
+values from 1 to 6, it follows that
+E[Xi ] =
+
+6
+
+
+i(1/6) = 21/6 = 7/2
+
+i=1
+
+which yields the result
+⎤
+⎡
+n
+n
+
+
+Xi ⎦ =
+E[Xi ] = 3.5 n
+E[X] = E ⎣
+i=1
+
+i=1
+
+.
+
+EXAMPLE 9d
+Find the expected total number of successes that result from n trials when trial i is a
+success with probability pi , i = 1, . . . , n.
+Solution. Letting
+%
+Xi =
+
+1,
+0,
+
+if trial i is a success
+if trial i is a failure
+
+we have the representation
+X=
+
+n
+
+i=1
+
+Xi
+
+Section 4.9
+
+Expected Value of Sums of Random Variables
+
+167
+
+Consequently,
+E[X] =
+
+n
+
+
+E[Xi ] =
+
+i=1
+
+n
+
+
+pi
+
+i=1
+
+Note that this result does not require that the trials be independent. It includes as a
+special case the expected value of a binomial random variable, which assumes independent trials and all pi = p, and thus has mean np. It also gives the expected value
+of a hypergeometric random variable representing the number of white balls selected
+when n balls are randomly selected, without replacement, from an urn of N balls of
+which m are white. We can interpret the hypergeometric as representing the number
+of successes in n trials, where trial i is said to be a success if the ith ball selected is
+white. Because the ith ball selected is equally likely to be any of the N balls and thus
+has probability m/N of being white, it follows that the hypergeometric is the number of successes in n trials in which each trial is a success with probability p = m/N.
+Hence, even though these hypergeometric trials are dependent, it follows from the
+result of Example 9d that the expected value of the hypergeometric is np = nm/N. .
+EXAMPLE 9e
+Derive an expression for the variance of the number of successful trials in Example
+9d, and apply it to obtain the variance of a binomial random variable with parameters
+n and p, and of a hypergeometric random variable equal to the number of white balls
+chosen when n balls are randomly chosen from an urn containing N balls of which m
+are white.
+Solution. Letting X be the number of successful trials, and using the same representation for X—namely, X = ni=1 Xi —as in the previous example, we have
+⎡
+⎞⎤
+⎞⎛
+⎛
+n
+n
+ ⎟⎥
+⎢ 
+⎠⎜
+⎝
+E[X 2 ] = E ⎢
+X
+Xj ⎠⎥
+⎝
+i
+⎦
+⎣
+i=1
+
+j=1
+
+⎡
+⎛
+⎞⎤
+n
+
+⎢ ⎝
+⎥
+= E⎣
+Xi Xi +
+Xj ⎠⎦
+jZi
+
+i=1
+
+⎤
+⎡
+n
+n 
+
+
+Xi2 +
+Xi Xj ⎦
+= E⎣
+i=1 jZi
+
+i=1
+
+=
+
+n
+
+
+E[Xi2 ] +
+
+
+i
+
+E[Xi Xj ]
+
+i=1 jZi
+
+i=1
+
+=
+
+n 
+
+
+pi +
+
+n 
+
+
+E[Xi Xj ]
+
+(9.1)
+
+i=1 jZi
+
+where the ﬁnal equation used that Xi2 = Xi . However, because the possible values of
+both Xi and Xj are 0 or 1, it follows that
+%
+1, if Xi = 1, Xj = 1
+Xi Xj =
+0, otherwise
+
+168
+
+Chapter 4
+
+Random Variables
+
+Hence,
+
+E[Xi Xj ] = P{Xi = 1, Xj = 1} = P(trials i and j are successes)
+
+Now, on the one hand, if X is binomial, then, for i Z j, the results of trial i and trial j
+are independent, with each being a success with probability p. Therefore,
+E[Xi Xj ] = p2 ,
+
+i Z j
+
+Together with Equation (9.1), the preceding equation shows that, for a binomial random variable X,
+E[X 2 ] = np + n(n − 1)p2
+implying that
+Var(X) = E[X 2 ] − (E[X])2 = np + n(n − 1)p2 − n2 p2 = np(1 − p)
+On the other hand, if X is hypergeometric, then, given that a white ball is chosen
+in trial i, each of the other N − 1 balls, of which m − 1 are white, is equally likely to
+be the jth ball chosen, for j Z i. Consequently, for j Z i,
+P{Xi = 1, Xj = 1} = P{Xi = 1}P{Xj = 1|Xi = 1} =
+
+mm − 1
+N N − 1
+
+Using pi = m/N, we now obtain, from Equation (9.1),
+E[X 2 ] =
+
+mm − 1
+nm
++ n(n − 1)
+N
+N N − 1
+
+Consequently,
+Var(X) =
+
+mm − 1
+nm
++ n(n − 1)
+−
+N
+N N − 1
+
+
+
+nm
+N
+
+2
+
+which, as shown in Example 8j, can be simpliﬁed to yield
+
+
+n − 1
+Var(X) = np(1 − p) 1 −
+N − 1
+where p = m/N.
+4.10
+
+.
+
+PROPERTIES OF THE CUMULATIVE DISTRIBUTION FUNCTION
+Recall that, for the distribution function F of X, F(b) denotes the probability that the
+random variable X takes on a value that is less than or equal to b. Following are some
+properties of the cumulative distribution function (c.d.f.) F:
+1. F is a nondecreasing function; that is, if a < b, then F(a) … F(b).
+2. lim F(b) = 1.
+b→q
+3. lim F(b) = 0.
+b→−q
+4. F is right continuous. That is, for any b and any decreasing sequence bn , n Ú 1,
+that converges to b, lim F(bn ) = F(b).
+n→q
+Property 1 follows, as was noted in Section 4.1, because, for a < b, the event
+{X … a} is contained in the event {X … b} and so cannot have a larger probability. Properties 2, 3, and 4 all follow from the continuity property of probabilities
+
+170
+
+Chapter 4
+
+Random Variables
+F(x)
+
+1
+11
+—
+12
+2–
+3
+1–
+2
+
+1
+
+2
+
+3
+
+x
+
+FIGURE 4.8: Graph of F(x).
+
+A graph of F(x) is presented in Figure 4.8. Compute (a) P{X < 3}, (b) P{X = 1}, (c)
+P{X > 12 }, and (d) P{2 < X … 4}.
+/
+
+%
+
+11
+1
+1
+= lim F 3 −
+=
+Solution. (a) P{X < 3} = lim P X … 3 −
+n
+n
+n
+n
+12
+(b)
+P{X = 1} = P{X … 1} − P{X < 1}
+
+
+2
+1
+1
+1
+= F(1) − lim F 1 −
+= − =
+n
+n
+3
+2
+6
+(c)
+/
+%
+/
+%
+1
+1
+=1 − P X …
+P X >
+2
+2
+ 
+1
+3
+=1 − F
+=
+2
+4
+(d)
+P{2 < X … 4} = F(4) − F(2)
+1
+=
+12
+
+.
+
+SUMMARY
+A real-valued function deﬁned on the outcome of a probability experiment is called
+a random variable.
+If X is a random variable, then the function F(x) deﬁned by
+F(x) = P{X … x}
+is called the distribution function of X. All probabilities concerning X can be stated
+in terms of F.
+
+Summary
+
+171
+
+A random variable whose set of possible values is either ﬁnite or countably inﬁnite
+is called discrete. If X is a discrete random variable, then the function
+p(x) = P{X = x}
+is called the probability mass function of X. Also, the quantity E[X] deﬁned by
+
+E[X] =
+xp(x)
+x:p(x)>0
+
+is called the expected value of X. E[X] is also commonly called the mean or the expectation of X.
+A useful identity states that, for a function g,
+
+E[g(X)] =
+g(x)p(x)
+x:p(x)>0
+
+The variance of a random variable X, denoted by Var(X), is deﬁned by
+Var(X) = E[(X − E[X])2 ]
+The variance, which is equal to the expected square of the difference between X
+and its expected value, is a measure of the spread of the possible values of X. A useful
+identity is
+Var(X) = E[X 2 ] − (E[X])2
+√
+The quantity Var(X) is called the standard deviation of X.
+We now note some common types of discrete random variables. The random variable X whose probability mass function is given by
+ 
+n
+pi (1 − p)n−i i = 0, . . . , n
+p(i) =
+i
+is said to be a binomial random variable with parameters n and p. Such a random
+variable can be interpreted as being the number of successes that occur when n independent trials, each of which results in a success with probability p, are performed.
+Its mean and variance are given by
+E[X] = np
+
+Var(X) = np(1 − p)
+
+The random variable X whose probability mass function is given by
+p(i) =
+
+e−λ λi
+i!
+
+i Ú 0
+
+is said to be a Poisson random variable with parameter λ. If a large number of (approximately) independent trials are performed, each having a small probability of being
+successful, then the number of successful trials that result will have a distribution
+which is approximately that of a Poisson random variable. The mean and variance of
+a Poisson random variable are both equal to its parameter λ. That is,
+E[X] = Var(X) = λ
+The random variable X whose probability mass function is given by
+p(i) = p(1 − p)i−1
+
+i = 1, 2, . . .
+
+172
+
+Chapter 4
+
+Random Variables
+
+is said to be a geometric random variable with parameter p. Such a random variable
+represents the trial number of the ﬁrst success when each trial is independently a
+success with probability p. Its mean and variance are given by
+E[X] =
+
+1
+p
+
+Var(X) =
+
+1 − p
+p2
+
+The random variable X whose probability mass function is given by
+
+
+i − 1
+pr (1 − p)i−r i Ú r
+p(i) =
+r − 1
+is said to be a negative binomial random variable with parameters r and p. Such a
+random variable represents the trial number of the rth success when each trial is
+independently a success with probability p. Its mean and variance are given by
+E[X] =
+
+r
+p
+
+Var(X) =
+
+r(1 − p)
+p2
+
+A hypergeometric random variable X with parameters n, N, and m represents the
+number of white balls selected when n balls are randomly chosen from an urn that
+contains N balls of which m are white. The probability mass function of this random
+variable is given by
+ 
+
+m
+N − m
+i
+n − i
+ 
+i = 0, . . . , m
+p(i) =
+N
+n
+With p = m/N, its mean and variance are
+E[X] = np Var(X) =
+
+N − n
+np(1 − p)
+N − 1
+
+An important property of the expected value is that the expected value of a sum of
+random variables is equal to the sum of their expected values. That is,
+⎡
+⎤
+n
+n
+
+
+E⎣
+Xi ⎦ =
+E[Xi ]
+i=1
+
+i=1
+
+PROBLEMS
+4.1. Two balls are chosen randomly from an urn containing 8 white, 4 black, and 2 orange balls. Suppose that we win $2 for each black ball selected
+and we lose $1 for each white ball selected. Let
+X denote our winnings. What are the possible values of X, and what are the probabilities associated
+with each value?
+4.2. Two fair dice are rolled. Let X equal the
+product of the 2 dice. Compute P{X = i} for
+i = 1, . . . , 36.
+
+4.3. Three dice are rolled. By assuming that each of
+the 63 = 216 possible outcomes is equally likely,
+ﬁnd the probabilities attached to the possible values that X can take on, where X is the sum of
+the 3 dice.
+4.4. Five men and 5 women are ranked according to
+their scores on an examination. Assume that no
+two scores are alike and all 10! possible rankings
+are equally likely. Let X denote the highest ranking achieved by a woman. (For instance, X = 1
+
+Problems
+if the top-ranked person is female.) Find P{X = i},
+i = 1, 2, 3, . . . , 8, 9, 10.
+4.5. Let X represent the difference between the number of heads and the number of tails obtained
+when a coin is tossed n times. What are the possible values of X?
+4.6. In Problem 5, for n = 3, if the coin is assumed fair,
+what are the probabilities associated with the values that X can take on?
+4.7. Suppose that a die is rolled twice. What are the
+possible values that the following random variables can take on:
+(a) the maximum value to appear in the two rolls;
+(b) the minimum value to appear in the two rolls;
+(c) the sum of the two rolls;
+(d) the value of the ﬁrst roll minus the value of
+the second roll?
+4.8. If the die in Problem 7 is assumed fair, calculate
+the probabilities associated with the random variables in parts (a) through (d).
+4.9. Repeat Example 1b when the balls are selected
+with replacement.
+4.10. In Example 1d, compute the conditional probability that we win i dollars, given that we win something; compute it for i = 1, 2, 3.
+4.11. (a) An integer N is to be selected at random from
+{1, 2, . . . , (10)3 } in the sense that each integer
+has the same probability of being selected.
+What is the probability that N will be divisible by 3? by 5? by 7? by 15? by 105? How
+would your answer change if (10)3 is replaced
+by (10)k as k became larger and larger?
+(b) An important function in number theory—
+one whose properties can be shown to be
+related to what is probably the most important unsolved problem of mathematics, the
+Riemann hypothesis—is the Möbius function
+μ(n), deﬁned for all positive integral values n
+as follows: Factor n into its prime factors. If
+there is a repeated prime factor, as in 12 =
+2 · 2 · 3 or 49 = 7 · 7, then μ(n) is deﬁned
+to equal 0. Now let N be chosen at random
+from {1, 2, . . . (10)k }, where k is large. Determine P{μ(N) = 0} as k→q.
+Hint: To compute P{μ(N) Z 0}, use the identity
+q
+
+P2 − 1
+i
+
+i=1
+
+Pi2
+
+=
+
+    
+3
+8
+24
+48
+6
+··· = 2
+4
+9
+25
+49
+π
+
+where Pi is the ith-smallest prime. (The number 1
+is not a prime.)
+4.12. In the game of Two-Finger Morra, 2 players show
+1 or 2 ﬁngers and simultaneously guess the number
+of ﬁngers their opponent will show. If only one of
+the players guesses correctly, he wins an amount
+
+173
+
+(in dollars) equal to the sum of the ﬁngers shown
+by him and his opponent. If both players guess
+correctly or if neither guesses correctly, then no
+money is exchanged. Consider a speciﬁed player,
+and denote by X the amount of money he wins in
+a single game of Two-Finger Morra.
+(a) If each player acts independently of the other,
+and if each player makes his choice of the
+number of ﬁngers he will hold up and the
+number he will guess that his opponent will
+hold up in such a way that each of the 4 possibilities is equally likely, what are the possible values of X and what are their associated
+probabilities?
+(b) Suppose that each player acts independently
+of the other. If each player decides to hold up
+the same number of ﬁngers that he guesses his
+opponent will hold up, and if each player is
+equally likely to hold up 1 or 2 ﬁngers, what
+are the possible values of X and their associated probabilities?
+4.13. A salesman has scheduled two appointments to
+sell encyclopedias. His ﬁrst appointment will lead
+to a sale with probability .3, and his second will
+lead independently to a sale with probability .6.
+Any sale made is equally likely to be either for the
+deluxe model, which costs $1000, or the standard
+model, which costs $500. Determine the probability mass function of X, the total dollar value of all
+sales.
+4.14. Five distinct numbers are randomly distributed
+to players numbered 1 through 5. Whenever two
+players compare their numbers, the one with the
+higher one is declared the winner. Initially, players
+1 and 2 compare their numbers; the winner then
+compares her number with that of player 3, and so
+on. Let X denote the number of times player 1 is a
+winner. Find P{X = i}, i = 0, 1, 2, 3, 4.
+4.15. The National Basketball Association (NBA) draft
+lottery involves the 11 teams that had the worst
+won–lost records during the year. A total of 66
+balls are placed in an urn. Each of these balls is
+inscribed with the name of a team: Eleven have
+the name of the team with the worst record, 10
+have the name of the team with the second-worst
+record, 9 have the name of the team with the thirdworst record, and so on (with 1 ball having the
+name of the team with the 11th-worst record).
+A ball is then chosen at random, and the team
+whose name is on the ball is given the ﬁrst pick
+in the draft of players about to enter the league.
+Another ball is then chosen, and if it “belongs”
+to a team different from the one that received the
+ﬁrst draft pick, then the team to which it belongs
+receives the second draft pick. (If the ball belongs
+
+174
+
+Chapter 4
+
+Random Variables
+
+to the team receiving the ﬁrst pick, then it is discarded and another one is chosen; this continues
+until the ball of another team is chosen.) Finally,
+another ball is chosen, and the team named on
+the ball (provided that it is different from the
+previous two teams) receives the third draft pick.
+The remaining draft picks 4 through 11 are then
+awarded to the 8 teams that did not “win the lottery,” in inverse order of their won–lost records.
+For instance, if the team with the worst record did
+not receive any of the 3 lottery picks, then that
+team would receive the fourth draft pick. Let X
+denote the draft pick of the team with the worst
+record. Find the probability mass function of X.
+4.16. In Problem 15, let team number 1 be the team
+with the worst record, let team number 2 be the
+team with the second-worst record, and so on. Let
+Yi denote the team that gets draft pick number i.
+(Thus, Y1 = 3 if the ﬁrst ball chosen belongs to
+team number 3.) Find the probability mass function of (a) Y1 , (b) Y2 , and (c) Y3 .
+4.17. Suppose that the distribution function of X is
+given by
+⎧
+⎪
+0
+b < 0
+⎪
+⎪
+⎪
+⎪
+⎪
+b
+⎪
+⎪
+0 … b < 1
+⎪
+⎪
+4
+⎪
+⎪
+⎪
+⎨1
+b − 1
++
+1 … b < 2
+F(b) =
+⎪
+2
+4
+⎪
+⎪
+⎪
+⎪
+11
+⎪
+⎪
+2 … b < 3
+⎪
+⎪
+⎪
+12
+⎪
+⎪
+⎪
+⎩1
+3 … b
+(a) Find P{X = i}, i = 1, 2, 3.
+(b) Find P{ 12 < X < 32 }.
+4.18. Four independent ﬂips of a fair coin are made. Let
+X denote the number of heads obtained. Plot the
+probability mass function of the random variable
+X − 2.
+4.19. If the distribution function of X is given by
+⎧
+⎪
+0
+b < 0
+⎪
+⎪
+⎪
+⎪
+1
+⎪
+⎪
+⎪
+0 … b < 1
+⎪
+⎪
+2
+⎪
+⎪
+⎪
+⎪
+3
+⎪
+⎪
+⎪
+1 … b < 2
+⎨5
+F(b) =
+⎪
+4
+⎪
+⎪
+2 … b < 3
+⎪
+⎪
+5
+⎪
+⎪
+⎪
+⎪
+⎪
+9
+⎪
+⎪
+3 … b < 3.5
+⎪
+⎪
+10
+⎪
+⎪
+⎪
+⎩1
+b Ú 3.5
+calculate the probability mass function of X.
+
+4.20. A gambling book recommends the following “winning strategy” for the
+ game of roulette: Bet$1 on
+red. If red appears which has probability 18
+38 , then
+take the $1 proﬁt andquit. If red does not appear
+20
+and you lose
+ this bet which has probability 38 of
+occurring , make additional $1 bets on red on each
+of the next two spins of the roulette wheel and then
+quit. Let X denote your winnings when you quit.
+(a) Find P{X > 0}.
+(b) Are you convinced that the strategy is indeed
+a “winning” strategy? Explain your answer!
+(c) Find E[X].
+4.21. Four buses carrying 148 students from the same
+school arrive at a football stadium. The buses
+carry, respectively, 40, 33, 25, and 50 students. One
+of the students is randomly selected. Let X denote
+the number of students that were on the bus carrying the randomly selected student. One of the 4
+bus drivers is also randomly selected. Let Y denote
+the number of students on her bus.
+(a) Which of E[X] or E[Y] do you think is larger?
+Why?
+(b) Compute E[X] and E[Y].
+4.22. Suppose that two teams play a series of games that
+ends when one of them has won i games. Suppose
+that each game played is, independently, won by
+team A with probability p. Find the expected number of games that are played when (a) i = 2 and (b)
+i = 3. Also, show in both cases that this number is
+maximized when p = 12 .
+4.23. You have $1000, and a certain commodity
+presently sells for $2 per ounce. Suppose that after
+one week the commodity will sell for either $1
+or $4 an ounce, with these two possibilities being
+equally likely.
+(a) If your objective is to maximize the expected
+amount of money that you possess at the
+end of the week, what strategy should you
+employ?
+(b) If your objective is to maximize the expected
+amount of the commodity that you possess at
+the end of the week, what strategy should you
+employ?
+4.24. A and B play the following game: A writes down
+either number 1 or number 2, and B must guess
+which one. If the number that A has written down
+is i and B has guessed correctly, B receives i units
+from A. If B makes a wrong guess, B pays 34 unit to
+A. If B randomizes his decision by guessing 1 with
+probability p and 2 with probability 1 − p, determine his expected gain if (a) A has written down
+number 1 and (b) A has written down number 2.
+What value of p maximizes the minimum possible value of B’s expected gain, and what is
+this maximin value? (Note that B’s expected
+
+Problems
+gain depends not only on p, but also on what
+A does.)
+Consider now player A. Suppose that she also
+randomizes her decision, writing down number 1
+with probability q. What is A’s expected loss if (c)
+B chooses number 1 and (d) B chooses number 2?
+What value of q minimizes A’s maximum
+expected loss? Show that the minimum of A’s maximum expected loss is equal to the maximum of B’s
+minimum expected gain. This result, known as the
+minimax theorem, was ﬁrst established in generality by the mathematician John von Neumann and
+is the fundamental result in the mathematical discipline known as the theory of games. The common
+value is called the value of the game to player B.
+4.25. Two coins are to be ﬂipped. The ﬁrst coin will land
+on heads with probability .6, the second with probability .7. Assume that the results of the ﬂips are
+independent, and let X equal the total number of
+heads that result.
+(a) Find P{X = 1}.
+(b) Determine E[X].
+4.26. One of the numbers 1 through 10 is randomly chosen. You are to try to guess the number chosen by
+asking questions with “yes–no” answers. Compute
+the expected number of questions you will need to
+ask in each of the following two cases:
+(a) Your ith question is to be “Is it i?” i =
+1, 2, 3, 4, 5, 6, 7, 8, 9, 10.
+(b) With each question you try to eliminate onehalf of the remaining numbers, as nearly as
+possible.
+4.27. An insurance company writes a policy to the effect
+that an amount of money A must be paid if some
+event E occurs within a year. If the company estimates that E will occur within a year with probability p, what should it charge the customer in order
+that its expected proﬁt will be 10 percent of A?
+4.28. A sample of 3 items is selected at random from a
+box containing 20 items of which 4 are defective.
+Find the expected number of defective items in the
+sample.
+4.29. There are two possible causes for a breakdown of
+a machine. To check the ﬁrst possibility would cost
+C1 dollars, and, if that were the cause of the breakdown, the trouble could be repaired at a cost of R1
+dollars. Similarly, there are costs C2 and R2 associated with the second possibility. Let p and 1 −
+p denote, respectively, the probabilities that the
+breakdown is caused by the ﬁrst and second possibilities. Under what conditions on p, Ci , Ri , i = 1, 2,
+should we check the ﬁrst possible cause of breakdown and then the second, as opposed to reversing
+the checking order, so as to minimize the expected
+cost involved in returning the machine to working
+order?
+
+175
+
+Note: If the ﬁrst check is negative, we must still
+check the other possibility.
+4.30. A person tosses a fair coin until a tail appears for
+the ﬁrst time. If the tail appears on the nth ﬂip, the
+person wins 2n dollars. Let X denote the player’s
+winnings. Show that E[X] = +q. This problem is
+known as the St. Petersburg paradox.
+(a) Would you be willing to pay $1 million to play
+this game once?
+(b) Would you be willing to pay $1 million for
+each game if you could play for as long as
+you liked and only had to settle up when you
+stopped playing?
+4.31. Each night different meteorologists give us the
+probability that it will rain the next day. To judge
+how well these people predict, we will score each
+of them as follows: If a meteorologist says that it
+will rain with probability p, then he or she will
+receive a score of
+1 − (1 − p)2
+1 − p2
+
+if it does rain
+if it does not rain
+
+We will then keep track of scores over a certain time span and conclude that the meteorologist
+with the highest average score is the best predictor
+of weather. Suppose now that a given meteorologist is aware of our scoring mechanism and wants
+to maximize his or her expected score. If this person truly believes that it will rain tomorrow with
+probability p∗ , what value of p should he or she
+assert so as to maximize the expected score?
+4.32. To determine whether they have a certain disease, 100 people are to have their blood tested.
+However, rather than testing each individual separately, it has been decided ﬁrst to place the people into groups of 10. The blood samples of the
+10 people in each group will be pooled and analyzed together. If the test is negative, one test will
+sufﬁce for the 10 people, whereas if the test is positive, each of the 10 people will also be individually
+tested and, in all, 11 tests will be made on this
+group. Assume that the probability that a person
+has the disease is .1 for all people, independently
+of each other, and compute the expected number
+of tests necessary for each group. (Note that we are
+assuming that the pooled test will be positive if at
+least one person in the pool has the disease.)
+4.33. A newsboy purchases papers at 10 cents and sells
+them at 15 cents. However, he is not allowed to
+return unsold papers. If his daily demand is a binomial random variable with n = 10, p = 13 , approximately how many papers should he purchase so as
+to maximize his expected proﬁt?
+4.34. In Example 4b, suppose that the department store
+incurs an additional cost of c for each unit of unmet
+
+176
+
+Chapter 4
+
+Random Variables
+
+demand. (This type of cost is often referred to as
+a goodwill cost because the store loses the goodwill of those customers whose demands it cannot meet.) Compute the expected proﬁt when the
+store stocks s units, and determine the value of s
+that maximizes the expected proﬁt.
+4.35. A box contains 5 red and 5 blue marbles. Two marbles are withdrawn randomly. If they are the same
+color, then you win $1.10; if they are different colors, then you win −$1.00. (That is, you lose $1.00.)
+Calculate
+(a) the expected value of the amount you win;
+(b) the variance of the amount you win.
+4.36. Consider Problem 22 with i = 2. Find the variance
+of the number of games played, and show that this
+number is maximized when p = 12 .
+4.37. Find Var(X) and Var(Y) for X and Y as given in
+Problem 21.
+4.38. If E[X] = 1 and Var(X) = 5, ﬁnd
+(a) E[(2 + X)2 ];
+(b) Var(4 + 3X).
+4.39. A ball is drawn from an urn containing 3 white and
+3 black balls. After the ball is drawn, it is replaced
+and another ball is drawn. This process goes on
+indeﬁnitely. What is the probability that, of the
+ﬁrst 4 balls drawn, exactly 2 are white?
+4.40. On a multiple-choice exam with 3 possible answers
+for each of the 5 questions, what is the probability
+that a student will get 4 or more correct answers
+just by guessing?
+4.41. A man claims to have extrasensory perception. As
+a test, a fair coin is ﬂipped 10 times and the man is
+asked to predict the outcome in advance. He gets
+7 out of 10 correct. What is the probability that
+he would have done at least this well if he had no
+ESP?
+4.42. Suppose that, in ﬂight, airplane engines will fail
+with probability 1 − p, independently from engine
+to engine. If an airplane needs a majority of its
+engines operative to complete a successful ﬂight,
+for what values of p is a 5-engine plane preferable
+to a 3-engine plane?
+4.43. A communications channel transmits the digits 0
+and 1. However, due to static, the digit transmitted
+is incorrectly received with probability .2. Suppose
+that we want to transmit an important message
+consisting of one binary digit. To reduce the
+chance of error, we transmit 00000 instead of 0 and
+11111 instead of 1. If the receiver of the message
+uses “majority” decoding, what is the probability
+that the message will be wrong when decoded?
+What independence assumptions are you making?
+4.44. A satellite system consists of n components and
+functions on any given day if at least k of the n
+components function on that day. On a rainy day
+
+each of the components independently functions
+with probability p1 , whereas on a dry day they each
+independently function with probability p2 . If the
+probability of rain tomorrow is α, what is the probability that the satellite system will function?
+4.45. A student is getting ready to take an important
+oral examination and is concerned about the possibility of having an “on” day or an “off” day. He
+ﬁgures that if he has an on day, then each of his
+examiners will pass him, independently of each
+other, with probability .8, whereas if he has an off
+day, this probability will be reduced to .4. Suppose that the student will pass the examination if a
+majority of the examiners pass him. If the student
+feels that he is twice as likely to have an off day as
+he is to have an on day, should he request an examination with 3 examiners or with 5 examiners?
+4.46. Suppose that it takes at least 9 votes from a 12member jury to convict a defendant. Suppose also
+that the probability that a juror votes a guilty person innocent is .2, whereas the probability that the
+juror votes an innocent person guilty is .1. If each
+juror acts independently and if 65 percent of the
+defendants are guilty, ﬁnd the probability that the
+jury renders a correct decision. What percentage
+of defendants is convicted?
+4.47. In some military courts, 9 judges are appointed.
+However, both the prosecution and the defense
+attorneys are entitled to a peremptory challenge
+of any judge, in which case that judge is removed
+from the case and is not replaced. A defendant is
+declared guilty if the majority of judges cast votes
+of guilty, and he or she is declared innocent otherwise. Suppose that when the defendant is, in fact,
+guilty, each judge will (independently) vote guilty
+with probability .7, whereas when the defendant is,
+in fact, innocent, this probability drops to .3.
+(a) What is the probability that a guilty defendant
+is declared guilty when there are (i) 9, (ii) 8,
+and (iii) 7 judges?
+(b) Repeat part (a) for an innocent defendant.
+(c) If the prosecution attorney does not exercise
+the right to a peremptory challenge of a judge,
+and if the defense is limited to at most two
+such challenges, how many challenges should
+the defense attorney make if he or she is 60
+percent certain that the client is guilty?
+4.48. It is known that diskettes produced by a certain company will be defective with probability
+.01, independently of each other. The company
+sells the diskettes in packages of size 10 and
+offers a money-back guarantee that at most 1 of
+the 10 diskettes in the package will be defective.
+The guarantee is that the customer can return the
+entire package of diskettes if he or she ﬁnds more
+
+Problems
+than one defective diskette in it. If someone buys
+3 packages, what is the probability that he or she
+will return exactly 1 of them?
+4.49. When coin 1 is ﬂipped, it lands on heads with probability .4; when coin 2 is ﬂipped, it lands on heads
+with probability .7. One of these coins is randomly
+chosen and ﬂipped 10 times.
+(a) What is the probability that the coin lands on
+heads on exactly 7 of the 10 ﬂips?
+(b) Given that the ﬁrst of these ten ﬂips lands
+heads, what is the conditional probability that
+exactly 7 of the 10 ﬂips land on heads?
+4.50. Suppose that a biased coin that lands on heads with
+probability p is ﬂipped 10 times. Given that a total
+of 6 heads results, ﬁnd the conditional probability
+that the ﬁrst 3 outcomes are
+(a) h, t, t (meaning that the ﬁrst ﬂip results in
+heads, the second in tails, and the third in
+tails);
+(b) t, h, t.
+4.51. The expected number of typographical errors on a
+page of a certain magazine is .2. What is the probability that the next page you read contains (a) 0
+and (b) 2 or more typographical errors? Explain
+your reasoning!
+4.52. The monthly worldwide average number of airplane crashes of commercial airlines is 3.5. What
+is the probability that there will be
+(a) at least 2 such accidents in the next month;
+(b) at most 1 accident in the next month?
+Explain your reasoning!
+4.53. Approximately 80,000 marriages took place in the
+state of New York last year. Estimate the probability that, for at least one of these couples,
+(a) both partners were born on April 30;
+(b) both partners celebrated their birthday on the
+same day of the year.
+State your assumptions.
+4.54. Suppose that the average number of cars abandoned weekly on a certain highway is 2.2. Approximate the probability that there will be
+(a) no abandoned cars in the next week;
+(b) at least 2 abandoned cars in the next week.
+4.55. A certain typing agency employs 2 typists. The
+average number of errors per article is 3 when
+typed by the ﬁrst typist and 4.2 when typed by the
+second. If your article is equally likely to be typed
+by either typist, approximate the probability that it
+will have no errors.
+4.56. How many people are needed so that the probability that at least one of them has the same birthday
+as you is greater than 12 ?
+
+177
+
+4.57. Suppose that the number of accidents occurring on
+a highway each day is a Poisson random variable
+with parameter λ = 3.
+(a) Find the probability that 3 or more accidents
+occur today.
+(b) Repeat part (a) under the assumption that at
+least 1 accident occurs today.
+4.58. Compare the Poisson approximation with the correct binomial probability for the following cases:
+(a) P{X = 2} when n = 8, p = .1;
+(b) P{X = 9} when n = 10, p = .95;
+(c) P{X = 0} when n = 10, p = .1;
+(d) P{X = 4} when n = 9, p = .2.
+4.59. If you buy a lottery ticket in 50 lotteries, in each of
+1
+which your chance of winning a prize is 100
+, what
+is the (approximate) probability that you will win
+a prize
+(a) at least once?
+(b) exactly once?
+(c) at least twice?
+4.60. The number of times that a person contracts a cold
+in a given year is a Poisson random variable with
+parameter λ = 5. Suppose that a new wonder drug
+(based on large quantities of vitamin C) has just
+been marketed that reduces the Poisson parameter to λ = 3 for 75 percent of the population. For
+the other 25 percent of the population, the drug
+has no appreciable effect on colds. If an individual tries the drug for a year and has 2 colds in that
+time, how likely is it that the drug is beneﬁcial for
+him or her?
+4.61. The probability of being dealt a full house in a
+hand of poker is approximately .0014. Find an
+approximation for the probability that, in 1000
+hands of poker, you will be dealt at least 2 full
+houses.
+4.62. Consider n independent trials, each of which
+results in one of the outcomes 1, . . . , k with respeck
+tive probabilities p1 , . . . , pk ,
+i=1 pi = 1. Show
+that if all the pi are small, then the probability that
+no trial outcome occurs more than once is approximately equal to exp(−n(n − 1) i p2i /2).
+4.63. People enter a gambling casino at a rate of 1 every
+2 minutes.
+(a) What is the probability that no one enters
+between 12:00 and 12:05?
+(b) What is the probability that at least 4 people
+enter the casino during that time?
+4.64. The suicide rate in a certain state is 1 suicide per
+100,000 inhabitants per month.
+(a) Find the probability that, in a city of 400,000
+inhabitants within this state, there will be 8 or
+more suicides in a given month.
+
+178
+
+Chapter 4
+
+Random Variables
+
+(b) What is the probability that there will be at
+least 2 months during the year that will have 8
+or more suicides?
+(c) Counting the present month as month number 1, what is the probability that the ﬁrst
+month to have 8 or more suicides will be
+month number i, i Ú 1?
+What assumptions are you making?
+4.65. Each of 500 soldiers in an army company independently has a certain disease with probability 1/103 .
+This disease will show up in a blood test, and to
+facilitate matters, blood samples from all 500 soldiers are pooled and tested.
+(a) What is the (approximate) probability that
+the blood test will be positive (that is, at least
+one person has the disease)?
+Suppose now that the blood test yields a positive
+result.
+(b) What is the probability, under this circumstance, that more than one person has the disease?
+One of the 500 people is Jones, who knows that he
+has the disease.
+(c) What does Jones think is the probability that
+more than one person has the disease?
+Because the pooled test was positive, the authorities have decided to test each individual separately. The ﬁrst i − 1 of these tests were negative,
+and the ith one—which was on Jones—was positive.
+(d) Given the preceding, scenario, what is the
+probability, as a function of i, that any of the
+remaining people have the disease?
+4.66. A total of 2n people, consisting of n married couples, are randomly seated (all possible orderings
+being equally likely) at a round table. Let Ci
+denote the event that the members of couple i are
+seated next to each other, i = 1, . . . , n.
+(a) Find P(Ci ).
+(b) For j Z i, ﬁnd P(Cj |Ci ).
+(c) Approximate the probability, for n large, that
+there are no married couples who are seated
+next to each other.
+4.67. Repeat the preceding problem when the seating is
+random but subject to the constraint that the men
+and women alternate.
+4.68. In response to an attack of 10 missiles, 500 antiballistic missiles are launched. The missile targets of
+the antiballistic missiles are independent, and each
+antiballstic missile is equally likely to go towards
+any of the target missiles. If each antiballistic missile independently hits its target with probability
+.1, use the Poisson paradigm to approximate the
+probability that all missiles are hit.
+
+4.69. A fair coin is ﬂipped 10 times. Find the probability
+that there is a string of 4 consecutive heads by
+(a) using the formula derived in the text;
+(b) using the recursive equations derived in the
+text.
+(c) Compare your answer with that given by the
+Poisson approximation.
+4.70. At time 0, a coin that comes up heads with probability p is ﬂipped and falls to the ground. Suppose it lands on heads. At times chosen according to a Poisson process with rate λ, the coin is
+picked up and ﬂipped. (Between these times the
+coin remains on the ground.) What is the probability that the coin is on its head side at time t?
+Hint What would be the conditional probability
+if there were no additional ﬂips by time t, and
+what would it be if there were additional ﬂips by
+time t?
+4.71. Consider a roulette wheel consisting of 38 numbers 1 through 36, 0, and double 0. If Smith always
+bets that the outcome will be one of the numbers 1
+through 12, what is the probability that
+(a) Smith will lose his ﬁrst 5 bets;
+(b) his ﬁrst win will occur on his fourth bet?
+4.72. Two athletic teams play a series of games; the ﬁrst
+team to win 4 games is declared the overall winner. Suppose that one of the teams is stronger than
+the other and wins each game with probability .6,
+independently of the outcomes of the other games.
+Find the probability, for i = 4, 5, 6, 7, that the
+stronger team wins the series in exactly i games.
+Compare the probability that the stronger team
+wins with the probability that it would win a 2-outof-3 series.
+4.73. Suppose in Problem 72 that the two teams are
+evenly matched and each has probability 12 of winning each game. Find the expected number of
+games played.
+4.74. An interviewer is given a list of people she can
+interview. If the interviewer needs to interview 5
+people, and if each person (independently) agrees
+to be interviewed with probability 23 , what is the
+probability that her list of people will enable her
+to obtain her necessary number of interviews if
+the list consists of (a) 5 people and (b) 8 people?
+For part (b), what is the probability that the interviewer will speak to exactly (c) 6 people and (d) 7
+people on the list?
+4.75. A fair coin is continually ﬂipped until heads
+appears for the 10th time. Let X denote the number of tails that occur. Compute the probability
+mass function of X.
+4.76. Solve the Banach match problem (Example 8e)
+when the left-hand matchbox originally contained
+
+Theoretical Exercises
+N1 matches and the right-hand box contained N2
+matches.
+4.77. In the Banach matchbox problem, ﬁnd the probability that, at the moment when the ﬁrst box is
+emptied (as opposed to being found empty), the
+other box contains exactly k matches.
+4.78. An urn contains 4 white and 4 black balls. We randomly choose 4 balls. If 2 of them are white and
+2 are black, we stop. If not, we replace the balls
+in the urn and again randomly select 4 balls. This
+continues until exactly 2 of the 4 chosen are white.
+What is the probability that we shall make exactly
+n selections?
+4.79. Suppose that a batch of 100 items contains 6 that
+are defective and 94 that are not defective. If X
+is the number of defective items in a randomly
+drawn sample of 10 items from the batch, ﬁnd (a)
+P{X = 0} and (b) P{X > 2}.
+4.80. A game popular in Nevada gambling casinos is
+Keno, which is played as follows: Twenty numbers are selected at random by the casino from the
+set of numbers 1 through 80. A player can select
+from 1 to 15 numbers; a win occurs if some fraction of the player’s chosen subset matches any of
+the 20 numbers drawn by the house. The payoff is a
+function of the number of elements in the player’s
+selection and the number of matches. For instance,
+if the player selects only 1 number, then he or she
+wins if this number is among the set of 20, and
+the payoff is $2.2 won for every dollar bet. (As
+the player’s probability of winning in this case is
+1
+4 , it is clear that the “fair” payoff should be $3
+won for every $1 bet.) When the player selects 2
+numbers, a payoff (of odds) of $12 won for every
+$1 bet is made when both numbers are among
+the 20,
+(a) What would be the fair payoff in this case?
+Let Pn, k denote the probability that exactly
+k of the n numbers chosen by the player are
+among the 20 selected by the house.
+(b) Compute Pn, k
+(c) The most typical wager at Keno consists of
+selecting 10 numbers. For such a bet the
+casino pays off as shown in the following
+table. Compute the expected payoff:
+
+179
+
+Keno Payoffs in 10 Number Bets
+Number of matches Dollars won for each $1 bet
+0–4
+5
+6
+7
+8
+9
+10
+
+-1
+1
+17
+179
+1, 299
+2, 599
+24, 999
+
+4.81. In Example 8i, what percentage of i defective lots
+does the purchaser reject? Find it for i = 1, 4.
+Given that a lot is rejected, what is the conditional probability that it contained 4 defective
+components?
+4.82. A purchaser of transistors buys them in lots of 20.
+It is his policy to randomly inspect 4 components
+from a lot and to accept the lot only if all 4 are
+nondefective. If each component in a lot is, independently, defective with probability .1, what proportion of lots is rejected?
+4.83. There are three highways in the county. The number of daily accidents that occur on these highways are Poisson random variables with respective
+parameters .3, .5, and .7. Find the expected number of accidents that will happen on any of these
+highways today.
+4.84. Suppose that 10 balls are put into 5 boxes, with
+each ball independently being put in box i with
+probability pi , 5i=1 pi = 1.
+(a) Find the expected number of boxes that do
+not have any balls.
+(b) Find the expected number of boxes that have
+exactly 1 ball.
+4.85. There are k types of coupons. Independently of
+the types of previously collected coupons, each
+new coupon collected is of type i with probability
+k
+pi ,
+i=1 pi = 1. If n coupons are collected, ﬁnd
+the expected number of distinct types that appear
+in this set. (That is, ﬁnd the expected number of
+types of coupons that appear at least once in the
+set of n coupons.)
+
+THEORETICAL EXERCISES
+4.1. There are N distinct types of coupons, and each
+time one is obtained it will, independently of
+past choices, be of type i with probability Pi , i =
+1, . . . , N. Let T denote the number one need select
+
+to obtain at least one of each type. Compute
+P{T = n}.
+Hint: Use an argument similar to the one used in
+Example 1e.
+
+180
+
+Chapter 4
+
+Random Variables
+
+4.2. If X has distribution function F, what is the distribution function of eX ?
+4.3. If X has distribution function F, what is the distribution function of the random variable αX + β,
+where α and β are constants, α Z 0?
+4.4. For a nonnegative integer-valued random variable N, show that
+E[N] =
+
+q
+
+
+P{N Ú i}
+
+i=1
+
+Hint:
+
+q
+
+P{N Ú i} =
+
+i=1
+
+q q
+
+P{N = k}. Now inter-
+
+i=1 k=i
+
+change the order of summation.
+4.5. For a nonnegative integer-valued random variable
+N, show that
+q
+
+
+iP{N > i} =
+
+i=0
+
+Hint:
+
+q
+
+iP{N > i} =
+
+i=0
+
+1
+(E[N 2 ] − E[N])
+2
+q
+
+i
+
+q
+
+P{N = k}. Now
+
+i=0 k=i+1
+
+interchange the order of summation.
+4.6. Let X be such that
+P{X = 1} = p = 1 − P{X = −1}
+Find c Z 1 such that E[cX ] = 1.
+4.7. Let X be a random variable having expected value
+μ and variance σ 2 . Find the expected value and
+variance of
+X − μ
+Y=
+σ
+4.8. Find Var(X) if
+P(X = a) = p = 1 − P(X = b)
+4.9. Show how the derivation of the binomial probabilities
+ 
+n i
+P{X = i} =
+p (1 − p)n−i , i = 0, . . . , n
+i
+leads to a proof of the binomial theorem
+(x + y)n =
+
+n  
+
+n
+i=0
+
+i
+
+xi yn−i
+
+when x and y are nonnegative.
+x
+Hint: Let p = x+y
+.
+4.10. Let X be a binomial random variable with parameters n and p. Show that
+
+
+1 − (1 − p)n+1
+1
+=
+E
+X + 1
+(n + 1)p
+
+4.11. Consider n independent sequential trials, each of
+which is successful with probability p. If there
+is a total of k successes, show that each of the
+n!/[k!(n − k)!] possible arrangements of the k successes and n − k failures is equally likely.
+4.12. There are n components lined up in a linear
+arrangement. Suppose that each component independently functions with probability p. What is the
+probability that no 2 neighboring components are
+both nonfunctional?
+Hint: Condition on the number of defective components and use the results of Example 4c of
+Chapter 1.
+4.13. Let X be a binomial random variable with parameters (n, p). What value of p maximizes P{X =
+k}, k = 0, 1, . . . , n? This is an example of a statistical method used to estimate p when a binomial (n, p) random variable is observed to equal
+k. If we assume that n is known, then we estimate
+p by choosing that value of p which maximizes
+P{X = k}. This is known as the method of maximum likelihood estimation.
+4.14. A family has n children with probability αpn , n Ú 1,
+where α … (1 − p)/p.
+(a) What proportion of families has no children?
+(b) If each child is equally likely to be a boy or a
+girl (independently of each other), what proportion of families consists of k boys (and any
+number of girls)?
+4.15. Suppose that n independent tosses of a coin having
+probability p of coming up heads are made. Show
+that the probability that an even number of heads
+results is 12 [1 + (q − p)n ], where q = 1 − p. Do
+this by proving and then utilizing the identity
+[n/2] 
+
+
+i=0
+
+n
+2i
+
+
+p2i qn−2i =
+
+3
+12
+(p + q)n + (q − p)n
+2
+
+where [n/2] is the largest integer less than or equal
+to n/2. Compare this exercise with Theoretical
+Exercise 3.5 of Chapter 3.
+4.16. Let X be a Poisson random variable with parameter λ. Show that P{X = i} increases monotonically
+and then decreases monotonically as i increases,
+reaching its maximum when i is the largest integer
+not exceeding λ.
+Hint: Consider P{X = i}/P{X = i − 1}.
+4.17. Let X be a Poisson random variable with
+parameter λ.
+(a) Show that
+P{X is even} =
+
+5
+14
+1 + e−2λ
+2
+
+Theoretical Exercises
+by using the result of Theoretical Exercise
+15 and the relationship between Poisson and
+binomial random variables.
+(b) Verify the formula in part (a) directly by making use of the expansion of e−λ + eλ .
+4.18. Let X be a Poisson random variable with parameter λ. What value of λ maximizes P{X = k}, k Ú 0?
+4.19. Show that X is a Poisson random variable with
+parameter λ, then
+E[X n ] = λE[(X + 1)n−1 ]
+Now use this result to compute E[X 3 ].
+4.20. Consider n coins, each of which independently
+comes up heads with probability p. Suppose that
+n is large and p is small, and let λ = np. Suppose
+that all n coins are tossed; if at least one comes
+up heads, the experiment ends; if not, we again
+toss all n coins, and so on. That is, we stop the
+ﬁrst time that at least one of the n coins come up
+heads. Let X denote the total number of heads that
+appear. Which of the following reasonings concerned with approximating P{X = 1} is correct
+(in all cases, Y is a Poisson random variable with
+parameter λ)?
+(a) Because the total number of heads that occur
+when all n coins are rolled is approximately a
+Poisson random variable with parameter λ,
+P{X = 1} L P{Y = 1} = λe−λ
+(b) Because the total number of heads that occur
+when all n coins are rolled is approximately
+a Poisson random variable with parameter λ,
+and because we stop only when this number is
+positive,
+P{X = 1} L P{Y = 1|Y > 0} =
+
+λe−λ
+1 − e−λ
+
+(c) Because at least one coin comes up heads, X
+will equal 1 if none of the other n − 1 coins
+come up heads. Because the number of heads
+resulting from these n − 1 coins is approximately Poisson with mean (n − 1)p L λ,
+P{X = 1} L P{Y = 0} = e−λ
+4.21. From a set of n randomly chosen people, let Eij
+denote the event that persons i and j have the same
+birthday. Assume that each person is equally likely
+to have any of the 365 days of the year as his or her
+birthday. Find
+(a) P(E3,4 |E1,2 );
+(b) P(E1,3 |E1,2 );
+(c) P(E2,3 |E1,2 ∩ E1,3 ).
+
+181
+
+What can you conclude from your answers
+ to
+
+n
+parts (a)–(c) about the independence of the
+2
+events Eij ?
+4.22. An urn contains 2n balls, of which 2 are numbered
+1, 2 are numbered 2, . . . , and 2 are numbered n.
+Balls are successively withdrawn 2 at a time without replacement. Let T denote the ﬁrst selection
+in which the balls withdrawn have the same number (and let it equal inﬁnity if none of the pairs
+withdrawn has the same number). We want to
+show that, for 0 < α < 1,
+lim P{T > αn} = e−α/2
+n
+
+To verify the preceding formula, let Mk denote the
+number of pairs withdrawn in the ﬁrst k selections,
+k = 1, . . . , n.
+(a) Argue that when n is large, Mk can be
+regarded as the number of successes in k
+(approximately) independent trials.
+(b) Approximate P{Mk = 0} when n is large.
+(c) Write the event {T > αn} in terms of the value
+of one of the variables Mk .
+(d) Verify the limiting probability given for
+P{T > αn}.
+4.23. Consider a random collection of n individuals. In
+approximating the probability that no 3 of these
+individuals share the same birthday, a better Poisson approximation than that obtained in the text
+(at least for values of n between 80 and 90) is
+obtained by letting Ei be the event that there are
+at least 3 birthdays on day i, i = 1, . . . , 365.
+(a) Find P(Ei ).
+(b) Give an approximation for the probability
+that no 3 individuals share the same birthday.
+(c) Evaluate the preceding when n = 88 (which
+can be shown to be the smallest value of n for
+which the probability exceeds .5).
+4.24. Here is another way to obtain a set of recursive equations for determining Pn , the probability
+that there is a string of k consecutive heads in a
+sequence of n ﬂips of a fair coin that comes up
+heads with probability p:
+(a) Argue that, for k < n, there will be a string of
+k consecutive heads if either
+1. there is a string of k consecutive heads
+within the ﬁrst n − 1 ﬂips, or
+2. there is no string of k consecutive heads
+within the ﬁrst n − k − 1 ﬂips, ﬂip n − k
+is a tail, and ﬂips n − k + 1, . . . , n are
+all heads.
+(b) Using the preceding, relate Pn to Pn−1 . Starting with Pk = pk , the recursion can be used to
+obtain Pk+1 , then Pk+1 , and so on, up to Pn .
+
+182
+
+Chapter 4
+
+Random Variables
+
+4.25. Suppose that the number of events that occur
+in a speciﬁed time is a Poisson random variable
+with parameter λ. If each event is counted with
+probability p, independently of every other event,
+show that the number of events that are counted
+is a Poisson random variable with parameter λp.
+Also, give an intuitive argument as to why this
+should be so. As an application of the preceding
+result, suppose that the number of distinct uranium deposits in a given area is a Poisson random
+variable with parameter λ = 10. If, in a ﬁxed
+period of time, each deposit is discovered inde1
+pendently with probability 50
+, ﬁnd the probability
+that (a) exactly 1, (b) at least 1, and (c) at most 1
+deposit is discovered during that time.
+4.26. Prove
+*
+n
+
+λi
+1 q −x n
+e−λ =
+e x dx
+i!
+n! λ
+i=0
+
+Hint: Use integration by parts.
+4.27. If X is a geometric random variable, show analytically that
+P{X = n + k|X > n} = P{X = k}
+Using the interpretation of a geometric random
+variable, give a verbal argument as to why the preceding equation is true.
+4.28. Let X be a negative binomial random variable with
+parameters r and p, and let Y be a binomial random variable with parameters n and p. Show that
+P{X > n} = P{Y < r}
+
+i=n+1
+
+r − 1
+
+pr (1 − p)i−r =
+
+
+r−1 
+
+n
+i=0
+
+E[X] =
+2 −
+Var(X) =
+
+Hint: Either one could attempt an analytical proof
+of the preceding equation, which is equivalent to
+proving the identity
+
+q 
+
+i − 1
+
+without replacement. Let Y denote the largest
+number selected.
+(a) Find the probability mass function of Y.
+(b) Derive an expression for E[Y] and then use
+Fermat’s combinatorial identity (see Theoretical Exercise 11 of Chapter 1) to simplify the
+expression.
+4.31. A jar contains m + n chips, numbered
+1, 2, . . . , n + m. A set of size n is drawn. If we
+let X denote the number of chips drawn having
+numbers that exceed each of the numbers of those
+remaining, compute the probability mass function
+of X.
+4.32. A jar contains n chips. Suppose that a boy successively draws a chip from the jar, each time replacing the one drawn before drawing another. The
+process continues until the boy draws a chip that
+he has previously drawn. Let X denote the number of draws, and compute its probability mass
+function.
+4.33. Show that Equation (8.6) follows from Equation
+(8.5).
+4.34. From a set of n elements, a nonempty subset is
+chosen at random in the sense that all of the
+nonempty subsets are equally likely to be selected.
+Let X denote the number of elements in the chosen subset. Using the identities given in Theoretical Exercise 12 of Chapter 1, show that
+
+i
+
+* pi (1 − p)n−i
+or one could attempt a proof that uses the probabilistic interpretation of these random variables.
+That is, in the latter case, start by considering a
+sequence of independent trials having a common
+probability p of success. Then try to express the
+events {X > n} and {Y < r} in terms of the outcomes of this sequence.
+4.29. For a hypergeometric random variable, determine
+P{X = k + 1}/P{X = k}
+4.30. Balls numbered 1 through N are in an urn. Suppose that n, n … N, of them are randomly selected
+
+n
+ n−1
+1
+2
+
+n · 22n−2 − n(n + 1)2n−2
+(2n − 1)2
+
+Show also that, for n large,
+Var(X) 
+
+n
+4
+
+in the sense that the ratio Var(X) to n/4
+approaches 1 as n approaches q. Compare this
+formula with the limiting form of Var(Y) when
+P{Y = i} = 1/n, i = 1, . . . , n.
+4.35. An urn initially contains one red and one blue ball.
+At each stage, a ball is randomly chosen and then
+replaced along with another of the same color. Let
+X denote the selection number of the ﬁrst chosen
+ball that is blue. For instance, if the ﬁrst selection is red and the second blue, then X is equal
+to 2.
+(a) Find P{X > i}, i Ú 1.
+(b) Show that, with probability 1, a blue ball is
+eventually chosen. (That is, show that P{X <
+q} = 1.)
+(c) Find E[X].
+
+Self-Test Problems and Exercises
+4.36. Suppose the possible values of X are {xi }, the possible values of Y are {yj }, and the possible values
+of X + Y are {zk }. Let Ak denote the set of all
+pairs of indices (i, j) such that xi + yj = zk ; that is,
+Ak = {(i, j) : xi + yj = zk }.
+(a) Argue that
+P{X + Y = zk } =
+
+183
+
+(c) Using the formula from part (b), argue that
+
+E[X + Y] =
+(xi + yj )P{X = xi ,
+i
+
+j
+
+Y = yj }
+(d) Show that
+
+
+
+P{X = xi , Y = yj }
+
+(i,j)∈Ak
+
+P(X = xi ) =
+
+
+
+P(X = xi , Y = yj ),
+
+j
+
+P(Y = yj ) =
+
+(b) Show that
+E[X + Y] =
+
+ 
+
+
+
+P{X = xi , Y = yj }
+
+i
+
+(xi + yj )P{X = xi ,
+
+k (i,j)∈Ak
+
+Y = yj }
+
+(e) Prove that
+E[X + Y] = E[X] + E[Y]
+
+SELF-TEST PROBLEMS AND EXERCISES
+4.1. Suppose that the random variable X is equal to
+the number of hits obtained by a certain baseball player in his next 3 at bats. If P{X = 1} =
+.3, P{X = 2} = .2, and P{X = 0} = 3P{X = 3},
+ﬁnd E[X].
+4.2. Suppose that X takes on one of the values 0, 1,
+and 2. If for some constant c, P{X = i} = cP{X =
+i − 1}, i = 1, 2, ﬁnd E[X].
+4.3. A coin that, when ﬂipped, comes up heads with
+probability p is ﬂipped until either heads or tails
+has occurred twice. Find the expected number of
+ﬂips.
+4.4. A certain community is composed of m families,
+r
+
+ni of which have i children,
+
+ni = m. If one of
+
+i=1
+
+the families is randomly chosen, let X denote the
+number of children in that family. If one of the
+r
+
+ini children is randomly chosen, let Y denote
+i=1
+
+the total number of children in the family of that
+child. Show that E[Y] Ú E[X].
+4.5. Suppose that P{X = 0} = 1 − P{X = 1}. If
+E[X] = 3Var(X), ﬁnd P{X = 0}.
+4.6. There are 2 coins in a bin. When one of them is
+ﬂipped, it lands on heads with probability .6, and
+when the other is ﬂipped, it lands on heads with
+probability .3. One of these coins is to be randomly
+chosen and then ﬂipped. Without knowing which
+coin is chosen, you can bet any amount up to 10
+dollars, and you then either win that amount if the
+coin comes up heads or lose it if it comes up tails.
+Suppose, however, that an insider is willing to sell
+you, for an amount C, the information as to which
+coin was selected. What is your expected payoff
+if you buy this information? Note that if you buy
+
+it and then bet x, you will end up either winning
+x − C or −x − C (that is, losing x + C in the latter case). Also, for what values of C does it pay to
+purchase the information?
+4.7. A philanthropist writes a positive number x on a
+piece of red paper, shows the paper to an impartial observer, and then turns it face down on the
+table. The observer then ﬂips a fair coin. If it shows
+heads, she writes the value 2x and, if tails, the value
+x/2, on a piece of blue paper, which she then turns
+face down on the table. Without knowing either
+the value x or the result of the coin ﬂip, you have
+the option of turning over either the red or the
+blue piece of paper. After doing so and observing
+the number written on that paper, you may elect
+to receive as a reward either that amount or the
+(unknown) amount written on the other piece of
+paper. For instance, if you elect to turn over the
+blue paper and observe the value 100, then you
+can elect either to accept 100 as your reward or
+to take the amount (either 200 or 50) on the red
+paper. Suppose that you would like your expected
+reward to be large.
+(a) Argue that there is no reason to turn over the
+red paper ﬁrst, because if you do so, then no
+matter what value you observe, it is always
+better to switch to the blue paper.
+(b) Let y be a ﬁxed nonnegative value, and consider the following strategy: Turn over the
+blue paper, and if its value is at least y, then
+accept that amount. If it is less than y, then
+switch to the red paper. Let Ry (x) denote the
+reward obtained if the philanthropist writes
+the amount x and you employ this strategy. Find E[Ry (x)]. Note that E[R0 (x)] is the
+
+184
+
+Chapter 4
+
+Random Variables
+
+expected reward if the philanthropist writes
+the amount x when you employ the strategy
+of always choosing the blue paper.
+4.8. Let B(n, p) represent a binomial random variable
+with parameters n and p. Argue that
+P{B(n, p) … i} = 1 − P{B(n, 1 − p) … n − i − 1}
+Hint: The number of successes less than or equal to
+i is equivalent to what statement about the number
+of failures?
+4.9. If X is a binomial random variable with expected
+value 6 and variance 2.4, ﬁnd P{X = 5}.
+4.10. An urn contains n balls numbered 1 through n. If
+you withdraw m balls randomly in sequence, each
+time replacing the ball selected previously, ﬁnd
+P{X = k}, k = 1, . . . , m, where X is the maximum
+of the m chosen numbers.
+Hint: First ﬁnd P{X … k}.
+4.11. Teams A and B play a series of games, with the
+ﬁrst team to win 3 games being declared the winner
+of the series. Suppose that team A independently
+wins each game with probability p. Find the conditional probability that team A wins
+(a) the series given that it wins the ﬁrst game;
+(b) the ﬁrst game given that it wins the series.
+4.12. A local soccer team has 5 more games left to play.
+If it wins its game this weekend, then it will play
+its ﬁnal 4 games in the upper bracket of its league,
+and if it loses, then it will play its ﬁnal games in
+the lower bracket. If it plays in the upper bracket,
+then it will independently win each of its games in
+this bracket with probability .4, and if it plays in
+the lower bracket, then it will independently win
+each of its games with probability .7. If the probability that the team wins its game this weekend is
+.5, what is the probability that it wins at least 3 of
+its ﬁnal 4 games?
+4.13. Each of the members of a 7-judge panel independently makes a correct decision with probability .7. If the panel’s decision is made by majority
+rule, what is the probability that the panel makes
+the correct decision? Given that 4 of the judges
+agreed, what is the probability that the panel made
+the correct decision?
+4.14. On average, 5.2 hurricanes hit a certain region in a
+year. What is the probability that there will be 3 or
+fewer hurricanes hitting this year?
+4.15. The number of eggs laid on a tree leaf by an insect
+of a certain type is a Poisson random variable with
+parameter λ. However, such a random variable
+can be observed only if it is positive, since if it is
+0 then we cannot know that such an insect was on
+the leaf. If we let Y denote the observed number
+of eggs, then
+
+P{Y = i} = P{X = i|X > 0}
+where X is Poisson with parameter λ. Find E[Y].
+4.16. Each of n boys and n girls, independently and randomly, chooses a member of the other sex. If a
+boy and girl choose each other, they become a
+couple. Number the girls, and let Gi be the event
+that girl number i is part of a couple. Let P0 =
+1 − P(∪ni=1 Gi ) be the probability that no couples
+are formed.
+(a) What is P(Gi )?
+(b) What is P(Gi |Gj )?
+(c) When n is large, approximate P0 .
+(d) When n is large, approximate Pk , the probability that exactly k couples are formed.
+(e) Use the inclusion–exclusion identity to evaluate P0 .
+4.17. A total of 2n people, consisting of n married couples, are randomly divided into n pairs. Arbitrarily
+number the women, and let Wi denote the event
+that woman i is paired with her husband.
+(a) Find P(Wi ).
+(b) For i Z j, ﬁnd P(Wi |Wj ).
+(c) When n is large, approximate the probability
+that no wife is paired with her husband.
+(d) If each pairing must consist of a man and a
+woman, what does the problem reduce to?
+4.18. A casino patron will continue to make $5 bets on
+red in roulette until she has won 4 of these bets.
+(a) What is the probability that she places a total
+of 9 bets?
+(b) What is her expected winnings when she
+stops?
+Remark: On each bet, she will either win $5 with
+20
+probability 18
+38 or lose $5 with probability 38 .
+4.19. When three friends go for coffee, they decide who
+will pay the check by each ﬂipping a coin and then
+letting the “odd person” pay. If all three ﬂips produce the same result (so that there is no odd person), then they make a second round of ﬂips, and
+they continue to do so until there is an odd person.
+What is the probability that
+(a) exactly 3 rounds of ﬂips are made?
+(b) more than 4 rounds are needed?
+4.20. Show that if X is a geometric random variable with
+parameter p, then
+E[1/X] =
+
+−p log(p)
+1 − p
+
+Hint: You will need to evaluate an expression of
+q
+-a
+ai /i. To do so, write ai /i = 0 xi−1 dx,
+the form
+i=1
+
+and then interchange the sum and the integral.
+4.21. Suppose that
+P{X = a} = p,
+
+P{X = b} = 1 − p
+
+Self-Test Problems and Exercises
+(a) Show that X−b
+a−b is a Bernoulli random variable.
+(b) Find Var(X).
+4.22. Each game you play is a win with probability p.
+You plan to play 5 games, but if you win the ﬁfth
+game, then you will keep on playing until you
+lose.
+(a) Find the expected number of games that
+you play.
+(b) Find the expected number of games that
+you lose.
+4.23. Balls are randomly withdrawn, one at a time without replacement, from an urn that initially has
+N white and M black balls. Find the probability
+that n white balls are drawn before m black balls,
+n … N, m … M.
+4.24. Ten balls are to be distributed among 5 urns,
+with each ball going into urn i with probabil5
+ity pi ,
+i=1 pi = 1. Let Xi denote the number of
+
+185
+
+balls that go into urn i. Assume that events corresponding to the locations of different balls are
+independent.
+(a) What type of random variable is Xi ? Be as
+speciﬁc as possible.
+(b) For i Z j, what type of random variable is
+Xi + Xj ?
+(c) Find P{X1 + X2 + X3 = 7}.
+4.25. For the match problem (Example 5m
+Chapter 2), ﬁnd
+(a) the expected number of matches.
+(b) the variance of the number of matches.
+
+in
+
+4.26. Let α be the probability that a geometric random
+variable X with parameter p is an even number.
+q
+(a) Find α by using the identity α =
+i=1
+P{X = 2i}.
+(b) Find α by conditioning on whether X = 1 or
+X > 1.
+
+C H A P T E R
+
+5
+
+Continuous Random Variables
+5.1
+5.2
+5.3
+5.4
+5.5
+5.6
+5.7
+
+INTRODUCTION
+EXPECTATION AND VARIANCE OF CONTINUOUS RANDOM VARIABLES
+THE UNIFORM RANDOM VARIABLE
+NORMAL RANDOM VARIABLES
+EXPONENTIAL RANDOM VARIABLES
+OTHER CONTINUOUS DISTRIBUTIONS
+THE DISTRIBUTION OF A FUNCTION OF A RANDOM VARIABLE
+
+5.1
+
+INTRODUCTION
+In Chapter 4, we considered discrete random variables—that is, random variables
+whose set of possible values is either ﬁnite or countably inﬁnite. However, there also
+exist random variables whose set of possible values is uncountable. Two examples are
+the time that a train arrives at a speciﬁed stop and the lifetime of a transistor. Let X
+be such a random variable. We say that X is a continuous† random variable if there
+exists a nonnegative function f , deﬁned for all real x ∈ (−q, q), having the property
+that, for any set B of real numbers,‡
+*
+P{X ∈ B} =
+f (x) dx
+(1.1)
+B
+
+The function f is called the probability density function of the random variable X.
+(See Figure 5.1.)
+In words, Equation (1.1) states that the probability that X will be in B may be
+obtained by integrating the probability density function over the set B. Since X must
+assume some value, f must satisfy
+* q
+f (x) dx
+1 = P{X ∈ (−q, q)} =
+−q
+
+All probability statements about X can be answered in terms of f . For instance, from
+Equation (1.1), letting B = [a, b], we obtain
+P{a … X … b} =
+
+* b
+
+f (x) dx
+
+(1.2)
+
+a
+
+† Sometimes called absolutely continuous.
+‡ Actually, for technical reasons Equation (1.1) is true only for the measurable sets B, which,
+
+fortunately, include all sets of practical interest.
+
+186
+
+C H A P T E R
+
+7
+
+Properties of Expectation
+7.1
+7.2
+7.3
+7.4
+7.5
+7.6
+7.7
+7.8
+7.9
+
+INTRODUCTION
+EXPECTATION OF SUMS OF RANDOM VARIABLES
+MOMENTS OF THE NUMBER OF EVENTS THAT OCCUR
+COVARIANCE, VARIANCE OF SUMS, AND CORRELATIONS
+CONDITIONAL EXPECTATION
+CONDITIONAL EXPECTATION AND PREDICTION
+MOMENT GENERATING FUNCTIONS
+ADDITIONAL PROPERTIES OF NORMAL RANDOM VARIABLES
+GENERAL DEFINITION OF EXPECTATION
+
+7.1
+
+INTRODUCTION
+In this chapter, we develop and exploit additional properties of expected values. To
+begin, recall that the expected value of the random variable X is deﬁned by
+
+xp(x)
+E[X] =
+x
+
+where X is a discrete random variable with probability mass function p(x), and by
+* q
+E[X] =
+xf (x) dx
+−q
+
+when X is a continuous random variable with probability density function f(x).
+Since E[X] is a weighted average of the possible values of X, it follows that if X
+must lie between a and b, then so must its expected value. That is, if
+P{a … X … b} = 1
+then
+a … E[X] … b
+To verify the preceding statement, suppose that X is a discrete random variable for
+which P{a … X … b} = 1. Since this implies that p(x) = 0 for all x outside of the
+interval [a, b], it follows that
+
+E[X] =
+xp(x)
+x:p(x)>0
+
+Ú
+
+
+
+ap(x)
+
+x:p(x)>0
+
+297
+
+298
+
+Chapter 7
+
+Properties of Expectation
+
+
+
+=a
+
+p(x)
+
+x:p(x)>0
+
+=a
+In the same manner, it can be shown that E[X] … b, so the result follows for discrete
+random variables. As the proof in the continuous case is similar, the result follows.
+7.2
+
+EXPECTATION OF SUMS OF RANDOM VARIABLES
+For a two-dimensional analog of Propositions 4.1 of Chapter 4 and 2.1 of Chapter 5,
+which give the computational formulas for the expected value of a function of a random variable, suppose that X and Y are random variables and g is a function of two
+variables. Then we have the following result.
+Proposition 2.1. If X and Y have a joint probability mass function p(x,y), then
+
+E[g(X, Y)] =
+g(x, y)p(x, y)
+y
+
+x
+
+If X and Y have a joint probability density function f(x,y), then
+* q* q
+g(x, y)f (x, y) dx dy
+E[g(X, Y)] =
+−q −q
+
+Let us give a proof of Proposition 2.1 when the random variables X and Y are
+jointly continuous with joint density function f (x, y) and when g(X, Y) is a nonnegative random variable. Because g(X, Y) Ú 0, we have, by Lemma 2.1 of Chapter 5,
+that
+* q
+P{g(X, Y) > t} dt
+E[g(X, Y)] =
+0
+
+Writing
+
+* *
+P{g(X, Y) > t} =
+
+shows that
+E[g(X, Y)] =
+
+(x,y):g(x,y)>t
+
+* q* *
+(x,y):g(x,y)>t
+
+0
+
+f (x, y) dy dx
+
+f (x, y) dy dx dt
+
+Interchanging the order of integration gives
+* * * g(x,y)
+f (x, y) dt dy dx
+E[g(X, Y) =
+x y t=0
+* *
+=
+g(x, y) f (x, y) dy dx
+x y
+
+Thus, the result is proven when g(X, Y) is a nonnegative random variable. The general case then follows as in the one-dimensional case. (See Theoretical Exercises 2
+and 3 of Chapter 5.)
+EXAMPLE 2a
+An accident occurs at a point X that is uniformly distributed on a road of length L.
+At the time of the accident, an ambulance is at a location Y that is also uniformly
+
+Section 7.2
+
+Expectation of Sums of Random Variables
+
+299
+
+distributed on the road. Assuming that X and Y are independent, ﬁnd the expected
+distance between the ambulance and the point of the accident.
+Solution. We need to compute E[|X − Y|]. Since the joint density function of X and
+Y is
+1
+f (x, y) = 2 , 0 < x < L, 0 < y < L
+L
+it follows from Proposition 2.1 that
+* L* L
+1
+|x − y| dy dx
+E[|X − Y|] = 2
+L 0 0
+Now,
+
+* L
+
+|x − y|dy =
+
+0
+
+=
+
+* x
+0
+x2
+
+(x − y)dy +
+
+* L
+
+(y − x)dy
+
+x
+
++
+
+L2
+x2
+−
+− x(L − x)
+2
+2
+
+2
+L2
++ x2 − xL
+=
+2
+
+Therefore,
+1
+E[|X − Y|] = 2
+L
+=
+
+* L
+0
+
+
+L2
++ x2 − xL dx
+2
+
+L
+3
+
+.
+
+For an important application of Proposition 2.1, suppose that E[X] and E[Y] are
+both ﬁnite and let g(X, Y) = X + Y. Then, in the continuous case,
+* q* q
+E[X + Y] =
+(x + y)f (x, y) dx dy
+−q
+*−q
+* q* q
+*
+q
+q
+=
+xf (x, y) dy dx +
+yf (x, y) dx dy
+−q
+−q −q
+*
+*−q
+q
+q
+xfX (x) dx +
+yfY (y) dy
+=
+−q
+
+= E[X] + E[Y]
+
+−q
+
+The same result holds in general; thus, whenever E[X] and E[Y] are ﬁnite,
+E[X + Y] = E[X] + E[Y]
+
+(2.1)
+
+EXAMPLE 2b
+Suppose that, for random variables X and Y,
+X Ú Y
+That is, for any outcome of the probability experiment, the value of the random variable X is greater than or equal to the value of the random variable Y. Since x Ú y is
+equivalent to the inequality X − Y Ú 0, it follows that E[X − Y] Ú 0, or, equivalently,
+E[X] Ú E[Y]
+
+.
+
+300
+
+Chapter 7
+
+Properties of Expectation
+
+Using Equation (2.1), we may show by a simple induction proof that if E[Xi ] is
+ﬁnite for all i = 1, . . . , n, then
+E[X1 + · · · + Xn ] = E[X1 ] + · · · + E[Xn ]
+
+(2.2)
+
+Equation (2.2) is an extremely useful formula whose utility will now be illustrated by
+a series of examples.
+EXAMPLE 2c The sample mean
+Let X1 , . . . , Xn be independent and identically distributed random variables having
+distribution function F and expected value μ. Such a sequence of random variables is
+said to constitute a sample from the distribution F. The quantity
+X=
+
+n
+
+Xi
+i=1
+
+n
+
+is called the sample mean. Compute E[X].
+Solution.
+
+⎤
+⎡
+n
+
+Xi ⎦
+E[X] = E ⎣
+n
+i=1
+⎤
+⎡
+n
+
+1
+= E⎣
+Xi ⎦
+n
+i=1
+
+=
+
+1
+n
+
+=μ
+
+n
+
+
+E[Xi ]
+
+i=1
+
+since E[Xi ] K μ
+
+That is, the expected value of the sample mean is μ, the mean of the distribution.
+When the distribution mean μ is unknown, the sample mean is often used in statistics
+to estimate it.
+.
+EXAMPLE 2d Boole’s inequality
+Let A1 , . . . , An denote events, and deﬁne the indicator variables Xi , i = 1, . . . , n, by
+%
+1
+if Ai occurs
+Xi =
+0
+otherwise
+Let
+X=
+
+n
+
+
+Xi
+
+i=1
+
+so X denotes the number of the events Ai that occur. Finally, let
+%
+1
+if X Ú 1
+Y=
+0
+otherwise
+
+Section 7.2
+
+Expectation of Sums of Random Variables
+
+301
+
+so Y is equal to 1 if at least one of the Ai occurs and is 0 otherwise. Now, it is immediate that
+X Ú Y
+so
+
+E[X] Ú E[Y]
+
+But since
+E[X] =
+
+n
+
+
+E[Xi ] =
+
+n
+
+
+i=1
+
+P(Ai )
+
+i=1
+
+⎛
+
+and
+
+E[Y] = P{at least one of the Ai occur} = P ⎝
+
+n
+
+
+⎞
+Ai ⎠
+
+i=1
+
+we obtain Boole’s inequality, namely,
+⎞
+⎛
+n
+n
+
+
+P(Ai )
+P ⎝ Ai ⎠ …
+i=1
+
+.
+
+i=1
+
+The next three examples show how Equation (2.2) can be used to calculate the
+expected value of binomial, negative binomial, and hypergeometric random variables. These derivations should be compared with those presented in Chapter 4.
+EXAMPLE 2e Expectation of a binomial random variable
+Let X be a binomial random variable with parameters n and p. Recalling that such
+a random variable represents the number of successes in n independent trials when
+each trial has probability p of being a success, we have that
+X = X1 + X2 + · · · + Xn
+where
+
+%
+1
+Xi =
+0
+
+if the ith trial is a success
+if the ith trial is a failure
+
+Hence, Xi is a Bernoulli random variable having expectation E[Xi ] = 1(p) + 0(1 −
+p). Thus,
+E[X] = E[X1 ] + E[X2 ] + · · · + E[Xn ] = np
+.
+
+EXAMPLE 2f Mean of a negative binomial random variable
+If independent trials having a constant probability p of being successes are performed,
+determine the expected number of trials required to amass a total of r successes.
+Solution. If X denotes the number of trials needed to amass a total of r successes,
+then X is a negative binomial random variable that can be represented by
+X = X1 + X2 + · · · + Xr
+where X1 is the number of trials required to obtain the ﬁrst success, X2 the number
+of additional trials until the second success is obtained, X3 the number of additional
+
+302
+
+Chapter 7
+
+Properties of Expectation
+
+trials until the third success is obtained, and so on. That is, Xi represents the number of additional trials required after the (i − 1)st success until a total of i successes
+is amassed. A little thought reveals that each of the random variables Xi is a geometric random variable with parameter p. Hence, from the results of Example 8b of
+Chapter 4, E[Xi ] = 1/p, i = 1, 2, . . . , r; thus,
+E[X] = E[X1 ] + · · · + E[Xr ] =
+
+r
+p
+
+.
+
+EXAMPLE 2g Mean of a hypergeometric random variable
+If n balls are randomly selected from an urn containing N balls of which m are white,
+ﬁnd the expected number of white balls selected.
+Solution. Let X denote the number of white balls selected, and represent X as
+X = X1 + · · · + Xm
+where
+Xi =
+
+%
+1
+0
+
+if the ith white ball is selected
+otherwise
+
+Now
+E[Xi ] = P{Xi = 1}
+= P{ith white ball is selected}
+ 
+
+1
+N − 1
+1
+n − 1
+ 
+=
+N
+n
+n
+=
+N
+Hence,
+E[X] = E[X1 ] + · · · + E[Xm ] =
+
+mn
+N
+
+We could also have obtained the preceding result by using the alternative representation
+X = Y1 + · · · + Yn
+where
+Yi =
+
+%
+1
+0
+
+if the ith ball selected is white
+otherwise
+
+Since the ith ball selected is equally likely to be any of the N balls, it follows that
+E[Yi ] =
+
+m
+N
+
+so
+E[X] = E[Y1 ] + · · · + E[Yn ] =
+
+nm
+N
+
+.
+
+Section 7.2
+
+Expectation of Sums of Random Variables
+
+303
+
+EXAMPLE 2h Expected number of matches
+Suppose that N people throw their hats into the center of a room. The hats are mixed
+up, and each person randomly selects one. Find the expected number of people that
+select their own hat.
+Solution. Letting X denote the number of matches, we can compute E[X] most easily by writing
+X = X1 + X2 + · · · + XN
+where
+
+%
+1
+Xi =
+0
+
+if the ith person selects his own hat
+otherwise
+
+Since, for each i, the ith person is equally likely to select any of the N hats,
+E[Xi ] = P{Xi = 1} =
+
+1
+N
+
+Thus,
+
+
+E[X] = E[X1 ] + · · · + E[XN ] =
+
+1
+N
+
+
+N=1
+
+Hence, on the average, exactly one person selects his own hat.
+
+.
+
+EXAMPLE 2i Coupon-collecting problems
+Suppose that there are N different types of coupons, and each time one obtains a
+coupon, it is equally likely to be any one of the N types. Find the expected number of
+coupons one need amass before obtaining a complete set of at least one of each type.
+Solution. Let X denote the number of coupons collected before a complete set is
+attained. We compute E[X] by using the same technique we used in computing the
+mean of a negative binomial random variable (Example 2f). That is, we deﬁne Xi , i =
+0, 1, . . . , N − 1 to be the number of additional coupons that need be obtained after
+i distinct types have been collected in order to obtain another distinct type, and we
+note that
+X = X0 + X1 + · · · + XN−1
+When i distinct types of coupons have already been collected, a new coupon obtained
+will be of a distinct type with probability (N − i)/N. Therefore,
+ 
+N − i i k−1
+k Ú 1
+P{Xi = k} =
+N
+N
+or, in other words, Xi is a geometric random variable with parameter (N − i)/N.
+Hence,
+N
+E[Xi ] =
+N − i
+implying that
+N
+N
+N
+E[X] = 1 +
++
++ ··· +
+N − 2
+1
+
+ N − 1
+1
+1
++
+= N 1 + ··· +
+N − 1
+N
+
+.
+
+304
+
+Chapter 7
+
+Properties of Expectation
+
+EXAMPLE 2j
+Ten hunters are waiting for ducks to ﬂy by. When a ﬂock of ducks ﬂies overhead, the
+hunters ﬁre at the same time, but each chooses his target at random, independently
+of the others. If each hunter independently hits his target with probability p, compute the expected number of ducks that escape unhurt when a ﬂock of size 10 ﬂies
+overhead.
+Solution. Let Xi equal 1 if the ith duck escapes unhurt and 0 otherwise, for i = 1,
+2, . . . , 10. The expected number of ducks to escape can be expressed as
+E[X1 + · · · + X10 ] = E[X1 ] + · · · + E[X10 ]
+To compute E[Xi ] = P{Xi = 1}, we note that each of the hunters will, independently,
+hit the ith duck with probability p/10, so
+
+
+p 10
+P{Xi = 1} = 1 −
+10
+Hence,
+
+
+p
+E[X] = 10 1 −
+10
+
+10
+.
+
+EXAMPLE 2k Expected number of runs
+Suppose that a sequence of n 1’s and m 0’s is randomly permuted so that each of the
+(n + m)!/(n!m!) possible arrangements is equally likely. Any consecutive string of 1’s
+is said to constitute a run of 1’s—for instance, if n = 6, m = 4, and the ordering is 1,
+1, 1, 0, 1, 1, 0, 0, 1, 0, then there are 3 runs of 1’s—and we are interested in computing
+the mean number of such runs. To compute this quantity, let
+%
+1
+if a run of 1’s starts at the ith position
+Ii =
+0
+otherwise
+Therefore, R(1), the number of runs of 1, can be expressed as
+R(1) =
+
+n+m
+
+
+Ii
+
+i=1
+
+and it follows that
+E[R(1)] =
+
+n+m
+
+
+E[Ii ]
+
+i=1
+
+Now,
+E[I1 ] = P{“1” in position 1}
+n
+=
+n + m
+
+Section 7.2
+
+Expectation of Sums of Random Variables
+
+305
+
+and for 1 < i … n + m,
+E[Ii ] = P{“0” in position i − 1, “1” in position i}
+m
+n
+=
+n + mn + m − 1
+Hence,
+E[R(1)] =
+
+nm
+n
++ (n + m − 1)
+n + m
+(n + m)(n + m − 1)
+
+Similarly, E[R(0)], the expected number of runs of 0’s, is
+E[R(0)] =
+
+nm
+m
++
+n + m
+n + m
+
+and the expected number of runs of either type is
+E[R(1) + R(0)] = 1 +
+
+2nm
+n + m
+
+.
+
+EXAMPLE 2l A random walk in the plane
+Consider a particle initially located at a given point in the plane, and suppose that it
+undergoes a sequence of steps of ﬁxed length, but in a completely random direction.
+Speciﬁcally, suppose that the new position after each step is one unit of distance from
+the previous position and at an angle of orientation from the previous position that is
+uniformly distributed over (0, 2π). (See Figure 7.1.) Compute the expected square of
+the distance from the origin after n steps.
+2
+
+1
+␪2
+
+1
+1
+
+0
+
+␪1
+
+0
+
+= initial position
+
+1
+
+= position after first step
+
+2
+
+= position after second step
+FIGURE 7.1
+
+Solution. Letting (Xi , Yi ) denote the change in position at the ith step, i = 1, . . . , n,
+in rectangular coordinates, we have
+Xi = cos θi
+Yi = sin θi
+
+306
+
+Chapter 7
+
+Properties of Expectation
+
+where θi , i = 1, . . . , n, are, by assumption, independent uniform (0, 2π)
+ random vari
+n
+
+ables. Because the position after n steps has rectangular coordinates
+
+n
+
+Yi ,
+
+Xi ,
+i=1
+
+i=1
+
+it follows that D2 , the square of the distance from the origin, is given by
+⎛
+⎛
+⎞2
+⎞2
+n
+n
+
+
+Xi ⎠ + ⎝
+Yi ⎠
+D2 = ⎝
+=
+
+i=1
+n
+
+
+i=1
+
+(Xi2 + Yi2 ) +
+
+i=1
+
+=n +
+
+
+
+
+(Xi Xj + Yi Yj )
+iZj
+
+(cos θi cos θj + sin θi sin θj )
+
+iZj
+
+where cos2 θi + sin2 θi = 1. Taking expectations and using the independence of θi and
+θj when i Z j and the fact that
+* 2π
+2πE[cos θi ] =
+cos u du = sin 2π − sin 0 = 0
+0
+* 2π
+sin u du = cos 0 − cos 2π = 0
+2πE[sin θi ] =
+0
+
+we arrive at
+
+E[D2 ] = n
+
+.
+
+EXAMPLE 2m Analyzing the quick-sort algorithm
+Suppose that we are presented with a set of n distinct values x1 , x2 , . . . , xn and that
+we desire to put them in increasing order, or as it is commonly stated, to sort them.
+An efﬁcient procedure for accomplishing this task is the quick-sort algorithm, which
+is deﬁned as follows. When n = 2, the algorithm compares the two values and then
+puts them in the appropriate order. When n > 2, one of the elements is randomly
+chosen—say it is xi —and then all of the other values are compared with xi . Those
+smaller than xi are put in a bracket to the left of xi and those larger than xi are put
+in a bracket to the right of xi . The algorithm then repeats itself on these brackets and
+continues until all values have been sorted. For instance, suppose that we desire to
+sort the following 10 distinct values:
+5, 9, 3, 10, 11, 14, 8, 4, 17, 6
+1
+We start by choosing one of them at random (that is, each value has probability 10
+of
+being chosen). Suppose, for instance, that the value 10 is chosen. We then compare
+each of the others to this value, putting in a bracket to the left of 10 all those values
+smaller than 10 and to the right all those larger. This gives
+
+{5, 9, 3, 8, 4, 6}, 10, {11, 14, 17}
+We now focus on a bracketed set that contains more than a single value—say the one
+on the left of the preceding—and randomly choose one of its values—say that 6 is
+chosen. Comparing each of the values in the bracket with 6 and putting the smaller
+
+Section 7.2
+
+Expectation of Sums of Random Variables
+
+307
+
+ones in a new bracket to the left of 6 and the larger ones in a bracket to the right
+of 6 gives
+{5, 3, 4}, 6, {9, 8}, 10, {11, 14, 17}
+If we now consider the leftmost bracket, and randomly choose the value 4 for comparison then the next iteration yields
+{3}, 4, {5}, 6, {9, 8}, 10, {11, 14, 17}
+This continues until there is no bracketed set that contains more than a single value.
+If we let X denote the number of comparisons that it takes the quick-sort algorithm
+to sort n distinct numbers, then E[X] is a measure of the effectiveness of this algorithm. To compute E[X], we will ﬁrst express X as a sum of other random variables
+as follows. To begin, give the following names to the values that are to be sorted:
+Let 1 stand for the smallest, let 2 stand for the next smallest, and so on. Then, for
+1 … i < j … n, let I(i, j) equal 1 if i and j are ever directly compared, and let it equal
+0 otherwise. With this deﬁnition, it follows that
+X=
+
+n
+n−1 
+
+
+I(i, j)
+
+i=1 j=i+1
+
+implying that
+
+⎡
+⎤
+n
+n−1
+⎢ 
+⎥
+E[X] = E ⎣
+I(i, j)⎦
+i=1 j=i+1
+
+=
+
+n
+n−1 
+
+
+E[I(i, j)]
+
+i=1 j=i+1
+
+=
+
+n
+n−1
+ 
+
+P{i and j are ever compared}
+
+i=1 j=i+1
+
+To determine the probability that i and j are ever compared, note that the values
+i, i + 1, . . . , j − 1, j will initially be in the same bracket (since all values are initially
+in the same bracket) and will remain in the same bracket if the number chosen for
+the ﬁrst comparison is not between i and j. For instance, if the comparison number is
+larger than j, then all the values i, i + 1, . . . , j − 1, j will go in a bracket to the left of
+the comparison number, and if it is smaller than i, then they will all go in a bracket
+to the right. Thus all the values i, i + 1, . . . , j − 1, j will remain in the same bracket
+until the ﬁrst time that one of them is chosen as a comparison value. At that point all
+the other values between i and j will be compared with this comparison value. Now,
+if this comparison value is neither i nor j, then upon comparison with it, i will go into
+a left bracket and j into a right bracket, and thus i and j will be in different brackets
+and so will never be compared. On the other hand, if the comparison value of the set
+i, i + 1, . . . , j − 1, j is either i or j, then there will be a direct comparison between
+i and j. Now, given that the comparison value is one of the values between i and j,
+it follows that it is equally likely to be any of these j − i + 1 values, and thus the
+probability that it is either i or j is 2/(j − i + 1). Therefore, we can conclude that
+P{i and j are ever compared} =
+
+2
+j − i + 1
+
+308
+
+Chapter 7
+
+Properties of Expectation
+
+and
+E[X] =
+
+n
+n−1 
+
+i=1 j=i+1
+
+2
+j − i + 1
+
+To obtain a rough approximation of the magnitude of E[X] when n is large, we can
+approximate the sums by integrals. Now
+n
+
+j=i+1
+
+2
+L
+j − i + 1
+
+* n
+
+2
+dx
+i+1 x − i + 1
+6n
+= 2 log(x − i + 1)6i+1
+
+= 2 log(n − i + 1) − 2 log(2)
+L 2 log(n − i + 1)
+Thus
+E[X] L
+
+n−1
+
+
+2 log(n − i + 1)
+
+i=1
+
+L 2
+=2
+
+* n−1
+
+* 1n
+
+log(n − x + 1) dx
+
+log(y)dy
+2
+
+= 2(y log(y) − y)|n2
+L 2n log(n)
+Thus we see that when n is large, the quick-sort algorithm requires, on average,
+approximately 2n log(n) comparisons to sort n distinct values.
+.
+EXAMPLE 2n The probability of a union of events
+Let A1 , . . . An denote events, and deﬁne the indicator variables Xi , i = 1, . . . , n, by
+%
+1
+Xi =
+0
+
+if Ai occurs
+otherwise
+
+(1 − Xi ) =
+
+%
+1
+0
+
+Now, note that
+1 −
+
+n
+
+i=1
+
+if ∪ Ai occurs
+otherwise
+
+Hence,
+⎡
+E ⎣1 −
+
+n
+
+i=1
+
+⎤
+
+⎛
+⎞
+n
+
+(1 − Xi )⎦ = P ⎝ Ai ⎠
+i=1
+
+Section 7.2
+
+Expectation of Sums of Random Variables
+
+309
+
+Expanding the left side of the preceding formula yields
+⎡
+⎛
+⎞
+n
+n
+
+
+
+⎢
+Xi −
+Xi Xj +
+Xi Xj Xk
+P ⎝ Ai ⎠ = E ⎣
+i=1
+
+i<j
+
+i=1
+
+i<j<k
+
+⎤
+
+− · · · + (−1)n+1 X1 · · · Xn ⎦
+However,
+Xi1 Xi2 · · · Xik =
+so
+
+(2.3)
+
+0
+1
+
+if Ai1 Ai2 · · · Aik occurs
+
+0
+
+otherwise
+
+E[Xi1 · · · Xik ] = P(Ai1 · · · Aik )
+
+Thus, Equation (2.3) is just a statement of the well-known formula for the union of
+events:
+
+
+
+P(Ai ) −
+P(Ai Aj ) +
+P(Ai Aj Ak )
+P(∪Ai ) =
+i
+
+i<j
+
+− · · · + (−1)
+
+n+1
+
+i<j<k
+
+P(A1 · · · An )
+
+.
+
+When one is dealing with an inﬁnite collection of random variables Xi , i Ú 1, each
+having a ﬁnite expectation, it is not necessarily true that
+⎡
+⎤
+q
+q
+
+
+⎦
+⎣
+Xi =
+E[Xi ]
+(2.4)
+E
+i=1
+
+i=1
+q
+
+n
+
+Xi = lim
+Xi . Thus,
+n→q i=1
+i=1
+⎡
+⎤
+⎡
+⎤
+n
+q
+
+
+E⎣
+Xi ⎦ = E ⎣ lim
+Xi ⎦
+n→q
+i=1
+i=1
+⎡
+⎤
+n
+
+?
+= lim E ⎣
+Xi ⎦
+n→q
+
+To determine when (2.4) is valid, we note that
+
+= lim
+n→q
+=
+
+q
+
+
+i=1
+n
+
+
+E[Xi ]
+
+i=1
+
+E[Xi ]
+
+(2.5)
+
+i=1
+
+Hence, Equation (2.4) is valid whenever we are justiﬁed in interchanging the expectation and limit operations in Equation (2.5). Although, in general, this interchange
+is not justiﬁed, it can be shown to be valid in two important special cases:
+1. The Xi are all nonnegative random variables. (That is, P{Xi Ú 0} = 1 for all i.)
+2.
+
+q
+
+i=1
+
+E[|Xi |] < q.
+
+310
+
+Chapter 7
+
+Properties of Expectation
+
+EXAMPLE 2o
+Consider any nonnegative, integer-valued random variable X. If, for each i Ú 1, we
+deﬁne
+%
+1
+if X Ú i
+Xi =
+0
+if X < i
+then
+q
+
+
+Xi =
+
+i=1
+
+X
+
+i=1
+
+=
+
+X
+
+
+q
+
+
+Xi +
+
+Xi
+
+i=X+1
+
+1 +
+
+i=1
+
+q
+
+
+0
+
+i=X+1
+
+=X
+Hence, since the Xi are all nonnegative, we obtain
+E[X] =
+=
+
+q
+
+i=1
+q
+
+
+E(Xi )
+P{X Ú i}
+
+(2.6)
+
+i=1
+
+.
+
+a useful identity.
+EXAMPLE 2p
+
+Suppose that n elements—call them 1, 2, . . ., n—must be stored in a computer in the
+form of an ordered list. Each unit of time, a request will be made for one of these
+elements—i being requested, independently of the past, with probability P(i), i Ú 1,
+P(i) = 1. Assuming that these probabilities are known, what ordering minimizes
+i
+
+the average position in the line of the element requested?
+Solution. Suppose that the elements are numbered so that P(1) Ú P(2) Ú · · · Ú P(n).
+To show that 1, 2, . . ., n is the optimal ordering, let X denote the position of the
+requested element. Now, under any ordering—say, O = i1 , i2 , . . . , in ,
+PO {X Ú k} =
+Ú
+
+n
+
+
+P(ij )
+
+j=k
+n
+
+
+P(j)
+
+j=k
+
+= P1,2, . . . , n {X Ú k}
+Summing over k and using Equation (2.6) yields
+Eo [X] Ú E1,2, . . . , n [X]
+thus showing that ordering the elements in decreasing order of the probability that
+they are requested minimizes the expected position of the element requested.
+.
+
+Section 7.2
+∗ 7.2.1
+
+Expectation of Sums of Random Variables
+
+311
+
+Obtaining Bounds from Expectations via the Probabilistic Method
+
+The probabilistic method is a technique for analyzing the properties of the elements
+of a set by introducing probabilities on the set and then studying an element chosen
+according to those probabilities. The technique was previously seen in Example 4l of
+Chapter 3, where it was used to show that a set contained an element that satisﬁed a
+certain property. In this subsection, we show how it can sometimes be used to bound
+complicated functions.
+Let f be a function on the elements of a ﬁnite set S, and suppose that we are
+interested in
+m = max f (s)
+s∈S
+A useful lower bound for m can often be obtained by letting S be a random element
+of S for which the expected value of f (S) is computable and then noting that m Ú f (S)
+implies that
+m Ú E[f (S)]
+with strict inequality if f (S) is not a constant random variable. That is, E[f (S)] is a
+lower bound on the maximum value.
+EXAMPLE 2q The maximum number of Hamiltonian paths in a tournament
+A
+round-robin tournament of n > 2 contestants is a tournament in which each of the
+
+n
+pair of contestants play each other exactly once. Suppose that the players are
+2
+numbered 1, 2, 3, . . . , n. The permutation i1 , i2 , . . . in is said to be a Hamiltonian path if
+i1 beats i2 , i2 beats i3 , . . ., and in−1 beats in . A problem of some interest is to determine
+the largest possible number of Hamiltonian paths.
+As an illustration, suppose that there are 3 players. On the one hand, one of them
+wins twice, then there is a single Hamiltonian path. (For instance, if 1 wins twice and
+2 beats 3, then the only Hamiltonian path is 1, 2, 3.) On the other hand, if each of
+the players wins once, than there are 3 Hamiltonian paths. (For instance, if 1 beats 2,
+2 beats 3, and 3 beats 1, then 1, 2, 3; 2, 3, 1; and 3, 1, 2, are all Hamiltonians). Hence,
+when n = 3, there is a maximum of 3 Hamiltonian paths.
+We now show that there is an outcome of the tournament that results in more than
+the
+n!/2n−1 Hamiltonian paths. To begin, let the outcome of the tournament specify
+
+n
+ 
+2
+n
+possible
+result of each of the
+games played, and let S denote the set of all 2
+2
+tournament outcomes. Then, with f (s) deﬁned as the number of Hamiltonian paths
+that result when the outcome is s ∈ S, we are asked to show that
+max f (s) Ú
+s
+
+n!
+2n−1
+
+To show this,consider
+the randomly chosen outcome S that is obtained when the
+
+n
+results of the
+games are independent, with each contestant being equally likely
+2
+to win each encounter. To determine E[f (S)], the expected number of Hamiltonian
+paths that result from the outcome S, number the n! permutations, and, for i =
+1, . . . , n!, let
+%
+1,
+if permutation i is a Hamiltonian
+Xi =
+0,
+otherwise
+
+322
+
+Chapter 7
+
+Properties of Expectation
+
+Now, conditional on the event Si,j , both Ai and Aj will occur if, at the time the ﬁrst
+type Tj coupon is collected, of the n − j + 2 types consisting of types Ti , Tj , and the
+n − j as yet uncollected types, Ti and Tj are both collected after the other n − j. But
+this implies that
+1
+1
+P(Ai Aj |Si,j ) = 2
+n − j + 2n − j + 1
+Therefore,
+P(Ai Aj ) =
+
+2
+,
+(n + 1 − i)(n + 2 − j)
+
+yielding
+E[X(X − 1)] = 4
+
+
+i<j
+
+i < j
+
+1
+(n + 1 − i)(n + 2 − j)
+
+Consequently, using the previous result for E[X], we obtain
+Var(X) = 4
+
+
+i<j
+
+7.4
+
+⎛
+⎞2
+n
+n
+
+
+1
+1
+1
+⎠
++
+− ⎝
+(n + 1 − i)(n + 2 − j)
+i
+i
+i=1
+
+.
+
+i=1
+
+COVARIANCE, VARIANCE OF SUMS, AND CORRELATIONS
+The following proposition shows that the expectation of a product of independent
+random variables is equal to the product of their expectations.
+Proposition 4.1. If X and Y are independent, then, for any functions h and g,
+E[g(X)h(Y)] = E[g(X)]E[h(Y)]
+Proof. Suppose that X and Y are jointly continuous with joint density f (x, y). Then
+* q* q
+E[g(X)h(Y)] =
+g(x)h(y)f (x, y) dx dy
+−q −q
+* q* q
+=
+g(x)h(y)fX (x)fY (y) dx dy
+−q −q
+* q
+* q
+h(y)fY (y)dy
+g(x)fX (x) dx
+=
+−q
+
+= E[h(Y)]E[g(X)]
+
+−q
+
+The proof in the discrete case is similar.
+Just as the expected value and the variance of a single random variable give us
+information about that random variable, so does the covariance between two random
+variables give us information about the relationship between the random variables.
+Deﬁnition
+The covariance between X and Y, denoted by Cov (X, Y), is deﬁned by
+Cov(X, Y) = E[(X − E[X])(Y − E[Y])]
+
+Section 7.4
+
+Covariance, Variance of Sums, and Correlations
+
+323
+
+Upon expanding the right side of the preceding deﬁnition, we see that
+Cov(X, Y) = E[XY − E[X]Y − XE[Y] + E[Y]E[X]]
+= E[XY] − E[X]E[Y] − E[X]E[Y] + E[X]E[Y]
+= E[XY] − E[X]E[Y]
+Note that if X and Y are independent, then, by Proposition 4.1, Cov(X, Y) = 0.
+However, the converse is not true. A simple example of two dependent random variables X and Y having zero covariance is obtained by letting X be a random variable
+such that
+1
+P{X = 0} = P{X = 1} = P{X = −1} =
+3
+and deﬁning
+
+%
+0
+Y=
+1
+
+if X Z 0
+if X = 0
+
+Now, XY = 0, so E[XY] = 0. Also, E[X] = 0. Thus,
+Cov(X, Y) = E[XY] − E[X]E[Y] = 0
+However, X and Y are clearly not independent.
+The following proposition lists some of the properties of covariance.
+Proposition 4.2.
+(i) Cov(X, Y) = Cov(Y, X)
+(ii) Cov(X, X) = Var(X)
+(iii) Cov(aX, Y) = a Cov(X, Y)
+⎛
+⎞
+m
+n
+m
+n 
+ ⎟ 
+⎜
+(iv) Cov ⎝
+Xi ,
+Yj ⎠ =
+Cov(Xi , Yj )
+i=1
+
+j=1
+
+i=1 j=1
+
+Proof of Proposition 4.2: Parts (i) and (ii) follow immediately from the deﬁnition
+of covariance, and part (iii) is left as an exercise for the reader. To prove part (iv),
+which states that the covariance operation is additive (as is the operation of taking
+expectations), let μi = E[Xi ] and vj = E[Yj ]. Then
+⎤
+⎡
+⎡
+⎤
+n
+n
+m
+m
+
+
+
+⎥ 
+⎢
+⎣
+⎦
+E
+Xi =
+μi , E ⎣
+Yj ⎦ =
+vj
+i=1
+
+and
+
+i=1
+
+j=1
+
+j=1
+
+⎡
+⎞⎤
+⎛
+⎞⎛
+n
+m
+n
+n
+m
+m
+ ⎟
+
+
+ ⎟⎥
+⎢ 
+⎜
+⎝
+⎠⎜
+Xi ,
+Yj ⎠ = E ⎢
+X
+−
+μ
+Y
+−
+vj ⎠⎥
+Cov ⎝
+⎝
+i
+i
+j
+⎣
+⎦
+⎞
+
+⎛
+
+i=1
+
+j=1
+
+i=1
+
+i=1
+
+j=1
+
+⎡
+⎤
+n
+m
+
+
+⎢
+⎥
+(Yj − vj )⎦
+= E ⎣ (Xi − μi )
+i=1
+
+j=1
+
+j=1
+
+324
+
+Chapter 7
+
+Properties of Expectation
+
+⎡
+⎤
+m
+n
+⎢ 
+⎥
+= E⎣
+(Xi − μi )(Yj − vj )⎦
+i=1 j=1
+
+=
+
+m
+n 
+
+
+E[(Xi − μi )(Yj − vj )]
+
+i=1 j=1
+
+where the last equality follows because the expected value of a sum of random variables is equal to the sum of the expected values.
+It follows from parts (ii) and (iv) of Proposition 4.2, upon taking Yj = Xj , j =
+1, . . . , n, that
+⎞
+⎛
+⎛
+⎞
+n
+n
+n
+
+ ⎟
+⎜
+Var ⎝
+Xi ⎠ = Cov ⎝
+Xi ,
+Xj ⎠
+i=1
+
+i=1
+
+=
+
+n
+n 
+
+
+j=1
+
+Cov(Xi , Xj )
+
+i=1 j=1
+
+=
+
+n
+
+
+Var(Xi ) +
+
+
+
+Cov(Xi , Xj )
+
+iZj
+
+i=1
+
+Since each pair of indices i, j, i Z j, appears twice in the double summation, the preceding formula is equivalent to
+⎛
+Var ⎝
+
+n
+
+i=1
+
+⎞
+Xi ⎠ =
+
+n
+
+
+
+Var(Xi ) + 2
+Cov(Xi , Xj )
+
+i=1
+
+i<j
+
+(4.1)
+
+If X1 , . . . , Xn are pairwise independent, in that Xi and Xj are independent for i Z j,
+then Equation (4.1) reduces to
+⎛
+⎞
+n
+n
+
+
+Xi ⎠ =
+Var(Xi )
+Var ⎝
+i=1
+
+i=1
+
+The following examples illustrate the use of Equation (4.1).
+EXAMPLE 4a
+Let X1 , . . . , Xn be independent and identically distributed random variables having
+expected value μ and variance σ 2 , and as in Example 2c, let X =
+
+n
+
+i=1
+
+Xi /n be the sam-
+
+ple mean. The quantities Xi − X, i = 1, . . . , n, are called deviations, as they equal the
+differences between the individual data and the sample mean. The random variable
+S2 =
+
+n
+
+(Xi − X)2
+i=1
+
+n − 1
+
+is called the sample variance. Find (a) Var(X) and (b) E[S2 ].
+
+Section 7.4
+
+Solution.
+
+Covariance, Variance of Sums, and Correlations
+
+325
+
+⎛
+⎞
+ 2
+n
+
+1
+(a) Var(X) =
+Var ⎝
+Xi ⎠
+n
+i=1
+ 2 
+n
+1
+Var(Xi ) by independence
+=
+n
+i=1
+
+=
+
+σ2
+n
+
+(b) We start with the following algebraic identity:
+n
+
+(n − 1)S =
+(Xi − μ + μ − X)2
+2
+
+i=1
+n
+n
+n
+
+
+
+2
+2
+=
+(Xi − μ) +
+(X − μ) − 2(X − μ)
+(Xi − μ)
+i=1
+
+i=1
+
+i=1
+
+n
+
+(Xi − μ)2 + n(X − μ)2 − 2(X − μ)n(X − μ)
+=
+i=1
+n
+
+=
+(Xi − μ)2 − n(X − μ)2
+i=1
+
+Taking expectations of the preceding yields
+(n − 1)E[S2 ] =
+
+n
+
+
+E[(Xi − μ)2 ] − nE[(X − μ)2 ]
+
+i=1
+
+= nσ 2 − nVar(X)
+= (n − 1)σ 2
+where the ﬁnal equality made use of part (a) of this example and the one preceding
+it made use of the result of Example 2c, namely, that E[X] = μ. Dividing through
+by n − 1 shows that the expected value of the sample variance is the distribution
+variance σ 2 .
+.
+Our next example presents another method for obtaining the variance of a binomial random variable.
+EXAMPLE 4b Variance of a binomial random variable
+Compute the variance of a binomial random variable X with parameters n and p.
+Solution. Since such a random variable represents the number of successes in n independent trials when each trial has the common probability p of being a success, we
+may write
+X = X1 + · · · + Xn
+where the Xi are independent Bernoulli random variables such that
+%
+1
+if the ith trial is a success
+Xi =
+0
+otherwise
+
+326
+
+Chapter 7
+
+Properties of Expectation
+
+Hence, from Equation (4.1), we obtain
+Var(X) = Var(X1 ) + · · · + Var(Xn )
+But
+Var(Xi ) = E[Xi2 ] − (E[Xi ])2
+= E[Xi ] − (E[Xi ])2
+
+since Xi2 = Xi
+
+= p − p2
+Thus,
+Var(X) = np(1 − p)
+
+.
+
+EXAMPLE 4c Sampling from a ﬁnite population
+Consider a set of N people, each of whom has an opinion about a certain subject that
+is measured by a real number v that represents the person’s “strength of
+feeling” about the subject. Let vi represent the strength of feeling of person i,
+i = 1, . . . N.
+Suppose that the quantities vi , i = 1, . . . , N, are unknown and, to gather information,
+  a group of n of the N people is “randomly chosen” in the sense that all of the
+N
+subsets of size n are equally likely to be chosen. These n people are then quesn
+tioned and their feelings determined. If S denotes the sum of the n sampled values,
+determine its mean and variance.
+An important application of the preceding problem is to a forthcoming election
+in which each person in the population is either for or against a certain candidate or
+proposition. If we take vi to equal 1 if person i is in favor and 0 if he or she is against,
+then v =
+
+N
+
+vi /N represents the proportion of the population that is in favor. To
+
+i=1
+
+estimate v, a random sample of n people is chosen, and these people are polled. The
+proportion of those polled who are in favor—that is, S/n—is often used as an estimate
+of v.
+Solution. For each person i, i = 1, . . . , N, deﬁne an indicator variable Ii to indicate
+whether or not that person is included in the sample. That is,
+%
+1
+if person i is in the random sample
+Ii =
+0
+otherwise
+Now, S can be expressed by
+S=
+
+N
+
+
+vi Ii
+
+i=1
+
+so
+E[S] =
+
+N
+
+i=1
+
+vi E[Ii ]
+
+Section 7.4
+
+Var(S) =
+
+Covariance, Variance of Sums, and Correlations
+
+N
+
+
+Var(vi Ii ) + 2
+
+
+
+=
+
+Cov(vi Ii , vj Ij )
+
+i<j
+
+i=1
+N
+
+
+327
+
+v2i Var(Ii ) + 2
+
+
+
+vi vj Cov(Ii , Ij )
+
+i<j
+
+i=1
+
+Because
+n
+N
+n n − 1
+E[Ii Ij ] =
+NN − 1
+E[Ii ] =
+
+it follows that
+Var(Ii ) =
+
+n
+N
+
+
+1 −
+
+n
+N
+
+
+
+n(n − 1)
+Cov(Ii , Ij ) =
+−
+N(N − 1)
+−n(N − n)
+= 2
+N (N − 1)
+
+
+
+n
+N
+
+2
+
+Hence,
+E[S] = n
+
+N
+
+vi
+i=1
+
+n
+N
+
+Var(S) =
+
+
+
+N
+
+= nv
+
+ N
+N − n  2
+2n(N − n)  
+vi − 2
+vi vj
+N
+N (N − 1)
+i<j
+
+i=1
+
+The expression for Var(S) can be simpliﬁed somewhat by using the identity
+(v1 + · · · + vN )2 =
+
+N
+i=1
+
+v2i + 2
+
+vi vj . After some simpliﬁcation, we obtain
+i<j
+
+⎛ N
+⎞
+
+2
+⎜
+⎟
+vi
+⎜
+⎟
+n(N − n) ⎝ i=1
+⎠
+− v2
+Var(S) =
+N − 1
+N
+Consider now the special case in which Np of the v’s are equal to 1 and the remainder equal to 0. Then, in this case, S is a hypergeometric random variable and has
+mean and variance given, respectively, by
+E[S] = nv = np
+and
+
+since v =
+
+Np
+=p
+N
+
+
+
+n(N − n) Np
+− p2
+N − 1
+N
+n(N − n)
+p(1 − p)
+=
+N − 1
+
+Var(S) =
+
+328
+
+Chapter 7
+
+Properties of Expectation
+
+The quantity S/n, equal to the proportion of those sampled which have values equal
+to 1, is such that
+ 
+S
+E
+=p
+n
+ 
+S
+N − n
+Var
+=
+p(1 − p)
+.
+n
+n(N − 1)
+The correlation of two random variables X and Y, denoted by ρ(X, Y), is deﬁned,
+as long as Var(X) Var(Y) is positive, by
+ρ(X, Y) = √
+It can be shown that
+
+Cov(X, Y)
+Var(X)Var(Y)
+
+−1 … ρ(X, Y) … 1
+
+(4.2)
+
+To prove Equation (4.2), suppose that X and Y have variances given by σx2 and σy2 ,
+respectively. Then, on the one hand,
+
+
+Y
+X
++
+0 … Var
+σx
+σy
+=
+
+Var(X)
+Var(Y)
+2Cov(X, Y)
++
++
+2
+2
+σx σy
+σx
+σy
+
+= 2[1 + ρ(X, Y)]
+implying that
+
+−1 … ρ(X, Y)
+
+On the other hand,
+
+
+
+X
+Y
+0 … Var
+−
+σx
+σy
+
+
+
+Var(X)
+VarY
+2Cov(X, Y)
++
+−
+σx σy
+σx2
+(−σy )2
+= 2[1 − ρ(X, Y)]
+=
+
+implying that
+
+ρ(X, Y) … 1
+
+which completes the proof of Equation (4.2).
+In fact, since Var(Z) = 0 implies that Z is constant with probability 1 (this intuitive relationship will be rigorously proven in Chapter 8), it follows from the proof of
+Equation (4.2) that ρ(X, Y) = 1 implies that Y = a + bX, where b = σy /σx > 0 and
+ρ(X, Y) = −1 implies that Y = a + bX, where b = −σy /σx < 0. We leave it as an
+exercise for the reader to show that the reverse is also true: that if Y = a + bX, then
+ρ(X, Y) is either +1 or −1, depending on the sign of b.
+The correlation coefﬁcient is a measure of the degree of linearity between X and Y.
+A value of ρ(X, Y) near +1 or −1 indicates a high degree of linearity between
+X and Y, whereas a value near 0 indicates that such linearity is absent. A positive
+
+Section 7.4
+
+Covariance, Variance of Sums, and Correlations
+
+329
+
+value of ρ(X, Y) indicates that Y tends to increase when X does, whereas a negative
+value indicates that Y tends to decrease when X increases. If ρ(X, Y) = 0, then X
+and Y are said to be uncorrelated.
+EXAMPLE 4d
+Let IA and IB be indicator variables for the events A and B. That is,
+%
+1
+if A occurs
+IA =
+0
+otherwise
+%
+1
+if B occurs
+IB =
+0
+otherwise
+Then
+E[IA ] = P(A)
+E[IB ] = P(B)
+E[IA IB ] = P(AB)
+so
+Cov(IA , IB ) = P(AB) − P(A)P(B)
+= P(B)[P(A|B) − P(A)]
+Thus, we obtain the quite intuitive result that the indicator variables for A and B
+are either positively correlated, uncorrelated, or negatively correlated, depending on
+whether P(A|B) is, respectively, greater than, equal to, or less than P(A).
+.
+Our next example shows that the sample mean and a deviation from the sample
+mean are uncorrelated.
+EXAMPLE 4e
+Let X1 , . . . , Xn be independent and identically distributed random variables having
+variance σ 2 . Show that
+Cov(Xi − X, X) = 0
+Solution. We have
+Cov(Xi − X, X) = Cov(Xi , X) − Cov(X, X)
+⎞
+⎛
+n
+1 ⎟
+⎜
+= Cov ⎝Xi ,
+Xj ⎠ − Var(X)
+n
+j=1
+
+=
+=
+
+1
+n
+
+n
+
+j=1
+
+σ2
+n
+
+Cov(Xi , Xj ) −
+
+−
+
+σ2
+=0
+n
+
+σ2
+n
+
+330
+
+Chapter 7
+
+Properties of Expectation
+
+where the next-to-last equality uses the result of Example 4a and the ﬁnal equality
+follows because
+0
+0
+if j Z i by independence
+Cov(Xi , Xj ) =
+σ2
+if j = i since Var(Xi ) = σ 2
+Although X and the deviation Xi − X are uncorrelated, they are not, in general, independent. However, in the special case where the Xi are normal random
+variables, it turns out that not only is X independent of a single deviation, but it is
+independent of the entire sequence of deviations Xj − X, j = 1, . . . , n. This result
+will be established in Section 7.8, where we will also show that, in this case, the sample mean X and the sample variance S2 are independent, with (n − 1)S2 /σ 2 having
+a chi-squared distribution with n − 1 degrees of freedom. (See Example 4a for the
+.
+deﬁnition of S2 .)
+
+EXAMPLE 4f
+Consider m independent trials, each of which results in any of r possible outcomes
+with probabilities P1 , P2 , . . . , Pr ,
+
+r
+
+Pi = 1. If we let Ni , i = 1, . . . , r, denote the num-
+
+1
+
+ber of the m trials that result in outcome i, then N1 , N2 , . . . , Nr have the multinomial
+distribution
+
+m!
+n n
+P1 1 P2 2 · · · Prnr
+ni = m
+P{N1 = n1 , N2 = n2 , . . . , Nr = nr } =
+n1 !n2 ! . . . nr !
+r
+
+i=1
+
+For i Z j, it seems likely that when Ni is large, Nj would tend to be small; hence, it is
+intuitive that they should be negatively correlated. Let us compute their covariance
+by using Proposition 4.2(iv) and the representation
+Ni =
+
+m
+
+
+Ii (k)
+
+and
+
+Nj =
+
+k=1
+
+m
+
+
+Ij (k)
+
+k=1
+
+where
+%
+1
+Ii (k) =
+0
+%
+1
+Ij (k) =
+0
+
+if trial k results in outcome i
+otherwise
+if trial k results in outcome j
+otherwise
+
+From Proposition 4.2(iv), we have
+Cov(Ni , Nj ) =
+
+m
+ m
+
+
+Cov(Ii (k), Ij ())
+
+=1 k=1
+
+Now, on the one hand, when k Z ,
+Cov(Ii (k), Ij ()) = 0
+
+Section 7.5
+
+Conditional Expectation
+
+331
+
+since the outcome of trial k is independent of the outcome of trial . On the other hand,
+Cov(Ii (), Ij ()) = E[Ii ()Ij ()] − E[Ii ()]E[Ij ()]
+= 0 − Pi Pj = −Pi Pj
+where the equation uses the fact that Ii ()Ij () = 0, since trial  cannot result in both
+outcome i and outcome j. Hence, we obtain
+Cov(Ni , Nj ) = −mPi Pj
+which is in accord with our intuition that Ni and Nj are negatively correlated.
+7.5
+
+.
+
+CONDITIONAL EXPECTATION
+7.5.1
+
+Deﬁnitions
+
+Recall that if X and Y are jointly discrete random variables, then the conditional
+probability mass function of X, given that Y = y, is deﬁned, for all y such that
+P{Y = y} > 0, by
+p(x, y)
+pX|Y (x|y) = P{X = x|Y = y} =
+pY (y)
+It is therefore natural to deﬁne, in this case, the conditional expectation of X given
+that Y = y, for all values of y such that pY (y) > 0, by
+
+xP{X = x|Y = y}
+E[X|Y = y] =
+x
+
+=
+
+
+
+xpX|Y (x|y)
+
+x
+
+EXAMPLE 5a
+If X and Y are independent binomial random variables with identical parameters n
+and p, calculate the conditional expected value of X given that X + Y = m.
+Solution. Let us ﬁrst calculate the conditional probability mass function of X given
+that X + Y = m. For k … min(n, m),
+P{X = k, X + Y = m}
+P{X + Y = m}
+P{X = k, Y = m − k}
+=
+P{X + Y = m}
+P{X = k}P{Y = m − k}
+=
+P{X + Y = m}
+ 
+
+
+n k
+n
+n−k
+p (1 − p)
+pm−k (1 − p)n−m+k
+k
+m − k
+ 
+=
+2n m
+p (1 − p)2n−m
+m
+ 
+
+n
+n
+k
+m − k
+ 
+=
+2n
+m
+
+P{X = k|X + Y = m} =
+
+354
+
+Chapter 7
+
+Properties of Expectation
+
+7.7
+
+MOMENT GENERATING FUNCTIONS
+The moment generating function M(t) of the random variable X is deﬁned for all real
+values of t by
+M(t) = E[etX ]
+⎧
+⎪
+etx p(x)
+⎪
+⎪
+⎨ x
+= * q
+⎪
+⎪
+⎪
+etx f (x) dx
+⎩
+−q
+
+if X is discrete with mass function p(x)
+if X is continuous with density f (x)
+
+We call M(t) the moment generating function because all of the moments of X can be
+obtained by successively differentiating M(t) and then evaluating the result at t = 0.
+For example,
+d
+E[etX ]
+dt
+
+d tX
+=E
+(e )
+dt
+
+M (t) =
+
+(7.1)
+
+= E[XetX ]
+where we have assumed that the interchange of the differentiation and expectation
+operators is legitimate. That is, we have assumed that
+⎡
+⎤
+
+ d
+d ⎣
+[etx p(x)]
+etx p(x)⎦ =
+dt
+dt
+x
+x
+in the discrete case and
+d
+dt
+
+*
+
+ *
+d tx
+e f (x) dx =
+[e f (x)] dx
+dt
+tx
+
+in the continuous case. This assumption can almost always be justiﬁed and, indeed, is
+valid for all of the distributions considered in this book. Hence, from Equation (7.1),
+evaluated at t = 0, we obtain
+M (0) = E[X]
+Similarly,
+d 
+M (t)
+dt
+d
+= E[XetX ]
+dt
+
+d
+tX
+(Xe )
+=E
+dt
+
+M (t) =
+
+= E[X 2 etX ]
+Thus,
+M (0) = E[X 2 ]
+
+Section 7.7
+
+Moment Generating Functions
+
+355
+
+In general, the nth derivative of M(t) is given by
+Mn (t) = E[X n etX ] n Ú 1
+implying that
+
+Mn (0) = E[X n ]
+
+n Ú 1
+
+We now compute M(t) for some common distributions.
+EXAMPLE 7a Binomial distribution with parameters n and p
+If X is a binomial random variable with parameters n and p, then
+M(t) = E[etX ]
+ 
+n
+
+n
+tk
+pk (1 − p)n−k
+e
+=
+k
+k=0
+n  
+
+n
+=
+(pet )k (1 − p)n−k
+k
+k=0
+t
+
+= (pe + 1 − p)n
+where the last equality follows from the binomial theorem. Differentiation yields
+M (t) = n(pet + 1 − p)n−1 pet
+Thus,
+
+E[X] = M (0) = np
+
+Differentiating a second time yields
+M (t) = n(n − 1)(pet + 1 − p)n−2 (pet )2 + n(pet + 1 − p)n−1 pet
+so
+
+E[X 2 ] = M (0) = n(n − 1)p2 + np
+
+The variance of X is given by
+Var(X) = E[X 2 ] − (E[X])2
+= n(n − 1)p2 + np − n2 p2
+= np(1 − p)
+.
+
+verifying the result obtained previously.
+EXAMPLE 7b Poisson distribution with mean λ
+If X is a Poisson random variable with parameter λ, then
+M(t) = E[etX ]
+q
+ etn e−λ λn
+=
+n!
+n=0
+
+= e−λ
+
+q
+
+(λet )n
+n=0
+
+n!
+
+356
+
+Chapter 7
+
+Properties of Expectation
+
+= e−λ eλe
+
+t
+
+= exp{λ(et − 1)}
+Differentiation yields
+M (t) = λet exp{λ(et − 1)}
+M (t) = (λet )2 exp{λ(et − 1)} + λet exp{λ(et − 1)}
+Thus,
+E[X] = M (0) = λ
+E[X 2 ] = M (0) = λ2 + λ
+Var(X) = E[X 2 ] − (E[X])2
+=λ
+Hence, both the mean and the variance of the Poisson random variable equal λ.
+
+.
+
+EXAMPLE 7c Exponential distribution with parameter λ
+M(t) = E[etX ]
+* q
+=
+etx λe−λx dx
+0
+* q
+e−(λ−t)x dx
+=λ
+0
+
+λ
+=
+λ − t
+
+for t < λ
+
+We note from this derivation that, for the exponential distribution, M(t) is deﬁned
+only for values of t less than λ. Differentiation of M(t) yields
+M (t) =
+
+λ
+(λ − t)2
+
+M (t) =
+
+2λ
+(λ − t)3
+
+Hence,
+E[X] = M (0) =
+
+1
+λ
+
+E[X 2 ] = M (0) =
+
+2
+λ2
+
+The variance of X is given by
+Var(X) = E[X 2 ] − (E[X])2
+1
+= 2
+λ
+
+.
+
+EXAMPLE 7d Normal distribution
+We ﬁrst compute the moment generating function of a unit normal random variable
+with parameters 0 and 1. Letting Z be such a random variable, we have
+MZ (t) = E[etZ ]
+* q
+1
+2
+=√
+etx e−x /2 dx
+2π −q
+
+Section 7.7
+
+Moment Generating Functions
+
+357
+
+7
+(x2 − 2tx)
+exp −
+dx
+2
+−q
+7
+0
+* q
+t2
+(x − t)2
+1
++
+dx
+exp −
+=√
+2
+2
+2π −q
+* q
+1
+2
+2
+e−(x−t) /2 dx
+= et /2 √
+2π −q
+1
+=√
+2π
+
+0
+
+* q
+
+= et /2
+2
+
+Hence, the moment generating function of the unit normal random variable Z is given
+2
+by MZ (t) = et /2 . To obtain the moment generating function of an arbitrary normal
+random variable, we recall (see Section 5.4) that X = μ + σ Z will have a normal
+distribution with parameters μ and σ 2 whenever Z is a unit normal random variable.
+Hence, the moment generating function of such a random variable is given by
+MX (t) = E[etX ]
+= E[et(μ+σ Z) ]
+= E[etμ etσ Z ]
+= etμ E[etσ Z ]
+= etμ MZ (tσ )
+= etμ e(tσ ) /2
+7
+0
+σ 2 t2
++ μt
+= exp
+2
+2
+
+By differentiating, we obtain
+
+7
+2 t2
+σ
+
++ μt
+(t) = (μ + tσ 2 ) exp
+MX
+2
+7
+7
+0
+0
+σ 2 t2
+σ 2 t2
+
+2 2
+2
+MX (t) = (μ + tσ ) exp
++ μt + σ exp
++ μt
+2
+2
+0
+
+Thus,
+E[X] = M (0) = μ
+E[X 2 ] = M (0) = μ2 + σ 2
+implying that
+Var(X) = E[X 2 ] − E([X])2
+= σ2
+
+.
+
+Tables 7.1 and 7.2 give the moment generating functions for some common discrete and continuous distributions.
+An important property of moment generating functions is that the moment generating function of the sum of independent random variables equals the product of
+the individual moment generating functions. To prove this, suppose that X and Y are
+
+358
+
+Chapter 7
+
+Properties of Expectation
+TABLE 7.1: DISCRETE PROBABILITY DISTRIBUTION
+
+Binomial with
+parameters n, p;
+0 … p … 1
+Poisson with
+parameter λ > 0
+Geometric with
+parameter
+0 … p … 1
+Negative
+binomial with
+parameters r, p;
+0 … p … 1
+
+Probability mass
+function, p(x)
+
+Moment
+generating
+function, M(t)
+
+Mean
+
+Variance
+
+ 
+n x
+p (1 − p)n−x
+x
+
+(pet + 1 − p)n
+
+np
+
+np(1 − p)
+
+exp{λ(et − 1)}
+
+λ
+
+λ
+
+pet
+1 − (1 − p)et
+
+1
+p
+
+1 − p
+p2
+
+r
+p
+
+r(1 − p)
+p2
+
+x = 0, 1, . . . , n
+e−λ
+
+λx
+x!
+
+x = 0, 1, 2, . . .
+p(1 − p)x−1
+x = 1, 2, . . .
+
+
+n − 1 r
+p (1 − p)n−r
+r − 1
+
+
+
+pet
+1 − (1 − p)et
+
+r
+
+n = r, r + 1, . . .
+
+independent and have moment generating functions MX (t) and MY (t), respectively.
+Then MX+Y (t), the moment generating function of X + Y, is given by
+MX+Y (t) = E[et(X+Y) ]
+= E[etX etY ]
+= E[etX ]E[etY ]
+= MX (t)MY (t)
+where the next-to-last equality follows from Proposition 4.1, since X and Y are independent.
+Another important result is that the moment generating function uniquely determines the distribution. That is, if MX (t) exists and is ﬁnite in some region about t = 0,
+then the distribution of X is uniquely determined. For instance, if
+ 10
+1
+(et + 1)10 ,
+MX (t) =
+2
+then it follows from Table 7.1 that X is a binomial random variable with parameters
+10 and 12 .
+EXAMPLE 7e
+Suppose that the moment generating function of a random variable X is given by
+t
+M(t) = e3(e −1) . What is P{X = 0}?
+
+TABLE 7.2:
+
+Uniform over (a, b)
+
+Normal with parameters
+(μ, σ 2 )
+
+⎧
+−λx
+s−1
+⎪
+⎪
+⎨ λe (λx)
+x Ú 0
+(s)
+f (x) =
+⎪
+⎪
+⎩0
+x < 0
+1
+
+f (x) = √
+e
+2πσ
+
+−(x−μ)2 /2σ 2
+
+− q < x < q
+
+Mean
+
+Variance
+
+etb − eta
+t(b − a)
+
+a + b
+2
+
+(b − a)2
+12
+
+λ
+λ − t
+
+1
+λ
+
+1
+λ2
+
+s
+λ
+
+s
+λ2
+
+μ
+
+σ2
+
+
+
+λ
+λ − t
+0
+
+s
+
+σ 2 t2
+exp μt +
+2
+
+7
+
+Moment Generating Functions
+
+Gamma with parameters
+(s, λ), λ > 0
+
+Probability mass function, f (x)
+⎧
+⎪
+⎨ 1
+a < x < b
+f (x) = b − a
+⎪
+⎩0
+otherwise
+0
+λe−λx x Ú 0
+f (x) =
+0
+x < 0
+
+Moment
+generating
+function, M(t)
+
+Section 7.7
+
+Exponential with
+parameter λ > 0
+
+CONTINUOUS PROBABILITY DISTRIBUTION
+
+359
+
+360
+
+Chapter 7
+
+Properties of Expectation
+
+Solution. We see from Table 7.1 that M(t) = e3(e −1) is the moment generating function of a Poisson random variable with mean 3. Hence, by the one-to-one correspondence between moment generating functions and distribution functions, it follows
+.
+that X must be a Poisson random variable with mean 3. Thus, P{X = 0} = e−3 .
+t
+
+EXAMPLE 7f Sums of independent binomial random variables
+If X and Y are independent binomial random variables with parameters (n, p) and
+(m, p), respectively, what is the distribution of X + Y?
+Solution. The moment generating function of X + Y is given by
+MX+Y (t) = MX (t)MY (t) = (pet + 1 − p)n (pet + 1 − p)m
+= (pet + 1 − p)m+n
+However, (pet + 1 − p)m+n is the moment generating function of a binomial random variable having parameters m + n and p. Thus, this must be the distribution
+of X + Y.
+.
+EXAMPLE 7g Sums of independent Poisson random variables
+Calculate the distribution of X + Y when X and Y are independent Poisson random
+variables with means respective λ1 and λ2 .
+Solution.
+MX+Y (t) = MX (t)MY (t)
+= exp{λ1 (et − 1)} exp{λ2 (et − 1)}
+= exp{(λ1 + λ2 )(et − 1)}
+Hence, X + Y is Poisson distributed with mean λ1 + λ2 , verifying the result given
+in Example 3e of Chapter 6.
+.
+EXAMPLE 7h Sums of independent normal random variables
+Show that if X and Y are independent normal random variables with respective
+parameters (μ1 , σ12 ) and (μ2 , σ22 ), then X + Y is normal with mean μ1 + μ2 and
+variance σ12 + σ22 .
+Solution.
+MX+Y (t) = MX (t)MY (t)
+0
+7
+0
+7
+σ12 t2
+σ22 t2
++ μ1 t exp
++ μ2 t
+= exp
+2
+2
+0
+7
+(σ12 + σ22 )t2
++ (μ1 + μ2 )t
+= exp
+2
+which is the moment generating function of a normal random variable with mean
+μ1 + μ2 and variance σ12 + σ22 . The desired result then follows because the moment
+generating function uniquely determines the distribution.
+.
+
+Section 7.7
+
+Moment Generating Functions
+
+361
+
+EXAMPLE 7i
+Compute the moment generating function of a chi-squared random variable with n
+degrees of freedom.
+Solution. We can represent such a random variable as
+Z12 + · · · + Zn2
+where Z1 , . . . , Zn are independent standard normal random variables. Let M(t) be its
+moment generating function. Then, by the preceding,
+2
+
+M(t) = (E[etZ ])n
+where Z is a standard normal random variable. Now,
+* q
+1
+2
+2
+tZ2
+E[e ] = √
+etx e−x /2 dx
+2π *−q
+q
+1
+2
+2
+=√
+e−x /2σ dx where σ 2 = (1 − 2t)−1
+2π −q
+=σ
+= (1 − 2t)−1/2
+where the next-to-last equality uses the fact that the normal density with mean 0 and
+variance σ 2 integrates to 1. Therefore,
+M(t) = (1 − 2t)−n/2
+
+.
+
+EXAMPLE 7j Moment generating function of the sum of a random number of
+random variables
+Let X1 , X2 , . . . be a sequence of independent and identically distributed random variables, and let N be a nonnegative, integer-valued random variable that is independent
+of the sequence X, i Ú 1. We want to compute the moment generating function of
+Y=
+
+N
+
+
+Xi
+
+i=1
+
+(In Example 5d, Y was interpreted as the amount of money spent in a store on a
+given day when both the amount spent by a customer and the number of customers
+are random variables.)
+To compute the moment generating function of Y, we ﬁrst condition on N as
+follows:
+⎤
+⎡
+⎤
+⎡
+⎫66
+⎫66
+⎧
+⎧
+N
+n
+⎬6
+⎬6
+⎨ 
+⎨ 
+⎥
+⎢
+⎥
+⎢
+6
+6
+⎥
+⎢
+⎥
+X
+X
+N
+=
+n
+=
+E
+exp
+t
+E⎢
+exp
+t
+6
+i
+i 6 N = n⎦
+⎦
+⎣
+⎣
+⎭6
+⎭6
+⎩
+⎩
+6
+6
+1
+1
+⎡
+⎫⎤
+⎧
+n
+⎬
+⎨ 
+⎥
+⎢
+Xi ⎦
+= E ⎣exp t
+⎭
+⎩
+1
+
+n
+
+= [MX (t)]
+
+362
+
+Chapter 7
+
+Properties of Expectation
+
+where
+
+MX (t) = E[etXi ]
+
+Hence,
+
+E[etY |N] = (MX (t))N
+
+Thus,
+
+MY (t) = E[(MX (t))N ]
+
+The moments of Y can now be obtained upon differentiation, as follows:
+
+
+(t) = E[N(MX (t))N−1 MX
+(t)]
+MY
+
+So
+
+E[Y] = MY
+(0)
+
+(0)]
+= E[N(MX (0))N−1 MX
+= E[NEX]
+= E[N]E[X]
+
+(7.2)
+
+verifying the result of Example 5d. (In this last set of equalities, we have used the fact
+that MX (0) = E[e0X ] = 1.)
+Also,
+
+
+
+(t) = E[N(N − 1)(MX (t))N−2 (MX
+(t))2 + N(MX (t))N−1 MX
+(t)]
+MY
+
+so
+
+(0)
+E[Y 2 ] = MY
+
+= E[N(N − 1)(E[X])2 + NE[X 2 ]]
+= (E[X])2 (E[N 2 ] − E[N]) + E[N]E[X 2 ]
+2
+
+2
+
+2
+
+(7.3)
+2
+
+= E[N](E[X ] − (E[X]) ) + (E[X]) E[N ]
+= E[N]Var(X) + (E[X])2 E[N 2 ]
+Hence, from Equations (7.2) and (7.3), we have
+Var(Y) = E[N]Var(X) + (E[X])2 (E[N 2 ] − (E[N])2 )
+= E[N]Var(X) + (E[X])2 Var(N)
+
+.
+
+EXAMPLE 7k
+Let Y denote a uniform random variable on (0, 1), and suppose that, conditional on
+Y = p, the random variable X has a binomial distribution with parameters n and p.
+In Example 5k, we showed that X is equally likely to take on any of the values
+0, 1, . . . , n. Establish this result by using moment generating functions.
+Solution. To compute the moment generating function of X, start by conditioning
+on the value of Y. Using the formula for the binomial moment generating function
+gives
+E[etX |Y = p] = (pet + 1 − p)n
+
+Section 7.7
+
+Moment Generating Functions
+
+363
+
+Now, Y is uniform on (0, 1), so, upon taking expectations, we obtain
+* 1
+tX
+E[e ] =
+(pet + 1 − p)n dp
+0
+
+* et
+1
+= t
+yn dy (by the substitution y = pet + 1 − p)
+e − 1 1
+1 et(n+1) − 1
+=
+n + 1 et − 1
+1
+(1 + et + e2t + · · · + ent )
+=
+n + 1
+Because the preceding is the moment generating function of a random variable that
+is equally likely to be any of the values 0, 1, . . . , n, the desired result follows from the
+fact that the moment generating function of a random variable uniquely determines
+its distribution.
+.
+7.7.1
+
+Joint Moment Generating Functions
+
+It is also possible to deﬁne the joint moment generating function of two or more
+random variables. This is done as follows: For any n random variables X1 , . . . , Xn ,
+the joint moment generating function, M(t1 , . . . , tn ), is deﬁned, for all real values of
+t1 , . . . , tn , by
+M(t1 , . . . , tn ) = E[et1 X1 + · · · +tn Xn ]
+The individual moment generating functions can be obtained from M(t1 , . . . , tn ) by
+letting all but one of the tj ’s be 0. That is,
+MXi (t) = E[etXi ] = M(0, . . . , 0, t, 0, . . . , 0)
+where the t is in the ith place.
+It can be proven (although the proof is too advanced for this text) that the joint
+moment generating function M(t1 , . . . , tn ) uniquely determines the joint distribution
+of X1 , . . . , Xn . This result can then be used to prove that the n random variables
+X1 , . . . , Xn are independent if and only if
+M(t1 , . . . , tn ) = MX1 (t1 ) · · · MXn (tn )
+
+(7.4)
+
+For the proof in one direction, if the n random variables are independent, then
+M(t1 , . . . , tn ) = E[e(t1 X1 + · · · +tn Xn ) ]
+= E[et1 X1 · · · etn Xn ]
+= E[et1 X1 ] · · · E[etn Xn ] by independence
+= MX1 (t1 ) · · · MXn (tn )
+For the proof in the other direction, if Equation (7.4) is satisﬁed, then the joint
+moment generating function M(t1 , . . . , tn ) is the same as the joint moment generating
+function of n independent random variables, the ith of which has the same distribution as Xi . As the joint moment generating function uniquely determines the joint
+distribution, this must be the joint distribution; hence, the random variables are
+independent.
+
+364
+
+Chapter 7
+
+Properties of Expectation
+
+EXAMPLE 7l
+Let X and Y be independent normal random variables, each with mean μ and variance σ 2 . In Example 7a of Chapter 6, we showed that X + Y and X − Y are independent. Let us now establish this result by computing their joint moment generating
+function:
+E[et(X+Y)+s(X−Y) ] = E[e(t+s)X+(t−s)Y ]
+= E[e(t+s)X ]E[e(t−s)Y ]
+= eμ(t+s)+σ (t+s) /2 eμ(t−s)+σ (t−s) /2
+2
+
+2
+
+2
+
+2
+
+= e2μt+σ t eσ s
+2 2
+
+2 2
+
+But we recognize the preceding as the joint moment generating function of the sum
+of a normal random variable with mean 2μ and variance 2σ 2 and an independent
+normal random variable with mean 0 and variance 2σ 2 . Because the joint moment
+generating function uniquely determines the joint distribution, it follows that X + Y
+and X − Y are independent normal random variables.
+.
+In the next example, we use the joint moment generating function to verify a result
+that was established in Example 2b of Chapter 6.
+EXAMPLE 7m
+Suppose that the number of events that occur is a Poisson random variable with
+mean λ and that each event is independently counted with probability p. Show that
+the number of counted events and the number of uncounted events are independent
+Poisson random variables with respective means λp and λ(1 − p).
+Solution. Let X denote the total number of events, and let Xc denote the number
+of them that are counted. To compute the joint moment generating function of Xc ,
+the number of events that are counted, and X − Xc , the number that are uncounted,
+start by conditioning on X to obtain
+E[esXc +t(X−Xc ) |X = n] = etn E[e(s−t)Xc |X = n]
+= etn (pes−t + 1 − p)n
+= (pes + (1 − p)et )n
+which follows because, conditional on X = n, Xc is a binomial random variable with
+parameters n and p. Hence,
+E[esXc +t(X−Xc ) |X] = (pes + (1 − p)et )X
+Taking expectations of both sides of this equation yields
+E[esXc +t(X−Xc ) ] = E[(pes + (1 − p)et )X ]
+Now, since X is Poisson with mean λ, it follows that E[etX ] = eλ(e −1) . Therefore, for
+any positive value a we see (by letting a = et ) that E[aX ] = eλ(a−1) . Thus
+t
+
+E[esXc +t(X−Xc ) ] = eλ(pe +(1−p)e −1)
+s
+
+s−1
+)
+
+= eλp(e
+
+t
+
+eλ(1−p)(e −1)
+t
+
+Section 7.8
+
+Additional Properties of Normal Random Variables
+
+365
+
+As the preceding is the joint moment generating function of independent Poisson
+random variables with respective means λp and λ(1 − p), the result is proven.
+.
+7.8
+
+ADDITIONAL PROPERTIES OF NORMAL RANDOM VARIABLES
+7.8.1
+
+The Multivariate Normal Distribution
+
+Let Z1 , . . . , Zn be a set of n independent unit normal random variables. If, for some
+constants aij , 1 … i … m, 1 … j … n, and μi , 1 … i … m,
+X1 = a11 Z1 + · · · + a1n Zn + μ1
+X2 = a21 Z1 + · · · + a2n Zn + μ2
+.
+.
+.
+Xi = ai1 Z1 + · · · + ain Zn + μi
+.
+.
+.
+Xm = am1 Z1 + · · · + amn Zn + μm
+then the random variables X1 , . . . , Xm are said to have a multivariate normal distribution.
+From the fact that the sum of independent normal random variables is itself a
+normal random variable, it follows that each Xi is a normal random variable with
+mean and variance given, respectively, by
+E[Xi ] = μi
+n
+
+Var(Xi ) =
+a2ij
+j=1
+
+Let us now consider
+M(t1 , . . . , tm ) = E[exp{t1 X1 + · · · + tm Xm }]
+the joint moment generating function of X1 , . . . , Xm . The ﬁrst thing to note is that
+m
+
+since
+
+ti Xi is itself a linear combination of the independent normal random varii=1
+ables Z1 , . . . , Zn , it is also normally distributed. Its mean and variance are
+⎡
+
+E⎣
+
+m
+
+
+⎤
+
+m
+
+
+ti Xi ⎦ =
+
+i=1
+
+and
+⎛
+Var ⎝
+
+ti μi
+
+i=1
+
+m
+
+
+⎞
+m
+m
+
+
+⎟
+⎜
+ti Xi ⎠ = Cov ⎝
+ti Xi ,
+tj Xj ⎠
+
+i=1
+
+i=1
+
+⎛
+
+⎞
+
+=
+
+m m
+
+
+i=1 j=1
+
+j=1
+
+ti tj Cov(Xi , Xj )
+
+

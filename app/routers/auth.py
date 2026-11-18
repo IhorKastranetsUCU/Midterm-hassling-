@@ -471,7 +471,8 @@ async def google_oauth_callback(
             await cal_store.sync_google_source(calendar_owner_id)
         except Exception:
             pass
-        redir = RedirectResponse(url="/hustle/app.html#calendar", status_code=status.HTTP_302_FOUND)
+        calendar_path = "/prototype/app.html" if decoded_state.get("calendar_view") == "paper" else "/hustle/app.html"
+        redir = RedirectResponse(url=f"{calendar_path}#calendar", status_code=status.HTTP_302_FOUND)
         redir.delete_cookie("google_oauth_state", path="/")
         return redir
 

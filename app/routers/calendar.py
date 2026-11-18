@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile, status
@@ -161,6 +161,7 @@ async def get_calendar_overview(
     request: Request,
     start: Optional[str] = Query(default=None),
     end: Optional[str] = Query(default=None),
+    planner: Literal["week", "month"] = "week",
     owner: WorkspaceOwner = Depends(get_workspace_owner),
 ):
     store = get_calendar_store()
@@ -178,9 +179,10 @@ async def get_calendar_overview(
     scheduler = CalendarScheduler(store)
     events = store.list_events(owner.owner_id, start_utc, end_utc)
     forbidden_blocks = store.expand_forbidden_intervals(cfg, start_utc, end_utc)
-    free_slots = scheduler.find_available_slots(owner.owner_id, datetime.now(timezone.utc), max(end_utc, datetime.now(timezone.utc) + timedelta(days=7)))
+    free_slots = [] if planner == "month" else scheduler.find_available_slots(owner.owner_id, datetime.now(timezone.utc), max(end_utc, datetime.now(timezone.utc) + timedelta(days=7)))
     sources = store.list_sources(owner.owner_id)
 
+    reviews = store.deadline_reviews(owner.owner_id)
     deadlines: List[Dict[str, Any]] = []
     if cfg.get("sync_deadlines", True):
         raw_dl = await _load_owner_deadlines(request, owner)
@@ -200,6 +202,7 @@ async def get_calendar_overview(
                 "name": dl.get("name"),
                 "duedate": due,
                 "due_at": to_utc_iso(datetime.fromtimestamp(due, tz=timezone.utc)),
+                "review": reviews.get((dl.get("course_id"), dl.get("id")), "pending"),
             })
 
     return {
@@ -211,6 +214,22 @@ async def get_calendar_overview(
         "deadlines": deadlines,
         "free_slots": free_slots[:20],
     }
+
+
+@router.put("/deadlines/{course_id}/{assignment_id}")
+async def review_deadline(
+    course_id: int, assignment_id: int, request: Request,
+    decision: Literal["accepted", "declined"], owner: WorkspaceOwner = Depends(get_workspace_owner),
+):
+    source = await _load_owner_deadlines(request, owner)
+    deadline = next((d for d in source if d.get("course_id") == course_id and d.get("id") == assignment_id), None)
+    if not deadline or not deadline.get("duedate"):
+        raise HTTPException(status_code=404, detail="Дедлайн більше недоступний у Moodle.")
+    store = get_calendar_store()
+    event, created = store.review_deadline(owner.owner_id, course_id, assignment_id, deadline, decision)
+    if created:
+        await store.push_event_to_google(owner.owner_id, event)
+    return {"decision": decision, "event": event}
 
 
 @router.get("/settings")
@@ -378,6 +397,7 @@ async def disconnect_calendar_source(source_id: str, owner: WorkspaceOwner = Dep
 async def connect_google_calendar(
     request: Request,
     redirect: bool = Query(default=True),
+    view: Literal["workspace", "paper"] = "workspace",
 ):
     """Start Google OAuth2 flow requesting Google Calendar scopes, reusing GOOGLE_REDIRECT_URI."""
     settings = get_settings()
@@ -396,6 +416,7 @@ async def connect_google_calendar(
             "token_type": "oauth_state",
             "oauth_state": state_nonce,
             "purpose": "calendar_connect",
+            "calendar_view": view,
             "owner_id": owner.owner_id,
         },
         settings,

@@ -250,14 +250,18 @@ def test_ai_nl_planner_snaps_conflicting_gemini_proposal_to_safe_slot(cal_env, m
     assert 8 <= scheduled_start.hour < 22
 
 
-def test_google_calendar_oauth_callback_and_two_way_sync(cal_env, monkeypatch):
+@pytest.mark.parametrize(("query", "return_path"), [
+    ("", "/hustle/app.html#calendar"),
+    ("&view=paper", "/prototype/app.html#calendar"),
+])
+def test_google_calendar_oauth_callback_and_two_way_sync(cal_env, monkeypatch, query, return_path):
     client, _, cal_store = cal_env
     monkeypatch.setattr(get_settings(), "GOOGLE_CLIENT_ID", "test-client-id")
     monkeypatch.setattr(get_settings(), "GOOGLE_CLIENT_SECRET", "test-client-secret")
     monkeypatch.setattr(get_settings(), "GOOGLE_REDIRECT_URI", "http://testserver/api/auth/google/callback")
 
     # Initialize workspace session cookie via calendar/google/connect?redirect=false.
-    conn_res = client.get("/api/calendar/google/connect?redirect=false")
+    conn_res = client.get("/api/calendar/google/connect?redirect=false" + query)
     assert conn_res.status_code == 200
     auth_url = conn_res.json()["auth_url"]
     assert "calendar.events" in auth_url
@@ -314,7 +318,7 @@ def test_google_calendar_oauth_callback_and_two_way_sync(cal_env, monkeypatch):
 
     cb = client.get(f"/api/auth/google/callback?code=authcode&state={state_param}", follow_redirects=False)
     assert cb.status_code == 302
-    assert cb.headers["location"].endswith("#calendar")
+    assert cb.headers["location"] == return_path
 
     overview = client.get("/api/calendar/overview").json()
     assert any(s["provider"] == "google" and "student@ucu.edu.ua" in s["title"] for s in overview["sources"])
@@ -351,3 +355,69 @@ def test_google_calendar_oauth_callback_and_two_way_sync(cal_env, monkeypatch):
     assert sel.status_code == 200
     ov2 = client.get("/api/calendar/overview").json()
     assert any(e["title"] == "Лекція PSA-25-B" and "PSA-25-B" in e["description"] for e in ov2["events"])
+
+
+def test_paper_deadline_review_is_personal_and_idempotent(cal_env, monkeypatch):
+    client, _, _ = cal_env
+    other = TestClient(app)
+    due = (datetime.now(timezone.utc) + timedelta(days=3)).replace(microsecond=0)
+
+    async def assignments(request, owner):
+        return [{"course_id": 71, "id": 12, "name": "Семінар", "duedate": int(due.timestamp())}]
+
+    monkeypatch.setattr("app.routers.calendar._load_owner_deadlines", assignments)
+    review = "/api/calendar/deadlines/71/12"
+    window = {"start": (due - timedelta(days=1)).isoformat(),
+              "end": (due + timedelta(days=1)).isoformat(), "planner": "month"}
+
+    def overview(browser):
+        response = browser.get("/api/calendar/overview", params=window)
+        assert response.status_code == 200
+        return response.json()
+
+    assert overview(client)["deadlines"][0]["review"] == "pending"
+    assert client.put(review, params={"decision": "declined"}).status_code == 200
+    assert overview(client)["deadlines"][0]["review"] == "declined"
+    response = client.put(review, params={"decision": "accepted"})
+    assert response.status_code == 200
+    event_id = response.json()["event"]["event_id"]
+    event_path = f"/api/calendar/events/{event_id}"
+    later = due + timedelta(hours=4)
+    moved = client.patch(event_path, json={"start_at": later.isoformat(),
+                         "end_at": (later + timedelta(minutes=1)).isoformat(), "allow_conflict": True})
+    assert moved.status_code == 200
+    assert client.put(review, params={"decision": "accepted"}).json()["event"]["event_id"] == event_id
+    mine = overview(client)
+    assert mine["deadlines"][0]["review"] == "accepted"
+    assert len(mine["events"]) == 1
+    assert datetime.fromisoformat(mine["events"][0]["start_at"]) == later
+    assert datetime.fromisoformat(mine["events"][0]["moodle_due_at"]) == due
+    theirs = overview(other)
+    assert theirs["deadlines"][0]["review"] == "pending"
+    assert theirs["events"] == []
+    assert client.delete(event_path).status_code == 200
+    assert overview(client)["deadlines"][0]["review"] == "removed"
+    assert client.put(review, params={"decision": "accepted"}).status_code == 200
+    assert len(overview(client)["events"]) == 1
+
+
+def test_public_workspace_entry_uses_paper_planner_and_same_owner(cal_env):
+    client, _, _ = cal_env
+    landing = client.get("/hustle/")
+    assert landing.url.path == "/prototype/"
+    assert 'href="/hustle/signin.html?mode=login"' in landing.text
+    entry = client.get("/hustle/app.html?source=signin", follow_redirects=False)
+    assert entry.status_code == 307
+    assert entry.headers["location"] == "/prototype/app.html?source=signin"
+    page = client.get(entry.headers["location"])
+    assert page.status_code == 200
+    assert "no-store" in page.headers["cache-control"]
+    for asset in ("paper-workspace.js", "dashboard.js", "deadline-visuals.js",
+                  "calendar-connected.js", "oral-practice.js"):
+        assert asset in page.text
+        assert client.get("/prototype/" + asset).status_code == 200
+    owner = client.get("/api/workspace/session").json()["owner_id"]
+    assert json.dumps(owner) in page.text
+    client.cookies.clear()
+    other = client.get("/prototype/app.html")
+    assert json.dumps(owner) not in other.text

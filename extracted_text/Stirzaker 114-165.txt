@@ -1,0 +1,4884 @@
+4
+Random Variables: Distribution
+and Expectation
+
+I am giddy, expectation whirls me round.
+William Shakespeare, Troilus and Cressida
+
+4.1 Random Variables
+
+In many experiments, outcomes are deﬁned in terms of numbers (e.g., the number of heads
+in n tosses of a coin) or may be associated with numbers, if we so choose. In either case,
+we want to assign probabilities directly to these numbers, as well as to the underlying
+events. This requires the introduction of some new functions.
+
+(1)
+
+Deﬁnition
+Given a sample space  (with F and P(.)), a discrete random variable
+X is a function such that for each outcome ω in , X (ω) is one of a countable set
+D of real numbers. Formally, X (.) is a function with domain  and range D, and so
+for each ω ∈ , X (ω) = x ∈ D, where D is a countable (denumerable) subset of the
+
+real numbers.
+
+(2)
+
+Example: Pairs in Poker
+How many distinct pairs are there in your poker hand of
+ﬁve cards? Your hand is one outcome ω in the sample space  of all possible hands; if
+). The number of pairs X depends on the
+you are playing with a full deck, then || = ( 52
+5
+outcome ω, and obviously X (ω) ∈ {0, 1, 2}, because you can have no more than two
+pairs. Notice that this holds regardless of how the hand is selected or whether the pack is
+shufﬂed. However, this information will be required later to assign probabilities.
+
+s
+
+We always use upper case letters (such as X , Y , T , R, and so on) to denote random
+variables and lower case letters (x, y, z, etc.) to denote their possible numerical values.
+You should do the same. Because the possible values of X are countable, we can denote
+them by {xi ; i ∈ I }, where the index set I is a subset of the integers. Very commonly, all
+the possible values of X are integers, in which case we may denote them simply by x, r ,
+k, j, or any other conventional symbol for integers.
+114
+
+4.2 Distributions
+
+115
+
+(3)
+
+Deﬁnition
+(a) If X takes only the values 0 or 1, it is called an indicator or sometimes
+a Bernoulli trial.
+
+(b) If X takes one of only a ﬁnite number of values, then it is called simple.
+
+(4)
+
+Example
+Suppose n coins are tossed. Let X j be the number of heads shown by the
+jth coin. Then, X j is obviously zero or one, so we may write X j (H ) = 1 and X j (T ) = 0.
+Let Y be the total number of heads shown by the n coins. Clearly, for each
+outcome, ω ∈ , Y (ω) ∈ {0, 1, 2, . . . , n}. Thus, X j is an indicator and Y is
+simple.
+
+s
+
+
+It is intuitively clear also that Y = n1 X j .
+We discuss the meaning of this and its implications in Chapter 5.
+Finally, note that the sample space  need not be countable, even though X (ω) takes
+one of a countable set of values.
+(5)
+
+Example: Darts
+You throw one dart at a conventional dartboard. A natural sample
+space  is the set of all possible points of impact. This is of course uncountable because
+it includes every point of the dartboard, much of the wall, and even parts of the ﬂoor or
+ceiling if you are not especially adroit.
+However, your score X (ω) is one of a ﬁnite set of integers lying between 0 and 60,
+inclusive.
+
+s
+
+4.2 Distributions
+
+Next, we need a function, deﬁned on the possible values x of X , to tell us how likely they
+are. For each such x, there is an event A x ⊆ , such that
+ω ∈ A x ⇔ X (ω) = x.
+
+(1)
+
+Hence, just as the probability that any event A in  occurs is given by the probability
+function P(A) ∈ [0, 1], the probability that X (ω) takes any value x is given by a function
+P(A x ) ∈ [0, 1]. (We assume that A x is in F.)
+For example, if a coin is tossed and X is the number of heads shown, then X ∈ {0, 1}
+and A1 = H ; A0 = T . Hence, P(X = 1) = P(A1 ) = P(H ) = 12 , if the coin is fair.
+This function has its own special name and notation. Given , F, and P(.):
+(2)
+
+Deﬁnition
+given by
+
+A discrete random variable X has a probability mass function f X (x)
+f X (x) = P(A x ).
+
+This is also denoted by P(X = x), which can be thought of as an obvious shorthand
+
+for P({ω: X (ω) = x}). It is often called the distribution.
+
+116
+
+4 Random Variables
+
+For example, let X be the number of pairs in a poker hand, as discussed in Example 4.1.2.
+If the hand is randomly selected, then
+ 
+52
+f X (2) = P({ω: X (ω) = 2}) = |{ω: X (ω) = 2}|
+5
+         
+13
+4
+4
+44
+52
+=
+≃ 0.048.
+2
+2
+2
+1
+5
+Likewise,
+
+f X (1) =
+
+13
+1
+
+      3  
+4
+12
+4
+52
+≃ 0.42 ,
+1
+3
+2
+5
+
+and hence,
+f X (0) = 1 − f X (1) − f X (2) ≃ 0.53.
+Returning to Example 4.1.4 gives an example of great theoretical and historical importance.
+(3)
+
+Example 4.1.4 Revisited: Binomial Distribution
+The random variable Y takes the
+value r , if exactly r heads appear in the n tosses. The probability of this event is ( nr ) pr q n−r ,
+where p = P(H ) = 1 − q. Hence, Y has probability mass function
+n
+f Y (r ) =
+pr q n−r , 0 ≤ r ≤ n.
+r
+
+s
+
+The sufﬁx in f X (x) or f Y (y) is included to stress the role of X or Y . Where this is
+unnecessary or no confusion can arise, we omit it. In the interests of brevity, f (x) is often
+called simply the mass function of X , or even more brieﬂy the p.m.f.
+The p.m.f., f (x) = f X (x), has the following properties: ﬁrst,
+f (x) ≥ 0 for x ∈ {xi : i ∈ Z}
+f (x) = 0 elsewhere.
+
+(4)
+
+(5)
+
+That is to say, it is positive for a countable number of values of x and zero elsewhere.
+Second, if X (ω) is ﬁnite with probability one, then it is called a proper random variable
+and we have
+
+
+f (xi ) =
+P(A xi ) = P() = 1.
+i
+
+i
+
+Third, we have the Key Rule
+(6)
+
+P(X ∈ A) =
+
+
+x∈A
+
+f (x).
+
+
+If i f (xi ) < 1, then X is said to be defective or improper. It is occasionally useful to
+allow X to take values in the extended real line, so that f X (∞) has a meaning. In general,
+it does not.
+We remark that any function satisfying (4) and (5) can be regarded as a mass function, in
+that, given such an f (.), it is quite simple to construct a sample space, probability function,
+and random variable X , such that f (x) = P(X = x).
+Here are two famous mass functions.
+
+4.2 Distributions
+
+(7)
+
+Example: Poisson Distribution
+f X (x) =
+
+117
+
+Let X be a random variable with mass function
+
+λx e−λ
+,
+x!
+
+x ∈ {0, 1, 2, . . .}, λ > 0.
+
+Then,
+∞
+
+x=0
+
+f (x) = e−λ
+
+∞
+
+λx
+x=0
+
+x!
+
+=1
+
+by Theorem 3.6.9.
+
+Hence, X is proper. This mass function is called the Poisson distribution and X is said to
+be Poisson (or a Poisson random variable), with parameter λ.
+
+s
+
+(8)
+
+Example: Negative Binomial Distribution
+By the negative binomial theorem, for
+any number q such that 0 < q < 1, we have
+
+∞ 
+
+n +r −1
+qr .
+(1 − q)−n =
+r
+r =0
+Hence, the function f (r ) deﬁned by
+
+
+n +r −1
+f (r ) =
+q r (1 − q)n , r ≥ 0,
+r
+is a probability mass function. Commonly, we let 1 − q = p.
+
+s
+
+The following function is also useful; see Figure 4.1 for a simple example
+
+(9)
+
+Deﬁnition
+A discrete random variable X has a cumulative distribution function
+FX (x), where
+
+FX (x) =
+f (xi ).
+
+i:xi ≤x
+
+Figure 4.1 The distribution function FX (x) of the random variable X , which is the indicator of
+the event A. Thus, the jump at zero is P(X = 0) = P(Ac ) = 1 − P(A) and the jump at x = 1 is
+P(X = 1) = P(A).
+
+118
+
+4 Random Variables
+
+This is also denoted by
+P(X ≤ x) = P({ω: X (ω) ≤ x});
+it may be referred to simply as the distribution function (or rarely as the c.d.f.), and the
+sufﬁx X may be omitted. The following properties of F(x) are trivial consequences of the
+deﬁnition (9):
+(10)
+(11)
+(12)
+
+F(x) ≤ F(y) for x ≤ y.
+1 − F(x) = P(X > x).
+P(a < X ≤ b) = F(b) − F(a) for a < b.
+Some further useful properties are not quite so trivial, in that they depend on Theorem
+1.5.2. Thus, if we deﬁne the event Bn = {X ≤ x − 1/n}, we ﬁnd that
+
+∞
+
+P(X < x) = P
+Bn = P( lim Bn ) = lim P(Bn ) by Theorem 1.5.2,
+n=1
+
+
+
+= lim F x −
+n→∞
+
+1
+n
+
+
+
+n→∞
+
+n→∞
+
+= lim F(y).
+y↑x
+
+If the random variable X is not defective then, again from (9) (and Theorem 1.5.2),
+limx→∞ F(x) = 1, and limx→−∞ F(x) = 0.
+The c.d.f. is obtained from the p.m.f. by (9). Conversely, the p.m.f. is obtained from the
+c.d.f. by
+f (x) = F(x) − lim F(y)
+y↑x
+
+where y < x.
+
+When X takes only integer values, this relationship has the following simpler more attractive form: for integer x
+f (x) = F(x) − F(x − 1).
+
+(13)
+
+(14) Example: Lottery
+An urn contains n tickets bearing numbers from 1 to n inclusive. Of these, r are withdrawn at random. Let X be the largest number removed if the
+tickets are replaced in the urn after each drawing, and let Y be the largest number removed
+if the drawn tickets are not replaced. Find f X (x), FX (x), f Y (x), and FY (x). Show that
+FY (k) < FX (k), for 0 < k < n.
+Solution
+The number of ways of choosing r numbers less than or equal to x, with
+repetition allowed, is x r . Because there are n r outcomes,
+x r
+FX (x) =
+, for 1 ≤ x ≤ n,
+n
+when x is an integer. For any real x, FX (x) = ([x]/n)r , (where [x] denotes the largest
+integer which is not greater than x). Hence, for integer x and 1 ≤ x ≤ n, by (13),
+ x r  x − 1 r
+f X (x) =
+−
+;
+n
+n
+and elsewhere f X (x) is zero.
+
+4.2 Distributions
+
+119
+
+Without replacement, the number of ways of choosing r different numbers less than or
+equal to x is ( rx ). Hence, for integer x, and 1 ≤ x ≤ n,
+ x  n
+.
+FY (x) =
+r
+r
+Hence, again by (13),
+f Y (x) =
+
+
+x
+r
+
+
+−
+
+x −1
+r
+
+ 
+
+n
+r
+
+
+=
+
+which is of course obvious directly. Furthermore,
+ r
+k
+k!(n − r )!
+<
+FY (k) =
+(k − r )!n!
+n
+= FX (k).
+
+
+x − 1  n
+,
+r −1
+r
+
+for 1 < k < n
+
+s
+
+Because real valued functions of random variables are random variables, they also have
+probability mass functions.
+(15) Theorem
+given by
+
+If X and Y are random variables such that Y = g(X ), then Y has p.m.f.
+
+
+f X (x).
+
+x:g(x)=y
+
+Proof
+
+
+
+f Y (y) = P(g(X ) = y) =
+
+P(X = x) =
+
+x:g(x)=y
+
+
+
+f X (x).
+
+
+
+x:g(x)=y
+
+(16) Example
+Let X have mass function f (x). Find the mass functions of the following
+functions of X .
+(a) −X
+(b) X + = max {0, X }
+(c) X − = max {0, −X }
+(d) |X | = X ++ X −
+X
+, X = 0,
+|X |
+(e) sgn X =
+0,
+X = 0.
+Solution
+(a)
+(b)
+
+(c)
+
+Using Theorem 15 repeatedly, we have:
+
+f −X (x) = f X (−x).
+
+ f X (x);
+f X + (x) =  f (x);
+X
+
+x≤0
+
+ f X (−x);
+f X − (x) =  f (x);
+X
+
+x≥0
+
+x > 0.
+x = 0.
+x >0
+x = 0.
+
+120
+
+4 Random Variables
+
+
+
+(d)
+
+(e)
+
+f X (x) + f X (−x);
+x = 0
+x = 0.
+f X (0);
+
+f X (x);
+x =1
+
+
+ x>0
+x =0
+f sgnX (x) = f X (0);
+
+
+
+
+f X (x);
+x = −1.
+f |X | (x) =
+
+s
+
+x<0
+
+Finally, we note that any number m such that limx↑m F(x) ≤ 12 ≤ F(m) is called a median
+of F (or a median of X , if X has distribution F)
+
+4.3 Expectation
+
+(1)
+
+Deﬁnition
+Let X be a random variable with probability mass function f (x) such
+
+that x |x| f (x) < ∞. The expected value of X is then denoted by E(X ) and deﬁned
+by
+
+E(X ) =
+x f (x).
+x
+
+This is also known as the expectation, or mean, or average or ﬁrst moment of X . 
+Note that E(X ) is the average of the possible values of X weighted by their probabilities.
+It can thus be seen as a guide to the location of X , and is indeed often called a location
+parameter. The importance of E(X ) will become progressively more apparent.
+(2)
+
+Example
+Suppose that X is an indicator random variable, so that X (ω) ∈ {0, 1}.
+Deﬁne the event A = {ω: X (ω) = 1}. Then X is the indicator of the event A; we have
+f X (1) = P(A) and E(X ) = 0. f X (0) + 1. f X (1) = P(A).
+
+s
+
+(3)
+
+Example
+
+Let X have mass function
+f X (x) =
+
+4
+,
+x(x + 1)(x + 2)
+
+x = 1, 2, . . .
+
+and let Y have mass function
+f Y (x) =
+
+1
+,
+x(x + 1)
+
+x = 1, 2, . . .
+
+Show that X does have an expected value and that Y does not have an expected value.
+Solution
+
+For any m < ∞,
+
+
+m 
+
+1
+4
+1
+|x| f X (x) =
+=4
+−
+= 2 − 4(m + 2)−1 ,
+(x
++
+1)(x
++
+2)
+x
++
+1
+x
++
+2
+x=1
+x=1
+x=1
+
+m
+
+
+m
+
+
+4.3 Expectation
+
+121
+
+by successive cancellations in the sum. Hence, the sum converges as m → ∞, and so
+because X > 0, E(X ) = 2. However, for the random variable Y ,
+
+
+|x| f Y (x) =
+
+x
+
+∞
+
+
+1
+,
+x +1
+x=1
+
+s
+
+which is not ﬁnite.
+
+
+Notice that the condition
+|x| f (x) < ∞ amounts to E(X + ) + E(X − ) < ∞ (use Example 4.2.16 to see this). A little extension of Deﬁnition 1 is sometimes useful. Thus, if
+E(X − ) < ∞ but E(X + ) diverges, then we may deﬁne E(X ) = +∞. With this extension in
+Example 3, E(Y ) = ∞. Likewise, if E(X + ) < ∞ but E(X − ) diverges, then E(X ) = −∞.
+If both E(X + ) and E(X − ) diverge, then E(X ) is undeﬁned.
+In general, real valued functions of random variables are random variables having a
+mass function given by Theorem 4.2.15. They may therefore have an expected value. In
+accordance with Example 3, if Y = g(X ), then by deﬁnition
+
+yi f Y (yi ).
+E(g(X )) =
+i
+
+We used this with Example 4.2.16(b) in observing that
+
+x f X (x).
+E(X + ) =
+x>0
+
+This was easy because it was easy to ﬁnd the mass function of X + in terms of that of X .
+It is not such an immediately attractive prospect to calculate (for example) E(cos(θ X )) by
+ﬁrst ﬁnding the mass function of cos (θ X ). The following theorem is therefore extremely
+useful.
+(4)
+
+Theorem
+Let X be a random variable with mass function f (x), and let g(.) be a
+real valued function deﬁned on R. Then,
+
+E(g(X )) =
+g(x) f (x)
+whenever
+
+
+
+x
+x |g(x)| f (x) < ∞.
+
+Proof Let (g j ) denote the possible values of g(X ), and for each j deﬁne the set
+A j = {x: g(x) = g j }. Then P(g(X ) = g j ) = P(X ∈ A j ), and therefore, provided all the
+following summations converge absolutely, we have
+
+ 
+E(g(X )) =
+g j P(g(X ) = g j ) =
+gj
+f (x)
+j
+
+=
+
+
+j
+
+=
+
+
+x
+
+j
+
+g(x) f (x),
+
+x∈A j
+
+because g(x) = g j
+
+for x ∈ A j ,
+
+x∈A j
+
+g(x) f (x),
+
+because A j ∩ Ak = φ
+
+for j = k.
+
+
+
+122
+
+(5)
+
+4 Random Variables
+
+Example
+
+Let X be Poisson with parameter λ. Find E(cos(θ X )).
+
+Solution
+First, recall de Moivre’s Theorem that eiθ = cos θ + i sin θ, where i is an
+imaginary square root of −1. Now, by Theorem 4,
+E(cos(θ X )) =
+
+∞
+
+
+
+cos (kθ)e−λ λk k!
+
+
+k=0
+
+= Re
+
+∞
+
+
+e
+
+ikθ −λ k
+
+e λ
+
+
+
+k! ,
+
+where Re (z) is the real part of z,
+
+k=0
+
+= Re (exp (λeiθ − λ))
+= eλ(cos θ −1) cos (λ sin θ ),
+
+using de Moivre’s Theorem again.
+
+s
+
+Now, we can use Theorem 4 to establish some important properties of E(.).
+(6)
+
+Theorem
+Let X be a random variable with ﬁnite mean E(X ), and let a and b be
+constants. Then:
+(i) E(a X + b) = aE(X ) + b;
+(ii) If P(X = b) = 1, then E(X ) = b;
+(iii) If P(a < X ≤ b) = 1, then a < E(X ) ≤ b;
+(iv) If g(X ) and h(X ) have ﬁnite mean, then
+E(g(X ) + h(X )) = E(g(X )) + E(h(X )).
+Proof (i) First, we establish the necessary absolute convergence:
+
+
+
+|ax + b| f (x) ≤
+(|a||x| + |b|) f (x) = |a|
+|x| f (x) + |b| < ∞,
+x
+
+x
+
+x
+
+as required. Hence, by Theorem 4.
+
+
+E(a X + b) =
+(ax + b) f (x) = a
+x f (x) + b = aE(X ) + b.
+x
+
+x
+
+(ii) Here, X has mass function f (b) = 1, so by deﬁnition E(X ) = b f (b) = b.
+(iii) In this case, f (x) = 0 for x ∈
+/ (a, b], so
+
+
+
+ ≤ b f (x) = b;
+
+E(X ) =
+x f (x)
+x
+
+
+ > a f (x) = a.
+x
+x
+
+(iv) Because |g(x) + h(x)| ≤ |g(x)| + |h(x)|, absolute convergence is quickly established. Hence, by Theorem 4,
+
+
+
+E(g(X ) + h(X )) =
+(g(x) + h(x)) f (x) =
+g(x) f (x) +
+h(x) f (x)
+x
+
+= E(g(X )) + E(h(X )).
+
+x
+
+The following simple corollary is of some importance.
+
+x
+
+
+
+4.3 Expectation
+
+(7)
+
+Theorem
+
+123
+
+If E(X ) exists, then (E(X ))2 ≤ (E(|X |))2 ≤ E(X 2 ).
+
+Proof First, note that (|X | − E(|X |))2 ≥ 0. Hence, by Theorem 6(iii),
+0 ≤ E((|X | − E(|X |))2 = E(|X |2 ) − (E(|X |))2 ,
+= E(X 2 ) − (E(|X |))2 ,
+
+by Theorem 6(iv) and 6(ii)
+
+which proves the second inequality. Also, |X | − X ≥ 0, so by 6(iv) and 6(iii)
+E(X ) ≤ E(|X |),
+
+
+which proves the ﬁrst inequality.
+(8)
+
+Example: Uniform Distribution
+Recall that an urn contains n tickets numbered from
+1 to n. You take one ticket at random; it bears the number X . Find E(X ) and E(X 2 ), and
+verify that Theorem 7 holds explicitly.
+Solution
+The mass function of X is P(X = k) = 1/n. (Because it distributes probability evenly over the values of X , it is called the uniform distribution.) Hence,
+1
+1 n
+x
+=
+(x(x + 1) − x(x − 1))
+n
+n x=1 2
+x=1
+1
+= (n + 1) by successive cancellation.
+2
+Likewise, using Theorems 4 and 6(iv),
+E(X ) =
+
+n
+
+
+1
+x2 + x
+1 n
+=
+(x(x + 1)(x + 2) − (x − 1)x(x + 1))
+n
+n x=1 3
+x=1
+1
+= (n + 1)(n + 2) by successive cancellation.
+3
+
+E(X 2 ) + E(X ) =
+
+n
+
+
+Hence,
+E(X 2 ) =
+
+s
+
+1
+1
+(n + 1)(2n + 1) ≥ (n + 1)2 = (E(X ))2 .
+6
+4
+
+In practice, we are often interested in the expectations of two particularly important collections of functions of X ; namely, (X k ; k ≥ 1) and ([X − E(X )]k ; k ≥ 1).
+(9)
+
+Deﬁnition
+
+Let X have mass function f (x) such that
+
+
+
+k
+x |x| f (x) < ∞. Then,
+
+(a) The kth moment of X is µk = E(X k ).
+(b) The kth central moment of X is σk = E((X − E(X ))k ).
+(c) The kth factorial moment of X is µ(k) = E(X (X − 1) . . . (X − k + 1)).
+In particular, σ2 is called the variance of X and is denoted by σ 2 , σ X2 , or
+var (X ). Thus,
+var (X ) = E((X − E(X ))2 ).
+
+
+
+124
+
+4 Random Variables
+
+Example: Indicators Let X be the indicator of the event A (recall Example 4.3.2). Because X k (ω) = X (ω) for all k and ω, we have
+µk = E(X k ) = P(A).
+Also, var (X ) = P(A)P(Ac ), and
+
+
+
+µ(k) =
+(10) Example
+
+s
+
+P(A); k = 1
+0;
+k > 1.
+
+Show that if E(X 2 ) < ∞, and a and b are constants then
+var (a X + b) = a 2 var (X ).
+
+Solution
+
+Using Theorem 6(i) and the deﬁnition of variance,
+
+var (a X + b) = E((a(X − E(X )) + b − b)2 ) = E(a 2 (X − E(X ))2 ) = a 2 var (X ).
+
+s
+
+Sometimes the tail of a distribution, P(X > x), has a simpler form than the mass function
+f (x). In these and other circumstances, the following theorems are useful.
+
+(11)
+
+Theorem
+
+If X ≥ 0 and X takes integer values, then E(X ) =
+
+∞
+
+
+P(X ≥ x).
+
+x=1
+
+Proof By deﬁnition,
+E(X ) =
+
+∞
+
+
+x f (x) =
+
+x=1
+
+∞
+
+x=1
+
+f (x)
+
+x
+
+
+1.
+
+r =1
+
+Because all terms are nonnegative, we may interchange the order of summation to obtain
+∞ 
+∞
+
+
+f (r ) =
+
+x=1 r =x
+
+∞
+
+
+P(X ≥ x).
+
+
+
+x=1
+
+This tail-sum theorem has various generalizations; we state one.
+(12) Theorem
+
+If X ≥ 0 and k ≥ 2, then
+
+µ(k) = E(X (X − 1) . . . (X − k + 1)) = k
+
+∞
+
+
+(x − 1) . . . (x − k + 1)P(X ≥ x).
+
+x=k
+
+Proof This is proved in the same way as Theorem 11, by changing the order of summation
+on the right-hand side.
+
+(13) Example: Waiting–The Geometric Distribution
+A biased coin shows a head with
+probability p or a tail with probability q = 1 − p. How many times do you expect to toss
+the coin until it ﬁrst shows a head? Find the various second moments of this waiting time.
+
+4.3 Expectation
+
+125
+
+Solution
+Let the required number of tosses until the ﬁrst head be T . Then because they
+are independent, P(T = x) = q x−1 p; x ≥ 1. (T is said to have the geometric distribution.)
+Hence,
+∞
+
+p
+xq x−1 p =
+, by (3.6.12) with n = 2,
+E(T ) =
+(1
+−
+q)2
+x=1
+=
+
+1
+.
+p
+
+Alternatively, we can use Theorem 11 as follows. Using the independence of tosses again
+gives P(T > x) = q x , so
+∞
+∞
+
+
+1
+P(T > x) =
+qx = .
+E(T ) =
+p
+x=0
+x=0
+For the second factorial moment, by Theorem 12
+∞
+
+2q
+(x − 1)q x−1 = 2 ,
+µ(2) = 2
+p
+x=2
+
+by (3.6.12) again.
+
+Hence, the second moment is
+2q
+1
+1+q
++ =
+.
+p2
+p
+p2
+
+E(T 2 ) = E(T (T − 1)) + E(T ) =
+Finally, the second central moment is
+
+σ2 = E((T − E(T ))2 ) = E(T 2 ) − (E(T ))2 =
+
+1+q
+1
+q
+− 2 = 2.
+p2
+p
+p
+
+s
+
+(14) Example
+
+Let X have mass function
+a
+f X (x) = 2 ; x = 1, 2, 3, . . .
+x
+and Y have mass function
+b
+f Y (y) = 2 ; y = ±1, ±2, . . .
+y
+
+(a) Find a and b.
+(b) What can you say about E(X ) and E(Y )?
+Solution
+
+(a) Because f X (x) is a mass function
+1=
+
+
+
+f X (x) = a
+
+x
+
+∞
+
+1
+x=1
+
+x
+
+=a
+2
+
+π2
+.
+6
+
+Hence, a = 6π −2 . Likewise, b = 3π −2 .
+(b) We have
+E(X ) = a
+
+∞
+
+x=1
+
+x f X (x) = a
+
+∞
+
+1
+x=1
+
+x
+
+= ∞.
+
+Because E(Y + ) and E(Y − ) both diverge, E(Y ) does not exist.
+
+s
+
+126
+
+4 Random Variables
+
+(15) Example: Coupons
+Each packet of an injurious product is equally likely to contain
+any one of n different types of coupon, independently of every other packet. What is the
+expected number of packets you must buy to obtain at least one of each type of coupon?
+Solution
+Let Arn be the event that the ﬁrst r coupons you obtain do not include a full
+set of n coupons. Let Ckr be the event that you have not obtained one of the kth coupon in
+the ﬁrst r . Then,
+n
+
+Ckr .
+Arn =
+k=1
+
+We may calculate:
+
+
+
+
+n−1 r
+,
+n
+
+r
+n−2
+;
+P(Cir ∩ C rj ) =
+n
+P(C1r ) =
+
+i = j,
+
+and, in general, for any set S j of j distinct coupons
+ 
+
+
+n− j r
+r
+Ci =
+.
+P
+n
+i∈S j
+Hence, by (1.4.8),
+P(Arn ) = P
+
+n
+
+
+
+Ckr
+
+=
+
+k=1
+
+n
+
+
+(−1)
+
+j=1
+
+j+1
+
+ 
+
+n
+j r
+1−
+,
+j
+n
+
+because for each j there are ( nj ) sets S j .
+Now, let R be the number of packets required to complete a set of n distinct coupons.
+Because Arn occurs if and only if R > r , we have P(R > r ) = P(Arn ). Hence, by Theorem
+11,
+ 
+
+∞
+∞ n
+
+
+
+j r
+j+1 n
+E(R) =
+P(R > r ) =
+(−1)
+1−
+j
+n
+r =0
+r =0 j=1
+
+
+n
+
+n n
+= nu n , say.
+=
+(−1) j+1
+j j
+j=1
+Now,
+(16)
+
+ 
+n
+
+1
+1
+j+1 n
+−
+(−1)
+(−1)
+u n+1 − u n =
+j
+j
+j
+j=1
+j=1
+
+
+
+
+n
+(−1)n+2 
+n+1
+n
+(−1) j+1
+=
++
+−
+n+1
+j
+j
+j
+j=1
+
+
+n
+(−1)n+2  (−1) j+1 n + 1
+=
++
+j
+n+1
+n+1
+j=1
+n+1
+
+
+=
+
+1
+,
+n+1
+
+
+
+j+1
+
+n+1
+j
+
+
+
+4.4 Conditional Distributions
+
+127
+
+because
+n+1
+
+
+
+(−1) j+1
+
+j=0
+
+n+1
+j
+
+
+= (1 − 1)n+1 = 0.
+
+Hence, iterating (16),
+un =
+
+n
+
+
+1
+,
+n− j +1
+j=1
+
+so that
+E(R) =
+
+n
+
+
+n
+.
+n− j +1
+j=1
+
+In Chapter 5, we discover a much easier method of obtaining this result.
+
+s
+
+4.4 Conditional Distributions
+
+Let  be some sample space, X some random variable deﬁned on , and P(.) a probability
+function deﬁned on . Now suppose that we are given that some event B ⊆  occurs, with
+P(B) > 0. Just as we argued in Chapter 2 that this gives rise to a conditional probability
+function, so we now conclude that this gives rise to a conditional distribution of X given
+B.
+In fact, using (4.2.1), we write
+(1)
+
+P(X (ω) = x|B) = P(A x |B) = P(A x ∩ B)/P(B) ≥ 0,
+
+(2)
+
+where as usual A x = {ω: X (ω) = x}. Furthermore, because x A x =  and A x ∩ A y = φ,
+whenever x = y we have
+
+
+P(A x |B) =
+P(A x ∩ B)/P(B) = P( ∩ B)/P(B) = 1.
+x
+
+x
+
+Hence, the function f (x|B) deﬁned by
+(3)
+
+f (x|B) = P(A x |B) = P(X = x|B)
+
+is a probability mass function, in that f (x|B) ≥ 0 and x f (x|B) = 1. It is the conditional mass function of X given B.
+
+(4)
+
+Example
+Let X be uniformly distributed on {1, 2, . . . , n}, and let B be the event that
+a ≤ X ≤ b, where 1 ≤ a < b ≤ n. Find the mass function of X given B.
+Solution
+
+Obviously,
+P(B) =
+
+b
+
+1
+i=a
+
+n
+
+= (b − a + 1)/n
+
+128
+
+4 Random Variables
+
+and
+
+
+1
+; a≤k≤b
+P({X = k} ∩ B) = n
+ 0; otherwise.
+
+Hence,
+f (x|B) =
+
+
+
+
+1
+; a≤x ≤b
+b−a+1
+ 0;
+otherwise
+
+s
+
+Thus, given that X lies in B, it is uniformly distributed over B.
+
+(5)
+
+Because f (x|B) is a probability mass
+ function, it may have an expectation. In line
+with Deﬁnition 4.3.1, we require that x |x| f (x|B) < ∞. If this condition is satisﬁed,
+then the conditional expectation of X given B is denoted by E(X |B) and deﬁned by
+
+E(X |B) =
+x f (x|B).
+x
+
+Expectation and conditional expectation are related by the following exceptionally important result.
+(6)
+
+Theorem
+Let X be a random variable with mean E(X ), and let B be an event
+such that P(B)P(B c ) > 0. Then,
+E(X ) = E(X |B)P(B) + E(X |B c )P(B c ).
+Proof By conditional probability,
+f (x) = P(X = x) = P({X = x} ∩ B) + P({X = x} ∩ B c )
+= f (x|B)P(B) + f (x|B c )P(B c ).
+Hence,
+E(X ) =
+
+
+
+x f (x) = P(B)
+
+x
+
+
+x
+
+x f (x|B) + P(B c )
+
+
+
+x f (x|B c ),
+
+x
+
+
+
+as required.
+
+More generally, it is shown in exactly the same way that if (Bi ; i ≥ 1) is a collection of
+events such that
+
+Bi = ,
+(i)
+i
+
+(ii) Bi ∩ B j = φ;
+(iii) P(Bi ) > 0,
+
+i = j, and
+
+4.4 Conditional Distributions
+
+then
+(7)
+
+E(X ) =
+
+
+
+129
+
+E(X |Bi )P(Bi )
+
+i
+
+whenever the summation is absolutely convergent.
+Finally, we make the small but useful observation that if A ⊆ B, then
+(8)
+
+E(X |A ∩ B) = E(X |A).
+
+(9)
+
+Example
+A coin is tossed repeatedly. As usual, for each toss, P(H ) = p = 1 − q =
+1 − P(H c ). The outcome is a sequence of runs of heads alternating with runs of tails; the
+ﬁrst run can be of either heads or tails. Let the length of the nth run be Rn . For all k and
+j, show that E(R2k+1 ) ≥ E(R2 j ) and var (R2k+1 ) ≥ var (R2 j ), with equality in each case
+if and only if p = q = 12 .
+Solution
+Let X be the number of heads shown before the ﬁrst appearance of a tail.
+We know that
+
+(10)
+
+P(X = k) = p k q,
+
+k ≥ 0.
+
+Let us consider the mass function of X conditional on the ﬁrst toss. Given that the ﬁrst
+toss is H , let X  be the further number of tosses before the ﬁrst tail. By independence,
+P(X  = k) = p k q = P(X = k).
+Hence, conditional on H , we have X = 1 + X  , and conditional on H c , we have X = 0.
+Therefore, by Theorem 6,
+(11)
+
+E(X ) = pE(X |H ) + qE(X |H c ) = p(1 + E(X  )) + 0 = p + pE(X )
+because E(X ) = E(X  ).
+Thus, E(X ) = p/q, which of course we could have obtained directly from (10); we chose
+to do it this way to display the new technique. Likewise, if Y is the number of tails before
+the ﬁrst head, E(Y ) = q/ p.
+Now R2k+1 is a run of heads if and only if the ﬁrst toss is a head. Hence, again using
+independence,
+E(R2k+1 ) = E(R2k+1 |H ) p + E(R2k+1 |H c )q = E(1 + X  ) p + E(1 + Y  )q
+
+
+
+
+p
+q
+p
+q
+= 1+
+p+ 1+
+q= + .
+q
+p
+q
+p
+Likewise, R2k is a run of heads if and only if the ﬁrst toss yields a tail, so
+
+
+
+
+q
+p
+q
+p
+E(R2k ) = 1 +
+q + 1+
+p=2≤ + ,
+q
+p
+q
+p
+with equality if and only if p = 12 = q. [Because ( p − q)2 > 0, for p = q.] Now, var
+2
+(R2k ) = E(R2k
+) − 4. Arguing as above, and using conditional probability again, yields
+
+
+
+
+1+ p
+1+q
+2
+ 2
+ 2
+E(R2k ) = qE((1 + X ) ) + pE((1 + Y ) ) = q
++p
+q2
+p2
+
+130
+
+4 Random Variables
+
+and so
+var (R2k ) =
+
+(12)
+Likewise,
+
+1 + ( p − q)2 − 2 pq
+.
+pq
+
+
+2
+)=q
+E(R2k+1
+
+1+q
+p2
+
+
+
+
+
+1+ p
++p
+q2
+
+
+
+and so
+var (R2k+1 ) =
+
+(13)
+
+q
+p
++
+− 2.
+p2 q 2
+
+Now
+var (R2k+1 ) − var (R2k ) =
+
+p 4 + q 4 + 2 p 2 q 2 − pq
+( p 3 − q 3 )( p − q)
+=
+≥0
+p2 q 2
+p2 q 2
+
+with equality if and only if p = q = 12 .
+
+s
+
+4.5 Sequences of Distributions
+
+If an experiment is repeated indeﬁnitely, it may give rise to a sequence (Fn (x); n ≥ 1) of
+distributions.
+(1)
+
+Deﬁnition
+Let f (x) be a probability mass function that is nonzero for x ∈ D, and zero
+for x ∈ R\D = C. Let F(x) be the corresponding distribution function
+
+F(x) =
+f (xi ).
+xi ≤x
+
+A sequence of distribution functions Fn (x) is said to converge to F(x) if, as n → ∞,
+Fn (x) → F(x)
+
+for x ∈ C.
+
+
+
+One special case is important to us; if D is included in the integers, then Fn (x) converges
+to F(x) if, for all x, f n (x) → f (x) as n → ∞.
+(2)
+
+Example: Matching revisited
+In Example 3.18, we showed that the probability of
+exactly r matches in n random assignments of letters is
+p(n, r ) =
+
+ (−)k
+e−1
+1 n−r
+→
+r ! k=0 k!
+r!
+
+as n → ∞. This shows that as n → ∞ the number of matches has a Poisson distribution
+(with parameter 1) in the limit.
+
+s
+
+(3)
+
+Example: Ménages Revisited
+In Problem 3.38, we found the probability that exactly m couples were adjacent when seated randomly at a circular table (alternating the
+
+4.6 Inequalities
+
+131
+
+sexes) is
+pm =
+
+∞
+ (−)k (n − m − k)!(2n − m − k − 1)!
+2k
+2m 
+2m e−2
+2 n−m
+→
+(−)k =
+m! k=0
+k!(2n − 2m − 2k)!n!
+m! k=0
+k!
+m!
+
+as n → ∞. Thus, the number of adjacent couples is Poisson with parameter 2 in the limit
+as n → ∞.
+
+s
+
+Finally, we note that the appearance of the Poisson distribution in Examples 2 and 3 is
+signiﬁcant. This distribution commonly arises in limits of this type, and that is one of the
+reasons for its major importance.
+4.6 Inequalities
+
+Calculating the exact probability that X lies in some set of interest is not always easy.
+However, simple bounds on these probabilities will often be sufﬁcient for the task in hand.
+We start with a basic inequality.
+(1)
+
+Theorem: Basic Inequality
+
+If h(x) is a nonnegative function, then, for a > 0
+P(h(X ) ≥ a) ≤ E(h(X ))/a).
+
+Proof Deﬁne the following function of X :
+
+1 whenever h(X ) ≥ a
+I (h ≥ a) =
+0 otherwise
+Observe that I is an indicator, and so by Example 4.3.2, E(I ) = P(h(X ) ≥ a). Now, by
+its construction I satisﬁes h(X ) − a I ≥ 0, and so by Theorem 4.3.6 [parts (iii) and (iv)],
+E(h(X )) ≥ aE(I ) = aP(h(X ) ≥ a).
+
+
+
+The following useful inequalities can all be proved using Theorem 1 or by essentially the
+same method. You should do some as exercises. For any a > 0, we have:
+Markov’s Inequality
+P(|X | ≥ a) ≤ E(|X |)/a.
+
+(2)
+Chebyshov’s Inequality†
+(3)
+
+P(|X | ≥ a) ≤ E(X 2 )/a 2 .
+
+† Some writers use the transliteration “Chebyshev”. They then have to remember that the second “e” is pronounced
+as “o”.
+
+132
+
+4 Random Variables
+
+One-Sided Chebyshov’s Inequality
+P(X − E(X ) ≥ a) ≤
+
+(4)
+
+Generalized Markov Inequality
+ative then
+
+var (X )
+.
+a 2 + var (X )
+
+If h(x) is increasing for x > 0, even, and nonneg-
+
+P(|X | ≥ a) ≤ E(h(X ))/ h(a).
+
+(5)
+If X is nonnegative, then
+
+P(X > a) ≤
+
+(6)
+
+E(X )
+.
+a
+
+If c > 0, then
+P(X > a) ≤
+
+(7)
+
+E((X + c)2 )
+,
+(a + c)2
+
+and
+P(X > a) ≤ E(exp (c(X − a))).
+
+(8)
+
+Here is one important application.
+(9)
+
+Example
+Let X be a random variable such that var (X ) = 0. Show that X is constant
+with probability one.
+Solution
+
+(10)
+
+By (3), for any integer n ≥ 1,
+
+
+1
+P |X − E(X )| >
+≤ n 2 var (X ) = 0.
+n
+
+Hence, deﬁning the events Cn = {|X − E(X )| > 1/n}, we have
+
+∞
+
+Cn = P( lim Cn ) = lim P(Cn )
+P(X = E(X )) = P
+n=1
+
+n→∞
+
+n→∞
+
+= 0.
+
+by Theorem 1.5.2
+
+s
+
+An important concept that crops up in many areas of pure and applied mathematics is that
+of convexity. We are interested in the following manifestation of this.
+(11) Deﬁnition
+such that
+(12)
+
+A function g(x) (from R to R) is called convex if, for all a, there exists λ(a)
+g(x) ≥ g(a) + λ(a)(x − a),
+
+for all x.
+
+
+
+4.6 Inequalities
+
+133
+
+If g(x) is differentiable, then a suitable λ is given by λ(a) = g  (a) and (12) takes the form
+g(x) ≥ g(a) + g  (a)(x − a).
+
+(13)
+
+This says that a convex function lies above all its tangents. If g is not differentiable, then
+there may be many choices for λ; draw a picture of g(x) = |x| at x = 0 to see this. (There
+are several other deﬁnitions of a convex function, all equivalent to Deﬁnition 11.) We are
+interested in the following property of convex functions.
+(14) Theorem: Jensen’s Inequality
+a convex function. Then,
+
+Let X be a random variable with ﬁnite mean and g(x)
+E(g(X )) ≥ g(E(X )).
+
+(15)
+
+Proof Choosing a = E(X ) in (12), we have
+g(X ) ≥ g(E(X )) + λ(X − E(X )).
+
+
+Taking the expected value of each side gives (15).
+
+For example, g(x) = |x| and g(x) = x 2 are both convex, so E(|X |) ≥ |E(X )| and E(X 2 ) ≥
+(E(X ))2 . This is Theorem 4.3.7. Here is a less trivial example.
+(16) Example
+
+Let X be a positive random variable. Show that E(log X ) ≤ log E(X ).
+
+Solution
+This follows immediately from Jensen’s inequality if we can show that
+− log x is convex. Fortunately, this is easy, as follows. By deﬁnition, for x > 0,
+1
+
+− log x =
+
+1
+
+y −1 dy =
+
+x
+
+a
+
+= − log a +
+
+a
+
+y −1 dy +
+
+a
+
+y −1 dy,
+
+x
+
+a
+
+y −1 dy ≥ − log a +
+
+x
+
+x
+
+for a > 0,
+1
+a −1 dy = − log a − (x − a),
+a
+
+−1
+
+and this is (12) with λ(a) = −a .
+
+s
+
+Example 16 has many important applications, of which we see more later. Here is one to
+begin with.
+(17) Example: Arithmetic–Geometric Means Inequality
+Let (xi ; 1 ≤ i ≤ n) be any col;
+1
+≤
+i
+≤
+n)
+any
+collection
+of positive numbers such
+lection
+of
+positive
+numbers
+and
+(
+p
+i
+
+that i pi = 1. Show that
+(18)
+p 1 x 1 + p 2 x 2 + · · · + p n x n ≥ x 1 p1 x 2 p2 · · · x n pn .
+Solution
+Let X be the random variable with probability mass function P(X = xi ) =
+pi ; 1 ≤ i ≤ n. Then, from (16),
+log E(X ) = log( p1 x1 + · · · + pn xn ) ≥ E(log X )
+= p1 log x1 + · · · + pn log xn = log(x1 p1 x2 p2 · · · xn pn ).
+The result (18) follows because log x is an increasing function.
+
+s
+
+134
+
+4 Random Variables
+
+In the special case when pi = 1/n, 1 ≤ i ≤ n, then
+
+(19) Example: AM/GM Inequality
+(18) takes the form
+
+n
+
+
+1 n
+xi ≥
+xi
+n 1
+i=1
+
+1/n
+
+s
+
+.
+
+4.7 Review and Checklist for Chapter 4
+
+We have seen that many experiments have numerical outcomes; and when they do not,
+the sample space can be usefully mapped to suitable points on the line. Such real-valued
+functions deﬁned on the sample space are called random variables. This chapter deﬁned
+some important types of random variable, and considered several important named examples. We introduced the key concepts of distribution, expectation, functions of random
+variables, conditional distributions, and sequences of distributions. In Table 4.1 we display
+the distribution, expectation, and variance for some important speciﬁc random variables.
+S Y N O P S I S O F F O R M U L A E : In general, every random variable has a distribution func-
+
+tion
+FX (x) = P(X ≤ x).
+Discrete random variables, taking one of a countable set of possible values, have a probability mass function
+f X (x) = P(X = x).
+When X is integer valued, we can write
+f X (x) = F(x) − F(x − 1).
+Table 4.1. Discrete random variables
+Distribution
+
+f (x)
+
+Mean
+
+Variance
+
+Uniform
+
+n −1 , 1 ≤ x ≤ n
+
+1
+(n + 1)
+2
+
+1
+(n 2 − 1)
+12
+
+Bernoulli
+
+p x (1 − p)1−x ,
+
+p
+
+p(1 − p)
+
+np
+
+np(1 − p)
+
+(1 − p)x−1 p, x ≥ 1
+
+p −1
+
+(1 − p) p −2
+
+e−λ λx
+,x ≥ 1
+x!
+
+λ
+
+λ
+
+kp −1
+
+k(1 − p) p −2
+
+nm
+m+w
+
+nmw(m+w−n)
+(m+w−1)(m+w)2
+
+Binomial
+
+n
+x
+
+x ∈ {0, 1}
+p x (1 − p)n−x ,
+0≤x ≤n
+
+Geometric
+Poisson
+Negative binomial
+
+Hypergeometric
+
+
+
+x−1
+k−1
+
+p k (1 − p)x−k ,
+x ≥k
+w
+)
+( mx )( n−x
+,
+m+w
+( n )
+0≤x ≤n
+
+4.7 Review and Checklist for Chapter 4
+
+135
+
+In any case, we have the
+Key Rule:
+P(X ∈ A) =
+
+
+
+f X (x).
+
+x∈A
+
+Expectation: A discrete random variable has an expected value if
+this case,
+
+x f x (x).
+EX =
+
+
+
+x |x| f X (x) < ∞. In
+
+x
+
+When X is integer valued and nonnegative,
+EX =
+
+∞
+
+
+∞
+
+
+P(X > x) =
+
+x=0
+
+(1 − F(x)).
+
+x=0
+
+Functions: Suppose that discrete random variables X and Y are such that Y = g(X )
+for some function g(.). Then,
+
+f X (x).
+f Y (y) =
+x:g(x)=y
+
+Also,
+EY =
+
+
+
+g(x) f X (x)
+
+x
+
+
+[provided that x |g(x)| f X (x) < ∞.]
+It follows that in any case where each side exists:
+E[ag(X ) + bh(X )] = aEg(X ) + bEh(X ).
+Variance: For any random variable X , the variance σ 2 is given by
+var X = E(X − EX )2 = EX 2 − (EX )2 = σ 2 ≥ 0.
+The number σ ≥ 0 is called the standard deviation, and in particular we have, for constants
+a and b,
+var (a X + b) = a 2 varX.
+Moments: The kth moment of X is
+µk = EX k ,
+
+k ≥ 1;
+
+usually we write µ1 = µ. The kth central moment of X is
+σk = E(X − EX )k ,
+
+k ≥ 1;
+
+usually we write σ2 = σ 2 .
+Conditioning: Any event B in  may condition a random variable X , leading to a conditional distribution function
+FX |B (x|B) = P(X ≤ x|B)
+
+136
+
+4 Random Variables
+
+and a conditional mass function
+f X |B (x|B) = P(X = x|B);
+Key Rule:
+P(X ∈ A|B) =
+
+
+
+f X |B (x|B).
+
+x∈A
+
+This distribution may have an expected value, called
+Conditional expectation:
+
+x f X |B (x|B).
+E(X |B) =
+x
+
+In particular,
+EX = E(X |B)P(B) + E(X |B c )P(B c )
+and if (Bi ; i ≥ 1) is a partition of 
+EX =
+
+
+
+E(X |Bi )P(Bi ).
+
+i
+
+Similarly, a random variable X may condition an event B, so that
+P(B|X = x) = P(B ∩ {X = x})/P(X = x),
+yielding
+P(B) =
+
+
+
+P(B|X = x) f X (x).
+
+x
+
+Checklist of Terms for Chapter 4
+
+4.1 discrete random variable
+Bernoulli trial
+indicator
+simple random variable
+4.2 probability distribution
+probability mass function
+binomial distribution
+Poisson distribution
+negative binomial distribution
+distribution function
+4.3 expectation and expected value
+uniform distribution
+moments
+variance
+tail sum
+geometric distribution
+4.4 conditional mass function
+conditional expectation
+4.5 sequences of distributions
+
+Worked Examples and Exercises
+
+137
+
+4.6 Markov’s inequality
+Chebyshov’s inequality
+Jensen’s inequality
+Arithmetic-geometric means inequality
+
+WORKED EXAMPLES AND EXERCISES
+
+4.8 Example: Royal Oak Lottery
+
+This eighteenth-century lottery paid winners 28 to 1; the chance of winning at any given
+bet was 2−5 , independently of other bets. Gamesters (as usual) complained that the odds
+were unfair. It is reported by de Moivre (in Doctrine of Chances, 1756) that the Master
+of the Ball maintained that any particular point of the Ball should come up once in 22
+throws; he offered to bet on this (at evens) at any time, and did so when required. The
+seeming contradiction between the 2−5 chance at any bet, with 22 throws for any chance
+to come up, so perplexed the gamesters that they began to think they had the advantage;
+so they played on and continued to lose.
+Explain why there is no contradiction.
+Solution
+Let P be a point of the Ball. Let T be the number of trials required to yield
+P for the ﬁrst time. At each trial, P fails to appear with probability 31/32, and T > k if
+and only if the ﬁrst k trials do not yield P. Hence, by independence,
+ k
+31
+.
+P(T > k) =
+32
+Now,
+
+
+
+31
+32
+
+22
+≃ 0.49 < 0.5.
+
+Hence,
+P(T ≤ 22) > 0.5.
+
+31 −1
+= 32.]
+[However, note that E(T ) = ∞
+0 P(T > k) = (1 − 32 )
+Thus, by betting on the event T ≤ 22, the Master of the Ball was giving himself a better
+than evens chance of winning. However, if we let W be the proﬁt to the gambler of a $1
+1
+and P(W = −1) = 31
+. Hence,
+stake wagered on P turning up, we have P(W = 28) = 32
+32
+28
+31
+3
+E(W ) = 32 − 32 = − 32 . A loss.
+Thus, in the long run, the gambler will surely lose at a rate of nearly 10% of his stake
+each play. (See Example 4.18 for a proof of this.)
+Remark
+The Master of the Ball was exploiting the fact that the median of the distribution of T is less than its mean. See Problem 4.51 for bounds on this difference.
+Note that T has a geometric distribution.
+
+138
+(1)
+(2)
+(3)
+
+(4)
+
+4 Random Variables
+
+Exercise
+Give an example of a distribution for which the median is larger than the mean.
+Exercise
+Find: (a) var (T ) and (b) µ(k)
+T .
+Exercise
+Which of the following strategies gives the gambler a better chance of winning if she
+takes up the offer of a bet on P not occurring in 22 trials:
+(a) Making such a bet immediately?
+(b) Waiting for a run of 22 trials during which P has not appeared?
+(c) Waiting until P has appeared in consecutive trials and then betting on its nonappearance in the
+following 22?
+Exercise
+Calculate P(T > j + k|T > j). Explain the signiﬁcance of your answer.
+
+4.9 Example: Misprints
+
+Each printed character in a book is misprinted independently with probability p, or is
+correct with probability 1 − p. Let n be the number of characters in the book, and let X
+be the number of misprinted characters.
+(a) Find P(X = r ).
+(b) Show that E(X ) = np.
+(c) Suppose that E(X ) is ﬁxed, and let A be the event that X = 0. Find E(X |A), and show
+that as n → ∞, E(X |A) → E(X )/(1 − exp [−E(X )]).
+
+(1)
+
+Solution
+(a) We provide two solutions.
+I Because characters are misprinted independently, the probability that r given characters
+are misprinted and the remaining n − r are correct is pr (1 − p)n−r . Because there are ( nr )
+distinct ways of ﬁxing the positions of the r misprints, it follows that
+n
+P(X = r ) =
+pr (1 − p)n−r .
+r
+
+Remark
+This is the binomial distribution, which we met in Example 4.2.3. We sometimes denote it by B(n, p).
+II Consider the ﬁrst character, and let M be the event that it is misprinted. Then,
+P(X = r ) = P(X = r |M)P(M) + P(X = r |M c )P(M c ).
+We write P(X = r ) = p(n, r ) and observe that if M occurs, then X = r if and only if
+there are r − 1 misprints in the remaining n − 1 characters. Hence,
+(2)
+
+p(n, r ) = p(n − 1, r − 1) p + p(n − 1, r )(1 − p)
+where p(n, 0) = (1 − p)n and p(n, n) = p n , n ≥ 0. Now the substitution p(n, r ) =
+pr (1 − p)n−r c(n, r ) gives c(n, r ) = c(n − 1, r − 1) + c(n − 1, r ), where c(n, 0) =
+c(n, n) = 1, n ≥ 0.
+We already know that this difference equation has the solution c(n, r ) = ( nr ), as required
+(recall Pascal’s triangle).
+(b) We consider two solutions.
+I Let m(n) be the expected number of misprints in n characters. Then, by Theorem 4.4.6,
+m(n) = E(X |M)P(M) + E(X |M c )P(M c ) = (1 + m(n − 1)) p + m(n − 1)(1 − p),
+
+Worked Examples and Exercises
+
+139
+
+where we have used
+
+
+r P(X = r |M) =
+r p(n − 1, r − 1),
+E(X |M) =
+r
+
+=
+
+r
+
+
+
+p(n − 1, r − 1) +
+
+r
+
+
+
+because misprints are independent,
+(r − 1) p(n − 1, r − 1) = 1 + m(n − 1).
+
+r
+
+Hence,
+m(n) = m(n − 1) + p.
+Obviously, m(0) = 0, so this difference equation has solution
+m(n) = np.
+
+(3)
+II
+
+Using (a)
+n
+n
+n
+
+
+(n − 1)!
+pr −1 (1 − p)n−r
+r
+pr (1 − p)n−r =
+np
+(r
+−
+1)!(n
+−
+r
+)!
+r
+r =0
+r =1
+
+n 
+
+n−1
+= np
+by the binomial theorem.
+pr −1 (1 − p)n−r = np
+r
+−
+1
+r =1
+
+m(n) =
+
+(c) By deﬁnition,
+n
+
+P(X = r )
+
+= np/(1 − (1 − p)n )
+P(X
+>
+0)
+r =1
+ 
+
+
+
+
+E(X ) n
+np n
+= E(X )/ 1 − 1 −
+= np/ 1 − 1 −
+n
+n
+→ E(X )/(1 − exp (−E(X ))
+as n → ∞.
+
+E(X |A) =
+
+(4)
+(5)
+(6)
+
+(7)
+
+Exercise
+Show that var (X ) = np(1 − p) by two different methods.
+Exercise
+Show that as n → ∞, if E(X ) is ﬁxed P(X = 0) → exp(−E(X )).
+Exercise
+Let X have the binomial distribution P(X = k) = ( nk ) p k (1 − p)n−k .
+(a) For ﬁxed n and p, for what value of k is P(X = k) greatest?
+(b) For ﬁxed k and p, for what value of n is P(X = k) greatest?
+Exercise
+If X has a binomial distribution with parameters n and p, ﬁnd:
+(a) The probability that X is even.
+(b) E(sin2 ( 12 π X )).
+(c) µ (k)
+.
+X
+
+4.10 Example: Dog Bites: Poisson Distribution
+
+(a) Let X be a binomial random variable with parameters n and p, such that np = λ.
+Show that for ﬁxed k, as n → ∞, with λ ﬁxed,
+P(X = k) →
+
+1 k −λ
+λ e .
+k!
+
+140
+
+4 Random Variables
+
+(b) During 1979–1981, in Bristol, 1103 postmen sustained 215 dog bites. A total of
+191 postmen were bitten, of whom 145 were bitten just once. Which should be the
+postman’s motto: “Once bitten, twice shy” or “Once bitten, twice bitten”?
+(8)
+
+Solution
+
+(a) Because X is binomial
+
+
+n
+λ n−k
+n(n − 1) . . . (n − k + 1) λk
+k
+n−k
+=
+. . 1−
+.
+P(X = k) =
+p (1 − p)
+nk
+k!
+n
+k
+Now for ﬁxed k, as n → ∞ with λ ﬁxed,
+n−k+ j
+→ 1; 1 ≤ j ≤ k,
+n
+
+
+
+
+λ k
+λ n
+1−
+→ 1, and
+1−
+→ e−λ .
+n
+n
+Hence, as n → ∞,
+P(X = k) →
+
+(4)
+
+λk −λ
+e .
+k!
+
+Remark
+This is the Poisson distribution, which we met in Example 4.2.7.
+(b) Suppose you were a postman, and let X be the number of your bites. If dogs bite
+any postman at random, then X is a binomial random variable with parameters 215 and
+(1103)−1 , because it may be thought of as a series of 215 trials in which a “success” is
+being bitten with probability (1103)−1 at each trial, independently of the rest.
+Hence,
+
+215
+1
+P(X = 0) = 1 −
+1103
+and
+
+214
+1
+215
+1−
+P(X = 1) =
+.
+1103
+1103
+You may either compute these directly or recognise from (a) that the number of bites you
+215
+≃ 0.195. So,
+get is approximately Poisson, with parameter λ = 1103
+P(X = 0) ≃ e−λ ≃ 0.82
+P(X = 1) ≃ λe−λ ≃ 0.16
+P(X > 1) ≃ 1 − e−λ − λe−λ ≃ 0.02.
+However, if we pick a postman at random and let X  be the number of bites he sustained,
+we ﬁnd that
+912
+P(X  = 0) =
+≃ 0.83
+1103
+145
+P(X  = 1) =
+≃ 0.13
+1103
+46
+P(X  > 1) =
+≃ 0.04.
+1103
+It seems that “once bitten, twice bitten” should be the postman’s motto.
+
+Worked Examples and Exercises
+
+141
+
+(5)
+
+Remark
+Our conclusion may be given more substance by investigating the extent to
+which the observed distribution differs from the expected Poisson distribution. Such techniques are known to statisticians as “goodness-of-ﬁt tests,” and an appropriate procedure
+here would use the χ 2 test. This may be found in textbooks of elementary statistics; the
+motto is the same.
+
+(1)
+
+Exercise
+If bites are Poisson with parameter λ, what is the probability that you get more than
+one bite, given that you get at least one?
+Exercise
+If bites are Poisson, what is your expected total number of bites given that you get at
+least one?
+Exercise
+Let X n have a binomial distribution with parameters n and p, such that np = λ, and
+let An be the event that X n ≥ 1. If Y is a Poisson random variable with parameter λ, show that as
+n → ∞, P(X n = k|An ) → P(Y = k|Y ≥ 1).
+Exercise
+Let X have a Poisson distribution with parameter λ. Show that E(X ) = λ.
+(a) For ﬁxed λ, what value of k maximizes P(X = k)?
+(b) For ﬁxed k, what value of λ maximizes P(X = k)?
+Exercise
+If X has a Poisson distribution with parameter λ, ﬁnd:
+(a) E(e X ) (b) E(cos(π X )) (c) var (X ) (d) µ (k)
+.
+X
+Exercise
+If X has a Poisson distribution with parameter λ, show that:
+(a) The probability that X is even is e−λ cosh λ.
+(b) E(|X − λ|) = 2λλ e−λ /(λ − 1)!, when λ is an integer greater than zero.
+
+(2)
+(3)
+
+(4)
+
+(5)
+(6)
+
+4.11 Example: Guesswork
+
+You are trying to guess the value of a proper integer valued random variable X , with
+probability mass function f (x) (which you know). If you underestimate by y, it will cost
+you $by; if you overestimate by y, it will cost you $ay. Your guess is an integer; what
+guess minimizes your expected loss?
+Solution
+(1)
+
+If you guess t, then your expected loss is
+
+
+L(t) = a
+(t − x) f (x) + b
+(x − t) f (x).
+x≤t
+
+(2)
+
+x>t
+
+Substituting t + 1 for t in (1) gives an expression for L(t + 1), and subtracting this from
+(1) gives
+
+
+L(t) − L(t + 1) = a
+f (x) + b
+f (x) = −a F(t) + b(1 − F(t)). = D(t)
+x≤t
+
+x>t
+
+(say).
+Now limx→−∞ D(x) = b, limx→∞ D(x) = −a, and both −F(t) and 1 − F(t) are nonincreasing. Therefore, there is a smallest t such that
+D(t) = L(t) − L(t + 1) ≤ 0,
+and this is the guess that minimizes your expected loss. Hence, denoting this guess by tˆ,
+
+!
+b
+tˆ = min t: F(t) ≥
+, by (2).
+a+b
+
+142
+(3)
+
+(4)
+
+(5)
+
+4 Random Variables
+
+Exercise
+Suppose that if you underestimate X you incur a ﬁxed loss £b, whereas if you
+overestimate X by y it will cost you £ay. Find an expression that determines the guess that
+minimizes your expected loss.
+Find this best guess when
+(a) P(X = x) = pq x−1 ; x ≥ 1, p = 1 − q > 0.
+(b) P(X = x) = 1/(x(x + 1)); x ≥ 1.
+(c) P(X = x) = 1/(2n + 1); −n ≤ x ≤ n.
+Exercise
+What is your best guess if
+(a) L(t) = E(|X − t|)?
+(b) L(t) = E((X − t)2 )?
+Exercise
+Icarus Airways sells m + n tickets for its n-seat aeroplane. Passengers fail to show up
+with probability p independently. Empty seats cost $c, and a passenger with a ticket who cannot ﬂy
+is paid $b for being bumped. What choice of m minimizes the airline’s expected losses on booking
+errors?
+What level of compensation b would be sufﬁcient to ensure that it was not worthwhile for the
+airline to overbook at all (for ﬁxed p)? For ﬁxed b, what value of p would entail no overbooking
+by the airline?
+
+4.12 Example: Gamblers Ruined Again
+
+Alberich and Brunnhilde have a and b gold coins, respectively. They play a series of
+independent games in which the loser gives a gold piece to the winner; they stop when
+one of them has no coins remaining. If Alberich wins each game with probability p, ﬁnd
+the expected number of games played before they stop. (Assume p = q = 1 − p.)
+(3)
+
+Solution
+Let X k be the number of games they will play when Alberich’s fortune is
+k, and let m k = E(X k ). Clearly, m 0 = m a+b = 0 because in each case one player has no
+coins. If A is the event that Alberich wins the ﬁrst game, then for 0 < k < a + b,
+E(X k |A) = 1 + E(X k+1 ) = 1 + m k+1
+because his fortune is then k + 1, and succeeding games are independent of A. Likewise,
+it follows that
+E(X k |Ac ) = 1 + E(X k−1 ).
+Hence, by Theorem 4.4.6,
+m k = E(X k |A)P(A) + E(X k |Ac )P(Ac ) = 1 + pm k+1 + qm k−1 .
+Setting
+mk =
+
+k
++ uk ,
+q−p
+
+gives
+u k = pu k+1 + qu k−1 ,
+
+for 0 < k < a + b.
+
+Worked Examples and Exercises
+
+(1)
+
+(2)
+(3)
+(4)
+
+(5)
+
+143
+
+In particular u 0 = 0, and u a+b = −(a + b)(q − p)−1 . Proceeding as in Example 2.11,
+using Theorem 2.3.1, shows that
+ k
+q
+1−
+(a + b)
+p
+uk = +
+ a+b .
+p−q
+q
+1−
+p
+Exercise
+What is the expected number of games played when p = 12 ?
+Exercise
+Let B be the event that Brunnhilde wins the entire contest. Find a difference equation
+satisﬁed by E(X k |B). Solve this in the case when p = 12 .
+Exercise
+When the ﬁrst game is over they redivide the a + b coins as follows. All the coins are
+tossed, one player gets those showing a head, the other gets all those showing a tail. Now they play
+a series of games as before. What is the expected number to be played until one or other player
+again has all the coins? What if p = 12 ?
+Exercise
+Alberich is blackmailing Fafner, so each time he loses his last gold coin, he immediately
+demands (and gets) one replacement coin, with which to continue gambling. What now is the
+expected number of games played? What if p = 12 ?
+
+4.13 Example: Postmen
+
+A and B are postmen. They start work on day 1. The probability that A sustains a dog
+bite on day n, given that he has not been bitten on any of the preceding days is p A (n). The
+corresponding probability for B is p B (n). Let X A and X B , respectively, be the number of
+days until each sustains his ﬁrst bite.
+(a) Find P(X A = n) and P(X B = n).
+(b) A is wary, so p A (n) decreases as n increases. If
+p A (n) =
+
+1
+;
+n+1
+
+n ≥ 1,
+
+ﬁnd P(X A = n) and show that E(X A ) = ∞, while P(X A < ∞) = 1.
+(c) B is complacent, so p B (n) increases as n increases. If, for some λ < 0,
+p B (n) = 1 − e−λn
+ﬁnd P(X B = n) and E(X B ).
+(2)
+
+Solution
+(a) Let Hk be the event that A isbitten on the kth day. Then the event that
+Hkc ∩ Hn . Hence,
+he is bitten for the ﬁrst time on the nth day is n−1
+1
+
+
+
+n−1
+n−1
+n−1
+
+
+
+c
+c
+c
+Hk ∩ Hn = P Hn |
+Hk P
+Hk
+P(X A = n) = P
+1
+c
+= p A (n)P Hn−1
+|
+
+n−2
+
+1
+
+
+Hkc P
+
+1
+n−2
+
+1
+
+
+Hkc
+
+1
+
+= p A (n)
+
+n−1
+
+
+(1 − p A (k)),
+
+1
+
+on iterating.
+
+144
+
+4 Random Variables
+
+Likewise, P(X B = n) = p B (n)
+
+n−1
+
+
+(1 − p B (k)).
+
+1
+
+(b) Employing a similar argument
+n
+
+
+P(X A > n) = P
+
+
+=
+
+Hkc
+
+k=1
+
+n
+
+
+(1 − p A (k))
+
+k=1
+
+n
+
+
+
+
+1
+→0
+n+1
+
+as n → ∞.
+
+P(X A = n) = P(X A > n − 1) − P(X A > n) =
+
+1
+,
+n(n + 1)
+
+=
+
+k=1
+
+1
+1−
+k+1
+
+=
+
+Hence, P(X A < ∞) = 1. Also,
+
+
+and ﬁnally E(X A ) = ∞
+1 1/(n + 1), which diverges. The expected time until A is ﬁrst
+bitten is inﬁnite.
+(c) By the same argument,
+P(X B ≥ n) =
+
+n
+
+
+(1 − p B ( j)) =
+
+j=1
+
+n
+
+
+e−λj = e−(λ/2)n(n+1) .
+
+j=1
+
+Hence, P(X B = n) = (1 − e−λn )e−(λ/2)n(n−1) and
+E(X B ) =
+
+∞
+
+
+e−(λ/2)n(n+1) < ∞.
+
+1
+
+B expects to be bitten in a ﬁnite time.
+(1)
+(2)
+(3)
+(4)
+
+Exercise
+In both cases (b) and (c), ﬁnd the probability that the postman is ﬁrst bitten on the jth
+day, given that he is bitten on or before day M.
+Exercise
+If A is less wary, so that p A (n) = 2/(n + 2), show that E(X A ) is now ﬁnite, but var
+(X A ) diverges.
+Exercise
+In each case (b) and (c), given that the postman has not been bitten during the ﬁrst m
+days, ﬁnd the expected further time until he is bitten.
+Exercise
+If A is extremely wary and p A (n) = 1/(n + 1)2 show that with probability 12 , he is
+never bitten. What is the median of the distribution of X A in this case? Find the expectation of X A ,
+given that X A is ﬁnite.
+
+4.14 Example: Acme Gadgets
+
+This company has developed a new product. The demand for it is unknown, but it is
+assumed to be a random variable X , which is distributed uniformly on {0, 1, . . . , N}. The
+gadgets have to be made in advance; each one sold makes a proﬁt of $b, and each one
+made and left unsold represents a net loss of $c.
+How many should be made, to maximize the expected proﬁt?
+
+Worked Examples and Exercises
+
+145
+
+Solution
+Suppose that m items are made. Then the total proﬁt (negative proﬁts are
+interpreted as losses) is
+
+bm;
+X ≥m
+.
+Ym =
+bX − c(m − X ); m > X
+The expected proﬁt is
+m−1
+m−x
+x
+−c
+,
+N +1
+N +1
+x=1
+x=0
+ 
+
+
+m
+1
+1
+1
+=
+b N+
+− c − m(b + c) .
+N +1
+2
+2
+2
+
+E(Ym ) = bmP(X ≥ m) + b
+
+m−1
+
+
+Now,
+2(N + 1)(E(Ym+1 ) − E(Ym )) = (2N + 1)b − c − (2m + 1)(b + c),
+so that the expected proﬁt is largest when m = m̂, where
+ "
+#!
+Nb − c
+m̂ = max 0,
+.
+b+c
+(1)
+(2)
+(3)
+
+Exercise
+Suppose that an unsatisﬁed customer represents a loss of $d. What now is the choice
+of m which maximizes expected proﬁt?
+Exercise
+Suppose that the unknown demand X is assumed to have a geometric distribution with
+parameter p. Find the choice of m that maximizes the expected proﬁt.
+Exercise
+Suppose the unknown demand X is a Poisson random variable with parameter λ. Show
+that the expected proﬁt if they make m items is
+
+m
+
+(b + c)λm+1
+λk
+λ(b + c) −
+− mc,
+m!
+k!
+0
+and that this is maximized by the value of m that minimizes
+
+m
+
+(b + c)λm+1
+λk
++ mc.
+m!
+k!
+0
+
+4.15 Example: Roulette and the Martingale
+
+Suppose you are playing roulette; the wheel has a zero. The chance of winning on red is
+p < 12 and you bet at evens; if you win, you gain an amount equal to your stake.
+Your ﬁrst bet is $1 on red. If it wins, you quit; if it loses, your second bet is $2 on red.
+If it wins you quit, and so on. Your nth bet is $2n−1 so long as you lose; as soon as you
+win you quit.
+(a) Show that you are certain to win $1 every time you use this system.
+(b) Find the expected size of your winning bet.
+Now suppose the house limit is $2 L , so this must be your last bet if you have not already
+won.
+
+146
+
+4 Random Variables
+
+(c) What is your expected gain when you stop?
+(d) Would you prefer large or small house limits?
+Remark
+
+This gambling system is the martingale. Avoid it unless you seek ruin!
+
+Solution
+Let T be the number of spins of the wheel until the outcome is ﬁrst red.
+(a) Your bet on that spin is $2T −1 , and because
+you win, you gain $2T −1 . However, your
+T −1 k−1
+= $2T −1 − 1. Because
+losses on the previous T − 1 spins are $ 1 2
+∞
+
+
+P(T = k) =
+
+k=1
+
+∞
+
+
+p(1 − p)k−1 = 1,
+
+k=1
+
+this means you are certain to win $1.
+(b) Because your winning bet is $2T −1 , it has expected value
+E(2T −1 ) =
+
+∞
+
+
+2k−1 p(1 − p)k−1 = ∞,
+
+since 2(1 − p) > 1.
+
+k=1
+
+(c) You win $1 if 1 ≤ T ≤ L + 1; otherwise, you lose $
+gains are $γ , where
+
+L
+
+k
+k=0 2 . Hence, your expected
+
+γ = P(T ≤ L + 1) − (2 L+1 − 1)P(T > L + 1) = 1 − (2(1 − p)) L+1 .
+(d) Because your expected losses increase exponentially fast with L, you must hope the
+casino is sufﬁciently generous to have low limits.
+(1)
+(2)
+
+Exercise
+What difference does it make to these results if the wheel is fair? (That is, p = 12 .)
+Exercise
+With house limit $2 L , what is the expected size of your winning bet, given that you do
+indeed win? What happens as L → ∞? (Remember to consider all three cases, p > 12 , p = 12 , p <
+1
+.)
+2
+
+4.16 Example: Searching
+
+(a) Let X be a positive integer valued random variable such that f (n) = P(X = n) is
+nonincreasing as n increases. Suppose that (g(x); x = 1, 2, . . .) is a function, taking
+positive integer values, such that for any k, g(x) = k for at most one positive integer
+x = rk .
+Show that E(g(X )) ≥ E(X ).
+(b) You have lost a key. There are n places in which you might have mislaid it with
+respective probabilities ( pk ; 1 ≤ k ≤ n). If you search the kth place once, you ﬁnd the
+key with probability dk , if it is indeed there. (You can search any place any number of
+times.) How do you arrange your searching to minimize the expected time until you
+ﬁnd the key? (Searches are successful independently of each other.)
+Solution
+(a) Consider the distribution of g(X ). Because g(X ) = k for at most one
+value rk of X ,
+
+
+
+P(g(X ) ≤ n) =
+P(g(X ) = k) =
+P(X = rk ) =
+f (rk )
+k
+
+k
+
+k
+
+Worked Examples and Exercises
+
+147
+
+where the ﬁnal sum contains m ≤ n nonzero terms. If these are arranged in decreasing
+order as f (rk1 ) ≥ f (rk2 ) ≥ · · · ≥ f (rkm ), then
+f (rk1 ) ≤ f (1)
+f (rk2 ) ≤ f (2),
+and so on. Hence, summing these inequalities yields
+P(g(X ) ≤ n) ≤ P(X ≤ n),
+and so
+E(g(X )) =
+
+∞
+
+0
+
+P(g(X ) > n) =
+
+∞
+
+(1 − P(g(X ) ≤ n))
+0
+
+∞
+
+(1 − P(X ≤ n)) = E(X ).
+≥
+0
+
+(b) The probability that you ﬁnd the key on the sth search of the r th room is
+m r s = (1 − dr )s−1 dr pr .
+To see this, note that the key has to be there (with probability pr ) and you have to fail to
+ﬁnd it s − 1 times before you succeed. Let pk be the kth largest of the numbers (m r s ; r ≥
+1, s ≥ 1). Then pk is a probability mass function and ( pk ; k ≥ 1) is nonincreasing. Take
+this ordering as an order of search; that is, if m r s ≥ m uv , then the sth search of the r th
+place precedes the vth search of the uth place. This searchis consistent [the mth search
+of a given place precedes the (m + 1)st for every m], and kpk is the expected number
+of searches required to ﬁnd the key.
+By part (a), any other order yields greater expected duration of the search time, because
+the function g(x) is a permutation, and thus one–one.
+(1)
+(2)
+
+(3)
+
+Exercise
+Show that you can arrange your searches so that the expected time to ﬁnd the key is
+ﬁnite.
+Exercise
+The key is upstairs with probability 23 or downstairs, with probability 13 . Any search
+upstairs is successful with probability 14 if the key is there; any search downstairs is successful
+with probability 34 if the key is there. How do you arrange your searches to minimize the expected
+number of searches?
+Exercise
+Suppose the sth search of the r th room (conditional on s − 1 previous unsuccessful
+searches of this room) discovers the key with probability dr s . How do you order your searches to
+minimize the expected number of searches?
+
+4.17 Example: Duelling
+
+Pascal and Brianchon ﬁght a series of independent bouts. At each bout, either Pascal is
+awarded a hit with probability p, or Brianchon is awarded a hit with probability q = 1 − p.
+The ﬁrst to be awarded two consecutive hits is declared the winner and the duel stops. Let
+X be the number of bouts fought. Find the distribution and expected value of X . For what
+value of p is E(X ) greatest?
+
+148
+
+4 Random Variables
+
+Solution
+
+Let B be the event that Brianchon wins. Then,
+f X (n) = P({X = n} ∩ B) + P({X = n} ∩ B c ).
+
+For B to occur at the nth bout, he must win the nth and (n − 1)th bouts (with probability q 2 ), and the preceding n − 2 bouts must be awarded alternately to each contestant.
+The probability of this is p (n/2)−1 q (n/2)−1 if n is even, or p (n/2)−(1/2) q (n/2)−(3/2) if n is odd,
+because bouts are independent.
+A similar argument applies if B c occurs, yielding
+
+p (n/2)−1 q (n/2)−1 (q 2 + p 2 )
+if n is even
+f X (n)
+(n/2)−(1/2) (n/2)−(1/2)
+q
+(q + p) if n is odd.
+p
+The expected value of X is then, by deﬁnition,
+E(X ) =
+
+∞
+
+
+p j−1 q j−1 (q 2 + p 2 )2 j +
+
+j=1
+
+(1)
+
+∞
+
+
+q j p j (q + p)(2 j + 1).
+
+j=1
+
+Summing this series is elementary and boring. To get a solution in closed form, it is more
+fun to argue as follows. Let Ak be the event that Pascal is awarded the kth bout. Then,
+
+
+E(X ) = E(X |A1 ) p + E X |Ac1 q,
+by conditioning on the outcome of the ﬁrst bout. Now if Pascal is awarded the ﬁrst bout but
+not the second, the state of the duel in respect of the ﬁnal outcome is exactly the same as if
+he had lost the ﬁrst bout, except of course that one bout extra has been fought. Formally,
+this says
+
+
+
+
+E X |A1 ∩ Ac2 = 1 + E X |Ac1 .
+Hence,
+
+(2)
+
+
+
+
+
+
+E(X |A1 ) = E(X |A1 ∩ A2 ) p + E X |A1 ∩ Ac2 q = 2 p + q 1 + E X |Ac1 .
+
+Likewise,
+(3)
+
+
+
+E X |Ac1 = 2q + p(1 + E(X |A1 )).
+
+Solving (2) and (3), and substituting into (1), yields
+E(X ) =
+
+2 + qp
+.
+1 − qp
+
+Because qp = 14 − ( p − 12 )2 , this is greatest when p = 12 and then E(X ) = 3.
+(4)
+(5)
+(6)
+(7)
+(8)
+(9)
+
+Exercise
+What is P(B)?
+Exercise
+What is P(B c )?
+Exercise
+Given that Pascal wins, ﬁnd the distribution and expected value of the number of bouts.
+Exercise
+Find P(A1 |B) and P(A2 |B).
+Exercise
+Find the median number of bouts when p = 12 .
+Exercise
+Find P(B) and the expectation of the number of bouts fought if the winner is required
+to win three consecutive bouts.
+
+Worked Examples and Exercises
+
+149
+
+(10) Exercise
+Brianchon suggests that they adopt a different rule for deciding the winner, viz: when
+ﬁrst a player has been awarded a total number of bouts two greater than the number of bouts awarded
+to his opponent, then the match stops and the leading player wins. If p > q, do you think Brianchon
+was wise to suggest this? (Assume he wants to win.) What is the expected duration of this game
+when p = q?
+
+4.18 Binomial Distribution: The Long Run
+
+Let X have a binomial distribution with parameters n and p, where p = 1 − q.
+Show that for λ > 0 and  > 0,
+P(X − np > n) ≤ E(exp [λ(X − np − n)]).
+Deduce that as n → ∞,
+P(|X − np| ≤ n) → 1.
+2
+
+(You may assume without proof that for any x, 0 < e x ≤ x + e x .)
+Solution
+For k > np + n, when λ > 0, we have exp (λ(k − np − n)) > 1. Hence
+
+
+P(X = k) <
+exp (λ(k − np − n))P(X = k)
+k>n( p+)
+
+k>n( p+)
+
+<
+
+
+
+exp (λ(k − np − n))P(X = k),
+
+because e x > 0,
+
+k
+
+= E(exp (λ(X − np − n))).
+Now, the left side is just P(X > np + n) and
+E(eλX ) =
+
+n 
+
+n
+0
+
+k
+
+( peλ )k q n−k = (q + peλ )n ,
+
+so the right side is
+( peλq + qe−λp )n e−λn ≤ ( peλ q + qeλ p )n e−λn ,
+≤ exp (nλ2 − λn).
+2 2
+
+2 2
+
+because e x ≤ x + e x
+
+2
+
+Now, choosing λ = /2 gives
+P(X − np > n) ≤ exp (−n 2 /4).
+Likewise, P(X − np < n) ≤ exp (−n 2 /4), so
+P(|X − np| > n) ≤ 2 exp (−n 2 /4) → 0
+
+(1)
+
+as n → ∞,
+
+as required.
+(2)
+
+Exercise
+You want to ask each of a large number n of people a question to which the answer
+“yes” is so embarrassing that many individuals would falsely answer “no”. The answer “no” is not
+embarrassing. The following procedure is proposed to determine the embarrassed fraction of the
+population. As the question is asked, a coin is tossed out of sight of the questioner. If the true answer
+would have been “no” and the coin shows heads, then the answer “yes” is given. Otherwise, people
+
+150
+
+4 Random Variables
+
+should respond truthfully. If the number responding “yes” is now Yn and “yes” is the true answer
+for a proportion p of the whole population, show that for  > 0
+$
+$
+
+$ Yn
+$
+1
+$
+$
+P $ − (1 + p)$ >  ≤ 2 exp (−n 2 /4).
+n
+2
+(3)
+
+Explain the advantages of this procedure.
+Exercise
+Suppose a coin shows a head with probability p, and let X n be the number of heads
+in n tosses, and An () the event that |X n /n − p| > , where 2 >  > 0. Show that as n → ∞,
+
+∞
+
+P
+Ak () → 0.
+n
+
+(4)
+
+(5)
+(6)
+
+1
+Exercise
+Suppose a gambler wins $28 with probability 32
+, or loses his stake of
+31
+$1 with probability 32 at each trial. Let Wn be his fortune after n such independent trials, and An () the event that |Wn /n + 3/32| > . Show that as n → ∞, P( ∞
+n=m
+An ()) → 0. Deduce that his fortune is equal to its initial value on only ﬁnitely many occasions,
+with probability one. (Hint: recall Problem 1.24.)
+Note: In the following exercise, X is a binomially distributed random variable with parameters n
+and p.
+Exercise
+Show that for any ﬁxed ﬁnite a and b, as n → ∞, P(a < X ≤ b) → 0.
+Exercise
+Show that for a > 0,
+$
+$
+
+$
+X
+( p(1 − p))1/2
+P $$ − p $$ > a ≤
+min {( p(1 − p))1/2 , an 1/2 }.
+n
+a2n
+
+(a) Show that if p = (m − 1)/n where m is an integer, then
+$
+
+$
+
+$X
+$
+n−1
+p m (1 − p)n−m+1 .
+E $$ − p $$ = 2
+m−1
+n
+
+(7)
+
+Exercise
+
+(8)
+
+(b) Find var (|X/n − p|).
+Exercise
+If n = 2m and p = 12 , show that
+
+P(X − m = k) =
+
+2m
+m
+
+
+
+1
+a(m, k)
+4m
+
+where, as m → ∞, (a(m, k))m → e−k .
+Also, show that
+2
+
+
+
+1
+2m
+
+1
+2
+
+<
+
+2m
+m
+
+
+
+1
+1
+<
+1 .
+4m
+(2m + 1) 2
+
+[You may assume that |log(1 + x) − x| < x 2 for small enough x.]
+
+4.19 Example: Uncertainty and Entropy
+
+Let X and Y be simple random variables taking values in the same set {x1 , . . . , xn }, with
+respective probability mass functions f X (.) and f Y (.). Show that
+(1)
+
+−E(log f Y (X )) ≥ −E(log f X (X )),
+
+Problems
+
+151
+
+and
+−E(log f X (X )) ≤ log n,
+
+(2)
+
+with equality in (1) if and only if f Y (.) ≡ f X (.), and equality in (2) if and only if f X (xi ) =
+n −1 for all xi . (Hint: Show ﬁrst that log x ≤ x − 1.)
+Solution
+
+By deﬁnition, for x > 0,
+1
+
+− log x =
+
+(3)
+
+1
+
+y −1 dy ≥
+
+x
+
+dy = 1 − x,
+
+x
+
+with equality if and only if x = 1. Hence,
+
+
+E(log f X (X )) − E(log f Y (X )) =
+f X (xi ) log f X (xi ) −
+f X (xi ) log f Y (xi )
+i
+
+=−
+
+
+
+
+i
+
+f X (xi ) log[ f Y (xi )/ f X (xi )]
+
+i
+
+≥−
+= 0,
+
+f X (xi )[1 − f Y (xi )/ f X (xi )] by (3)
+
+i
+
+with equality iff f X (xi ) = f Y (xi ) for all xi , which proves (1). In particular, setting f Y (xi ) =
+n −1 yields (2).
+Remark
+It is conventional to denote −E(log f X (X )) by H (X ) [or alternatively h(X )]
+and the logarithms are taken to base 2. The number H (X ) is known as the uncertainty or
+entropy of X , and is an essential tool in information theory and communication theory.
+The result (1) is sometimes called the Gibbs inequality.
+(4)
+
+Exercise
+
+Let f X (x) = ( nx ) p x (1 − p)n−x ; 0 ≤ x ≤ n. Show that
+H (X ) ≤ −n( p log p + (1 − p) log(1 − p)),
+
+(5)
+
+with equality if n = 1.
+Exercise
+Let f X (x) = pq x−1 /(1 − q M ), for 1 ≤ x ≤ M, where p = 1 − q. Show that
+lim H (X ) = − p −1 [ p log p + (1 − p) log(1 − p)].
+
+M→∞
+
+(6)
+
+Exercise
+
+Let Y = g(X ) be a function of the random variable X . Show that for any c > 0
+
+
+−cg(xi )
+H (Y ) ≤ H (X ) ≤ cE(Y ) + log
+.
+e
+i
+
+When does equality hold?
+
+P RO B L E M S
+
+1
+
+A box contains 12 sound grapefruit and four that are rotten. You pick three at random.
+(a) Describe the sample space.
+(b) Let X be the number of sound grapefruit you pick. Find f X (x) and E(X ).
+
+152
+2
+3
+4
+5
+
+6
+7
+8
+
+9
+
+4 Random Variables
+
+Show that the expected number of pairs in your poker hand is about 0.516.
+You roll a die once. What is the variance of your score?
+What is the variance of a uniform random variable?
+For each of the following functions f (x) (deﬁned on the positive integers x = 1, 2, . . .), ﬁnd:
+(a) The value of c for which f (x) is a probability mass function.
+(b) The expectation
+(i) f (x) = c.2x /x!
+(iv) f (x) = cx −2
+(ii) f (x) = cp x ;
+0≤ p≤1
+(v) f (x) = c[x(x + 1)]−1
+x −1
+(iii) f (x) = cp x ; 0 ≤ p ≤ 1
+If X is a random variable, explain whether it is true that X + X = 2X and X − X = 0.
+Are 0 and 2X random variables?
+For what value of c is f (x) = c(x(x + 1)(x + 2))−1 ; 1 ≤ x ≤ M, a probability mass function? Find
+its expectation E(X ). Find the limit of c and E(X ) as M → ∞.
+A fair coin is tossed repeatedly. Let An be the event that three heads have appeared in consecutive
+tosses for the ﬁrst time on the nth toss. Let T be the number of tosses required until three consecutive
+heads appear for the ﬁrst time. Find P(An ) and E(T ).
+Let U be the number of tosses required until the sequence HTH appears for the ﬁrst time. Can
+you ﬁnd E(U )?
+You choose a random number X as follows. Toss a coin repeatedly and count the number of
+tosses until it shows a head, N say. Then pick an integer at random in 1, 2, . . . , 10 N . Show
+that
+P(X = k) =
+
+10
+11
+12
+13
+14
+15
+
+16
+17
+18
+19
+
+20
+
+1
+1
+,
+.
+19 20d−1
+
+where d is the number of digits in the decimal expansion of k. What is E(X )?
+Let X have a Poisson distribution f (k), with parameter λ. Show that the largest term in this
+distribution is f ([λ]).
+Show that if E(X 2 ) < ∞, min E((X − a)2 ) = var (X ).
+a
+
+Let f 1 (x) and f 2 (x) be probability mass functions. Show that if 0 ≤ p ≤ 1, then f 3 (x) = p f 1 (x) +
+(1 − p) f 2 (x) is a probability mass function. Interpret this result.
+Let X be a geometric random variable. Show that, for n > 0 and k > 0, P(X > n + k|X > n) =
+P(X > k).
+Let X be a random variable uniform on 1 ≤ x ≤ m. What is P(X = k|a ≤ X ≤ b)? In particular
+ﬁnd P(X > n + k|X > n).
+A random variable is symmetric if for some a and all k, f (a − k) = f (a + k). Show that the mean
+and a median are equal for symmetric random variables. Find a nonsymmetric random variable for
+which the mean and median are equal.
+If X is symmetric about zero and takes integer values, ﬁnd E(cos(π X )) and E(sin(π X )).
+Let X have distribution function F. Find the distribution of Y = a X + b and of Z = |X |.
+Let X have a geometric distribution such that P(X = k) = q k−1 p; k ≥ 1. Show that E(X −1 ) =
+log( p (1/ p−1 ).
+(a) Let X have a Poisson distribution with parameter λ. Show that E(1/(X + 1)) =
+λ−1 (1 − e−λ ), and deduce that for all λ, E(1/(X + 1)) ≥ (E(X + 1))−1 . When does equality
+hold?
+(b) Find E(1/(X + 1)) when P(X = k) = (−k −1 p k )/ log(1 − p); k ≥ 1.
+Fingerprints
+It is assumed that the number X of individuals in a population, whose ﬁngerprints
+are of a given type, has a Poisson distribution with some parameter λ.
+(a) Explain when and why this is a plausible assumption.
+(b) Show that P(X = 1|X ≥ 1) = λ(eλ − 1)−1 .
+
+Problems
+
+21
+
+22
+
+23
+
+(c) A careless miscreant leaves a clear ﬁngerprint of type t. It is known that the probability that any
+randomly selected person has this type of ﬁngerprint is 10−6 . The city has 107 inhabitants and
+a citizen is produced who has ﬁngerprints of type t. Do you believe him to be the miscreant on
+this evidence alone? In what size of city would you be convinced?
+Initially urn I contains n red balls and urn II contains n blue balls. A ball selected randomly from
+urn I is placed in urn II, and a ball selected randomly from urn II is placed in urn I. This whole
+operation is repeated indeﬁnitely. Given that r of the n balls in urn I are red, ﬁnd the mass function
+of R, the number of red balls in urn I after the next repetition.
+Show that the mean of this is r + 1 − 2r/n, and hence ﬁnd the expected number of red balls in
+urn I in the long run.
+A monkey has a bag with four apples, three bananas, and two pears. He eats fruit at random until
+he takes a fruit of a kind he has eaten already. He throws that away and the bag with the rest. What
+is the mass function of the number of fruit eaten, and what is its expectation?
+Matching
+Consider the matching problem of Example 3.17. Let µ(k) be the kth factorial
+moment of the number X of matching letters, µ(k) = E(X (X − 1) . . . (X − k + 1)). Show that
+
+µ(k) =
+
+24
+
+25
+
+26
+
+27
+
+28
+
+153
+
+1; k ≤ n
+0; k > n.
+
+Suppose an urn contains m balls which bear the numbers from 1 to m inclusive. Two balls are
+removed with replacement. Let X be the difference between the two numbers they bear.
+(a) Find P(X ≤ n).
+(b) Show that if n/m = x is ﬁxed as m → ∞, then P(|X | ≤ n) → 1 − (1 − x)2 ;
+0 ≤ x ≤ 1.
+(c) Show that E|X |/m → 13 .
+Suppose the probability of an insect laying n eggs is given by the Poisson distribution with
+mean µ > 0, that, is by the probability distribution over all the nonnegative integers deﬁned by
+pn = e−µ µn /n! (n = 0, 1, 2, . . .), and suppose further that the probability of an egg developing is
+p. Assuming mutual independence of the eggs, show that the probability distribution qm for the
+probability that there are m survivors is of the Poisson type and ﬁnd the mean.
+Preparatory to a camping trip, you can buy six cans of food, all the same size, two each of meat,
+vegetables, and fruit. Assuming that cans with the same contents have indistinguishable labels, in
+how many distinguishable ways can the cans be arranged in a row?
+On the trip, there is heavy rain and all the labels are washed off. Show that if you open three of
+the cans at random the chance that you will open one of each type is 25 . If you do not succeed, you
+continue opening cans until you have one of each type; what is the expected number of open cans?
+A belt conveys tomatoes to be packed. Each tomato is defective with probability p, independently
+of the others. Each is inspected with probability r ; inspections are also mutually independent. If a
+tomato is defective and inspected, it is rejected.
+(a) Find the probability that the nth tomato is the kth defective tomato.
+(b) Find the probability that the nth tomato is the kth rejected tomato.
+(c) Given that the (n + 1)th tomato is the ﬁrst to be rejected, let X be the number of its predecessors
+that were defective. Find P(X = k), the probability that X takes the value k, and E(X ).
+Mr. Smith must site his widget warehouse in either Acester or Beeley. Initially, he assesses the
+probability as p that the demand for widgets is greater in Acester, and as 1 − p that it is greater in
+Beeley. The ideal decision is to site the warehouse in the town with the larger demand. The cost of
+the wrong decision, because of increased transport costs, may be assumed to be £1000 if Acester
+is the correct choice and £2000 if Beeley is the correct choice. Find the expectations of these costs
+
+154
+
+29
+
+30
+
+31
+
+32
+
+33
+
+4 Random Variables
+
+for each of the two possible decisions, and the values of p for which Acester should be chosen on
+the basis of minimum expected cost.
+Mr. Smith could commission a market survey to assess the demand. If Acester has the higher
+demand, the survey will indicate this with probability 34 and will indicate Beeley with probability
+1
+. If Beeley has the higher demand the survey will indicate this with probability 23 and will indicate
+4
+Acester with probability 13 . Show the probability that the demand is higher in Acester is 9 p/(4 + 5 p)
+if the survey indicates Acester. Find also the expected cost for each of the two possible decisions if
+the survey indicates Acester.
+If the survey indicates Acester and p < 8/17, where should Mr. Smith site the warehouse?
+A coin is tossed repeatedly and, on each occasion, the probability of obtaining a head is p and the
+probability of obtaining a tail is 1 − p (0 < p < 1).
+(a) What is the probability of not obtaining a tail in the ﬁrst n tosses?
+(b) What is the probability pn of obtaining the ﬁrst tail at the nth toss?
+(c) What is the expected number of tosses required to obtain the ﬁrst tail?
+The probability of a day being ﬁne is p if the previous day was ﬁne and is p  if the previous day was
+wet. Show that, in a consecutive sequence of days, the probability u n that the nth is ﬁne satisﬁes
+u n = ( p − p  )u n−1 + p  , n ≥ 2.
+Show that as n → ∞, u n → p  (1 − p + p  )−1 .
+By considering the alternative possibilities for tomorrow’s weather, or otherwise, show that if
+today is ﬁne the expected number of future days up to and including the next wet day is 1/(1 − p).
+Show that (today being ﬁne) the expected number of future days up to and including the next
+two consecutive wet days is (2 − p)/((1 − p)(1 − p  )).
+Cars are parked in a line in a parking lot in order of arrival and left there. There are two types of
+cars, small ones requiring only one unit of parking length (say 15 ft) and large ones requiring two
+units of parking length (say 30 ft). The probability that a large car turns up to park is p and the
+probability that a small car turns up is q = 1 − p. It is required to ﬁnd the expected maximum
+number of cars that can park in a parking length of n units, where n is an integer. Denoting
+this number by M(n) show that:
+(a) M(0) = 0
+(b) M(1) = 1 − p
+(c) M(n) − q M(n − 1) − pM(n − 2) = 1, (n ≥ 2)
+Show that the equations are satisﬁed by a solution of the form M(n) = Aα n + Bβ n + Cn, where
+α, β are the roots of the equation x 2 − q x − p = 0, and A, B, C are constants to be found. What
+happens to M(n) as n → ∞?
+The probability that the postman delivers at least one letter to my house on any day (including
+Sundays) is p. Today is Sunday, the postman has passed my house and no letter has been delivered.
+(a) What is the probability that at least one letter will be delivered during the next week (including
+next Sunday)?
+(b) Given that at least one letter is delivered during the next week, let X be the number of days
+until the ﬁrst is delivered. What is f X (x)?
+(c) What is the expected value of X ?
+(d) Suppose that all the conditions in the ﬁrst paragraph hold, except that it is known that a letter
+will arrive on Thursday. What is the expected number of days until a letter arrives?
+A gambler plays two games, in each of which the probability of her winning is 0.4. If she loses a
+game she loses her stake, but if she wins she gets double her stake. Suppose that she stakes a in the
+ﬁrst game and b in the second, with a + b = 1. Show that her expected loss after both games is 0.2.
+Suppose she plays again, but now the stake in the ﬁrst game buys knowledge of the second, so that
+the chance of winning in the second is ap (≤1). Show that the value of a which gives the greatest
+expected gain is 0.5 + 0.2/ p.
+
+Problems
+34
+
+35
+
+36
+
+37
+
+155
+
+Let f 1 (X ) and f 2 (X ) be functions of the random variable X . Show that (when both sides exist)
+[E( f 1 f 2 )]2 ≤ E( f 12 )E( f 22 ). Deduce that P(X = 0) ≤ 1 − [E(X )]2 /E(X 2 ).
+(Recall that at 2 + 2bt + c has distinct real roots if and only if b2 > ac.)
+Any oyster contains a pearl with probability p independently of its fellows. You have a tiara that
+requires k pearls and are opening a sequence of oysters until you ﬁnd exactly k pearls. Let X be the
+number of oysters you have opened
+that contain no pearl.
+(a) Find P(X = r ) and show that r P(X = r ) = 1.
+(b) Find the mean and variance of X .
+(c) If p = 1 − λ/k, ﬁnd the limit of the distribution of X as k → ∞.
+A factory produces 100 zoggles a day. Each is defective independently with probability p. If a
+defective zoggle is sold, it costs the factory £100 in ﬁnes and replacement charges. Therefore, each
+day 10 are selected at random and tested. If they all pass, all 100 zoggles are sold. If more than
+one is defective, then all 100 zoggles are scrapped. If one is defective, it is scrapped and a further
+sample of size 10 is taken. If any are defective, the day’s output is scrapped; otherwise, 99 zoggles
+are sold.
+(a) Show that the probability r of not scrapping the day’s output is (1 − p)10 (1 +
+10 p(1 − p)9 ).
+(b) If testing one zoggle costs £10, ﬁnd the expected cost of a day’s testing.
+(c) Find the expected returns on a day’s output in terms of the proﬁt b of a sold zoggle and cost c
+of a scrapped zoggle.
+An urn contains two blue balls and n − 2 red balls; they are removed without replacement.
+(a) Show that the probability of removing exactly one blue ball in r − 1 removals is
+2(r − 1)(n − r + 1)
+.
+n(n − 1)
+(b) Show that the probability that the urn ﬁrst contains no blue balls after the r th removal is
+2(r − 1)
+.
+n(n − 1)
+
+38
+
+39
+
+40
+
+41
+
+(c) Find the expected number of removals required to remove both blue balls.
+Suppose that n dice are rolled once; let X be the number of sixes shown. These X dice are rolled
+again, let Y be the number of sixes shown after this second set of rolls.
+(a) Find the distribution and mean of Y .
+(b) Given that the second set of rolls yielded r sixes, ﬁnd the distribution and mean of X .
+Pascal and Brianchon now play a series of games that may be drawn (i.e., tied) with probability r .
+Otherwise, Pascal wins with probability p or Brianchon wins with probability q, where p + q+
+r = 1.
+(a) Find the expected duration of the match if they stop when one or other wins two consecutive
+games. Also, ﬁnd the probability that Pascal wins.
+(b) Find the expected duration of the match if they stop when one or other wins two successive
+games of the games that are won. (That is, draws are counted but ignored.) Find the probability
+that Pascal wins.
+If you were Brianchon and p > q, which rules would you rather play by?
+Let the random variable X have a geometric distribution, P(X = k) = q k−1 p; k ≥ 1. Show that for
+t > 0, P(X ≥ a + 1) ≤ pe−ta (1 − qet )−1 . Deduce that P(X ≥ a + 1) ≤ (a + 1) p[q(a + 1)a −1 ]a ,
+and compare this with the exact value of P(X ≥ a + 1).
+An archer shoots arrows at a circular target of radius 1 where the central portion of the target inside
+radius 14 is called the bull. The archer is as likely to miss the target as she is to hit it. When the
+
+156
+
+42
+
+4 Random Variables
+
+archer does hit the target, she is as likely to hit any one point on the target as any other. What is the
+probability that the archer will hit the bull? What is the probability that the archer will hit k bulls in
+n attempts? Prove that the mean number of bulls that the archer hits in n attempts is n/32.
+Show that if the archer shoots 96 arrows in a day, the probability of her hitting no more than one
+bull is approximately 4e−3 . Show that √
+the average number of bulls the archer hits in a day is 3, and
+that the variance is approximately (63 3/64)2 .
+Prove Chebyshov’s inequality that, for a random variable X with mean µ and variance σ 2 ,
+P(|X − µ| ≤ hσ ) ≥ 1 −
+
+1
+, for any h > 0.
+h2
+
+When an unbiased coin is tossed n times, let the number of tails obtained be m. Show that
+
+m
+P 0.4 ≤
+≤ 0.6 ≥ 0.75
+n
+
+43
+
+44
+
+45
+
+46
+
+when n ≥ 100. Given that n = 100, show that
+
+%
+m
+P 0.49 ≤
+≤ 0.51 ≃ 3(5 (2π))−1 .
+n
+√
+(You may assume Stirling’s formula that n! ≃ (2π )n n+1/2 e−n when n is large.)
+An ambidextrous student has a left and a right pocket, each initially containing n humbugs. Each
+time she feels hungry she puts a hand into one of her pockets and if it is not empty, takes a humbug
+from it and eats it. On each occasion, she is equally likely to choose either the left or the right
+pocket. When she ﬁrst puts her hand into an empty pocket, the other pocket contains H humbugs.
+Show that if ph is the probability that H = h, then
+
+
+1
+2n − h
+,
+ph =
+2n−h
+n
+2
+
+and ﬁnd the expected value of H , by considering nh=0 (n − h) ph , or otherwise.
+You insure your car. You make a claim in any year with probability q independently of events in
+other years. The premium in year j is a j (where a j < ak for k < j), so long as no claim is made.
+If you make a claim in year k, then the premium in year k + j is a j as long as no further claim is
+made, and so on. Find the expected total payment of premiums until the ﬁrst claim.
+A Scotch die has faces bearing tartan patterns: three are McDiarmid, two are
+Meldrum, and one is Murray. Show that the expected number of times you must roll the die before
+all three patterns have appeared is 7.3.
+Tail Sums Let X ≥ 0 be integer valued. Use the indicator I (X > k) to prove that
+
+EX =
+P(X > k),
+k ≥0
+
+and
+EX r =
+
+
+
+r k r −1 P(X > k).
+
+k ≥0
+
+47
+
+Coupon Collecting: Example (4.3.15) Revisited
+Let X n be the number of coupons collected
+until you ﬁrst obtain a coupon that is a duplicate of one you already possess. Find P(X n = k) and
+deduce that
+n+1
+
+k−1
+n!
+(a)
+= 1.
+(n
+−
+k
++
+1)!
+nk
+k=2
+n
+ n!
+(b) EX n =
+n −k .
+(n − k)!
+k=0
+
+Problems
+48
+
+49
+50
+51
+
+157
+
+Let (xi ; 1 ≤ i ≤ n) be a collection of positive numbers. Show that
+−1
+1/n
+n
+ 1
+
+1 n
+≤
+xi
+.
+n i=1 xi
+i=1
+n x i
+If (yi ; 1 ≤ i ≤ n) is any ordering of (xi ; 1 ≤ i ≤ n), show that i=1
+≥ n.
+yi
+Let X have ﬁnite variance, and set ν(x) = E(X − x)2 . Show that Eν(X ) = 2varX .
+Let X have mean µ, variance σ 2 , and median m. Use (4.6.4) to show that
+|µ − m| < σ .
+
+5
+Random Vectors: Independence
+and Dependence
+
+Wherever there is wealth there will be dependence and expectation.
+Samuel Johnson [The Rambler, 189]
+
+5.1 Joint Distributions
+
+Commonly, each outcome of an experiment generates two (or more) real numbers of
+interest. We can treat these as individual random variables (X i ; 1 ≤ i ≤ n), but it is often
+important to consider their joint behaviour. For example, if the experiment is your visit to
+your doctor, you may ﬁnd out your height H and weight W . These are separate random variables, but are often informative when considered jointly. Thus, the outcome H = 150 cm
+and W = 150 kg might disturb your physician, whereas the outcome H = 190 cm and
+W = 80 kg probably would not. Likewise, the random vector comprising height, weight,
+age, sex, blood pressure, and heart rate is of more use considered jointly than separately.
+As another example, complicated systems (e.g., space shuttles) have several on-board
+computers that work together to run the system. If one fails or makes an error, the others
+can override it; thus, the system fails only when a majority of the computers fail. If
+X i is the time until the ith processor fails, then the time until the system fails depends
+jointly on the collection of random variables, X 1 , . . . , X n . It is natural to refer to such a
+collection as a random vector, and write X = (X 1 , X 2 , . . . , X n ). Formally, as before, we
+have X = X (ω); ω ∈  and A x = {ω : X (ω) = x} ∈ F, but we do not often refer to the
+underlying sample space . Because X maps  into a countable subset S of R n , we think
+of S as the sample space. (You may well have already been doing this instinctively in
+Chapter 4.)
+For simplicity, we summarize the properties of random vectors in two dimensions; the
+appropriate generalizations in more dimensions are straightforward.
+Deﬁnition
+Let X and Y be two discrete random variables taking values (xi ; i ≥ 1)
+and (y j ; i ≥ 1), respectively. Their joint probability mass function f (x, y) is deﬁned
+by
+f (x, y) = P(X = x, Y = y)
+as x and y range over all possible values xi and y j of X and Y .
+158
+
+
+
+5.1 Joint Distributions
+
+159
+
+The mass function f (x, y) is zero, except at a countable set of points in R2 . In fact,
+(1)
+
+(2)
+
+f (x, y) ≥ 0
+
+for all x and y,
+
+
+and further if i, j f (xi , y j ) = 1, then the joint distribution f (x, y) is not defective. Most
+important is the Key Rule:
+
+P((X, Y ) ∈ C) =
+f (x, y).
+(x,y)∈C
+
+(3)
+
+Example
+Suppose that a coin is tossed twice; let X be the total number of heads shown
+and Y the total number of tails. Then, (X, Y ) takes values in
+S = {0, 1, 2} × {0, 1, 2} = {(i, j) : i ∈ {0, 1, 2}, j ∈ {0, 1, 2}}.
+Clearly, f (x, y) is zero, except at the points (0, 2), (1, 1), and (2, 0). Furthermore,
+f (0, 2) + f (1, 1) + f (2, 0) = (1 − p)2 + 2 p(1 − p) + p 2 = 1,
+where we have denoted the probability of a head by p, as usual.
+
+(4)
+
+s
+
+Any real function g(X, Y ) of two such jointly distributed random variables is itself a
+random variable. If we set Z = g(X, Y ), then Z has a probability mass function given by
+using the Key Rule (2) above:
+
+f (x, y),
+f Z (z) = P(g(X, Y ) = z) =
+where the summation is over all x and y, such that g(x, y) = z.
+In particular, if g(x, y) = x, we have
+f X (x) =
+
+(5)
+
+
+
+f (x, y),
+
+y
+
+and if g(x, y) = y, we have
+(6)
+
+f Y (y) =
+
+
+
+f (x, y).
+
+x
+
+Thus, we have shown the important result that, if we know the joint mass function of
+several random variables, we can ﬁnd all their separate mass functions. When obtained in
+this way, f X (x) and f Y (y) are sometimes called marginal mass functions.
+Here are some examples illustrating joint mass functions.
+(7)
+
+Example
+A row of n numbered machines are producing components that are identical,
+except for the serial number. On any day, the kth component produced by the jth machine
+bears the serial number ( j, k). On the day in question, the r th machine produces cr (1 ≤
+r ≤ n) components, and at the end of the day one component C is picked at random from
+all those produced. Let its serial number be (X, Y ). Find f (x, y), f X (x) and f Y (y).
+
+160
+
+5 Random Vectors: Independence and Dependence
+
+Solution
+
+
+Because C is picked at random from all rn=1 cr components, we have
+−1
+n
+
+f (x, y) =
+cr
+, 1 ≤ x ≤ n; 1 ≤ y ≤ cx ,
+1
+
+=a
+
+(say).
+
+Then, by (5),
+f X (x) =
+
+1
+0
+
+Now deﬁne the function H (i, j) =
+
+
+
+f (x, y) = acx .
+
+y
+
+if ci ≥ c j ,
+otherwise.
+
+Then, by (6),
+f Y (y) =
+
+
+x
+
+(8)
+
+f (x, y) = a
+
+n
+
+
+H (x, y).
+
+x=1
+
+s
+
+Example: Cutting for the Deal
+It is customary, before engaging in a card game, to
+cut for the deal; each player removes a portion of the deck in turn, and then each reveals
+the bottom card of his segment. The highest card wins. For these to be random variables,
+we need to assign numerical values to the court cards, so we set J = 11, Q = 12, K = 13,
+A = 14, when aces are high.
+(a) Art and Bart cut for deal, aces high. Let X be Art’s card, and Y be Bart’s card. Find
+the joint mass function of X and Y . Does it make any difference how many cards Art
+removes from the deck?
+(b) Let V be the loser’s card, and W the dealer’s (winning) card. Find the joint mass
+function of V and W , and the separate mass functions of V and W .
+(c) Find the mass function of the dealer’s winning margin (namely, W − V ).
+(d) What is the mass function of the dealer’s card when three players cut for deal?
+Note that in the event of a tie, the deck is shufﬂed and the players cut again to choose the
+dealer.
+Solution
+(a) Each random variable takes values in {2, 3 . . . , 14}. Cutting the deck
+twice amounts to selecting two cards at random, and because ties are not allowed, X = Y .
+By symmetry, any two unequal values are equally likely to occur, so
+
+
+ 1 . 1 x = y 
+2 ≤ x, y ≤ 14.
+f X,Y (x, y) = P(X = x, Y = y) = 12 13
+
+
+0
+x=y
+It makes no difference how many cards Art removes with his cut.
+(b) Of course, W > V , so
+f V,W (v, w) = P(V = v, W = w) = P(X = v, Y = w) + P(X = w, Y = v)
+
+ 2 · 1 = 1 ; 2 ≤ v < w ≤ 14
+= 12 13
+78
+
+0·
+; otherwise.
+
+5.1 Joint Distributions
+
+161
+
+This is otherwise obvious, because the experiment amounts to choosing an unordered
+pair of unequal cards at random, with equal probability of choosing any pair. Hence, for
+)−1 , as above. Now, by (5),
+v < w, f (v, w) = ( 13
+2
+14
+
+14 − v
+1
+=
+;
+f V (v) =
+78
+78
+w=v+1
+
+2 ≤ v ≤ 13.
+
+Then by (6),
+f W (w) =
+
+w−1
+
+2
+
+w−2
+1
+=
+;
+78
+78
+
+3 ≤ w ≤ 14.
+
+(c) By (4),
+f Z (z) = P(W − V = z) =
+
+ 1
+78
+
+,
+
+where the summation is over all v and w such that w − v = z. Because z ≤ v < w ≤ 14,
+there are exactly 13 − z terms in this sum, so
+P(W − V = z) =
+
+13 − z
+;
+78
+
+1 ≤ z ≤ 12.
+
+(d) Arguing as we did for (b), where now u < v < w, we have
+ −1
+13
+P(U = u, V = v, W = w) =
+.
+3
+Hence,
+ −1
+13
+f W (w) =
+; 4 ≤ w ≤ 14,
+3
+2≤u<v<w
+ −1
+ −1
+
+1
+13
+13
+=
+(v − 2)
+= (w − 3)(w − 2)
+.
+3
+3
+2
+3≤v<w
+
+
+(9)
+
+Example
+
+For what value of c is the function
+
+
+x +y−1 x y
+f (x, y) = c
+λ µ , x ≥ 0; y ≥ 1; 1 > 1 − λ > µ > 0
+x
+
+a joint mass function? For this value of c, ﬁnd the mass functions of X and Y .
+Solution
+
+By (2),
+c
+
+−1
+
+=
+
+
+∞ 
+∞ 
+
+x +y−1
+y=1 x=0
+
+=
+
+µ
+.
+1−λ−µ
+
+x
+
+λx µ y =
+
+∞
+
+
+µy
+(1 − λ) y
+y=1
+
+by (3.6.12),
+
+s
+
+162
+
+5 Random Vectors: Independence and Dependence
+
+Then, by (5),
+f X (x) = c
+
+∞
+
+
+
+µλx
+
+y=1
+
+
+x + 1 + y − 2 y−1 (1 − λ − µ)λx
+=
+,
+µ
+y−1
+(1 − µ)x+1
+
+x ≥ 0.
+
+Likewise,
+
+∞ 
+
+(1 − λ − µ)µ y−1
+x +y−1 x y
+λ µ =
+f Y (y) = c
+,
+x
+(1 − λ) y
+x=0
+
+y ≥ 1.
+
+µ
+λ
+Thus, X + 1 and Y are both geometric, with parameters 1−µ
+and 1−λ
+, respectively, X
+taking values in the nonnegative integers and Y in the positive integers.
+
+s
+
+(10) Example
+Leif and Rolf are bored with fair games. They want to play a game in which
+the probability of winning (for Leif) is λ, where λ is an arbitrary number in [0, 1]. Also,
+they want the game to be of ﬁnite duration with probability 1. Unfortunately, the only
+gaming aid they have is a fair coin. Can you supply them with a game?
+Solution
+
+Let λ have binary expansion
+λ = 0.b1 b2 b3 . . . =
+
+∞
+
+
+bn 2−n .
+
+n=1
+
+Now toss the coin repeatedly and let In be the indicator of the event that the nth toss is
+a head. Let T be the ﬁrst toss such that In = bn , T = min{n: In = bn }. If IT < bT , then
+Leif wins; otherwise, Rolf wins. Now, P(T = n) = ( 12 )n so that
+∞  n
+
+1
+=1
+P(T < ∞) =
+2
+1
+and indeed E(T ) = 2. Also, Leif can only win at the nth toss if bn = 1 so
+
+
+P(Leif wins) =
+bn P(T = n) =
+bn 2−n = λ,
+n
+
+n
+
+as required.
+
+s
+
+5.2 Independence
+
+Given the joint mass function of X and Y , equations (5.1.5) and (5.1.6) yield the marginal
+mass functions of X and Y . However, to be given the marginal distributions does not in
+general uniquely determine a joint distribution.
+(1)
+
+Example
+
+Let X and Y have joint mass function given by
+1
+1
+5
+1
+, f (1, 1) =
+,
+f (0, 0) = , f (0, 1) = , f (1, 0) =
+6
+3
+12
+12
+and let U and V have joint mass function given by
+f (0, 0) =
+
+1
+1
+1
+, f (0, 1) = , f (1, 0) = 0, f (1, 1) = .
+4
+4
+2
+
+5.2 Independence
+
+163
+
+Then, summing to get the marginal mass functions shows that:
+f X (0) = fU (0) =
+
+1
+1
+, f X (1) = fU (1) = ;
+2
+2
+
+f Y (0) = f V (0) =
+
+1
+3
+, f Y (1) = f V (1) = .
+4
+4
+
+and
+
+These marginal mass functions are the same, but the joint mass functions are different.
+
+s
+
+There is one exceptionally important special case when marginal mass functions do
+determine the joint mass function uniquely.
+(2)
+
+Deﬁnition
+
+Random variables X and Y are independent if, for all x and y,
+f (x, y) = f X (x) f Y (y).
+
+This is equivalent to P(A ∩ B) = P(A)P(B), where A = {ω: X (ω) = x} and B =
+{ω: X (ω) = y}, which is the deﬁnition of independence for the events A and B. More
+generally, a collection (X i ; 1 ≤ i ≤ n) with mass function f is independent if for all
+x = (x1 , . . . , xn )
+f (x) =
+
+(3)
+
+n
+
+
+f X i (xi ).
+
+
+
+i=1
+
+Note that if X or Y (or both) are improper random variables [so that f (x, y) is defective],
+then to say they are independent is interpreted as meaning
+P(X = x, Y = y) = P(X = x)P(Y = y)
+
+(4)
+
+for all ﬁnite x and y. This may seem odd, but such random variables occur quite naturally
+in simple random walks and other topics.
+Example 5.1.7 Revisited
+Recall that n machines produce components. Suppose that
+all the machines produce the same number c of components, and as before we pick one at
+random and let its serial number be (X, Y ), where X is the machine number and Y is the
+component index. Then,
+f (x, y) = (nc)−1 ;
+
+1 ≤ x ≤ n; 1 ≤ y ≤ c
+
+1
+;
+n
+
+and
+
+and
+f X (x) =
+
+1≤x ≤n
+
+f Y (y) =
+
+1
+;
+c
+
+1 ≤ y ≤ c.
+
+Obviously, f (x, y) = f X (x) f Y (y) and so X and Y are independent in this case.
+
+s
+
+164
+
+(5)
+
+5 Random Vectors: Independence and Dependence
+
+Example 1 Revisited
+Observe that the mass functions of X and Y , and of U and
+V , do not satisfy Deﬁnition 2. Let W and Z be independent random variables such that
+f W (0) = 12 , f W (1) = 12 and f Z (0) = 14 , f Z (1) = 34 .
+Then, by Deﬁnition 2, their joint mass function is
+f (0, 0) =
+
+(6)
+
+3
+1
+3
+1
+, f (0, 1) = , f (1, 0) = , f (1, 1) = .
+8
+8
+8
+8
+
+s
+
+Example 5.1.9 Revisited
+Observe that X and Y are not independent because
+x y
+)λ
+µ
+cannot
+be
+expressed
+in the form f X (x) f Y (y). If X + 1 and Y were inde( x+y−1
+x
+µ
+λ
+pendent geometric random variables with parameters 1−µ
+and 1−λ
+, then the joint mass
+function would be
+
+
+x 
+ y−1
+
+µ
+λ
+µ
+λ
+1−
+, x ≥ 0; y ≥ 1.
+f (x, y) = 1 −
+1−µ
+1−λ
+1−µ
+1−λ
+
+s
+
+The apparently simple Deﬁnition 2 implies a great deal more about independent random
+variables, as the following result shows.
+(7)
+
+Theorem
+Let X and Y be independent random variables. Then:
+(a) For arbitrary countable sets A and B,
+P(X ∈ A, Y ∈ B) = P(X ∈ A)P(Y ∈ B),
+
+(8)
+
+and
+(b) For any real functions g(·) and h(·), g(X ) and h(Y ) are independent.
+
+Proof (a) The left-hand side of (8) is
+
+
+P(X = x, Y = y) =
+P(X = x)P(Y = y)
+x∈A y∈B
+
+x∈A y∈B
+
+=
+
+
+x∈A
+
+P(X = x)
+
+
+
+by independence
+
+P(Y = y) = P(X ∈ A)P(Y ∈ B),
+
+y∈B
+
+as required. For (b), let A = {x: g(X ) = ξ } and B = {y: h(Y ) = η}. Then, by part (a), for
+any ξ and η,
+P(g(X ) = ξ, h(Y ) = η) = P(X ∈ A, Y ∈ B) = P(X ∈ A)P(Y ∈ B)
+= P(g(X ) = ξ )P(h(Y ) = η),
+as required.
+
+(9)
+
+
+
+Example
+Independent random variables X and Y take the values −1 or +1 only, and
+P(X = 1) = a, P(Y = 1) = α. A third random variable Z is deﬁned by Z = cos((X +
+Y ) π2 ). If 0 < a, α < 1, show that there are unique values of a and α such that X and Z are
+independent, and Y and Z are independent. In this case, are X, Y , and Z independent?
+
+5.3 Expectation
+
+Solution
+
+165
+
+First, for Z ,
+P(Z = 1) = P(X + Y = 0) = a(1 − α) + α(1 − a)
+
+and, likewise, P(Z = −1) = aα + (1 − a)(1 − α). Now,
+P(Z = 1, X = 1) = P(X = 1, Y = −1) = a(1 − α).
+Hence, if
+a(1 − α) = a(a(1 − α) + α(1 − a))
+
+(10)
+
+we have P(Z = 1, X = 1) = P(Z = 1)P(X = 1). Simplifying (10) yields α = 12 . Now,
+plodding through three similar constraints shows that X and Z are independent iff α =
+a = 12 . By symmetry, the same condition holds iff Y and Z are independent.
+However, X, Y , and Z are not independent because
+
+s
+
+P(X = 1, Y = 1, Z = −1) = 0 = P(X = 1)P(Y = 1)P(Z = −1).
+Independent random variables often have interesting and useful properties.
+
+(11) Example
+Let X and Y be independent geometric random variables having respective
+mass functions f X (x) = (1 − λ)λx and f Y (y) = (1 − µ)µ y for x ≥ 0 and y ≥ 0. What is
+the mass function of Z = min{X, Y }?
+Solution
+
+By independence,
+
+P(Z > n) = P(X > n ∩ Y > n) = P(X > n)P(Y > n) = λn+1 µn+1 = (λµ)n+1 .
+Hence,
+P(Z = n) = P(Z > n − 1) − P(Z > n) = (1 − λµ)(λµ)n
+
+s
+
+and Z is also geometric with parameter λµ.
+5.3 Expectation
+
+Let the random variable Z = g(X, Y ) be a function of X and Y . Using (5.1.4) and the
+deﬁnition of expectation (4.3.1), we have
+
+
+z f Z (z) =
+zP(g(X, Y ) = z).
+E(Z ) =
+z
+
+z
+
+This expression for E(Z ) is not always simple or convenient for use in calculation. The
+following generalization of Theorem 4.3.4 is therefore very useful.
+(1)
+
+Theorem
+Let X and Y have joint mass function f (x, y). Whenever the sum on
+the right-hand side is absolutely convergent, we have
+
+E(g(X, Y )) =
+g(x, y) f (x, y).
+x,y
+
+Proof The proof is essentially the same as that of Theorem 4.3.4.
+
+
+
+

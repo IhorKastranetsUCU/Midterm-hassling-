@@ -6,6 +6,12 @@
   const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
   let state = null;
   let weekOffset = 0;
+  function selectWeek(day) {
+    weekOffset = Math.floor((Date.parse(day + 'T12:00:00Z') - Date.parse(mondayKey(0) + 'T12:00:00Z')) / 604800000);
+  }
+  let requestNumber = 0;
+
+  function courseBase() { return window.Hustle?.liveCalendar ? '/hustle/app.html' : ''; }
 
   function tz() {
     return state?.data?.settings?.timezone || 'Europe/Kyiv';
@@ -46,7 +52,7 @@
 
   function mondayKey(offsetWeeks = 0) {
     const now = new Date();
-    const todayStr = new Intl.DateTimeFormat('en-CA', {timeZone: 'Europe/Kyiv', year: 'numeric', month: '2-digit', day: '2-digit'}).format(now);
+    const todayStr = new Intl.DateTimeFormat('en-CA', {timeZone: tz(), year: 'numeric', month: '2-digit', day: '2-digit'}).format(now);
     const noon = new Date(todayStr + 'T12:00:00Z');
     const wd = (noon.getUTCDay() + 6) % 7; // Mon=0..Sun=6
     noon.setUTCDate(noon.getUTCDate() - wd + offsetWeeks * 7);
@@ -92,6 +98,7 @@
 
       <div class="calendar-toolbar">
         <div class="calendar-nav-group">
+          ${window.Hustle?.liveCalendar ? '' : '<a class="secondary" href="/prototype/app.html#calendar">Місяць</a>'}
           <button type="button" class="secondary" data-cal-week="-1" aria-label="Попередній тиждень">←</button>
           <button type="button" class="secondary" data-cal-today>Сьогодні</button>
           <button type="button" class="secondary" data-cal-week="1" aria-label="Наступний тиждень">→</button>
@@ -149,8 +156,8 @@
     const courseMap = new Map(courses.map(c => [String(c.course_id), c.title]));
 
     const gridHtml = `<div class="calendar-week-grid">${days.map(ymd => {
-      const dayEvents = (data.events || []).filter(ev => dayKey(ev.start_at) === ymd);
-      const dayDeadlines = (data.deadlines || []).filter(dl => dayKey(dl.due_at) === ymd);
+      const dayEvents = (data.events || []).filter(ev => dayKey(ev.start_at) <= ymd && dayKey(new Date(Date.parse(ev.end_at) - 1)) >= ymd);
+      const dayDeadlines = (data.deadlines || []).filter(dl => (dl.review || 'pending') === 'pending' && !window.Hustle?.liveCalendar && dayKey(dl.due_at) === ymd);
       const dayForbidden = (data.forbidden_blocks || []).filter(fb => dayKey(fb.start_at) === ymd || dayKey(fb.end_at) === ymd);
 
       const forbiddenNote = dayForbidden.length
@@ -167,24 +174,26 @@
           const dl = entry.dl;
           return `<article class="cal-item type-deadline">
             <div class="cal-item-top"><span>до ${esc(fmtTime(dl.due_at))}</span><span class="cal-item-badge">Дедлайн</span></div>
-            <a class="cal-item-title" href="#course/${encodeURIComponent(dl.course_id)}/assignments">${esc(dl.name)}</a>
+            <a class="cal-item-title" href="${courseBase()}#course/${encodeURIComponent(dl.course_id)}/assignments">${esc(dl.name)}</a>
             ${dl.course_name ? `<div class="cal-item-desc">${esc(dl.course_name)}</div>` : ''}
           </article>`;
         }
         const ev = entry.ev;
-        const label = ev.source_type === 'ai_study' ? 'ШІ · Навчання' : ev.source_type === 'google' ? 'Google' : ev.source_type === 'ics' ? 'iCal' : 'Подія';
+        const label = ev.created_by === 'moodle' ? 'Дедлайн Moodle' : ev.source_type === 'ai_study' ? 'ШІ · Навчання' : ev.source_type === 'google' ? 'Google' : ev.source_type === 'ics' ? 'iCal' : 'Подія';
         const isEditable = ev.source_type === 'ai_study' || ev.source_type === 'manual';
-        const courseHref = ev.course_id ? `#course/${encodeURIComponent(ev.course_id)}/overview` : '';
+        const courseHref = ev.course_id ? `${courseBase()}#course/${encodeURIComponent(ev.course_id)}/overview` : '';
         const cTitle = ev.course_id ? courseMap.get(String(ev.course_id)) : '';
-        return `<article class="cal-item type-${esc(ev.source_type)} ${ev.status === 'done' ? 'is-done' : ''}" data-event-id="${esc(ev.event_id)}">
+        return `<article class="cal-item ${ev.created_by === 'moodle' ? 'type-deadline deadline-surface' : ''} type-${esc(ev.source_type)} ${ev.status === 'done' ? 'is-done' : ''}" data-event-id="${esc(ev.event_id)}">
           <div class="cal-item-top"><span>${ev.all_day ? 'Весь день' : `${esc(fmtTime(ev.start_at))}–${esc(fmtTime(ev.end_at))}`}</span><span class="cal-item-badge">${esc(label)}</span></div>
           ${courseHref ? `<a class="cal-item-title" href="${courseHref}">${esc(ev.title)}</a>` : `<div class="cal-item-title">${esc(ev.title)}</div>`}
           ${cTitle && !ev.title.includes(cTitle) ? `<div class="cal-item-desc">${esc(cTitle)}</div>` : ''}
           ${ev.description ? `<div class="cal-item-desc">${esc(ev.description)}</div>` : ''}
           ${isEditable ? `<div class="cal-item-controls">
+            <button type="button" class="cal-mini-btn" data-cal-event="${esc(ev.event_id)}">Редагувати</button>
             <button type="button" class="cal-mini-btn" data-ev-toggle="${esc(ev.event_id)}" data-status="${ev.status === 'done' ? 'planned' : 'done'}">${ev.status === 'done' ? '↩ Повернути' : '✓ Виконано'}</button>
             <button type="button" class="cal-mini-btn" data-ev-delete="${esc(ev.event_id)}" aria-label="Видалити">✕</button>
           </div>` : ''}
+          ${ev.moodle_due_at && window.HustleDeadlineVisuals ? HustleDeadlineVisuals.edge(Date.parse(ev.moodle_due_at),ev.status === 'done') : ''}
         </article>`;
       }).join('');
 
@@ -196,10 +205,13 @@
     }).join('')}</div>`;
 
     state.root.querySelector('[data-cal-grid]').innerHTML = gridHtml;
+    window.HustleDeadlineVisuals?.mount(state.root);
   }
 
   async function loadOverview() {
     if (!state?.root?.isConnected) return;
+    if (state.paperReload) return state.paperReload();
+    const request = ++requestNumber, active = state;
     const startYmd = mondayKey(weekOffset);
     state.startYmd = startYmd;
     const startUtc = localInputToUtcIso(startYmd + 'T00:00');
@@ -210,34 +222,36 @@
     const grid = state.root.querySelector('[data-cal-grid]');
     try {
       const data = await UI.api(`/api/calendar/overview?start=${encodeURIComponent(startUtc)}&end=${encodeURIComponent(endUtc)}`);
-      if (!state?.root?.isConnected) return;
+      if (state !== active || request !== requestNumber || !active.root.isConnected) return;
       state.data = data;
       renderGrid();
     } catch (err) {
-      if (grid && state?.root?.isConnected) {
+      if (grid?.isConnected && request === requestNumber) {
         grid.innerHTML = `<div role="alert" class="live-error">${esc(err.message)} <button type="button" class="text-button" data-cal-reload>Повторити</button></div>`;
       }
     }
   }
 
-  function openEventDialog() {
+  function openEventDialog(ev = null) {
     const courses = state?.courses || [];
     const free = state?.data?.free_slots?.[0];
-    const startDef = free ? toLocalInput(free.start_at) : toLocalInput(new Date(Date.now() + 3600000).toISOString());
-    const endDef = free ? toLocalInput(new Date(new Date(free.start_at).getTime() + 3600000).toISOString()) : toLocalInput(new Date(Date.now() + 7200000).toISOString());
+    const chosen = state?.selectedDay;
+    const startDef = ev ? toLocalInput(ev.start_at) : chosen ? chosen + 'T12:00' : free ? toLocalInput(free.start_at) : toLocalInput(new Date(Date.now() + 3600000).toISOString());
+    const endDef = ev ? toLocalInput(ev.end_at) : chosen ? chosen + 'T13:00' : free ? toLocalInput(new Date(new Date(free.start_at).getTime() + 3600000).toISOString()) : toLocalInput(new Date(Date.now() + 7200000).toISOString());
 
-    showModal('Нова подія', `<form class="cal-form" id="cal-event-form">
-      <label>Назва<input name="title" required maxlength="200" placeholder="Наприклад: Підготовка до контрольної"></label>
+    showModal(ev ? 'Редагувати подію' : 'Нова подія', `<form class="cal-form" id="cal-event-form" data-id="${esc(ev?.event_id || '')}">
+      <label>Назва<input name="title" value="${esc(ev?.title || '')}" required maxlength="200" placeholder="Наприклад: Підготовка до контрольної"></label>
       <div class="cal-form-row">
         <label>Початок<input type="datetime-local" name="start" value="${esc(startDef)}" required></label>
         <label>Кінець<input type="datetime-local" name="end" value="${esc(endDef)}" required></label>
       </div>
-      ${courses.length ? `<label>Прив’язати до курсу (необов’язково)<select name="course_id"><option value="">Без курсу</option>${courses.map(c => `<option value="${c.course_id}">${esc(c.title)}</option>`).join('')}</select></label>` : ''}
-      <label>Опис<textarea name="description" rows="2" placeholder="Короткі нотатки"></textarea></label>
+      ${courses.length && !ev ? `<label>Прив’язати до курсу (необов’язково)<select name="course_id"><option value="">Без курсу</option>${courses.map(c => `<option value="${c.course_id}">${esc(c.title)}</option>`).join('')}</select></label>` : ''}
+      <label>Опис<textarea name="description" rows="2" placeholder="Короткі нотатки">${esc(ev?.description || '')}</textarea></label>
       <div data-cal-override-wrap hidden>
         <label class="cal-checkbox"><input type="checkbox" name="allow_conflict"> Додати попри перетин із забороненим часом або іншою подією</label>
       </div>
       <button class="primary" type="submit">Зберегти подію</button>
+      ${ev ? `<button type="button" class="text-button" data-ev-delete="${esc(ev.event_id)}">Прибрати з календаря</button>` : ''}
     </form>`);
   }
 
@@ -303,7 +317,7 @@
              </form>`
           : (cfg.google_oauth_available
               ? `<p class="muted" style="margin:0;">Події з Google Календаря блокуватимуть вільний час, а заплановані ШІ сесії автоматично з’являтимуться в Google.</p>
-                 <a class="primary" href="/api/calendar/google/connect" style="align-self:flex-start;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem;padding:.55rem .95rem;">Підключити Google Календар →</a>`
+                 <a class="primary" href="/api/calendar/google/connect${window.Hustle?.liveCalendar ? '?view=paper' : ''}" style="align-self:flex-start;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem;padding:.55rem .95rem;">Підключити Google Календар →</a>`
               : `<p class="muted" style="margin:0;">Google OAuth не налаштований на сервері — використовуй iCal (.ics) підписку нижче (підтримується в Google, Apple і Outlook).</p>`)}
       </section>
 
@@ -422,6 +436,14 @@
     if (t.closest('[data-cal-open-rules]')) return openRulesDialog();
     if (t.closest('[data-cal-open-sync]')) return openSyncDialog();
     if (t.closest('[data-cal-new-event]')) return openEventDialog();
+    const open = t.closest('[data-cal-event]');
+    if (open) {
+      const ev = state.data?.events?.find(item => item.event_id === open.dataset.calEvent);
+      if (!ev) return;
+      if (['manual', 'ai_study'].includes(ev.source_type)) return openEventDialog(ev);
+      showModal(ev.title, `<p>${esc(fmtDayHead(dayKey(ev.start_at)))} · ${ev.all_day ? 'Весь день' : esc(fmtTime(ev.start_at))}</p><p>${esc(ev.description)}</p>`);
+      return;
+    }
     if (t.closest('[data-cal-sync-now]')) {
       const btn = t.closest('[data-cal-sync-now]'); btn.disabled = true;
       try {
@@ -451,7 +473,10 @@
     }
     const del = t.closest('[data-ev-delete]');
     if (del) {
-      await UI.api(`/api/calendar/events/${encodeURIComponent(del.dataset.evDelete)}`, {method: 'DELETE'});
+      try {
+        await UI.api(`/api/calendar/events/${encodeURIComponent(del.dataset.evDelete)}`, {method: 'DELETE'});
+      } catch (error) { UI.toast(error.message); return; }
+      if (dialog.open) dialog.close();
       UI.toast('Подію видалено');
       return loadOverview();
     }
@@ -542,16 +567,21 @@
       event.preventDefault();
       const btn = form.querySelector('[type="submit"]'); btn.disabled = true; modalError('');
       try {
-        await UI.post('/api/calendar/events', {
+        const id = form.dataset.id;
+        const payload = {
           title: form.elements.title.value.trim(),
           start_at: localInputToUtcIso(form.elements.start.value),
           end_at: localInputToUtcIso(form.elements.end.value),
           course_id: form.elements.course_id?.value ? Number(form.elements.course_id.value) : null,
           description: form.elements.description.value.trim(),
           allow_conflict: Boolean(form.elements.allow_conflict?.checked),
+        };
+        if (id) await UI.api('/api/calendar/events/' + encodeURIComponent(id), {
+          method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload),
         });
+        else await UI.post('/api/calendar/events', payload);
         dialog.close();
-        UI.toast('Подію додано');
+        UI.toast(id ? 'Подію збережено' : 'Подію додано');
         await loadOverview();
       } catch (err) {
         modalError(err.message);
@@ -636,5 +666,8 @@
     }
   });
 
-  window.HustleCalendar = {shell, mount};
+  function bindMonth(root, data, courses, selectedDay, paperReload) {
+    state = {root, data, courses, selectedDay, paperReload, draftWindows: []};
+  }
+  window.HustleCalendar = {shell, mount, bindMonth, selectWeek, localInputToUtcIso, toLocalInput};
 })();

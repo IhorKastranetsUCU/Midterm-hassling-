@@ -1,0 +1,133 @@
+R.H.
+
+Probability and statistics: Midterm exam 2 @ UCU
+
+Spring 2017
+
+Probability and Statistics
+Practice midterm exam 2: Random variables
+Date:
+
+22 March 2017
+
+Name:
+
+Group:
+
+Problem 1 (5 pt). Multiple choice questions:
+• If X and Y are independent r.v. with Var(X) = Var(Y ) = 1, then Var(2X − Y )
+is equal to
+(a) 1
+
+(b) 3
+
+(c) 5
+
+(d) . . . . . . . . . . . .
+your variant
+
+• If X ∼ N (0, 1), then Y = aX + b ∼ N (µ, σ 2 ) with
+(a) µ = a, σ 2 = b
+
+(b) µ = b, σ 2 = a
+
+(c) µ = b, σ 2 = a2
+
+(d) . . . . . . . . . . . .
+your variant
+
+2
+
+• The formula f (x) = ce−2x (with a suitable constant c) gives the probability
+density function for the distribution
+√
+(a) E (2)
+(b) E ( 2)
+(d) . . . . . . . . . . . .
+(c) N (0, 12 )
+your variant
+
+• If E(X) = E(Y ), then E(X 2 ) = E(Y 2 )
+(choose True or False)
+
+T
+
+F
+
+• If X and Y are independent and have distribution U (0, 1), then X1 + X2 is
+uniformly distributed on the interval (0, 2)
+T F
+(choose True or False)
+
+Problem 2 (5 pt). Complete the following definitions/statements:
+• A r.v. X is continuous if . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+.............................................................................
+• R.v.’s X and Y are independent if . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+.............................................................................
+• Expectation of a continuous r.v. X is equal to . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+.............................................................................
+• The probability density function of distribution E (2) is equal to. . . . . . . . . . . . . .
+............................................................................
+• The cumulative distribution function of a r.v. X is given by . . . . . . . . . . . . . . . .
+.............................................................................
+1
+
+2
+
+3
+
+4
+
+1
+
+5
+
+6
+
+Σ
+
+R.H.
+
+Probability and statistics: Midterm exam 2 @ UCU
+
+Spring 2017
+
+Problem 3 (10pt). Assume that Z has the standard normal distribution N (0, 1)
+and Y = 3 − 2Z
+(a) Determine the cumulative distribution function of Y in terms of Φ.
+(b) Find the probability density function of Y and identify the distribution of Y .
+(c) Express in terms of Φ the probability that Y ≤ 1.
+(d) Express in terms of Φ the probability that Y > 5.
+Problem 4 (10pt). Random variables X1 and X2 are independent and have Poisson
+distribution P(λ).
+(a) Find E(X1 − X2 ) and Var(X1 − X2 ).
+(b) Find the probability generating function of X1 .
+(c) Using (b), prove that Y := X1 + X2 has distribution P(2λ).
+(d) Prove that the conditional distribution (X1 | Y = n) of X1 given that Y = n is
+binomial B( 21 ).
+Problem 5 (10pt). There are two types of batteries in a bin. When in use, type i
+batteries last (in hours) an exponentially distributed time with rate λi , i = 1, 2. A
+battery that is randomly chosen from the bin will be a type i battery with probability
+pi , p1 + p2 = 1.
+(a) What is the probability that a randomly chosen battery is still operating after
+t hours of use?
+(b) Calculate the expected value of operating time for a randomly chosen battery.
+(c) If a randomly chosen battery is still operating after t hours of use, what is the
+probability that it will still be operating after an additional s hours?
+Problem 6 (10pt). The joint probability density function of random variables X
+and Y is given by the formula
+(
+ax,
+0 ≤ y ≤ x ≤ 1;
+fX,Y (x, y) =
+0,
+otherwise
+(a) Find the value of a.
+(b) Calculate the marginal probability density functions fX and fY and find E(X)
+and E(Y )
+(c) Calculate the probability density function fX|Y (x, 0.5) of X given that Y = 0.5
+(d) Find the conditional expectation E(X | Y = 0.5).
+
+2
+
+

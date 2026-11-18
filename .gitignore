@@ -1,3 +1,12 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+*$py.class
+.vscode/
+.idea/
+users_database.json
+жфжф.py
+
 # Python
 __pycache__/
 *.py[cod]

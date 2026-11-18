@@ -59,7 +59,7 @@
     const host=state.root.querySelector('[data-course-focus]');
     if(item){
       const late=HustleStudentHome.classify(item)==='late',url=target(state,item),related=linkedNode(bundle,item);
-      host.innerHTML=`<article class="today-focus ${late?'is-late':''}" data-course-task="${item.id}"><div class="today-focus-top"><span>${late?'Потребує уваги':'Найближче завдання'}</span><span class="today-deadline">${icon('clock')}<time datetime="${new Date(item.duedate*1000).toISOString()}">${esc(dueLabel(item))}</time></span></div><h2>${esc(taskTitle(item.name))}</h2>${related?`<a class="course-task-context" href="${nodeLink(bundle,related)}">${icon('courses')}${esc(titleFor(bundle,related))}</a>`:''}${late?'<span class="today-missing">Не здано</span>':''}<div class="today-focus-actions"><a class="primary" href="${esc(url)}" ${external(url)}>Відкрити завдання <span aria-hidden="true">↗</span></a><a class="text-button" href="${related?nodeLink(bundle,related):topicsLink(bundle)}">${related?'Матеріали теми':'Теми курсу'} ${icon('arrow')}</a></div></article>`;
+      host.innerHTML=`<article class="today-focus deadline-surface ${late?'is-late':''}" data-course-task="${item.id}"><div class="today-focus-top"><span>${late?'Потребує уваги':'Найближче завдання'}</span><span class="today-deadline">${icon('clock')}<time datetime="${new Date(item.duedate*1000).toISOString()}">${esc(dueLabel(item))}</time></span></div><h2>${esc(taskTitle(item.name))}</h2>${related?`<a class="course-task-context" href="${nodeLink(bundle,related)}">${icon('courses')}${esc(titleFor(bundle,related))}</a>`:''}${late?'<span class="today-missing">Не здано</span>':''}<div class="today-focus-actions"><a class="primary" href="${esc(url)}" ${external(url)}>Відкрити завдання <span aria-hidden="true">↗</span></a><a class="text-button" href="${related?nodeLink(bundle,related):topicsLink(bundle)}">${related?'Матеріали теми':'Теми курсу'} ${icon('arrow')}</a></div>${window.HustleDeadlineVisuals?.edge(item.duedate*1000,false) || ''}</article>`;
     }else if(node){
       const label=selection.reason==='recent'?'Продовжити тему':'Почати з теми';
       host.innerHTML=`<section class="today-focus"><div class="today-focus-top"><span>${label}</span>${state.deadlinesError?'<button class="course-status-retry" data-course-deadline-retry>Дедлайни не завантажено ↻</button>':state.account.moodle_paired&&bundle.course.source_type!=='manual_upload'?'<span class="course-clear-status">Найближчих дедлайнів немає</span>':''}</div><h2>${esc(titleFor(bundle,node))}</h2><div class="today-focus-actions"><a class="primary" href="${nodeLink(bundle,node)}">${selection.reason==='recent'?'Продовжити':'Відкрити тему'} ${icon('arrow')}</a></div></section>`;
@@ -110,6 +110,7 @@
     const saved=history[state.bundle.course.course_id]||(recent?.courseId===String(state.bundle.course.course_id)?{topicIndex:recent.topicIndex}:null);
     state.selection=chooseTopic(state.bundle,state.model.focus,saved);
     drawFocus(state);drawStudy(state);drawQueue(state);
+    window.HustleDeadlineVisuals?.mount(state.root);
   }
   function mount(bundle,section,account) {
     originalMount(bundle,section,account);setAccount(account);

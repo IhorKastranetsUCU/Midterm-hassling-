@@ -1,0 +1,1923 @@
+// ========================================================
+// Multi-User Database, Auth Gate, Per-Tab Time Analytics,
+// Cloud Cross-Device Synchronization, Mistakes Tracker &
+// Faculty of Applied Sciences Avatar Wardrobe Gamification
+// UCU Probability & Statistics Midterm 2 Platform
+// ========================================================
+
+const CLOUD_SYNC_ENDPOINT = 'https://vkzth64629.execute-api.us-east-1.amazonaws.com';
+
+const WARDROBE_ITEMS = [
+  {
+    id: 'freshman_tee',
+    name: 'Футболка першокурсника УКУ',
+    category: 'clothes',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
+    minReadiness: 0,
+    icon: '👕',
+    badge: '0% Початковий рівень',
+    color: '#3b82f6',
+    description: 'Класична синьо-біла футболка студента УКУ для старту підготовки до колоквіуму та мідтерму. store.ucu.edu.ua',
+    renderSvg: (color) => `
+      <g id="outfit-freshman_tee">
+        <path d="M30 65 L45 50 L55 58 L65 50 L80 65 L72 75 L65 70 L65 105 L45 105 L45 70 L38 75 Z" fill="${color}" stroke="#1e293b" stroke-width="2"/>
+        <path d="M50 58 Q55 64 60 58" fill="none" stroke="#1e293b" stroke-width="2"/>
+        <text x="55" y="80" text-anchor="middle" font-size="8" font-family="sans-serif" font-weight="bold" fill="#ffffff">UCU</text>
+      </g>
+    `
+  },
+  {
+    id: 'dukatch_chervona_ruta',
+    name: 'Латунний Дукач «Червона Рута»',
+    category: 'prykrasy',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=prykrasy',
+    minReadiness: 10,
+    icon: '🌸',
+    badge: '10% Прикраси УКУ',
+    color: '#b45309',
+    description: 'Автентичний латунний дукач ручної роботи з гравірованим рослинним орнаментом із колекції прикрас УКУ. store.ucu.edu.ua',
+    renderSvg: (color) => `
+      <g id="accessory-dukatch_chervona_ruta">
+        <path d="M46 48 Q55 70 64 48" fill="none" stroke="#78350f" stroke-width="1.8"/>
+        <path d="M48 50 Q55 69 62 50" fill="none" stroke="#d97706" stroke-width="1"/>
+        <circle cx="55" cy="72" r="7.5" fill="url(#goldGrad)" stroke="#78350f" stroke-width="1.2"/>
+        <circle cx="55" cy="72" r="5.5" fill="#fef3c7" stroke="#92400e" stroke-width="0.8"/>
+        <circle cx="55" cy="72" r="3.2" fill="#dc2626" stroke="#991b1b" stroke-width="0.8"/>
+        <circle cx="54" cy="71" r="0.8" fill="#fca5a5"/>
+        <circle cx="49" cy="60" r="1.5" fill="#dc2626"/>
+        <circle cx="61" cy="60" r="1.5" fill="#dc2626"/>
+      </g>
+    `
+  },
+  {
+    id: 'focus_cap',
+    name: 'Кепка фокусу та Smart Glasses',
+    category: 'prykrasy',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
+    minReadiness: 15,
+    icon: '🧢',
+    badge: '15% Аксесуар',
+    color: '#10b981',
+    description: 'Кепка фокусу та антивідблискові окуляри для продуктивного хаслінгу та вивчення розподілів й лекцій.',
+    renderSvg: (color) => `
+      <g id="outfit-focus_cap">
+        <path d="M36 32 Q55 18 74 32 L83 34 Q55 24 32 34 Z" fill="${color}" stroke="#065f46" stroke-width="2"/>
+        <path d="M36 32 Q55 20 74 32 Q55 35 36 32 Z" fill="${color}"/>
+        <circle cx="55" cy="22" r="2" fill="#f59e0b"/>
+        <circle cx="46" cy="38" r="6" fill="none" stroke="#38bdf8" stroke-width="2"/>
+        <circle cx="64" cy="38" r="6" fill="none" stroke="#38bdf8" stroke-width="2"/>
+        <line x1="52" y1="38" x2="58" y2="38" stroke="#38bdf8" stroke-width="2"/>
+      </g>
+    `
+  },
+  {
+    id: 'apps_cs_hoodie',
+    name: 'Офіційне худі CS@UCU APPS',
+    category: 'clothes',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
+    minReadiness: 25,
+    icon: '💻',
+    badge: '25% APPS Merch',
+    color: '#1e1b4b',
+    description: 'Темне брендоване худі Факультету прикладних наук (APPS / CS@UCU) з символікою </> та емблемою факультету. store.ucu.edu.ua',
+    renderSvg: (color) => `
+      <g id="outfit-apps_cs_hoodie">
+        <path d="M28 65 L44 48 L55 56 L66 48 L82 65 L74 76 L66 70 L66 108 L44 108 L44 70 L36 76 Z" fill="#1e1b4b" stroke="#0f172a" stroke-width="2"/>
+        <path d="M44 48 Q55 62 66 48 Q55 42 44 48 Z" fill="#312e81"/>
+        <line x1="51" y1="56" x2="51" y2="72" stroke="#e0e7ff" stroke-width="1.5"/>
+        <line x1="59" y1="56" x2="59" y2="72" stroke="#e0e7ff" stroke-width="1.5"/>
+        <rect x="47" y="75" width="16" height="11" rx="2" fill="#312e81" stroke="#4338ca" stroke-width="1"/>
+        <text x="55" y="83" text-anchor="middle" font-size="6" font-family="monospace" font-weight="bold" fill="#38bdf8">&lt;/&gt;</text>
+        <text x="55" y="99" text-anchor="middle" font-size="5" font-weight="bold" fill="#c7d2fe">APPS CS</text>
+      </g>
+    `
+  },
+  {
+    id: 'namysto_dukatch',
+    name: 'Намисто з дукачем УКУ',
+    category: 'prykrasy',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=prykrasy',
+    minReadiness: 30,
+    icon: '📿',
+    badge: '30% Прикраси УКУ',
+    color: '#dc2626',
+    description: 'Традиційне багаторядне коралове намисто з латунним медальйоном-дукачем та хрестиком УКУ. store.ucu.edu.ua',
+    renderSvg: (color) => `
+      <g id="accessory-namysto_dukatch">
+        <path d="M45 49 Q55 63 65 49" fill="none" stroke="#b91c1c" stroke-width="2" stroke-dasharray="2,1"/>
+        <path d="M43 51 Q55 71 67 51" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="2.5,1"/>
+        <path d="M41 53 Q55 79 69 53" fill="none" stroke="#991b1b" stroke-width="2.2" stroke-dasharray="2,1.2"/>
+        <circle cx="55" cy="80" r="6" fill="url(#goldGrad)" stroke="#78350f" stroke-width="1"/>
+        <text x="55" y="82.5" text-anchor="middle" font-size="5" font-weight="900" fill="#78350f">†</text>
+      </g>
+    `
+  },
+  {
+    id: 'ucu_hoodie',
+    name: 'Класичне худі УКУ',
+    category: 'clothes',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
+    minReadiness: 35,
+    icon: '🧥',
+    badge: '35% Classic Merch',
+    color: '#4f46e5',
+    description: 'Тепле університетське худі насиченого індиго-кольору з гербом УКУ. Зручне для занять у Колегіумі.',
+    renderSvg: (color) => `
+      <g id="outfit-ucu_hoodie">
+        <path d="M28 65 L44 48 L55 56 L66 48 L82 65 L74 76 L66 70 L66 108 L44 108 L44 70 L36 76 Z" fill="${color}" stroke="#312e81" stroke-width="2"/>
+        <path d="M44 48 Q55 62 66 48 Q55 42 44 48 Z" fill="#4338ca"/>
+        <line x1="51" y1="56" x2="51" y2="72" stroke="#e2e8f0" stroke-width="1.5"/>
+        <line x1="59" y1="56" x2="59" y2="72" stroke="#e2e8f0" stroke-width="1.5"/>
+        <text x="55" y="86" text-anchor="middle" font-size="7" font-weight="bold" fill="#fbbf24">УКУ CS</text>
+      </g>
+    `
+  },
+  {
+    id: 'velykogo_raglan',
+    name: 'Реглан «Великого бажайте!»',
+    category: 'clothes',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
+    minReadiness: 45,
+    icon: '✨',
+    badge: '45% UCU Icon',
+    color: '#18181b',
+    description: 'Культовий чорний реглан з духовним гаслом патріарха Йосифа Сліпого «Великого бажайте!». store.ucu.edu.ua',
+    renderSvg: (color) => `
+      <g id="outfit-velykogo_raglan">
+        <path d="M28 65 L44 48 L55 58 L66 48 L82 65 L74 76 L66 70 L66 108 L44 108 L44 70 L36 76 Z" fill="#18181b" stroke="#09090b" stroke-width="2"/>
+        <path d="M50 58 Q55 64 60 58" fill="none" stroke="#27272a" stroke-width="2"/>
+        <text x="55" y="78" text-anchor="middle" font-size="5" font-family="sans-serif" font-weight="900" fill="#fafafa">ВЕЛИКОГО</text>
+        <text x="55" y="86" text-anchor="middle" font-size="5" font-family="sans-serif" font-weight="900" fill="#fafafa">БАЖАЙТЕ!</text>
+        <circle cx="55" cy="95" r="2.5" fill="#eab308"/>
+      </g>
+    `
+  },
+  {
+    id: 'sribna_zirka',
+    name: 'Срібна Зірка УКУ',
+    category: 'prykrasy',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=prykrasy',
+    minReadiness: 50,
+    icon: '⭐',
+    badge: '50% Прикраси УКУ',
+    color: '#94a3b8',
+    description: 'Витончена срібна восьмикутна Зірка УКУ на темному шнурку. Символ сяйва розуму та університетської гідності. store.ucu.edu.ua',
+    renderSvg: (color) => `
+      <g id="accessory-sribna_zirka">
+        <path d="M46 49 Q55 69 64 49" fill="none" stroke="#334155" stroke-width="1.6"/>
+        <rect x="54" y="68" width="2" height="3" fill="#94a3b8"/>
+        <path d="M55 70 L57.5 74 L62 74 L58.5 77 L60 82 L55 78.5 L50 82 L51.5 77 L48 74 L52.5 74 Z" fill="url(#silverGrad)" stroke="#475569" stroke-width="0.8"/>
+        <circle cx="55" cy="76" r="1.5" fill="#38bdf8"/>
+      </g>
+    `
+  },
+  {
+    id: 'colloquium_suit',
+    name: 'Colloquium Formal Defense Suit',
+    category: 'clothes',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
+    minReadiness: 55,
+    icon: '👔',
+    badge: '55% Colloquium Style',
+    color: '#1e293b',
+    description: 'Діловий костюм з краваткою для урочистого усного захисту теоретичних питань перед комісією на Колоквіумі.',
+    renderSvg: (color) => `
+      <g id="outfit-colloquium_suit">
+        <path d="M28 65 L45 48 L55 60 L65 48 L82 65 L74 76 L66 70 L66 108 L44 108 L44 70 L36 76 Z" fill="#0f172a" stroke="#020617" stroke-width="2"/>
+        <polygon points="50,48 55,60 60,48" fill="#ffffff"/>
+        <polygon points="53,52 57,52 58,74 55,80 52,74" fill="#e11d48"/>
+        <path d="M45 48 L52 70 L44 108" fill="none" stroke="#334155" stroke-width="1.5"/>
+        <path d="M65 48 L58 70 L66 108" fill="none" stroke="#334155" stroke-width="1.5"/>
+      </g>
+    `
+  },
+  {
+    id: 'ucu_shmot_sweatshirt',
+    name: 'Світшот «Шмот» УКУ',
+    category: 'clothes',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
+    minReadiness: 65,
+    icon: '🍷',
+    badge: '65% Campus Classic',
+    color: '#881337',
+    description: 'Фірмовий бордовий світшот «Шмот» з автентичної колекції одягу крамнички УКУ. store.ucu.edu.ua',
+    renderSvg: (color) => `
+      <g id="outfit-ucu_shmot_sweatshirt">
+        <path d="M28 65 L44 48 L55 58 L66 48 L82 65 L74 76 L66 70 L66 108 L44 108 L44 70 L36 76 Z" fill="#881337" stroke="#4c0519" stroke-width="2"/>
+        <circle cx="55" cy="56" r="6" fill="#be123c"/>
+        <text x="55" y="81" text-anchor="middle" font-size="7" font-weight="900" fill="#ffffff">ШМОТ</text>
+        <text x="55" y="93" text-anchor="middle" font-size="4.5" font-weight="bold" fill="#fecdd3">store.ucu</text>
+      </g>
+    `
+  },
+  {
+    id: 'sheptytsky_blanket_socks',
+    name: 'Коцик і теплі шкарпетки Шептицького',
+    category: 'clothes',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
+    minReadiness: 75,
+    icon: '🧣',
+    badge: '75% Study Gear',
+    color: '#065f46',
+    description: 'Набір витривалого студента з Центру Шептицького: затишний теплий коцик та в\'язані шкарпетки УКУ. store.ucu.edu.ua',
+    renderSvg: (color) => `
+      <g id="outfit-sheptytsky_blanket_socks">
+        <path d="M26 62 L44 46 L55 56 L66 46 L84 62 L80 90 L68 85 L68 108 L42 108 L42 85 L30 90 Z" fill="#047857" stroke="#064e3b" stroke-width="2"/>
+        <line x1="34" y1="65" x2="76" y2="65" stroke="#f59e0b" stroke-width="1" stroke-dasharray="2,2"/>
+        <line x1="32" y1="78" x2="78" y2="78" stroke="#f59e0b" stroke-width="1" stroke-dasharray="2,2"/>
+        <line x1="48" y1="52" x2="48" y2="105" stroke="#34d399" stroke-width="1"/>
+        <line x1="62" y1="52" x2="62" y2="105" stroke="#34d399" stroke-width="1"/>
+        <text x="55" y="96" text-anchor="middle" font-size="5" font-weight="bold" fill="#fef08a">ШЕПТИЦЬКИЙ</text>
+      </g>
+    `
+  },
+  {
+    id: 'tech_lab_vest',
+    name: 'Жилетка інженера Sheptytsky Tech Lab',
+    category: 'clothes',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
+    minReadiness: 85,
+    icon: '🛠️',
+    badge: '85% Sheptytsky Tech',
+    color: '#0f172a',
+    description: 'Брендована жилетка інженера та розробника APPS / Sheptytsky Tech Lab із нашивкою для лабораторій. store.ucu.edu.ua',
+    renderSvg: (color) => `
+      <g id="outfit-tech_lab_vest">
+        <path d="M28 65 L44 48 L55 58 L66 48 L82 65 L74 76 L66 70 L66 108 L44 108 L44 70 L36 76 Z" fill="#cbd5e1" stroke="#64748b" stroke-width="1.5"/>
+        <path d="M38 52 L50 56 L55 60 L60 56 L72 52 L68 108 L42 108 Z" fill="#0f172a" stroke="#020617" stroke-width="2"/>
+        <line x1="55" y1="60" x2="55" y2="108" stroke="#38bdf8" stroke-width="1.5"/>
+        <rect x="44" y="68" width="6" height="5" fill="#1e293b" rx="1"/>
+        <text x="64" y="72" text-anchor="middle" font-size="4" font-weight="bold" fill="#38bdf8">APPS</text>
+      </g>
+    `
+  },
+  {
+    id: 'wizard_robe',
+    name: 'Markov Master Wizard Robe',
+    category: 'clothes',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=clothes-u',
+    minReadiness: 95,
+    icon: '🧙‍♂️',
+    badge: '95% Markov Grandmaster',
+    color: '#7e22ce',
+    description: 'Магічна фіолетова мантія з рунами густини та математичного сподівання для володарів Марковських процесів.',
+    renderSvg: (color) => `
+      <g id="outfit-wizard_robe">
+        <path d="M24 68 L44 46 L55 56 L66 46 L86 68 L76 82 L68 74 L69 112 L41 112 L42 74 L34 82 Z" fill="#581c87" stroke="#3b0764" stroke-width="2"/>
+        <polygon points="55,10 40,34 70,34" fill="#6b21a8" stroke="#3b0764" stroke-width="2"/>
+        <ellipse cx="55" cy="34" rx="20" ry="4" fill="#7e22ce" stroke="#3b0764" stroke-width="1.5"/>
+        <polygon points="55,10 52,24 58,24" fill="#f59e0b"/>
+        <path d="M44 46 L55 56 L66 46" fill="none" stroke="#fbbf24" stroke-width="2"/>
+        <text x="55" y="85" text-anchor="middle" font-size="8" font-family="serif" font-weight="bold" fill="#fde047">E[X]</text>
+      </g>
+    `
+  },
+  {
+    id: 'champion_crown',
+    name: 'Grand Champion Crown & Trophy',
+    category: 'prykrasy',
+    storeUrl: 'https://www.store.ucu.edu.ua/shop/?swoof=1&add_to_wishlist=6197&_wpnonce=19c9004ea9&add-to-cart=7555&product_cat=prykrasy',
+    minReadiness: 100,
+    icon: '👑',
+    badge: '100% Master Grade',
+    color: '#eab308',
+    description: 'Золота корона та тріумфальний трофей студента, який підкорив 100% готовності до Мідтерму 2 та Колоквіуму 2!',
+    renderSvg: (color) => `
+      <g id="accessory-champion_crown">
+        <path d="M38 28 L40 14 L48 22 L55 10 L62 22 L70 14 L72 28 Z" fill="url(#goldGrad)" stroke="#a16207" stroke-width="1.5"/>
+        <circle cx="40" cy="14" r="2" fill="#ef4444"/>
+        <circle cx="55" cy="10" r="2.5" fill="#3b82f6"/>
+        <circle cx="70" cy="14" r="2" fill="#10b981"/>
+        <ellipse cx="55" cy="28" rx="17" ry="3" fill="#ca8a04"/>
+        <circle cx="55" cy="55" r="48" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3,3"/>
+      </g>
+    `
+  }
+];
+
+class UserProfileManager {
+  constructor() {
+    this.dbName = 'StatHustleUsersDB';
+    this.sessionKey = 'stathustle_active_session_email';
+    this.registryStorageKey = 'stathustle_users_registry';
+    this.googleClientId = '794609556919-4ac9ftru7l363jbqcjpgovn9kb3vbkjm.apps.googleusercontent.com';
+
+    this.isLoggedIn = false;
+    this.profile = this.createDefaultProfile();
+    this.lastCloudSyncTime = 0;
+    this.cloudSyncTimer = null;
+
+    // Synchronous local session restoration
+    this.checkSessionSync();
+    this.initDatabase();
+    this.initTabTimeTracker();
+    this.initGoogleAuth();
+    this.syncWithServer();
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        this.initExamScheduleControls();
+        this.renderExamScheduleAndGrades();
+      });
+    } else {
+      setTimeout(() => {
+        this.initExamScheduleControls();
+        this.renderExamScheduleAndGrades();
+      }, 50);
+    }
+  }
+
+  createDefaultProfile(email = '', name = 'UCU Student') {
+    return {
+      id: 'usr_' + Math.random().toString(36).substring(2, 9),
+      email: email,
+      name: name,
+      passwordHash: '',
+      photoUrl: '',
+      authProvider: 'local',
+      equippedOutfit: 'freshman_tee',
+      totalSeconds: 0,
+      studySeconds: 0,
+      timePerTab: {
+        dashboard: 0,
+        colloquium: 0,
+        problems: 0,
+        quizzes: 0,
+        topics: 0,
+        formulas: 0
+      },
+      examSchedule: {
+        colloquiumDate: '2026-10-14T09:00',
+        midtermDate: '2026-10-16T08:30'
+      },
+      examGrades: {
+        colloquium: { grade: '', notes: '', updatedAt: null },
+        midterm: { grade: '', notes: '', updatedAt: null }
+      },
+      mistakesHistory: {},
+      readinessState: null,
+      geminiApiKey: '',
+      createdAt: Date.now(),
+      lastLogin: Date.now()
+    };
+  }
+
+  // --- DATABASE & PERSISTENCE ---
+  initDatabase() {
+    if (!window.indexedDB) {
+      this.checkSession();
+      return;
+    }
+
+    const req = indexedDB.open(this.dbName, 2);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('users')) {
+        db.createObjectStore('users', { keyPath: 'email' });
+      }
+    };
+    req.onsuccess = () => {
+      this.checkSession();
+    };
+    req.onerror = () => {
+      this.checkSession();
+    };
+  }
+
+  getAllUsersFromStorage() {
+    try {
+      return JSON.parse(localStorage.getItem(this.registryStorageKey) || '{}');
+    } catch (e) {
+      return {};
+    }
+  }
+
+  // --- AWS CLOUD CROSS-DEVICE SYNC ENGINE ---
+  async fetchUserFromCloud(email) {
+    if (!email) return null;
+    try {
+      const url = `${CLOUD_SYNC_ENDPOINT}/?email=${encodeURIComponent(email.toLowerCase().trim())}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.found !== false && data.email) {
+          return data;
+        }
+      }
+    } catch (err) {
+      console.warn('Notice: AWS Cloud fetch unavailable:', err);
+    }
+    return null;
+  }
+
+  async syncUserToCloud(userObj) {
+    if (!userObj || !userObj.email) return;
+    try {
+      const payload = JSON.stringify(userObj);
+      const res = await fetch(`${CLOUD_SYNC_ENDPOINT}/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload
+      });
+      if (res.ok) {
+        this.lastCloudSyncTime = Date.now();
+        this.updateCloudStatusUI('synced');
+      } else {
+        this.updateCloudStatusUI('pending');
+      }
+    } catch (err) {
+      console.warn('Notice: AWS Cloud sync deferred:', err);
+      this.updateCloudStatusUI('offline');
+    }
+  }
+
+  scheduleCloudSync(userObj) {
+    if (!userObj || !userObj.email) return;
+    clearTimeout(this.cloudSyncTimer);
+    this.cloudSyncTimer = setTimeout(() => {
+      this.syncUserToCloud(userObj);
+    }, 2000);
+  }
+
+  updateCloudStatusUI(status = 'synced') {
+    const el = document.getElementById('cloud-sync-status-indicator');
+    if (!el) return;
+
+    if (status === 'synced') {
+      el.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span class="text-emerald-400 font-semibold">Хмара синхронізована</span>`;
+    } else if (status === 'syncing') {
+      el.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span><span class="text-amber-400 font-semibold">Синхронізація...</span>`;
+    } else {
+      el.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-500"></span><span class="text-slate-400 font-semibold">Офлайн-режим</span>`;
+    }
+  }
+
+  mergeUserProfiles(local, cloud) {
+    if (!cloud) return local;
+    if (!local) return cloud;
+
+    const merged = Object.assign({}, local, cloud);
+
+    // Keep highest total seconds spent
+    const maxSec = Math.max(
+      Number(local.totalSeconds) || 0,
+      Number(local.studySeconds) || 0,
+      Number(cloud.totalSeconds) || 0,
+      Number(cloud.studySeconds) || 0
+    );
+    merged.totalSeconds = maxSec;
+    merged.studySeconds = maxSec;
+
+    // Tab analytics: take max for each tab
+    merged.timePerTab = {};
+    const tabs = ['dashboard', 'colloquium', 'problems', 'quizzes', 'topics', 'formulas'];
+    for (const t of tabs) {
+      merged.timePerTab[t] = Math.max((local.timePerTab?.[t] || 0), (cloud.timePerTab?.[t] || 0));
+    }
+
+    // Merge mistakes history
+    merged.mistakesHistory = Object.assign({}, local.mistakesHistory || {}, cloud.mistakesHistory || {});
+
+    // Merge readinessState intelligently
+    const lR = local.readinessState || {};
+    const cR = cloud.readinessState || {};
+    merged.readinessState = {
+      definitionsScores: Object.assign({}, lR.definitionsScores || {}),
+      topicTestsSolved: Object.assign({}, lR.topicTestsSolved || {}),
+      questionsAnswered: Object.assign({}, lR.questionsAnswered || {}),
+      problemsMastered: Object.assign({}, lR.problemsMastered || {}),
+      daysCompleted: Object.assign({}, lR.daysCompleted || {}),
+      overallPercent: Math.max(lR.overallPercent || 0, cR.overallPercent || 0)
+    };
+
+    // For definitions, take highest score
+    if (cR.definitionsScores) {
+      for (const [defId, score] of Object.entries(cR.definitionsScores)) {
+        merged.readinessState.definitionsScores[defId] = Math.max(
+          merged.readinessState.definitionsScores[defId] || 0,
+          score
+        );
+      }
+    }
+
+    // For topic tests, take best score
+    if (cR.topicTestsSolved) {
+      for (const [tId, testObj] of Object.entries(cR.topicTestsSolved)) {
+        const existing = merged.readinessState.topicTestsSolved[tId];
+        if (!existing || (testObj.score || 0) > (existing.score || 0)) {
+          merged.readinessState.topicTestsSolved[tId] = testObj;
+        }
+      }
+    }
+
+    // For questions answered
+    if (cR.questionsAnswered) {
+      Object.assign(merged.readinessState.questionsAnswered, cR.questionsAnswered);
+    }
+
+    // For problems mastered
+    if (cR.problemsMastered) {
+      for (const [pId, solved] of Object.entries(cR.problemsMastered)) {
+        if (solved) merged.readinessState.problemsMastered[pId] = true;
+      }
+    }
+
+    // For days completed
+    if (cR.daysCompleted) {
+      for (const [dNum, done] of Object.entries(cR.daysCompleted)) {
+        if (done) merged.readinessState.daysCompleted[dNum] = true;
+      }
+    }
+
+    // Preserve Gemini API Key if available in either
+    merged.geminiApiKey = local.geminiApiKey || cloud.geminiApiKey || '';
+
+    // Merge examSchedule
+    merged.examSchedule = Object.assign(
+      { colloquiumDate: '2026-10-14T09:00', midtermDate: '2026-10-16T08:30' },
+      local.examSchedule || {},
+      cloud.examSchedule || {}
+    );
+
+    // Merge examGrades
+    merged.examGrades = {
+      colloquium: Object.assign({}, local.examGrades?.colloquium || {}, cloud.examGrades?.colloquium || {}),
+      midterm: Object.assign({}, local.examGrades?.midterm || {}, cloud.examGrades?.midterm || {})
+    };
+
+    return merged;
+  }
+
+  saveUserToRegistry(userObj) {
+    if (!userObj || !userObj.email) return;
+    const emailKey = userObj.email.toLowerCase().trim();
+    userObj.email = emailKey;
+
+    // 1. LocalStorage registry map
+    const registry = this.getAllUsersFromStorage();
+    registry[emailKey] = userObj;
+    localStorage.setItem(this.registryStorageKey, JSON.stringify(registry));
+
+    // 1b. Direct dedicated key per user
+    try {
+      localStorage.setItem('stathustle_user_' + emailKey, JSON.stringify(userObj));
+    } catch (e) {}
+
+    // 2. IndexedDB store
+    if (window.indexedDB) {
+      try {
+        const req = indexedDB.open(this.dbName, 2);
+        req.onsuccess = (e) => {
+          const db = e.target.result;
+          if (db.objectStoreNames.contains('users')) {
+            const tx = db.transaction('users', 'readwrite');
+            tx.objectStore('users').put(userObj);
+          }
+        };
+      } catch (err) {}
+    }
+
+    // 3. AWS Cloud Sync (Cross-Device API)
+    this.scheduleCloudSync(userObj);
+
+    // 4. Server sync if running locally
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      fetch('/api/users/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userObj)
+      }).catch(() => {});
+    }
+  }
+
+  getUserFromRegistry(email) {
+    if (!email) return null;
+    const emailKey = email.toLowerCase().trim();
+    const registry = this.getAllUsersFromStorage();
+    if (registry[emailKey]) return registry[emailKey];
+
+    // Fallback to direct key
+    try {
+      const direct = localStorage.getItem('stathustle_user_' + emailKey);
+      if (direct) {
+        const parsed = JSON.parse(direct);
+        registry[emailKey] = parsed;
+        localStorage.setItem(this.registryStorageKey, JSON.stringify(registry));
+        return parsed;
+      }
+    } catch (e) {}
+
+    return null;
+  }
+
+  recoverStudyTimeIfZero() {
+    if (!this.profile) return;
+    let currentSec = Math.max(
+      Number(this.profile.totalSeconds) || 0,
+      Number(this.profile.studySeconds) || 0
+    );
+    if (currentSec > 0) return;
+
+    let highestSec = 0;
+    try {
+      const pomo = JSON.parse(localStorage.getItem('stathustle_pomodoro_stats') || '{}');
+      if (pomo.totalMinutesStudied) {
+        highestSec = Math.max(highestSec, (Number(pomo.totalMinutesStudied) || 0) * 60);
+      }
+    } catch (e) {}
+
+    try {
+      const reg = this.getAllUsersFromStorage();
+      for (const u of Object.values(reg)) {
+        highestSec = Math.max(highestSec, Number(u?.totalSeconds) || 0, Number(u?.studySeconds) || 0);
+      }
+    } catch (e) {}
+
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('stathustle_user_')) {
+          const u = JSON.parse(localStorage.getItem(k) || '{}');
+          highestSec = Math.max(highestSec, Number(u?.totalSeconds) || 0, Number(u?.studySeconds) || 0);
+        }
+      }
+    } catch (e) {}
+
+    if (highestSec > 0) {
+      console.log(`[StatHustle] Automatically recovered ${highestSec}s study time!`);
+      this.profile.totalSeconds = highestSec;
+      this.profile.studySeconds = highestSec;
+      this.saveProfile();
+      this.renderStudyTimeElements();
+    }
+  }
+
+  checkSessionSync() {
+    const activeEmail = localStorage.getItem(this.sessionKey);
+    if (activeEmail) {
+      const found = this.getUserFromRegistry(activeEmail);
+      if (found) {
+        this.profile = found;
+        this.isLoggedIn = true;
+        this.recoverStudyTimeIfZero();
+        return;
+      }
+    }
+    this.isLoggedIn = false;
+    this.recoverStudyTimeIfZero();
+  }
+
+  async checkSession() {
+    const activeEmail = localStorage.getItem(this.sessionKey);
+    if (activeEmail) {
+      let found = this.getUserFromRegistry(activeEmail);
+      // Fetch latest cloud profile in background to merge any progress from other devices
+      const cloudUser = await this.fetchUserFromCloud(activeEmail);
+      if (cloudUser) {
+        found = this.mergeUserProfiles(found, cloudUser);
+        this.saveUserToRegistry(found);
+      }
+      if (found) {
+        this.loadExistingUser(found);
+        return;
+      }
+    }
+
+    // Not logged in -> Show mandatory Auth & Onboarding Gate Modal
+    this.isLoggedIn = false;
+    this.showAuthGate();
+  }
+
+  async syncWithServer() {
+    // 1. AWS Cloud sync for active user
+    const activeEmail = localStorage.getItem(this.sessionKey);
+    if (activeEmail && this.isLoggedIn) {
+      const cloudUser = await this.fetchUserFromCloud(activeEmail);
+      if (cloudUser) {
+        const merged = this.mergeUserProfiles(this.profile, cloudUser);
+        this.profile = merged;
+        this.saveUserToRegistry(merged);
+        if (window.quizManager && this.profile.readinessState) {
+          window.quizManager.loadUserState(activeEmail, this.profile.readinessState);
+        }
+        this.updateUserUI();
+      }
+    }
+
+    // 2. Local backend fallback if running locally
+    if (window.location && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      try {
+        const res = await fetch('/api/users/list');
+        if (res.ok) {
+          const serverUsers = await res.json();
+          if (serverUsers && typeof serverUsers === 'object') {
+            const localRegistry = this.getAllUsersFromStorage();
+            let changed = false;
+            for (const [email, sUser] of Object.entries(serverUsers)) {
+              const lUser = localRegistry[email];
+              if (!lUser || (sUser.lastLogin || 0) > (lUser.lastLogin || 0)) {
+                localRegistry[email] = sUser;
+                changed = true;
+              }
+            }
+            if (changed) {
+              localStorage.setItem(this.registryStorageKey, JSON.stringify(localRegistry));
+            }
+          }
+        }
+      } catch (err) {}
+    }
+  }
+
+  loadExistingUser(userObj) {
+    this.profile = userObj;
+    this.isLoggedIn = true;
+    localStorage.setItem(this.sessionKey, userObj.email);
+
+    // Sync API key to geminiMentor if saved in profile
+    if (userObj.geminiApiKey && window.geminiMentor && !window.geminiMentor.apiKey) {
+      window.geminiMentor.setApiKey(userObj.geminiApiKey);
+    }
+
+    // Sync readiness state strictly for THIS specific user account
+    if (window.quizManager) {
+      window.quizManager.loadUserState(userObj.email, userObj.readinessState);
+    }
+
+    this.recoverStudyTimeIfZero();
+    this.hideAuthGate();
+    this.updateUserUI();
+    this.updateCloudStatusUI('synced');
+
+    // Re-render UI sections so that problem checkboxes, test scores, etc. reflect this user
+    if (window.app) {
+      window.app.renderDashboard();
+      window.app.renderColloquiumSection();
+      window.app.renderProblemsSection();
+      window.app.renderTopicsSection();
+      window.app.renderAllMath();
+    }
+  }
+
+  // --- AUTHENTICATION ACTIONS ---
+  async register(name, email, password, photoUrl = '') {
+    if (!email || !email.includes('@')) {
+      alert('Будь ласка, введіть коректну електронну пошту!');
+      return false;
+    }
+    if (!password || password.length < 4) {
+      alert('Пароль має містити щонайменше 4 символи!');
+      return false;
+    }
+
+    const emailKey = email.toLowerCase().trim();
+    const existing = this.getUserFromRegistry(emailKey) || await this.fetchUserFromCloud(emailKey);
+    if (existing) {
+      alert('Користувач із цією поштою вже зареєстрований! Будь ласка, увійдіть.');
+      this.switchAuthTab('login');
+      return false;
+    }
+
+    const newUser = this.createDefaultProfile(emailKey, name || 'UCU Student');
+    newUser.passwordHash = btoa(password);
+    newUser.photoUrl = photoUrl;
+    newUser.authProvider = 'local';
+    newUser.createdAt = Date.now();
+    newUser.lastLogin = Date.now();
+
+    this.saveUserToRegistry(newUser);
+    this.loadExistingUser(newUser);
+    await this.syncUserToCloud(newUser);
+
+    alert(`🎉 Вітаємо, ${newUser.name}! Ваш акаунт успішно створено. Усі ваші досягнення та час зберігатимуться в хмарі.`);
+    return true;
+  }
+
+  async login(email, password) {
+    if (!email || !password) {
+      alert('Введіть пошту та пароль!');
+      return false;
+    }
+
+    const emailKey = email.toLowerCase().trim();
+    let user = this.getUserFromRegistry(emailKey);
+    // Check cloud if not in local storage on new device
+    if (!user) {
+      const cloudUser = await this.fetchUserFromCloud(emailKey);
+      if (cloudUser) {
+        user = cloudUser;
+      }
+    }
+
+    if (!user) {
+      alert('Користувача з такою поштою не знайдено. Будь ласка, зареєструйтесь!');
+      this.switchAuthTab('register');
+      return false;
+    }
+
+    if (user.passwordHash && user.passwordHash !== btoa(password)) {
+      alert('Невірний пароль! Спробуйте ще раз.');
+      return false;
+    }
+
+    user.lastLogin = Date.now();
+    this.saveUserToRegistry(user);
+    this.loadExistingUser(user);
+    await this.syncUserToCloud(user);
+
+    alert(`👋 З поверненням, ${user.name}! Ваш прогрес успішно синхронізовано з хмари.`);
+    return true;
+  }
+
+  async loginWithGoogle(payload) {
+    if (!payload || !payload.email) return;
+    const emailKey = payload.email.toLowerCase().trim();
+
+    this.updateCloudStatusUI('syncing');
+
+    // Fetch from AWS Cloud first to guarantee cross-device transfer!
+    const cloudUser = await this.fetchUserFromCloud(emailKey);
+    let localUser = this.getUserFromRegistry(emailKey);
+
+    let user = null;
+    if (cloudUser) {
+      user = this.mergeUserProfiles(localUser, cloudUser);
+    } else {
+      user = localUser;
+    }
+
+    if (!user) {
+      user = this.createDefaultProfile(emailKey, payload.name || 'UCU Student');
+      user.photoUrl = payload.picture || '';
+      user.authProvider = 'google';
+      user.createdAt = Date.now();
+    } else {
+      user.name = payload.name || user.name;
+      if (payload.picture) user.photoUrl = payload.picture;
+    }
+
+    user.lastLogin = Date.now();
+    this.saveUserToRegistry(user);
+    this.loadExistingUser(user);
+    await this.syncUserToCloud(user);
+
+    alert(`🎉 Авторизація через Google успішна! Вітаємо, ${user.name}. Усі ваші дані синхронізовано між вашими пристроями!`);
+  }
+
+  loginAsGuest() {
+    const guestEmail = 'guest_student@ucu.edu.ua';
+    let user = this.getUserFromRegistry(guestEmail);
+    if (!user) {
+      user = this.createDefaultProfile(guestEmail, 'Ihor (UCU Guest)');
+      user.authProvider = 'guest';
+    }
+    user.lastLogin = Date.now();
+    this.saveUserToRegistry(user);
+    this.loadExistingUser(user);
+  }
+
+  logout() {
+    if (confirm('Ви впевнені, що хочете вийти з акаунту? Ваші досягнення збережені в хмарі.')) {
+      this.saveProfile();
+      localStorage.removeItem(this.sessionKey);
+      this.isLoggedIn = false;
+      this.profile = this.createDefaultProfile();
+      if (window.quizManager) {
+        window.quizManager.loadUserState(null, null);
+      }
+      this.updateUserUI();
+      if (window.app) {
+        window.app.renderDashboard();
+        window.app.renderColloquiumSection();
+        window.app.renderProblemsSection();
+        window.app.renderTopicsSection();
+        window.app.renderAllMath();
+      }
+      this.showAuthGate();
+    }
+  }
+
+  // --- TIME & TAB TRACKING (Per Account & Per Topic) ---
+  initTabTimeTracker() {
+    setInterval(() => {
+      if (!this.profile) return;
+
+      if (!document.hidden) {
+        const activeTab = window.app?.currentTab || 'dashboard';
+        const activeTopic = window.currentActiveTopic || 'topic2';
+
+        if (!this.profile.timePerTab) {
+          this.profile.timePerTab = { dashboard: 0, colloquium: 0, problems: 0, quizzes: 0, topics: 0, formulas: 0 };
+        }
+        if (!this.profile.timePerTopic) {
+          this.profile.timePerTopic = { topic2: 0, topic3: 0 };
+        }
+
+        this.profile.timePerTab[activeTab] = (this.profile.timePerTab[activeTab] || 0) + 1;
+        this.profile.timePerTopic[activeTopic] = (this.profile.timePerTopic[activeTopic] || 0) + 1;
+        this.profile.totalSeconds = (Number(this.profile.totalSeconds) || 0) + 1;
+        this.profile.studySeconds = this.profile.totalSeconds;
+
+        // Auto-save every 3 seconds to guarantee progress persistence
+        if (this.profile.totalSeconds % 3 === 0) {
+          this.saveProfile();
+        }
+
+        this.renderStudyTimeElements();
+        this.renderTabTimeAnalytics();
+      }
+    }, 1000);
+
+    document.addEventListener('visibilitychange', () => {
+      if (this.isLoggedIn) this.saveProfile();
+    });
+
+    window.addEventListener('beforeunload', () => {
+      if (this.isLoggedIn) this.saveProfile();
+    });
+  }
+
+  saveProfile() {
+    if (!this.profile?.email) return;
+
+    if (window.quizManager?.readinessState) {
+      this.profile.readinessState = JSON.parse(JSON.stringify(window.quizManager.readinessState));
+    }
+    if (window.quizManager?.readinessPerTopic) {
+      this.profile.readinessPerTopic = JSON.parse(JSON.stringify(window.quizManager.readinessPerTopic));
+    }
+
+    this.saveUserToRegistry(this.profile);
+    this.renderStudyTimeElements();
+  }
+
+  // --- MISTAKES ANALYTICS ---
+  recordMistake(id, title, topic, type) {
+    if (!this.profile) return;
+    if (!this.profile.mistakesHistory) this.profile.mistakesHistory = {};
+
+    if (!this.profile.mistakesHistory[id]) {
+      this.profile.mistakesHistory[id] = {
+        id,
+        title,
+        topic,
+        type,
+        count: 1,
+        lastErrorAt: Date.now()
+      };
+    } else {
+      this.profile.mistakesHistory[id].count += 1;
+      this.profile.mistakesHistory[id].lastErrorAt = Date.now();
+    }
+    this.saveProfile();
+    this.renderMistakesAnalytics();
+  }
+
+  recordSuccess(id) {
+    if (this.profile?.mistakesHistory?.[id]) {
+      delete this.profile.mistakesHistory[id];
+      this.saveProfile();
+      this.renderMistakesAnalytics();
+    }
+  }
+
+  // --- TIME DISPLAY HELPERS ---
+  formatDuration(seconds) {
+    const s = Math.floor(seconds || 0);
+    const hrs = Math.floor(s / 3600);
+    const mins = Math.floor((s % 3600) / 60);
+    const secs = s % 60;
+    if (hrs > 0) {
+      return `${hrs}h ${mins}m ${secs}s`;
+    }
+    return `${mins}m ${secs}s`;
+  }
+
+  renderStudyTimeElements() {
+    const totalSec = Math.max(
+      Number(this.profile?.totalSeconds) || 0,
+      Number(this.profile?.studySeconds) || 0
+    );
+    const activeTopic = window.currentActiveTopic || 'topic2';
+    const perTopic = this.profile?.timePerTopic || { topic2: 0, topic3: 0 };
+    const t2Sec = Number(perTopic.topic2) || 0;
+    const t3Sec = Number(perTopic.topic3) || 0;
+    const activeTopicSec = activeTopic === 'topic3' ? t3Sec : t2Sec;
+    const topicLabel = activeTopic === 'topic3' ? 'T3' : 'T2';
+
+    const formatted = this.formatDuration(totalSec);
+    const activeFormatted = `${topicLabel}: ${this.formatDuration(activeTopicSec)}`;
+
+    // Header badges
+    const userHeaderBadge = document.getElementById('user-header-study-time');
+    if (userHeaderBadge) {
+      userHeaderBadge.textContent = activeFormatted;
+      userHeaderBadge.setAttribute('title', `Тема 2: ${this.formatDuration(t2Sec)} | Тема 3: ${this.formatDuration(t3Sec)} | Загалом: ${formatted}`);
+    }
+    const headerBadge = document.getElementById('header-study-time');
+    if (headerBadge) headerBadge.textContent = activeFormatted;
+
+    // Dashboard card timer & total focus hours
+    const userDashTime = document.getElementById('user-dash-study-time');
+    if (userDashTime) userDashTime.textContent = activeFormatted;
+    const dashTime = document.getElementById('dashboard-study-time-val');
+    if (dashTime) dashTime.textContent = activeFormatted;
+
+    const dashBreakdown = document.getElementById('user-dash-topic-time-breakdown');
+    if (dashBreakdown) {
+      dashBreakdown.innerHTML = `<span class="text-indigo-400">⚡ Тема 2: ${this.formatDuration(t2Sec)}</span> • <span class="text-emerald-400">🎯 Тема 3: ${this.formatDuration(t3Sec)}</span>`;
+    }
+
+    const dashHours = document.getElementById('user-dash-study-hours');
+    if (dashHours) {
+      dashHours.textContent = `${(totalSec / 3600).toFixed(1)} hrs (T2: ${(t2Sec / 3600).toFixed(1)}h | T3: ${(t3Sec / 3600).toFixed(1)}h)`;
+    }
+
+    const modalTotal = document.getElementById('user-modal-total-time');
+    if (modalTotal) modalTotal.textContent = `${formatted} (T2: ${this.formatDuration(t2Sec)} | T3: ${this.formatDuration(t3Sec)})`;
+  }
+
+  renderTabTimeAnalytics() {
+    const container = document.getElementById('tab-time-analytics-grid') || document.getElementById('user-tab-time-list');
+    if (!container || !this.profile) return;
+
+    const tabsMap = [
+      { key: 'dashboard', label: 'Dashboard & Countdown', icon: '📊' },
+      { key: 'colloquium', label: 'Colloquium 2 Questions', icon: '🗣️' },
+      { key: 'problems', label: 'Problems Bank', icon: '📝' },
+      { key: 'quizzes', label: '600 Practice Quizzes', icon: '🧠' },
+      { key: 'topics', label: '12 Theory Topics', icon: '📚' },
+      { key: 'formulas', label: 'Formulas & Distributions', icon: '📐' }
+    ];
+
+    const total = Math.max(this.profile.totalSeconds || 1, 1);
+    const perTab = this.profile.timePerTab || {};
+
+    container.innerHTML = tabsMap.map(t => {
+      const sec = perTab[t.key] || 0;
+      const pct = Math.min(Math.round((sec / total) * 100), 100);
+      return `
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs font-semibold text-slate-300">
+            <span class="flex items-center gap-1.5"><span>${t.icon}</span> ${t.label}</span>
+            <span class="font-mono text-indigo-400">${this.formatDuration(sec)} (${pct}%)</span>
+          </div>
+          <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+            <div class="h-full bg-indigo-500 rounded-full transition-all duration-300" style="width: ${pct}%"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  renderMistakesAnalytics() {
+    const container = document.getElementById('mistakes-analytics-list') || document.getElementById('user-mistakes-list');
+    const badge = document.getElementById('user-mistakes-badge');
+    if (!container || !this.profile) return;
+
+    const mistakes = Object.values(this.profile.mistakesHistory || {});
+    mistakes.sort((a, b) => (b.count || 0) - (a.count || 0));
+
+    if (badge) {
+      badge.textContent = `${mistakes.length} ${mistakes.length === 1 ? 'помилка' : 'помилок'}`;
+      badge.className = mistakes.length > 0 
+        ? 'px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-rose-950/80 text-rose-300 border border-rose-800'
+        : 'px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-800';
+    }
+
+    if (mistakes.length === 0) {
+      container.innerHTML = `
+        <div class="p-6 text-center rounded-xl bg-slate-950/60 border border-slate-800 text-slate-400 text-xs space-y-1.5">
+          <div class="text-2xl">🎉</div>
+          <div class="font-bold text-slate-200">Жодної помилки в реєстрі!</div>
+          <p class="text-[11px] text-slate-400">Ви розв'язали всі поточні завдання безпомилково. Помилкові відповіді з тестів чи завдань з'являться тут з кнопкою швидкого перездавання.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = mistakes.map(m => `
+      <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:border-slate-700 transition">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${m.type === 'problem' ? 'bg-indigo-950 text-indigo-300 border border-indigo-800' : 'bg-amber-950 text-amber-300 border border-amber-800'}">
+              ${m.type === 'problem' ? '📝 Задача' : '❓ Тест'}
+            </span>
+            <span class="text-[11px] text-slate-400 truncate">${m.topic || 'Загальна тема'}</span>
+          </div>
+          <div class="font-bold text-slate-200 truncate" title="${m.title}">${m.title}</div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+          <span class="px-2 py-0.5 rounded bg-rose-950/80 text-rose-300 border border-rose-800 text-[10px] font-bold" title="Кількість помилкових спроб">
+            ${m.count} ${m.count === 1 ? 'спроба' : 'спроби'}
+          </span>
+          <button onclick="window.userProfile?.retakeMistakeTask('${m.id}', '${m.type}')" 
+                  class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition flex items-center gap-1 shadow-sm"
+                  title="Перейти та розв'язати це завдання знову">
+            <span>🔄</span> <span>Розв'язати знову</span>
+          </button>
+          <button onclick="window.userProfile?.recordSuccess('${m.id}')" 
+                  class="p-1.5 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-slate-800 transition" 
+                  title="Видалити зі списку помилок">
+            ✕
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  retakeMistakeTask(id, type) {
+    if (type === 'problem') {
+      const probId = parseInt(id.replace('prob_', ''), 10);
+      const probTabBtn = document.querySelector('[data-tab-target="problems"]');
+      if (probTabBtn) probTabBtn.click();
+      setTimeout(() => {
+        if (window.appController?.retakeProblem) {
+          window.appController.retakeProblem(probId);
+        }
+      }, 100);
+    } else if (type === 'quiz') {
+      const quizTabBtn = document.querySelector('[data-tab-target="quizzes"]');
+      if (quizTabBtn) quizTabBtn.click();
+      setTimeout(() => {
+        if (window.quizManager?.retakeQuestionById) {
+          window.quizManager.retakeQuestionById(id);
+        }
+      }, 100);
+    }
+  }
+
+  // --- AVATAR & WARDROBE GAMIFICATION ---
+  renderWardrobeList() {
+    const container = document.getElementById('wardrobe-items-list') || document.getElementById('user-wardrobe-grid');
+    if (!container) return;
+
+    // Wardrobe filter tabs setup
+    const filterTabsContainer = document.getElementById('wardrobe-filter-tabs');
+    if (filterTabsContainer && !filterTabsContainer.dataset.initialized) {
+      filterTabsContainer.dataset.initialized = 'true';
+      filterTabsContainer.querySelectorAll('.wardrobe-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          this.activeWardrobeFilter = btn.getAttribute('data-wardrobe-filter') || 'all';
+          filterTabsContainer.querySelectorAll('.wardrobe-filter-btn').forEach(b => {
+            b.className = (b === btn)
+              ? 'wardrobe-filter-btn px-3 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white transition'
+              : 'wardrobe-filter-btn px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition';
+          });
+          this.renderWardrobeList();
+        });
+      });
+    }
+
+    const currentFilter = this.activeWardrobeFilter || 'all';
+    const currentReadiness = window.quizManager?.readinessState?.overallPercent || 0;
+    const equippedOutfit = this.getEquippedOutfit()?.id || 'freshman_tee';
+    const equippedAccessory = this.profile?.equippedAccessory || null;
+
+    const filteredItems = WARDROBE_ITEMS.filter(item => {
+      if (currentFilter === 'all') return true;
+      return item.category === currentFilter;
+    });
+
+    container.innerHTML = filteredItems.map(item => {
+      const isUnlocked = currentReadiness >= item.minReadiness;
+      const isPrykrasa = item.category === 'prykrasy';
+      const isEquipped = isPrykrasa ? (equippedAccessory === item.id) : (equippedOutfit === item.id);
+
+      let btnLabel = '🔒 Заблоковано';
+      let btnClass = 'bg-slate-800 text-slate-500 cursor-not-allowed';
+
+      if (isEquipped) {
+        btnLabel = isPrykrasa ? '✓ Надіто (Зняти)' : '✓ Одягнено';
+        btnClass = 'bg-emerald-600 hover:bg-rose-600 text-white font-bold shadow-sm transition';
+      } else if (isUnlocked) {
+        btnLabel = isPrykrasa ? '✨ Надіти прикрасу' : '👕 Одягнути';
+        btnClass = 'bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition';
+      }
+
+      return `
+        <div class="p-4 rounded-2xl border ${isEquipped ? 'border-indigo-500 bg-indigo-950/40 ring-1 ring-indigo-500/50' : 'border-slate-800 bg-slate-950/70'} flex flex-col justify-between hover:border-slate-700 transition">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-3xl">${item.icon}</span>
+              <div class="flex flex-col items-end gap-1">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isUnlocked ? 'bg-indigo-950 text-indigo-300 border border-indigo-700' : 'bg-slate-800 text-slate-400'}">
+                  ${item.badge}
+                </span>
+                ${item.storeUrl ? `
+                  <a href="${item.storeUrl}" target="_blank" rel="noopener noreferrer" class="text-[10px] text-indigo-400 hover:text-indigo-300 underline font-semibold flex items-center gap-0.5">
+                    <span>store.ucu.edu.ua</span> <span>↗</span>
+                  </a>
+                ` : ''}
+              </div>
+            </div>
+            <h4 class="font-bold text-slate-100 text-xs mb-1 flex items-center gap-1.5">
+              <span>${item.name}</span>
+            </h4>
+            <p class="text-[11px] text-slate-400 leading-relaxed mb-3">${item.description}</p>
+          </div>
+          <button class="wardrobe-equip-btn w-full py-2 rounded-xl text-xs font-semibold ${btnClass}" data-item-id="${item.id}" ${!isUnlocked ? 'disabled' : ''}>
+            ${btnLabel}
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.wardrobe-equip-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-item-id');
+        this.equipOutfit(id);
+      });
+    });
+  }
+
+  getEquippedOutfit() {
+    const item = WARDROBE_ITEMS.find(w => w.id === this.profile?.equippedOutfit);
+    if (!item || item.category === 'prykrasy') {
+      return WARDROBE_ITEMS.find(w => w.id === 'freshman_tee') || WARDROBE_ITEMS[0];
+    }
+    return item;
+  }
+
+  getEquippedAccessory() {
+    if (this.profile?.equippedAccessory) {
+      return WARDROBE_ITEMS.find(w => w.id === this.profile.equippedAccessory) || null;
+    }
+    const currentOutfit = WARDROBE_ITEMS.find(w => w.id === this.profile?.equippedOutfit);
+    if (currentOutfit && currentOutfit.category === 'prykrasy') {
+      return currentOutfit;
+    }
+    return null;
+  }
+
+  equipOutfit(itemId) {
+    const item = WARDROBE_ITEMS.find(w => w.id === itemId);
+    if (!item) return false;
+
+    const currentReadiness = window.quizManager?.readinessState?.overallPercent || 0;
+    if (currentReadiness < item.minReadiness) {
+      alert(`🔒 Цей предмет вимагає ${item.minReadiness}% готовності! Ваш поточний рівень: ${currentReadiness}%.`);
+      return false;
+    }
+
+    if (item.category === 'prykrasy') {
+      if (this.profile.equippedAccessory === itemId) {
+        this.profile.equippedAccessory = null;
+      } else {
+        this.profile.equippedAccessory = itemId;
+      }
+    } else {
+      this.profile.equippedOutfit = itemId;
+    }
+
+    this.saveProfile();
+    this.renderAvatar();
+    this.renderWardrobeList();
+    return true;
+  }
+
+  renderAvatar() {
+    const containers = [
+      document.getElementById('user-avatar-display'),
+      document.getElementById('modal-avatar-preview')
+    ].filter(Boolean);
+
+    if (containers.length === 0) return;
+
+    const outfit = this.getEquippedOutfit();
+    const accessory = this.getEquippedAccessory();
+
+    // Update mini header avatar icon
+    const headerIcon = document.getElementById('user-header-default-avatar');
+    if (headerIcon) {
+      headerIcon.textContent = accessory?.icon || outfit?.icon || '👕';
+    }
+
+    const svgContent = `
+      <svg viewBox="0 0 110 120" class="w-full h-full drop-shadow-lg transition-transform duration-300 hover:scale-105" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="avatarGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#0f172a" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="skinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#fed7aa"/>
+            <stop offset="100%" stop-color="#fbd38d"/>
+          </linearGradient>
+          <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#fef08a"/>
+            <stop offset="50%" stop-color="#eab308"/>
+            <stop offset="100%" stop-color="#ca8a04"/>
+          </linearGradient>
+          <linearGradient id="silverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f8fafc"/>
+            <stop offset="50%" stop-color="#cbd5e1"/>
+            <stop offset="100%" stop-color="#94a3b8"/>
+          </linearGradient>
+        </defs>
+        <circle cx="55" cy="60" r="50" fill="url(#avatarGlow)" />
+        
+        <!-- Base Student Body / Torso (Ensures avatar is never naked/broken) -->
+        <path d="M30 65 L45 50 L55 58 L65 50 L80 65 L72 75 L65 70 L65 106 L45 106 L45 70 L38 75 Z" fill="#3b82f6" stroke="#1e293b" stroke-width="1.5"/>
+        <path d="M50 58 Q55 64 60 58" fill="none" stroke="#1e293b" stroke-width="1.5"/>
+        <text x="55" y="80" text-anchor="middle" font-size="8" font-family="sans-serif" font-weight="bold" fill="#ffffff">UCU</text>
+
+        <!-- Neck & Head -->
+        <rect x="50" y="47" width="10" height="13" fill="url(#skinGrad)"/>
+        <circle cx="55" cy="38" r="16" fill="url(#skinGrad)"/>
+        
+        <!-- Hair -->
+        <path d="M39 36 Q55 18 71 36 Q55 28 39 36 Z" fill="#1e293b"/>
+        
+        <!-- Eyes & Smile -->
+        <circle cx="49" cy="38" r="2" fill="#0f172a"/>
+        <circle cx="61" cy="38" r="2" fill="#0f172a"/>
+        <circle cx="50" cy="37" r="0.6" fill="#ffffff"/>
+        <circle cx="62" cy="37" r="0.6" fill="#ffffff"/>
+        <path d="M51 44 Q55 48 59 44" fill="none" stroke="#e11d48" stroke-width="1.5" stroke-linecap="round"/>
+
+        <!-- Layer 1: Equipped Clothing Outfit -->
+        ${outfit && outfit.id !== 'freshman_tee' ? outfit.renderSvg(outfit.color) : ''}
+
+        <!-- Layer 2: Equipped Prykrasa / Accessory -->
+        ${accessory ? accessory.renderSvg(accessory.color) : ''}
+      </svg>
+    `;
+
+    containers.forEach(c => {
+      c.innerHTML = svgContent;
+    });
+  }
+
+  updateUserUI() {
+    const userNameEl = document.getElementById('user-header-name');
+    if (userNameEl) userNameEl.textContent = this.profile.name || 'UCU Student';
+
+    const userEmailEl = document.getElementById('user-header-email');
+    if (userEmailEl) userEmailEl.textContent = this.profile.email || 'UCU Student';
+
+    const userPhotoEl = document.getElementById('user-header-photo');
+    if (userPhotoEl) {
+      if (this.profile.photoUrl) {
+        userPhotoEl.src = this.profile.photoUrl;
+        userPhotoEl.classList.remove('hidden');
+        document.getElementById('user-header-default-avatar')?.classList.add('hidden');
+      } else {
+        userPhotoEl.classList.add('hidden');
+        document.getElementById('user-header-default-avatar')?.classList.remove('hidden');
+      }
+    }
+
+    this.renderStudyTimeElements();
+    this.renderTabTimeAnalytics();
+    this.renderMistakesAnalytics();
+    this.renderAvatar();
+    this.renderWardrobeList();
+    this.renderExamScheduleAndGrades();
+    this.updateCloudStatusUI('synced');
+
+    // Google Account status in profile modal
+    const gStatusEl = document.getElementById('google-account-status');
+    if (gStatusEl) {
+      if (this.profile.email) {
+        gStatusEl.innerHTML = `
+          <div class="p-3 rounded-xl bg-emerald-950/70 border border-emerald-800 text-emerald-200 text-xs flex items-center justify-between">
+            <div class="flex items-center gap-2 truncate">
+              <span class="text-emerald-400 font-bold">☁️</span>
+              <span class="truncate">Синхронізовано: <strong>${this.profile.email}</strong></span>
+            </div>
+            <div class="flex items-center gap-2 shrink-0 ml-2">
+              <button id="auth-manual-sync-btn" class="px-2 py-1 rounded bg-indigo-900/60 hover:bg-indigo-800 text-[10px] text-indigo-200 font-bold border border-indigo-700">🔄 Синхр</button>
+              <button id="auth-logout-btn-modal" class="text-[11px] text-rose-400 hover:text-rose-300 font-bold underline">Вийти</button>
+            </div>
+          </div>
+        `;
+        document.getElementById('auth-logout-btn-modal')?.addEventListener('click', () => {
+          this.logout();
+        });
+        document.getElementById('auth-manual-sync-btn')?.addEventListener('click', async () => {
+          const btn = document.getElementById('auth-manual-sync-btn');
+          if (btn) btn.textContent = '...';
+          await this.syncUserToCloud(this.profile);
+          if (btn) btn.textContent = '✓ Збережено';
+          setTimeout(() => { if (btn) btn.textContent = '🔄 Синхр'; }, 2000);
+        });
+      } else {
+        gStatusEl.innerHTML = '';
+      }
+    }
+  }
+
+  // --- MANDATORY AUTH & ONBOARDING GATE MODAL ---
+  showAuthGate() {
+    const modal = document.getElementById('auth-gate-modal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      this.setupGoogleButton('auth-gate-google-btn-container');
+    }
+  }
+
+  hideAuthGate() {
+    const modal = document.getElementById('auth-gate-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  switchAuthTab(tab) {
+    const loginForm = document.getElementById('auth-gate-login-form');
+    const registerForm = document.getElementById('auth-gate-register-form');
+    const loginTabBtn = document.getElementById('auth-tab-btn-login');
+    const regTabBtn = document.getElementById('auth-tab-btn-register');
+
+    if (tab === 'login') {
+      loginForm?.classList.remove('hidden');
+      registerForm?.classList.add('hidden');
+      loginTabBtn?.classList.add('border-indigo-500', 'text-white', 'bg-indigo-950/50');
+      loginTabBtn?.classList.remove('text-slate-400');
+      regTabBtn?.classList.remove('border-indigo-500', 'text-white', 'bg-indigo-950/50');
+      regTabBtn?.classList.add('text-slate-400');
+    } else {
+      registerForm?.classList.remove('hidden');
+      loginForm?.classList.add('hidden');
+      regTabBtn?.classList.add('border-indigo-500', 'text-white', 'bg-indigo-950/50');
+      regTabBtn?.classList.remove('text-slate-400');
+      loginTabBtn?.classList.remove('border-indigo-500', 'text-white', 'bg-indigo-950/50');
+      loginTabBtn?.classList.add('text-slate-400');
+    }
+  }
+
+  initGoogleAuth() {
+    window.handleGoogleCredentialResponse = (response) => {
+      try {
+        const payload = this.decodeJwtResponse(response.credential);
+        if (payload) {
+          this.loginWithGoogle(payload);
+        }
+      } catch (err) {
+        console.error('Failed to parse Google JWT credential', err);
+      }
+    };
+
+    this.setupGoogleButton('google-signin-btn-container');
+    this.setupGoogleButton('auth-gate-google-btn-container');
+  }
+
+  setupGoogleButton(containerId) {
+    const checkAndInit = () => {
+      if (window.google?.accounts?.id) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: this.googleClientId,
+            callback: window.handleGoogleCredentialResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true
+          });
+
+          const gBtnContainer = document.getElementById(containerId);
+          if (gBtnContainer) {
+            gBtnContainer.innerHTML = '';
+            window.google.accounts.id.renderButton(gBtnContainer, {
+              theme: 'filled_blue',
+              size: 'large',
+              text: 'continue_with',
+              shape: 'rectangular',
+              width: 320
+            });
+          }
+        } catch (e) {
+          console.warn('Google GSI init notice', e);
+        }
+      } else {
+        setTimeout(checkAndInit, 300);
+      }
+    };
+    checkAndInit();
+  }
+
+  decodeJwtResponse(token) {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // --- EXAM SCHEDULE & GRADES ENGINE (Per Topic: Topic 2 & Topic 3) ---
+  getExamSchedule(topicId = null) {
+    const activeTopic = topicId || window.currentActiveTopic || 'topic2';
+    const defaults = {
+      topic2: {
+        colloquiumDate: '2026-11-06T09:00',
+        midtermDate: '2026-11-08T08:30'
+      },
+      topic3: {
+        colloquiumDate: '2026-11-11T09:00',
+        midtermDate: '2026-11-13T08:30'
+      }
+    };
+
+    let allSchedules = this.profile?.examSchedulePerTopic;
+    if (!allSchedules) {
+      try {
+        const raw = localStorage.getItem('stathustle_exam_schedule_per_topic');
+        if (raw) {
+          allSchedules = JSON.parse(raw);
+        } else {
+          const legacyRaw = localStorage.getItem('stathustle_exam_schedule');
+          if (legacyRaw) {
+            const legacy = JSON.parse(legacyRaw);
+            if (legacy && legacy.colloquiumDate) {
+              allSchedules = {
+                topic2: legacy,
+                topic3: defaults.topic3
+              };
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (!allSchedules || typeof allSchedules !== 'object') {
+      allSchedules = JSON.parse(JSON.stringify(defaults));
+    }
+    if (!allSchedules.topic2) allSchedules.topic2 = defaults.topic2;
+    if (!allSchedules.topic3) allSchedules.topic3 = defaults.topic3;
+
+    if (this.profile) {
+      this.profile.examSchedulePerTopic = allSchedules;
+    }
+
+    return allSchedules[activeTopic] || defaults[activeTopic];
+  }
+
+  saveExamSchedule(colloquiumDate, midtermDate = null, topicId = null) {
+    let col = colloquiumDate;
+    let mid = midtermDate;
+    let tid = topicId;
+
+    if (typeof colloquiumDate === 'string' && (colloquiumDate === 'topic2' || colloquiumDate === 'topic3')) {
+      // Called as (topicId, { colloquiumDate, midtermDate }) or (topicId, colDate, midDate)
+      tid = colloquiumDate;
+      if (typeof midtermDate === 'object' && midtermDate !== null) {
+        col = midtermDate.colloquiumDate || null;
+        mid = midtermDate.midtermDate || null;
+      } else {
+        col = midtermDate;
+        mid = topicId;
+      }
+    } else if (typeof colloquiumDate === 'object' && colloquiumDate !== null) {
+      col = colloquiumDate.colloquiumDate || null;
+      mid = colloquiumDate.midtermDate || null;
+      tid = midtermDate || topicId;
+    }
+
+    const activeTopic = tid || window.currentActiveTopic || 'topic2';
+    if (!this.profile) this.profile = this.createDefaultProfile();
+
+    // Ensure initialized
+    this.getExamSchedule(activeTopic);
+
+    if (col) {
+      this.profile.examSchedulePerTopic[activeTopic].colloquiumDate = col;
+    }
+    if (mid) {
+      this.profile.examSchedulePerTopic[activeTopic].midtermDate = mid;
+    }
+
+    try {
+      localStorage.setItem('stathustle_exam_schedule_per_topic', JSON.stringify(this.profile.examSchedulePerTopic));
+    } catch (e) {}
+    this.saveProfile();
+    this.renderExamScheduleAndGrades();
+    if (window.app?.setupCountdowns) {
+      window.app.setupCountdowns();
+    }
+  }
+
+  getExamGrades(topicId = null) {
+    const activeTopic = topicId || window.currentActiveTopic || 'topic2';
+    const emptyGrades = () => ({
+      colloquium: { grade: '', notes: '', updatedAt: null },
+      midterm: { grade: '', notes: '', updatedAt: null }
+    });
+
+    let allGrades = this.profile?.examGradesPerTopic;
+    if (!allGrades) {
+      try {
+        const raw = localStorage.getItem('stathustle_exam_grades_per_topic');
+        if (raw) {
+          allGrades = JSON.parse(raw);
+        } else {
+          const legacyRaw = localStorage.getItem('stathustle_exam_grades');
+          if (legacyRaw) {
+            const legacy = JSON.parse(legacyRaw);
+            if (legacy && (legacy.colloquium || legacy.midterm)) {
+              allGrades = {
+                topic2: legacy,
+                topic3: emptyGrades()
+              };
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (!allGrades || typeof allGrades !== 'object') {
+      allGrades = {
+        topic2: emptyGrades(),
+        topic3: emptyGrades()
+      };
+    }
+    if (!allGrades.topic2) allGrades.topic2 = emptyGrades();
+    if (!allGrades.topic3) allGrades.topic3 = emptyGrades();
+
+    if (this.profile) {
+      this.profile.examGradesPerTopic = allGrades;
+    }
+
+    return allGrades[activeTopic] || emptyGrades();
+  }
+
+  saveExamGrade(type, grade, notes = '', topicId = null) {
+    const activeTopic = topicId || window.currentActiveTopic || 'topic2';
+    if (!this.profile) this.profile = this.createDefaultProfile();
+
+    this.getExamGrades(activeTopic);
+
+    this.profile.examGradesPerTopic[activeTopic][type] = {
+      grade: (grade || '').trim(),
+      notes: (notes || '').trim(),
+      updatedAt: Date.now()
+    };
+
+    try {
+      localStorage.setItem('stathustle_exam_grades_per_topic', JSON.stringify(this.profile.examGradesPerTopic));
+    } catch (e) {}
+    this.saveProfile();
+    this.renderExamScheduleAndGrades();
+    if (window.app?.setupCountdowns) {
+      window.app.setupCountdowns();
+    }
+  }
+
+  renderExamScheduleAndGrades() {
+    const activeTopic = window.currentActiveTopic || 'topic2';
+    const isT3 = activeTopic === 'topic3';
+    const schedule = this.getExamSchedule(activeTopic);
+    const grades = this.getExamGrades(activeTopic);
+
+    // Update Titles for Active Topic
+    const colTitleEl = document.getElementById('colloquium-card-title');
+    if (colTitleEl) colTitleEl.textContent = isT3 ? 'Колоквіум 3 (Colloquium 3)' : 'Колоквіум 2 (Colloquium 2)';
+    const colSubEl = document.getElementById('colloquium-card-subtitle');
+    if (colSubEl) colSubEl.textContent = isT3
+      ? 'Усна співбесіда (20 хв) • 22 означення + 12 усних запитань'
+      : 'Усна співбесіда (20 хв) • 21 означення + 12 усних запитань';
+
+    const midTitleEl = document.getElementById('midterm-card-title');
+    if (midTitleEl) midTitleEl.textContent = isT3 ? 'Мідтерм 3 (Midterm 3)' : 'Мідтерм 2 (Midterm 2)';
+    const midSubEl = document.getElementById('midterm-card-subtitle');
+    if (midSubEl) midSubEl.textContent = isT3
+      ? 'Письмовий іспит (LLN, CLT, MME, MLE, CI, Bayes)'
+      : 'Письмовий іспит (Discrete & Continuous RVs, Joint, PGF)';
+
+    // Update schedule topic switcher buttons if present
+    document.querySelectorAll('.schedule-topic-pill').forEach(btn => {
+      const t = btn.getAttribute('data-sched-topic');
+      if (t === activeTopic) {
+        btn.className = 'schedule-topic-pill px-3 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow transition';
+      } else {
+        btn.className = 'schedule-topic-pill px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition';
+      }
+    });
+
+    // 1. Populate Colloquium Date Picker
+    const colInput = document.getElementById('colloquium-datetime-input');
+    if (colInput && schedule.colloquiumDate) {
+      colInput.value = schedule.colloquiumDate;
+    }
+
+    // 2. Populate Midterm Date Picker
+    const midInput = document.getElementById('midterm-datetime-input');
+    if (midInput && schedule.midtermDate) {
+      midInput.value = schedule.midtermDate;
+    }
+
+    // 3. Render Colloquium Grade
+    const colGradeForm = document.getElementById('colloquium-grade-form');
+    const colGradeDisplay = document.getElementById('colloquium-grade-display');
+    const colStatusBadge = document.getElementById('colloquium-status-badge');
+    const colDateLabel = document.getElementById('colloquium-grade-saved-date');
+
+    const colG = grades.colloquium;
+    if (colG && colG.grade) {
+      if (colGradeForm) colGradeForm.classList.add('hidden');
+      if (colGradeDisplay) {
+        colGradeDisplay.classList.remove('hidden');
+        const badgeVal = document.getElementById('colloquium-grade-badge-val');
+        const notesVal = document.getElementById('colloquium-grade-notes-val');
+        if (badgeVal) badgeVal.textContent = colG.grade;
+        if (notesVal) notesVal.textContent = colG.notes || 'Без додаткового коментаря';
+      }
+      if (colStatusBadge) {
+        colStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-700 shrink-0';
+        colStatusBadge.textContent = `✅ Складено: ${colG.grade}`;
+      }
+      if (colDateLabel && colG.updatedAt) {
+        const d = new Date(colG.updatedAt);
+        colDateLabel.textContent = `Збережено: ${d.toLocaleDateString('uk-UA')} ${d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}`;
+      }
+    } else {
+      if (colGradeDisplay) colGradeDisplay.classList.add('hidden');
+      if (colGradeForm) colGradeForm.classList.remove('hidden');
+      const gInput = document.getElementById('colloquium-grade-input');
+      const nInput = document.getElementById('colloquium-notes-input');
+      if (gInput) gInput.value = '';
+      if (nInput) nInput.value = '';
+      if (colStatusBadge) {
+        colStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-950 text-amber-300 border border-amber-800 shrink-0';
+        colStatusBadge.textContent = '⚡ Очікується';
+      }
+      if (colDateLabel) colDateLabel.textContent = '';
+    }
+
+    // 4. Render Midterm Grade
+    const midGradeForm = document.getElementById('midterm-grade-form');
+    const midGradeDisplay = document.getElementById('midterm-grade-display');
+    const midStatusBadge = document.getElementById('midterm-status-badge');
+    const midDateLabel = document.getElementById('midterm-grade-saved-date');
+
+    const midG = grades.midterm;
+    if (midG && midG.grade) {
+      if (midGradeForm) midGradeForm.classList.add('hidden');
+      if (midGradeDisplay) {
+        midGradeDisplay.classList.remove('hidden');
+        const badgeVal = document.getElementById('midterm-grade-badge-val');
+        const notesVal = document.getElementById('midterm-grade-notes-val');
+        if (badgeVal) badgeVal.textContent = midG.grade;
+        if (notesVal) notesVal.textContent = midG.notes || 'Без додаткового коментаря';
+      }
+      if (midStatusBadge) {
+        midStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-700 shrink-0';
+        midStatusBadge.textContent = `🏆 Оцінка: ${midG.grade}`;
+      }
+      if (midDateLabel && midG.updatedAt) {
+        const d = new Date(midG.updatedAt);
+        midDateLabel.textContent = `Збережено: ${d.toLocaleDateString('uk-UA')} ${d.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}`;
+      }
+    } else {
+      if (midGradeDisplay) midGradeDisplay.classList.add('hidden');
+      if (midGradeForm) midGradeForm.classList.remove('hidden');
+      const gInput = document.getElementById('midterm-grade-input');
+      const nInput = document.getElementById('midterm-notes-input');
+      if (gInput) gInput.value = '';
+      if (nInput) nInput.value = '';
+      if (midStatusBadge) {
+        midStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-950 text-indigo-300 border border-indigo-800 shrink-0';
+        midStatusBadge.textContent = '🔥 Очікується';
+      }
+      if (midDateLabel) midDateLabel.textContent = '';
+    }
+  }
+
+  initExamScheduleControls() {
+    if (this._examControlsBound) return;
+    this._examControlsBound = true;
+
+    // Colloquium save time
+    document.getElementById('save-colloquium-datetime-btn')?.addEventListener('click', () => {
+      const input = document.getElementById('colloquium-datetime-input');
+      if (!input || !input.value) {
+        alert('Будь ласка, оберіть дату та час для колоквіуму!');
+        return;
+      }
+      this.saveExamSchedule(input.value, null);
+      alert(`✅ Час колоквіуму успішно збережено: ${input.value.replace('T', ' ')}! Таймер оновлено.`);
+    });
+
+    // Midterm save time
+    document.getElementById('save-midterm-datetime-btn')?.addEventListener('click', () => {
+      const input = document.getElementById('midterm-datetime-input');
+      if (!input || !input.value) {
+        alert('Будь ласка, оберіть дату та час для мідтерму!');
+        return;
+      }
+      this.saveExamSchedule(null, input.value);
+      alert(`✅ Час мідтерму успішно збережено: ${input.value.replace('T', ' ')}! Таймер оновлено.`);
+    });
+
+    // Colloquium preset buttons
+    document.querySelectorAll('.col-slot-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const dt = btn.getAttribute('data-dt');
+        const input = document.getElementById('colloquium-datetime-input');
+        if (input && dt) {
+          input.value = dt;
+          this.saveExamSchedule(dt, null);
+        }
+      });
+    });
+
+    // Midterm preset buttons
+    document.querySelectorAll('.mid-slot-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const dt = btn.getAttribute('data-dt');
+        const input = document.getElementById('midterm-datetime-input');
+        if (input && dt) {
+          input.value = dt;
+          this.saveExamSchedule(null, dt);
+        }
+      });
+    });
+
+    // Colloquium save grade
+    document.getElementById('save-colloquium-grade-btn')?.addEventListener('click', () => {
+      const gradeInput = document.getElementById('colloquium-grade-input');
+      const notesInput = document.getElementById('colloquium-notes-input');
+      const val = gradeInput?.value?.trim();
+      if (!val) {
+        alert('Будь ласка, введіть отриману оцінку за колоквіум (наприклад, 10/10 або 9.5)!');
+        return;
+      }
+      this.saveExamGrade('colloquium', val, notesInput?.value || '');
+      alert(`🎉 Оцінку за колоквіум збережено: ${val}! Вітаємо зі складанням!`);
+    });
+
+    // Colloquium edit grade
+    document.getElementById('edit-colloquium-grade-btn')?.addEventListener('click', () => {
+      const grades = this.getExamGrades();
+      const gradeInput = document.getElementById('colloquium-grade-input');
+      const notesInput = document.getElementById('colloquium-notes-input');
+      if (gradeInput && grades.colloquium?.grade) gradeInput.value = grades.colloquium.grade;
+      if (notesInput && grades.colloquium?.notes) notesInput.value = grades.colloquium.notes;
+
+      document.getElementById('colloquium-grade-display')?.classList.add('hidden');
+      document.getElementById('colloquium-grade-form')?.classList.remove('hidden');
+    });
+
+    // Midterm save grade
+    document.getElementById('save-midterm-grade-btn')?.addEventListener('click', () => {
+      const gradeInput = document.getElementById('midterm-grade-input');
+      const notesInput = document.getElementById('midterm-notes-input');
+      const val = gradeInput?.value?.trim();
+      if (!val) {
+        alert('Будь ласка, введіть отриману оцінку за мідтерм (наприклад, 95/100 або 24/25)!');
+        return;
+      }
+      this.saveExamGrade('midterm', val, notesInput?.value || '');
+      alert(`🏆 Оцінку за мідтерм збережено: ${val}! Чудовий результат!`);
+    });
+
+    // Midterm edit grade
+    document.getElementById('edit-midterm-grade-btn')?.addEventListener('click', () => {
+      const grades = this.getExamGrades();
+      const gradeInput = document.getElementById('midterm-grade-input');
+      const notesInput = document.getElementById('midterm-notes-input');
+      if (gradeInput && grades.midterm?.grade) gradeInput.value = grades.midterm.grade;
+      if (notesInput && grades.midterm?.notes) notesInput.value = grades.midterm.notes;
+
+      document.getElementById('midterm-grade-display')?.classList.add('hidden');
+      document.getElementById('midterm-grade-form')?.classList.remove('hidden');
+    });
+
+    // Make header countdowns jump to schedule card on click
+    const colHeader = document.getElementById('colloquium-countdown-text');
+    if (colHeader) {
+      colHeader.style.cursor = 'pointer';
+      colHeader.setAttribute('title', 'Натисніть, щоб налаштувати дату або внести оцінку за колоквіум');
+      colHeader.onclick = () => {
+        window.app?.switchTab('dashboard');
+        setTimeout(() => {
+          document.getElementById('exam-schedule-grades-card')?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      };
+    }
+    const midHeader = document.getElementById('midterm-countdown-text');
+    if (midHeader) {
+      midHeader.style.cursor = 'pointer';
+      midHeader.setAttribute('title', 'Натисніть, щоб переглянути розклад або внести оцінку за мідтерм');
+      midHeader.onclick = () => {
+        window.app?.switchTab('dashboard');
+        setTimeout(() => {
+          document.getElementById('exam-schedule-grades-card')?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      };
+    }
+  }
+
+  resetStudyTimer() {
+    if (!this.profile) return;
+    this.profile.totalSeconds = 0;
+    this.profile.studySeconds = 0;
+    this.profile.timePerTab = { dashboard: 0, colloquium: 0, problems: 0, quizzes: 0, topics: 0, formulas: 0 };
+    this.saveProfile();
+    this.renderStudyTimeElements();
+    this.renderTabTimeAnalytics();
+  }
+}
+
+window.userProfile = new UserProfileManager();
