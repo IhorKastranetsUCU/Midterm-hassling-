@@ -3,7 +3,8 @@
 .sidebar { background: #efebe2; border-color: #e1dad1; padding-top: 1.75rem; }
 .sidebar .wordmark { margin-bottom: 2.2rem; }
 .workspace-topbar { background: #fcfaf5b3; min-height: 4.6rem; }
-.workspace-topbar #view-name { margin-right: auto; color: #756873; }
+.workspace-topbar #view-name { min-width: 0; margin-right: auto; color: #756873; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.workspace-topbar > :is(a, button) { flex-shrink: 0; }
 .workspace-nav a { font-size: .8rem; min-height: 2.9rem; }
 .workspace-nav a[aria-current="page"] { background: #e1d4eb; color: #49324f; box-shadow: inset 0 1px 0 #ffffff80; }
 .sidebar-course-label { color: #756873; margin: 1.75rem .8rem .5rem; font-size: .69rem; font-weight: 700; }
@@ -433,10 +434,12 @@
 .workspace-topbar { min-height: 3.65rem; }
 #workspace-main { padding-top: clamp(1.15rem, 2.2vw, 2rem); }
 .workspace-nav a { font-size: .86rem; }
-.workspace-nav a.sidebar-course { font-size: .8rem; }
+.workspace-nav a.sidebar-course { font-size: .8rem; line-height: 1.4; overflow-wrap: anywhere; }
 .workspace-nav .sidebar-course[aria-current="page"] { box-shadow: inset .2rem 0 #795387; }
 .dashboard-heading { margin-bottom: 1rem; }
 .dashboard-heading h1 { font-size: clamp(1.85rem, 2.8vw, 2.8rem); line-height: 1.1; }
+.back-to-courses ~ .dashboard-heading > div:first-child { min-width: 0; flex: 1 1 24rem; }
+.back-to-courses ~ .dashboard-heading h1 { font-size: clamp(1.55rem, 1.15rem + 1.1vw, 2.1rem); line-height: 1.16; overflow-wrap: anywhere; }
 .dashboard-heading p { margin-top: .4rem; color: #6f606d; font-size: .84rem; }
 .learning-strip { gap: clamp(.7rem, 2vw, 2rem); padding: .45rem 0 1rem; margin-bottom: 1.3rem; align-items: center; }
 .learning-strip strong { font-size: 1.22rem; }
@@ -515,6 +518,6 @@
 .calendar-month-controls strong { text-transform: none; }
 .month-heading strong { order: -1; margin-right: .35rem; font-size: 1.2rem; }
 .month-heading .icon-button { background: #f3ebe6; width: 2rem; height: 2rem; }
-@media(max-width:58rem) {
+@media(max-width:67rem) {
   .desk-layout { grid-template-columns: minmax(0,1fr); grid-template-areas: "focus" "stats" "work" "side"; grid-template-rows: auto; }
 }
