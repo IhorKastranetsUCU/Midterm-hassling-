@@ -191,7 +191,8 @@
     if (!timerPanel || timerPanel.hidden) return;
     const {bottom, right} = timerMenu.getBoundingClientRect();
     if (bottom <= 0) { closeTimerMenu(); return; }
-    timerPanel.style.setProperty('--timer-menu-top', Math.ceil(bottom + 8) + 'px');
+    const topbarBottom = timerMenu.closest('.workspace-topbar').getBoundingClientRect().bottom;
+    timerPanel.style.setProperty('--timer-menu-top', Math.ceil(Math.max(bottom, topbarBottom) + 8) + 'px');
     timerPanel.style.setProperty('--timer-menu-right', Math.max(16, innerWidth - right) + 'px');
   }
   function refreshTimerControls(trigger, selector) {
@@ -269,7 +270,7 @@
     const hash = location.hash.slice(1) || 'plan', course = hash.startsWith('course/') ? courseById(hash.split('/')[1]) : null;
     if (H.workspace && (hash === 'deadlines' || course?.connected && hash === 'course/' + course.id + '/assignments')) {
       document.title = 'Дедлайни — Hustle';
-      document.querySelector('#view-name').textContent = course?.short || 'Дедлайни';
+      if (!course) document.querySelector('#view-name').textContent = 'Дедлайни';
       document.querySelectorAll('[data-nav],.sidebar-course').forEach(a => {
         if (course && a.hash === '#course/' + course.id) a.setAttribute('aria-current','page');
         else a.removeAttribute('aria-current');
@@ -287,11 +288,17 @@
       return true;
     }
     if (!['plan', 'courses', 'calendar', 'focus'].includes(hash) && !hash.startsWith('course/')) return false;
-    if (hash.startsWith('course/') && !course) { fire.mount(); main.innerHTML = heading('Предмет не знайдено', '<a class="secondary" href="#courses">До предметів</a>'); return true; }
+    if (hash.startsWith('course/') && !course) {
+      document.querySelector('#view-name').textContent = 'Предмет не знайдено';
+      fire.mount();
+      main.innerHTML = heading('Предмет не знайдено', '<a class="secondary" href="#courses">До предметів</a>');
+      return true;
+    }
     if (course && timerPhase(state.timer) === 'ready' && state.timer.course !== course.id) { state.timer.course = course.id; save(); }
     const title = course?.short || ({ plan: 'Мій огляд', courses: 'Мої предмети', calendar: 'Календар', focus: 'Pomodoro' })[hash];
     document.querySelectorAll('[data-nav],.sidebar-course').forEach(a => { if (course ? a.hash === '#course/' + course.id : a.dataset.nav === hash) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-    document.querySelector('#view-name').textContent = title; document.title = `${title} — Hustle`;
+    if (!course?.connected) document.querySelector('#view-name').textContent = title;
+    document.title = `${title} — Hustle`;
     // The weekly planner manages its own refreshes and open days.
     const mountedWeek = hash === 'calendar' && H.liveCalendar?.week && main.querySelector('[data-paper-week]');
     if (!mountedWeek) main.innerHTML = hash === 'calendar' ? calendarView() : hash === 'courses' ? coursesView() : hash === 'focus' ? heading('Pomodoro') + `<div class="dedicated-focus">${timerCard()}${weeklyChart()}</div>` : dashboardView(course);

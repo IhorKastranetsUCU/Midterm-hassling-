@@ -100,7 +100,7 @@
       : ({settings:'Налаштування',deadlines:'Дедлайни',connect:'Додати з Moodle',import:'Додати з Moodle'})[hash];
     const main = document.querySelector('#workspace-main');
     document.title = title + ' — Hustle';
-    document.querySelector('#view-name').textContent = isPickerRoute(hash) ? 'Мої предмети' : title;
+    if (!currentCourse) document.querySelector('#view-name').textContent = isPickerRoute(hash) ? 'Мої предмети' : title;
     const navHash = isPickerRoute(hash) ? 'courses' : hash;
     const activeHash = course ? 'course/' + course[1] : navHash;
     document.querySelectorAll('[data-nav],.sidebar-course').forEach(a => {
@@ -126,6 +126,13 @@
     return true;
   }
   function courseHeader(course, section = 'overview') {
+    const titleSlot = document.querySelector('#view-name');
+    if (titleSlot.firstElementChild?.textContent !== course.name) {
+      const title = document.createElement('h1');
+      title.tabIndex = -1;
+      title.textContent = course.name;
+      titleSlot.replaceChildren(title);
+    }
     const sections = [['overview', 'Огляд'], ['topics', 'Теми'], ['practice', 'Практика'], ['assignments', 'Дедлайни'], ['manage', 'Параметри']];
     const active = ({reading:'topics', materials:'topics', topic:'topics', exam:'practice', grades:'assignments', submissions:'assignments'})[section] || section;
     const route = (id, key) => '#course/' + id + (key === 'overview' ? '' : '/' + key);
@@ -134,9 +141,11 @@
       <option value="" selected disabled>Змінити предмет</option>${courses.filter(c => c.id !== course.id).map(c =>
         `<option value="${esc(route(c.id, active))}">${esc(c.name)}</option>`).join('')}</select>` : '';
     return `<div class="paper-course-header">
-      <nav aria-label="Шлях сторінки"><a class="back-to-courses" href="#courses">← Мої предмети</a></nav>
-      <header class="page-heading dashboard-heading"><div><h1 tabindex="-1">${esc(course.name)}</h1><p>${esc(day)}</p></div>
-        <div class="paper-course-header-actions">${switcher}${H.paperOral?.button(course) || ''}</div></header>
+      <div class="paper-course-context">
+        <nav aria-label="Шлях сторінки"><a class="back-to-courses" href="#courses">← Мої предмети</a></nav>
+        <time datetime="${core.dateKey()}">${esc(day)}</time>
+        <div class="paper-course-header-actions">${switcher}${H.paperOral?.button(course) || ''}</div>
+      </div>
       <nav class="paper-course-actions" aria-label="Розділи предмета">
         ${sections.map(([key, label]) => `<a class="secondary" href="${esc(route(course.id, key))}"${key === active ? ' aria-current="page"' : ''}>${label}</a>`).join('')}
       </nav></div>`;

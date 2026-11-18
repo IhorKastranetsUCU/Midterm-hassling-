@@ -5,9 +5,15 @@
 .workspace-topbar { background: #fcfaf5b3; min-height: 4.6rem; }
 .workspace-topbar #view-name { min-width: 0; margin-right: auto; color: #756873; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .workspace-topbar > :is(a, button) { flex-shrink: 0; }
-.workspace-topbar:has(+ #workspace-main .paper-course-header) { justify-content: flex-end; }
-.workspace-topbar:has(+ #workspace-main .paper-course-header) #view-name { display: none; }
-.workspace-topbar:has(+ #workspace-main .paper-course-header) .mobile-menu { margin-inline-end: auto; }
+.workspace-topbar:has(#view-name h1) { position: sticky; top: 0; z-index: 20; background: #faf7ef; }
+.workspace-topbar:has(#view-name h1) #view-name { flex: 1; white-space: normal; overflow: visible; }
+.workspace-topbar #view-name h1 { margin: 0; color: #39273c; font-size: clamp(.95rem, 1.25vw, 1.125rem); line-height: 1.3; overflow-wrap: anywhere; }
+.workspace-topbar #view-name h1:focus { outline: 0; }
+@media(max-width:40rem) {
+  .workspace-topbar:has(#view-name h1) { flex-wrap: wrap; gap: .4rem .6rem; }
+  .workspace-topbar:has(#view-name h1) #view-name { flex: 0 0 100%; order: 1; }
+  .workspace-topbar:has(#view-name h1) .mobile-menu { margin-inline-end: auto; }
+}
 .workspace-nav a { font-size: .8rem; min-height: 2.9rem; }
 .workspace-nav a[aria-current="page"] { background: #e1d4eb; color: #49324f; box-shadow: inset 0 1px 0 #ffffff80; }
 .sidebar-course-label { color: #756873; margin: 1.75rem .8rem .5rem; font-size: .69rem; font-weight: 700; }
@@ -532,9 +538,12 @@
 .desk-layout { grid-template-areas: "stats stats" "focus side" "work side"; grid-template-rows: auto auto 1fr; }
 .compact-desk-layout { grid-template-areas: "stats stats" "work side"; grid-template-rows: auto auto; }
 .paper-course-header { margin-bottom: 1.15rem; }
-.paper-course-header .dashboard-heading > div:first-child { min-width: 0; flex: 1 1 24rem; }
-.paper-course-header .dashboard-heading h1 { font-size: clamp(1.55rem, 1.15rem + 1.1vw, 2.1rem); line-height: 1.16; overflow-wrap: anywhere; }
+.paper-course-context { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem 1rem; margin-bottom: .85rem; }
+.paper-course-context .back-to-courses { margin: 0; }
+.paper-course-context time { color: #6f606d; font-size: .75rem; }
+.paper-course-context time::first-letter { text-transform: uppercase; }
 .paper-course-header-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; min-width: 0; max-width: 100%; }
+.paper-course-context .paper-course-header-actions { margin-inline-start: auto; }
 .paper-course-switch { width: 11rem; max-width: 100%; min-height: 2.55rem; padding: .4rem .55rem; color: inherit; background: #fcfaf4; border: 1px solid #bca9be; border-radius: .55rem; }
 .paper-course-header .paper-course-actions a[aria-current="page"] { background: #e9ddef; border-color: #9a78a6; }
 .paper-deadline-actions { margin-bottom: 1rem; }

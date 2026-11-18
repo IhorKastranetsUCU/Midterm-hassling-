@@ -66,7 +66,7 @@
     render();
     if (main.querySelector('.paper-course-header')) {
       const target = fromCourseTab && main.querySelector('.paper-course-actions [aria-current="page"]');
-      (target || main.querySelector('h1'))?.focus({preventScroll:true});
+      (target || document.querySelector('#view-name h1'))?.focus({preventScroll:true});
       window.scrollTo({top:0, behavior:'instant'});
     } else main.querySelector('h1')?.focus();
   });
