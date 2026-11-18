@@ -1,0 +1,105 @@
+/* Shared closed field and picker for the paper workspace and its embedded tools. */
+select:is(:not([size]), [size="1"]):not([multiple]) {
+  --dropdown-ink: #39273c;
+  --dropdown-paper: #fdfaf3;
+  --dropdown-border: #cdbdcb;
+  --dropdown-active: #eee3f3;
+  --dropdown-focus: #82558a;
+  box-sizing: border-box;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  min-block-size: 2.55rem;
+  padding: .55rem 2.1rem .55rem .75rem;
+  border: 1px solid var(--dropdown-border);
+  border-radius: .65rem;
+  font-family: inherit;
+  color: var(--dropdown-ink);
+  background: var(--dropdown-paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%2375547d' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") right .72rem center / 1rem no-repeat;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  appearance: none;
+}
+
+select:is(:not([size]), [size="1"]):not([multiple]):enabled:hover {
+  border-color: #a88bad;
+}
+
+select:is(:not([size]), [size="1"]):not([multiple]):focus-visible {
+  outline: 2px solid var(--dropdown-focus);
+  outline-offset: 2px;
+}
+
+select:is(:not([size]), [size="1"]):not([multiple]):disabled {
+  background-color: #f1ecf0;
+  color: #655569;
+  cursor: default;
+}
+
+@supports (appearance: base-select) and selector(select::picker(select)) {
+  select:is(:not([size]), [size="1"]):not([multiple]) {
+    appearance: base-select;
+    align-items: center;
+    gap: .55rem;
+    padding-inline-end: .75rem;
+    background-image: none;
+    overflow: hidden;
+  }
+
+  select:is(:not([size]), [size="1"]):not([multiple])::picker-icon {
+    flex: none;
+    color: #75547d;
+  }
+
+  select:is(:not([size]), [size="1"]):not([multiple]):open::picker-icon {
+    rotate: 180deg;
+  }
+
+  select:is(:not([size]), [size="1"]):not([multiple])::picker(select) {
+    appearance: base-select;
+    box-sizing: border-box;
+    inline-size: min(22rem, calc(100vw - 1.5rem));
+    inline-size: clamp(min(13rem, calc(100vw - 1.5rem)), anchor-size(width, 18rem), min(26rem, calc(100vw - 1.5rem)));
+    max-block-size: min(18rem, calc(100dvh - 1.5rem));
+    overflow: auto;
+    overscroll-behavior: contain;
+    margin-block: .35rem;
+    padding: .3rem;
+    background: #fdfaf3;
+    color: #39273c;
+    border: 1px solid #cdbdcb;
+    border-radius: .8rem;
+    box-shadow: 0 .65rem 1.65rem #33203926;
+  }
+
+  select:is(:not([size]), [size="1"]):not([multiple]) option {
+    box-sizing: border-box;
+    min-block-size: 2.45rem;
+    gap: .45rem;
+    padding: .58rem .68rem;
+    border-radius: .48rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+  }
+
+  select:is(:not([size]), [size="1"]):not([multiple]) option:checked {
+    background: #eee3f3;
+  }
+
+  select:is(:not([size]), [size="1"]):not([multiple]) option:enabled:is(:hover, :focus-visible) {
+    background-color: #e8daf0;
+    outline: 1px solid #a787af;
+    outline-offset: -1px;
+  }
+
+  select:is(:not([size]), [size="1"]):not([multiple]) option::checkmark {
+    order: 1;
+    margin-inline-start: auto;
+    color: #6d4278;
+    flex: none;
+  }
+}
+
+@media (forced-colors: active) {
+  select:is(:not([size]), [size="1"]):not([multiple]) { appearance: auto; background-image: none; }
+}

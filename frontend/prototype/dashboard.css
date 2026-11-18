@@ -5,6 +5,9 @@
 .workspace-topbar { background: #fcfaf5b3; min-height: 4.6rem; }
 .workspace-topbar #view-name { min-width: 0; margin-right: auto; color: #756873; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .workspace-topbar > :is(a, button) { flex-shrink: 0; }
+.workspace-topbar:has(+ #workspace-main .paper-course-header) { justify-content: flex-end; }
+.workspace-topbar:has(+ #workspace-main .paper-course-header) #view-name { display: none; }
+.workspace-topbar:has(+ #workspace-main .paper-course-header) .mobile-menu { margin-inline-end: auto; }
 .workspace-nav a { font-size: .8rem; min-height: 2.9rem; }
 .workspace-nav a[aria-current="page"] { background: #e1d4eb; color: #49324f; box-shadow: inset 0 1px 0 #ffffff80; }
 .sidebar-course-label { color: #756873; margin: 1.75rem .8rem .5rem; font-size: .69rem; font-weight: 700; }

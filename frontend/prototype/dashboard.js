@@ -455,6 +455,7 @@
     document.addEventListener('click', e => { if (!e.composedPath().includes(timerMenu)) closeTimerMenu(); });
     document.addEventListener('keydown', e => {
       if (e.key !== 'Escape' || timerPanel.hidden || document.querySelector('dialog[open]')) return;
+      if (CSS.supports('selector(select:open)') && timerPanel.querySelector('select:open')) return;
       e.preventDefault();
       closeTimerMenu(timerMenu.contains(document.activeElement));
     });
