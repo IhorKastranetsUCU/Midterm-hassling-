@@ -127,8 +127,8 @@ async def open_workspace(request: Request):
 @app.get("/hustle/tools.html", response_class=HTMLResponse, include_in_schema=False)
 async def course_tools():
     source = (Path(hustle_dir) / "app.html").read_text(encoding="utf-8")
-    return HTMLResponse(source.replace("<head>", '<head><link rel="stylesheet" href="/prototype/course-tools.css">'
-                                       '<script defer src="/prototype/course-tools.js"></script>'),
+    return HTMLResponse(source.replace("<head>", '<head><link rel="stylesheet" href="/prototype/course-tools.css?v=5149d95e">'
+                                       '<script defer src="/prototype/course-tools.js?v=c8755da5"></script>'),
                         headers={"Cache-Control": "no-cache"})
 
 
@@ -181,7 +181,7 @@ async def paper_workspace(request: Request, response: Response):
         '<script defer src="/hustle/dashboard-today.js"></script>'
         '<link rel="stylesheet" href="/hustle/moodle-picker.css">'
         '<script defer src="/hustle/moodle-picker.js"></script>'
-        '<script defer src="paper-workspace.js"></script>'
+        '<script defer src="paper-workspace.js?v=83a4e056"></script>'
         '<script defer src="calendar-connected.js"></script>'
         '<link rel="stylesheet" href="/hustle/oral-defense.css">'
         '<script defer src="/hustle/oral-defense.js"></script>'

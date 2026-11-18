@@ -84,7 +84,7 @@
     },
   });
   function tools(hash) {
-    const course = /^course\/(\d+)\/([^?]+)/.exec(hash);
+    const course = /^course\/(\d+)\/([^/?]+)/.exec(hash);
     const isTool = (course && course[2] !== 'overview') || ['settings','deadlines','connect','import'].includes(hash);
     const previousTool = lastTool;
     lastTool = isTool ? hash : '';
@@ -95,7 +95,8 @@
     }
     if (course && course[2] === 'overview') return false;
     if (!course && !['settings','deadlines','connect','import'].includes(hash)) return false;
-    const title = course ? courses.find(c => c.id === course[1])?.name || 'Предмет'
+    const currentCourse = course && courses.find(c => c.id === course[1]);
+    const title = course ? currentCourse?.name || 'Предмет'
       : ({settings:'Налаштування',deadlines:'Дедлайни',connect:'Додати з Moodle',import:'Додати з Moodle'})[hash];
     const main = document.querySelector('#workspace-main');
     document.title = title + ' — Hustle';
@@ -119,19 +120,33 @@
     const nestedRoute = hash.replace(/^(course\/\d+)\/submissions$/, '$1/assignments');
     const src = '/hustle/tools.html#' + nestedRoute;
     const goal = hash === 'settings' ? '<label class="paper-goal">Ціль навчання на день <select data-paper-goal>' + [25,45,60].map(n => '<option value="' + n + '"' + (n === H.state.minutes ? ' selected' : '') + '>' + n + ' хв</option>').join('') + '</select></label>' : '';
-    main.innerHTML = '<h1 class="paper-hidden-heading" tabindex="-1">' + esc(title) + '</h1>' + goal + '<iframe class="paper-course-tools" title="' + esc(title) + '" data-route="' + esc(hash) + '" src="' + esc(src) + '" allow="microphone"></iframe>';
+    const header = currentCourse ? courseHeader(currentCourse, course[2]) : '<h1 class="paper-hidden-heading" tabindex="-1">' + esc(title) + '</h1>';
+    main.innerHTML = header + goal + '<iframe class="paper-course-tools" title="' + esc(title) + '" data-route="' + esc(hash) + '"' +
+      (currentCourse ? ' data-shared-course-header' : '') + ' src="' + esc(src) + '" allow="microphone"></iframe>';
     return true;
   }
-  function courseActions(c) {
-    return '<nav class="paper-course-actions" aria-label="Навчання за предметом">' +
-      [['topics','Теми'],['practice','Практика'],['assignments','Дедлайни'],['manage','Параметри']].map(([section,title]) =>
-        '<a class="secondary" href="#course/' + c.id + '/' + section + '">' + title + '</a>').join('') + '</nav>';
+  function courseHeader(course, section = 'overview') {
+    const sections = [['overview', 'Огляд'], ['topics', 'Теми'], ['practice', 'Практика'], ['assignments', 'Дедлайни'], ['manage', 'Параметри']];
+    const active = ({reading:'topics', materials:'topics', topic:'topics', exam:'practice', grades:'assignments', submissions:'assignments'})[section] || section;
+    const route = (id, key) => '#course/' + id + (key === 'overview' ? '' : '/' + key);
+    const day = new Intl.DateTimeFormat('uk-UA', {timeZone: core.zone, weekday: 'long', day: 'numeric', month: 'long'}).format(Date.now());
+    const switcher = courses.length > 1 ? `<select class="paper-course-switch" data-paper-course-switch aria-label="Змінити предмет">
+      <option value="" selected disabled>Змінити предмет</option>${courses.filter(c => c.id !== course.id).map(c =>
+        `<option value="${esc(route(c.id, active))}">${esc(c.name)}</option>`).join('')}</select>` : '';
+    return `<div class="paper-course-header">
+      <nav aria-label="Шлях сторінки"><a class="back-to-courses" href="#courses">← Мої предмети</a></nav>
+      <header class="page-heading dashboard-heading"><div><h1 tabindex="-1">${esc(course.name)}</h1><p>${esc(day)}</p></div>
+        <div class="paper-course-header-actions">${switcher}${H.paperOral?.button(course) || ''}</div></header>
+      <nav class="paper-course-actions" aria-label="Розділи предмета">
+        ${sections.map(([key, label]) => `<a class="secondary" href="${esc(route(course.id, key))}"${key === active ? ' aria-current="page"' : ''}>${label}</a>`).join('')}
+      </nav></div>`;
   }
   document.addEventListener('change', e => {
     if (e.target.matches('[data-paper-goal]')) H.update({minutes:Number(e.target.value)});
+    if (e.target.matches('[data-paper-course-switch]') && e.target.value) location.hash = e.target.value;
   });
   const add = '<a class="secondary" href="#connect">Додати з Moodle +</a>';
-  H.workspace = { get deadlineError() {return deadlineError;}, get courses() {return courses;}, tasks, notice, tools, courseActions, updateCourses, add };
+  H.workspace = { get deadlineError() {return deadlineError;}, get courses() {return courses;}, tasks, notice, tools, courseHeader, updateCourses, add };
   if (location.hash === '#dashboard') history.replaceState(null,'','#plan');
   window.addEventListener('hashchange', () => {
     updateImportLink();

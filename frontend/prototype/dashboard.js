@@ -185,12 +185,13 @@
     const list = tasks(course?.id).sort((a, b) => deadlineOrder(a, b, now));
     const active = list.filter(task => !task.done);
     const next = active[0];
-    const upcoming = active.filter((task, index) => task !== next && (task.course.connected || task.course.id !== next?.course.id &&
+    const compactCourse = course?.connected;
+    const upcoming = compactCourse ? active : active.filter((task, index) => task !== next && (task.course.connected || task.course.id !== next?.course.id &&
       active.findIndex(other => other.course.id === task.course.id) === index));
     const queue = upcoming.length ? `<section class="dash-panel deadline-queue">
-      <div class="panel-title"><h2>Інші дедлайни</h2><a href="#calendar">Календар ${icon('arrow')}</a></div>
-      ${upcoming.map(task => `<a class="deadline-line deadline-surface" href="#course/${task.course.id}">
-        ${avatar(task.course)}<span class="queue-title"><strong>${esc(task.course.deadline || task.title)}</strong><small>${esc(task.course.name)}</small></span>
+      <div class="panel-title"><h2>${compactCourse ? 'Дедлайни' : 'Інші дедлайни'}</h2><a href="#calendar">Календар ${icon('arrow')}</a></div>
+      ${upcoming.map(task => `<a class="deadline-line deadline-surface" href="${esc(compactCourse && task.href ? task.href : '#course/' + task.course.id)}"${compactCourse && task.href && !task.href.startsWith('#') ? ' target="_blank" rel="noopener noreferrer"' : ''}>
+        ${avatar(task.course)}<span class="queue-title"><strong>${esc(task.course.deadline || task.title)}</strong>${compactCourse ? '' : `<small>${esc(task.course.name)}</small>`}</span>
         ${badge(task)}${icon('arrow')}${fire.edge(task.due, task.done)}</a>`).join('')}
     </section>` : '';
     const plan = tasks(course?.id).sort((a, b) => a.scheduled.localeCompare(b.scheduled) || a.due - b.due);
@@ -201,7 +202,8 @@
       <div class="dash-task-list">${visibleRows.map(t => practiceRow(t, !course)).join('') || '<p class="agenda-empty">На сьогодні занять не заплановано.</p>'}</div>
       ${others.length ? `<details class="remaining-tasks"><summary>Інші заняття <span>${others.length}</span></summary>${others.map(t => practiceRow(t, true)).join('')}</details>` : ''}
     </section>`;
-    return `${course ? '<a class="back-to-courses" href="#courses">← Усі предмети</a>' : ''}${H.workspace?.notice() || ''}${heading(course ? course.name : 'Мій огляд', course ? (H.paperOral?.button(course) || '') : (H.liveCalendar?.inboxButton() || H.calendar.button()))}<div class="dashboard-layout desk-layout">${focusCard(course, next)}${metrics(course)}<div class="dashboard-main">${course?.connected ? H.workspace.courseActions(course) : ''}${queue}${checklist}${course ? `<template><section class="dash-panel course-material-panel"><div class="panel-title"><h2>Матеріали предмета</h2></div>${course.materials.map((m, i) => `<button class="course-material-link" data-material="${i}" data-course="${course.id}" data-focus-id="dash-material-${course.id}-${i}">${icon('files')}<span><strong>${esc(m.title)}</strong><small>${esc(m.type)}</small></span>${icon('arrow')}</button>`).join('')}</section></template>` : ''}${weeklyChart(course)}</div><aside class="dashboard-aside">${timerCard()}${calendarGrid(true, course)}</aside></div>`;
+    const header = compactCourse ? H.workspace.courseHeader(course) : `${course ? '<a class="back-to-courses" href="#courses">← Усі предмети</a>' : ''}${heading(course ? course.name : 'Мій огляд', course ? (H.paperOral?.button(course) || '') : (H.liveCalendar?.inboxButton() || H.calendar.button()))}`;
+    return `${header}${H.workspace?.notice() || ''}<div class="dashboard-layout desk-layout${compactCourse ? ' course-desk-layout' : ''}">${compactCourse ? '' : focusCard(course, next)}${metrics(course)}<div class="dashboard-main">${queue}${checklist}${course ? `<template><section class="dash-panel course-material-panel"><div class="panel-title"><h2>Матеріали предмета</h2></div>${course.materials.map((m, i) => `<button class="course-material-link" data-material="${i}" data-course="${course.id}" data-focus-id="dash-material-${course.id}-${i}">${icon('files')}<span><strong>${esc(m.title)}</strong><small>${esc(m.type)}</small></span>${icon('arrow')}</button>`).join('')}</section></template>` : ''}${weeklyChart(course)}</div><aside class="dashboard-aside">${timerCard()}${calendarGrid(true, course)}</aside></div>`;
   }
   function deadlinesView(course) {
     const list = tasks(course?.id).sort((a,b) => deadlineOrder(a,b,Date.now()));
@@ -209,7 +211,8 @@
     const rows = list.map(t => `<article class="deadline-line deadline-surface">
       ${avatar(t.course)}<span class="queue-title"><strong>${esc(t.title)}</strong><small>${esc(t.course.name)}</small></span>
       ${badge(t)}${start(t, 'Відкрити', 'task-open')}${fire.edge(t.due,t.done)}</article>`).join('');
-    return heading('Дедлайни', records) + (H.workspace.notice() || '') +
+    const header = course ? H.workspace.courseHeader(course, 'assignments') + `<div class="paper-deadline-actions">${records}</div>` : heading('Дедлайни');
+    return header + (H.workspace.notice() || '') +
       '<section class="dash-panel deadline-queue">' + (rows || '<p class="agenda-empty">Найближчих дедлайнів немає.</p>') + '</section>';
   }
   function coursesView() { return heading('Мої предмети', H.workspace?.add || '<a class="secondary" href="connect.html?edit=1">Обрати предмети +</a>') + metrics() + (H.workspace ? H.workspace.notice() : H.liveCalendar?.coursesView() || '') + courseCards(false, true); }
@@ -225,7 +228,7 @@
     const hash = location.hash.slice(1) || 'plan', course = hash.startsWith('course/') ? courseById(hash.split('/')[1]) : null;
     if (H.workspace && (hash === 'deadlines' || course?.connected && hash === 'course/' + course.id + '/assignments')) {
       document.title = 'Дедлайни — Hustle';
-      document.querySelector('#view-name').textContent = 'Дедлайни';
+      document.querySelector('#view-name').textContent = course?.short || 'Дедлайни';
       document.querySelectorAll('[data-nav],.sidebar-course').forEach(a => {
         if (course && a.hash === '#course/' + course.id) a.setAttribute('aria-current','page');
         else a.removeAttribute('aria-current');

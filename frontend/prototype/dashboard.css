@@ -509,6 +509,14 @@
 
 #workspace-main .page-heading h1[tabindex="-1"]:focus { outline: 0; }
 .desk-layout { grid-template-areas: "stats stats" "focus side" "work side"; grid-template-rows: auto auto 1fr; }
+.course-desk-layout { grid-template-areas: "stats stats" "work side"; grid-template-rows: auto auto; }
+.paper-course-header { margin-bottom: 1.15rem; }
+.paper-course-header .dashboard-heading > div:first-child { min-width: 0; flex: 1 1 24rem; }
+.paper-course-header .dashboard-heading h1 { font-size: clamp(1.55rem, 1.15rem + 1.1vw, 2.1rem); line-height: 1.16; overflow-wrap: anywhere; }
+.paper-course-header-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; min-width: 0; max-width: 100%; }
+.paper-course-switch { width: 11rem; max-width: 100%; min-height: 2.55rem; padding: .4rem .55rem; color: inherit; background: #fcfaf4; border: 1px solid #bca9be; border-radius: .55rem; }
+.paper-course-header .paper-course-actions a[aria-current="page"] { background: #e9ddef; border-color: #9a78a6; }
+.paper-deadline-actions { margin-bottom: 1rem; }
 .desk-layout > .next-session { grid-area: focus; }
 .desk-layout > .learning-strip { grid-area: stats; margin: 0; }
 .desk-layout > .dashboard-main { grid-area: work; }
@@ -520,4 +528,5 @@
 .month-heading .icon-button { background: #f3ebe6; width: 2rem; height: 2rem; }
 @media(max-width:67rem) {
   .desk-layout { grid-template-columns: minmax(0,1fr); grid-template-areas: "focus" "stats" "work" "side"; grid-template-rows: auto; }
+  .course-desk-layout { grid-template-areas: "stats" "work" "side"; }
 }

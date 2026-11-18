@@ -60,7 +60,16 @@
     if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
     if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
   });
-  window.addEventListener('hashchange',()=>{setMenu(false);render();main.querySelector('h1')?.focus();});
+  window.addEventListener('hashchange',()=>{
+    setMenu(false);
+    const fromCourseTab = !!document.activeElement?.closest('.paper-course-actions');
+    render();
+    if (main.querySelector('.paper-course-header')) {
+      const target = fromCourseTab && main.querySelector('.paper-course-actions [aria-current="page"]');
+      (target || main.querySelector('h1'))?.focus({preventScroll:true});
+      window.scrollTo({top:0, behavior:'instant'});
+    } else main.querySelector('h1')?.focus();
+  });
   function showDialog(trigger){focusId=trigger.dataset.focusId;dialog.showModal();}
   function finish(){window.HustleDashboard?.completePractice(practice);practice.finished=true;const completed={...H.state.completed,[taskKey(practice.course,practice.kind)]:true};H.update({completed});renderPractice();}
   function renderPractice(){

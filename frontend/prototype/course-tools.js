@@ -3,6 +3,7 @@
   if (parent === window) { location.replace('/hustle/app.html' + location.hash); return; }
   const frame = window.frameElement;
   if (!frame || frame.ownerDocument.location.origin !== location.origin) return;
+  document.documentElement.classList.toggle('shared-course-header', frame.hasAttribute('data-shared-course-header'));
   function parentRoute(hash) {
     return hash === '#new-course' ? '#import' : hash === '#dashboard' ? '#plan' : hash || '#plan';
   }
