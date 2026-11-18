@@ -74,7 +74,7 @@
     }).join('');
   }
   function moveEvent(id, day) { const e = data.events.find(e => e.id === id && e.status === 'accepted'); if (!e || e.day === day) return; e.history.push({ status: e.status, day: e.day, time: e.time, at: e.updatedAt }); e.day = day; e.updatedAt = Date.now(); persist(); H.dashboardRefresh?.(); notify(`Подію перенесено на ${dateLabel(day)}`); }
-  H.calendar = { init, events, pending, button, chips, agenda };
+  H.calendar = { init, events, pending, button, chips, agenda, openInbox };
   document.addEventListener('DOMContentLoaded', () => {
     document.body.insertAdjacentHTML('beforeend', `<dialog id="calendar-sync-dialog" class="calendar-sync-dialog" aria-labelledby="calendar-sync-title"><button class="icon-button dialog-close" data-sync-close aria-label="Закрити події LMS">${icon('close')}</button><div id="calendar-sync-body"></div></dialog><dialog id="calendar-event-dialog" class="calendar-event-dialog" aria-labelledby="calendar-event-title"><button class="icon-button dialog-close" data-sync-close aria-label="Закрити подію">${icon('close')}</button><div id="calendar-event-body"></div></dialog>`);
     document.querySelectorAll('.calendar-sync-dialog,.calendar-event-dialog').forEach(dialog => {

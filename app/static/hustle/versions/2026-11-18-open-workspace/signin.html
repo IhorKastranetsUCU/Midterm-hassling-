@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Створи акаунт Hustle, щоб перейти до підключення університетської LMS.">
+  <meta name="theme-color" content="#f5f2e8">
+  <title>Увійти — Hustle</title>
+  <link rel="icon" type="image/svg+xml" href="brand-favicon.svg">
+  <link rel="stylesheet" href="landing.css">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="register.css">
+  <link rel="stylesheet" href="product.css">
+  <script src="ui.js" defer></script>
+  <script src="signin.js" defer></script>
+<link rel="stylesheet" href="brand.css"></head>
+<body class="auth-page">
+  <a class="skip-link" href="#registration">До реєстрації</a>
+  <header class="site-header container">
+    <a class="wordmark brand-lockup" href="index.html" aria-label="Hustle, головна"><img class="brand-initial" src="brand-mark.svg" alt="" aria-hidden="true"><span class="brand-name" aria-hidden="true">ustle<span class="brand-stop">.</span></span></a>
+    <nav class="site-nav" aria-label="Навігація"><a href="index.html"><span aria-hidden="true">←</span> На головну</a></nav>
+  </header>
+
+  <main class="registration-shell container" id="registration" tabindex="-1">
+    <aside class="registration-preview" aria-label="Приклад навчального плану">
+      <h2 class="auth-illustration-title">Від лекції<br>до плану на день.</h2>
+      <div class="registration-art" aria-hidden="true">
+        <div class="art-backdrop"></div>
+        <div class="course-slip"><span class="slip-type">PDF</span><div><strong>Лекція 08</strong><span>Теорія ймовірностей</span></div><span class="slip-check">✓</span></div>
+        <div class="study-sheet">
+          <div class="sheet-heading"><strong>План на сьогодні</strong><span>25 хв</span></div>
+          <div class="sheet-task"><span class="task-number">01</span><div><strong>Повторити означення</strong><span>Картки з лекції</span></div><small>5 хв</small></div>
+          <div class="sheet-task"><span class="task-number">02</span><div><strong>Розібрати приклад</strong><span>Умовна ймовірність</span></div><small>10 хв</small></div>
+          <div class="sheet-task"><span class="task-number">03</span><div><strong>Перевірити себе</strong><span>Мініквіз за темою</span></div><small>10 хв</small></div>
+        </div>
+        <div class="deadline-slip"><span>П’ЯТНИЦЯ · 10:30</span><strong>Колоквіум</strong></div>
+      </div>
+    </aside>
+
+    <div class="registration-card">
+      <h1>Твій навчальний простір</h1>
+      <button class="registration-submit" id="google-login">Увійти через Google →</button>
+      <button class="text-button" id="guest-login">Продовжити як гість</button>
+      <p class="field-error" role="alert" id="auth-error" hidden></p>
+    </div>
+  </main>
+</body>
+</html>

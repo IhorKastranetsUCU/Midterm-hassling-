@@ -1,6 +1,6 @@
 (() => {
   const H = window.Hustle, C = window.HustleStudy, esc = H.escape, icon = H.icon;
-  if (!H.state.registered || !H.state.ready || !H.state.courses.length) return;
+  if (!H.liveCalendar?.standalone && (!H.state.registered || !H.state.ready || !H.state.courses.length)) return;
   const fire = window.HustleDeadlineVisuals;
   const storageKey = 'hustle-study-dashboard-v1';
   const main = document.querySelector('#workspace-main');
@@ -20,7 +20,7 @@
   if (!courseById(state.timer.course)) state.timer = newTimer();
   const definitions = [ { kind: 'cards', title: 'Повторити означення', label: 'Картки', minutes: 5 }, { kind: 'example', title: 'Розібрати приклад', label: 'Практика', minutes: 10 }, { kind: 'quiz', title: 'Перевірити себе', label: 'Мініквіз', minutes: 10 } ];
   const schedules = { algebra: [1, 16], probability: [2, 12], english: [2, 18] };
-  function save() { try { localStorage.setItem(storageKey, JSON.stringify(state)); } catch { announce('Не вдалося зберегти дані в браузері.'); } }
+  function save() { if (H.liveCalendar?.standalone) return; try { localStorage.setItem(storageKey, JSON.stringify(state)); } catch { announce('Не вдалося зберегти дані в браузері.'); } }
   function announce(message) { const el = document.querySelector('.toast'); clearTimeout(toastTimeout); el.textContent = message; el.hidden = false; toastTimeout = setTimeout(() => el.hidden = true, 4500); }
   function tasks(courseId) {
     return selected().filter(c => !courseId || c.id === courseId).flatMap(course => {
@@ -179,13 +179,15 @@
       <div class="dash-task-list">${visibleRows.map(t => practiceRow(t, !course)).join('') || '<p class="agenda-empty">На сьогодні занять не заплановано.</p>'}</div>
       ${others.length ? `<details class="remaining-tasks"><summary>Інші заняття <span>${others.length}</span></summary>${others.map(t => practiceRow(t, true)).join('')}</details>` : ''}
     </section>`;
-    return `${course ? '<a class="back-to-courses" href="#courses">← Усі предмети</a>' : ''}${heading(course ? course.name : 'Мій огляд', course ? '' : H.calendar.button())}<div class="dashboard-layout desk-layout">${focusCard(course, next)}${metrics(course)}<div class="dashboard-main">${queue}${checklist}${course ? `<template><section class="dash-panel course-material-panel"><div class="panel-title"><h2>Матеріали предмета</h2></div>${course.materials.map((m, i) => `<button class="course-material-link" data-material="${i}" data-course="${course.id}" data-focus-id="dash-material-${course.id}-${i}">${icon('files')}<span><strong>${esc(m.title)}</strong><small>${esc(m.type)}</small></span>${icon('arrow')}</button>`).join('')}</section></template>` : ''}${weeklyChart(course)}</div><aside class="dashboard-aside">${timerCard()}${calendarGrid(true, course)}</aside></div>`;
+    return `${course ? '<a class="back-to-courses" href="#courses">← Усі предмети</a>' : ''}${heading(course ? course.name : 'Мій огляд', course ? '' : (H.liveCalendar?.inboxButton() || H.calendar.button()))}<div class="dashboard-layout desk-layout">${focusCard(course, next)}${metrics(course)}<div class="dashboard-main">${queue}${checklist}${course ? `<template><section class="dash-panel course-material-panel"><div class="panel-title"><h2>Матеріали предмета</h2></div>${course.materials.map((m, i) => `<button class="course-material-link" data-material="${i}" data-course="${course.id}" data-focus-id="dash-material-${course.id}-${i}">${icon('files')}<span><strong>${esc(m.title)}</strong><small>${esc(m.type)}</small></span>${icon('arrow')}</button>`).join('')}</section></template>` : ''}${weeklyChart(course)}</div><aside class="dashboard-aside">${timerCard()}${calendarGrid(true, course)}</aside></div>`;
   }
-  function coursesView() { return heading('Мої предмети', '<a class="secondary" href="connect.html?edit=1">Обрати предмети +</a>') + metrics() + courseCards(false, true); }
+  function coursesView() { return heading('Мої предмети', '<a class="secondary" href="connect.html?edit=1">Обрати предмети +</a>') + metrics() + (H.liveCalendar?.coursesView() || '') + courseCards(false, true); }
   function calendarView() {
+    if (H.liveCalendar?.week) return H.liveCalendar.weekView();
+
     const dayHeading = dateText(selectedDate, { weekday: 'long', day: 'numeric', month: 'long' });
     const weekStart = C.addDays(selectedDate, -((new Date(selectedDate + 'T12:00:00Z').getUTCDay() + 6) % 7));
-    return heading('Календар', H.calendar.button()) + `<div class="calendar-layout planner-spread">${calendarGrid()}<section class="dash-panel selected-agenda"><div class="panel-title"><h2>${dayHeading[0].toLocaleUpperCase('uk') + dayHeading.slice(1)}</h2><span>${C.secondsLabel(C.sum(state.records, { from: selectedDate, to: selectedDate }))} у фокусі</span></div><div class="agenda-week" role="group" aria-label="Обрати день тижня">${Array.from({ length: 7 }, (_, i) => C.addDays(weekStart, i)).map(day => `<button data-calendar-date="${day}" aria-pressed="${day === selectedDate}"><span>${dateText(day, { weekday: 'short' })}</span><strong>${Number(day.slice(-2))}</strong></button>`).join('')}</div>${agendaItems(selectedDate)}</section></div>`;
+    return heading('Календар', H.liveCalendar?.actions() || H.calendar.button()) + (H.liveCalendar?.viewSwitch() || '') + `<div class="calendar-layout planner-spread">${calendarGrid()}<section class="dash-panel selected-agenda"><div class="panel-title"><h2>${dayHeading[0].toLocaleUpperCase('uk') + dayHeading.slice(1)}</h2><span>${C.secondsLabel(C.sum(state.records, { from: selectedDate, to: selectedDate }))} у фокусі</span></div><div class="agenda-week" role="group" aria-label="Обрати день тижня">${Array.from({ length: 7 }, (_, i) => C.addDays(weekStart, i)).map(day => `<button data-calendar-date="${day}" aria-pressed="${day === selectedDate}"><span>${dateText(day, { weekday: 'short' })}</span><strong>${Number(day.slice(-2))}</strong></button>`).join('')}</div>${agendaItems(selectedDate)}</section></div>`;
   }
   function closeMobileMenu() { document.body.classList.remove('menu-open'); document.querySelector('.sidebar-shade').hidden = true; document.querySelector('#menu-toggle').setAttribute('aria-expanded', 'false'); document.querySelector('#sidebar').inert = matchMedia('(max-width: 52rem)').matches; }
   function render() {
@@ -197,6 +199,7 @@
     document.querySelectorAll('[data-nav],.sidebar-course').forEach(a => { if (course ? a.hash === '#' + hash : a.dataset.nav === hash) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     document.querySelector('#view-name').textContent = title; document.title = `${title} — Hustle`;
     main.innerHTML = hash === 'calendar' ? calendarView() : hash === 'courses' ? coursesView() : hash === 'focus' ? heading('Pomodoro') + `<div class="dedicated-focus">${timerCard()}${weeklyChart()}</div>` : dashboardView(course);
+    H.liveCalendar?.mount(hash, month, selectedDate, course);
     fire.mount(main); paintTimer(); return true;
   }
   function refresh(focusSelector) {
@@ -274,7 +277,7 @@
       const check = refresh(`[data-dash-complete="${id}"]`);
       if (state.completed[id]) check?.closest('.practice-line')?.classList.add('just-completed'); }
     if (el.hasAttribute('data-calendar-date')) { selectDay(el.dataset.calendarDate); }
-    if (el.hasAttribute('data-month-step')) { const d = new Date(month + 'T12:00:00Z'); d.setUTCMonth(d.getUTCMonth() + Number(el.dataset.monthStep)); month = d.toISOString().slice(0, 10); refresh(`[data-month-step="${el.dataset.monthStep}"]`); }
+    if (el.hasAttribute('data-month-step')) { const d = new Date(month + 'T12:00:00Z'); d.setUTCMonth(d.getUTCMonth() + Number(el.dataset.monthStep)); month = d.toISOString().slice(0, 10); selectedDate = month; refresh(`[data-month-step="${el.dataset.monthStep}"]`); }
     if (el.hasAttribute('data-calendar-today')) { month = today().slice(0, 7) + '-01'; selectedDate = today(); refresh('[data-calendar-today]'); }
     if (el.hasAttribute('data-timer-toggle')) {
       flushPractice(); tickTimer(); const t = state.timer;
@@ -318,7 +321,13 @@
     document.querySelector('.topbar-account').insertAdjacentHTML('beforebegin', `<a href="#focus" class="persistent-timer" id="persistent-timer"></a>`);
     const label = document.createElement('p'); label.className = 'sidebar-course-label'; label.textContent = 'Предмети';
     nav.insertBefore(label, settings);
+    if (H.liveCalendar) settings.insertAdjacentHTML('beforebegin', `<a href="/hustle/app.html#courses">${icon('link')}<span>Курси Moodle</span></a>`);
     selected().forEach(c => settings.insertAdjacentHTML('beforebegin', `<a class="sidebar-course" href="#course/${c.id}"><i class="course-dot ${c.color}"></i><span>${esc(c.short)}</span></a>`));
+    if (H.liveCalendar?.standalone) {
+      nav.innerHTML = `<a href="/hustle/app.html#dashboard">${icon('plan')}<span>Мій огляд</span></a><a href="/hustle/app.html#courses">${icon('courses')}<span>Курси Moodle</span></a><a href="#calendar" data-nav="calendar">${icon('calendar')}<span>Календар</span></a><a href="/hustle/app.html#settings">${icon('settings')}<span>Налаштування</span></a>`;
+      document.querySelectorAll('.topbar-account,.sidebar-profile').forEach(a => a.href = '/hustle/app.html#settings');
+      document.querySelector('#persistent-timer').hidden = true;
+    }
     tickTimer(); render(); paintTimer();
   });
   window.addEventListener('storage', e => {

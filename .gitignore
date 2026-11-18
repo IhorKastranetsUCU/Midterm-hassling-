@@ -6,3 +6,77 @@ __pycache__/
 .idea/
 users_database.json
 жфжф.py
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Environment Variables
+.env
+
+# Pytest / Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local Workspace Storage
+data/
+*.db
+*.sqlite3
+
+# Logs
+*.log
+
+# IDE & Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+.directory
+
+# OS generated / Weird files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+# Documents & Presentations
+pitch.pdf
+*.pdf
+
+# Local integration QA and non-destructive source backups
+backups/
+output/
+tools/hustle-ui/node_modules/
+.playwright-cli/

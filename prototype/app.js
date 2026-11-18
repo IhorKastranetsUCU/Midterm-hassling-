@@ -1,7 +1,7 @@
 (() => {
   const H=window.Hustle, courses=window.HustleCourses, esc=H.escape, icon=H.icon;
-  if(!H.requireAccount())return;
-  if(!H.state.ready||!H.state.courses.length){location.replace('connect.html');return;}
+  if(!H.liveCalendar?.standalone && !H.requireAccount())return;
+  if(!H.liveCalendar?.standalone && (!H.state.ready||!H.state.courses.length)){location.replace('connect.html');return;}
   const main=document.querySelector('#workspace-main'), dialog=document.querySelector('#study-dialog'), body=document.querySelector('#dialog-body');
   const nav=[['plan','Мій план','plan'],['courses','Курси','courses'],['practice','Практика','practice'],['materials','Матеріали','files'],['settings','Налаштування','settings']];
   let day=0, courseFilter='all', search='', practice, focusId, toastTimer;

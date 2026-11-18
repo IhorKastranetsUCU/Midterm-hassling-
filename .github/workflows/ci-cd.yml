@@ -1,0 +1,130 @@
+name: Hustle CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test JS, Python & Docker Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Check JS syntax & run Node tests
+        run: |
+          for f in app/static/js/*.js app/static/hustle/*.js; do
+            node -c "$f"
+          done
+          node --test tests/*.test.cjs
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: requirements.txt
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Python test suite (non-mock mode)
+        env:
+          MOODLE_MOCK_MODE: "false"
+        run: pytest --ignore=tests/test_material_clustering_and_video_transcription.py -v
+
+      - name: Run clustering & mock-mode tests
+        env:
+          MOODLE_MOCK_MODE: "true"
+        run: pytest tests/test_material_clustering_and_video_transcription.py -v
+
+      - name: Verify Docker image builds
+        run: docker build -t hustle-ci-check .
+
+  deploy:
+    name: Deploy to Google Cloud VM
+    needs: test
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify deploy secrets exist
+        env:
+          GCP_VM_HOST: ${{ secrets.GCP_VM_HOST }}
+          GCP_VM_USER: ${{ secrets.GCP_VM_USER }}
+          GCP_VM_SSH_KEY: ${{ secrets.GCP_VM_SSH_KEY }}
+        run: |
+          if [ -z "$GCP_VM_HOST" ] || [ -z "$GCP_VM_USER" ] || [ -z "$GCP_VM_SSH_KEY" ]; then
+            echo "Missing one of required secrets: GCP_VM_HOST, GCP_VM_USER, GCP_VM_SSH_KEY"
+            exit 1
+          fi
+
+      - name: Configure SSH
+        env:
+          GCP_VM_SSH_KEY: ${{ secrets.GCP_VM_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$GCP_VM_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+      - name: Sync code to VM (preserving .env and data/)
+        env:
+          GCP_VM_HOST: ${{ secrets.GCP_VM_HOST }}
+          GCP_VM_USER: ${{ secrets.GCP_VM_USER }}
+        run: |
+          rsync -az --delete \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='.venv/' \
+            --exclude='.pytest_cache/' \
+            --exclude='__pycache__/' \
+            --exclude='.env' \
+            --exclude='data/' \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new" \
+            ./ "$GCP_VM_USER@$GCP_VM_HOST:~/cms_obgortka/"
+
+      - name: Rebuild container, reload Caddy if needed & verify health
+        env:
+          GCP_VM_HOST: ${{ secrets.GCP_VM_HOST }}
+          GCP_VM_USER: ${{ secrets.GCP_VM_USER }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new "$GCP_VM_USER@$GCP_VM_HOST" '
+            set -euo pipefail
+            cd ~/cms_obgortka
+            mkdir -p data/staging
+            sudo chown -R 1000:1000 data
+            sudo docker compose up -d --build
+            if [ -f deploy/Caddyfile ] && ! sudo diff -q deploy/Caddyfile /etc/caddy/Caddyfile >/dev/null 2>&1; then
+              sudo cp deploy/Caddyfile /etc/caddy/Caddyfile
+              sudo caddy validate --config /etc/caddy/Caddyfile
+              sudo systemctl reload caddy
+            fi
+            for i in $(seq 1 20); do
+              if curl -sf http://127.0.0.1:8000/healthz; then
+                echo ""
+                echo "DEPLOY_OK"
+                exit 0
+              fi
+              sleep 2
+            done
+            sudo docker compose logs --tail=50
+            exit 1
+          '

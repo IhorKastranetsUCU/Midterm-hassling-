@@ -1,0 +1,66 @@
+/* Palette tokens also cover the interactive demo, hover and selected states. */
+:root {
+  --dot: #9b4f71;
+  --button-hover: #542c54;
+  --exam-paper: #efd3ee;
+  --practice-paper: #f2b4a5;
+  --paper-rule: #d8d5c9;
+  --demo-surface: #f1e7f1;
+  --demo-line: #ddd0dd;
+  --control-line: #887087;
+  --control-hover: #f2e4f1;
+  --study-surface: #f5eaf5;
+  --file-surface: #f7eef6;
+  --shadow-ink: 58 26 32;
+}
+
+.demo-board { background: var(--demo-surface); border-color: var(--demo-line); }
+.demo-play, .demo-tab, .demo-choice { border-color: var(--control-line); }
+.demo-play:hover, .demo-tab:hover, .demo-choice:hover { background: var(--control-hover); }
+.demo-study-card { background: var(--study-surface); }
+.demo-files li { background: var(--file-surface); }
+/* Surface levels: canvas, quiet container, raised paper, floating illustration.
+   Keep elevation tied to grouping; static cards do not lift on hover. */
+:root {
+  --shadow-low: 0 1px 2px rgb(48 31 65 / 5%), 0 8px 24px -14px rgb(48 31 65 / 18%);
+  --shadow-high: 0 2px 4px rgb(48 31 65 / 6%), 0 20px 50px -24px rgb(48 31 65 / 24%);
+  --canvas-light: #fff9eb;
+  --hero-end: #f3d69a;
+  --hero-start: #fbe9b6;
+  --card-ink: var(--ink);
+}
+body {
+  background: radial-gradient(ellipse at 8% 20%, var(--canvas-light), transparent 55%), var(--page);
+}
+.hero {
+  position: relative; isolation: isolate;
+  background: radial-gradient(ellipse at 15% 5%, #ffffff30, transparent 65%), linear-gradient(120deg, var(--hero-start), var(--hero-end));
+  border: 1px solid #ffffff60;
+  box-shadow: inset 0 1px 0 #ffffff70, var(--shadow-high);
+}
+.paper-stack::before {
+  border-radius: 28%;
+  transform: rotate(-8deg);
+  border: 1px solid #ffffff35;
+  background: radial-gradient(circle at 30% 25%, #ffffff60, transparent 70%), var(--gold);
+  box-shadow: inset 0 2px 4px #ffffff30, 0 30px 40px -30px rgb(61 37 79 / 35%);
+}
+.paper {
+  color: var(--card-ink); border: 1px solid #ffffff55;
+  box-shadow: 0 1px 2px rgb(47 30 61 / 15%), 0 8px 12px -5px rgb(47 30 61 / 15%), 0 24px 36px -12px rgb(47 30 61 / 28%), inset 0 1px 0 #ffffff55;
+}
+.paper--exam { color: var(--paper-exam-ink, var(--ink)); }
+.paper--practice { color: var(--paper-practice-ink, var(--ink)); }
+.paper--lecture { background: linear-gradient(145deg, #ffffff85, transparent 65%), var(--paper); }
+.hero .button { box-shadow: inset 0 1px 0 #ffffff25, 0 3px 6px #2f1e3d15, 0 10px 20px -12px #2f1e3d60; }
+.step { box-shadow: var(--shadow-low); border-color: rgb(86 62 103 / 13%); background: linear-gradient(145deg, #ffffff60, transparent), var(--paper); color: var(--card-ink); }
+.step-icon { box-shadow: inset 0 1px 0 #ffffffa0, 0 2px 3px #38254410; }
+.demo-board { box-shadow: inset 0 2px 5px #4630540a; }
+.demo-screen { border: 1px solid #ffffff80; box-shadow: var(--shadow-high); }
+.demo-study-card { border: 1px solid #59416b20; box-shadow: var(--shadow-low); }
+.demo-tabs { padding-bottom: .8rem; border-bottom: 1px solid var(--line); }
+.demo-tab[aria-pressed="true"] { box-shadow: 0 3px 7px #30203820; }
+@media (prefers-reduced-motion: no-preference) {
+  .button { transition: background-color .15s, box-shadow .15s; }
+}
+

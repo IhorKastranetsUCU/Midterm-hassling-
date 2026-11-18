@@ -1,0 +1,21 @@
+# Reverse proxy config for Google Compute Engine VM with Caddy (automatic HTTPS).
+# Domain: hustle.pp.ua (DNS A-record must point to the VM's external IP).
+www.hustle.pp.ua {
+	redir https://hustle.pp.ua{uri} permanent
+}
+
+hustle.pp.ua {
+	encode gzip
+
+	@backend path /hustle /hustle/* /api/* /healthz /favicon.ico
+	handle @backend {
+		reverse_proxy 127.0.0.1:8000 {
+			flush_interval -1
+		}
+	}
+
+	# Hide legacy UI routes publicly on production domain by redirecting to /hustle/
+	handle {
+		redir https://hustle.pp.ua/hustle/ temporary
+	}
+}

@@ -1,0 +1,43 @@
+.paper-view-switch {
+  display: inline-flex;
+  width: fit-content;
+  gap: .22rem;
+  margin: 0 0 1rem;
+  padding: .23rem;
+  border-radius: .75rem;
+  background: #eae1d7;
+}
+.paper-view-switch button {
+  padding: .47rem .85rem;
+  border: 0;
+  border-radius: .55rem;
+  font: inherit;
+  font-size: .85rem;
+  font-weight: 650;
+  color: #645362;
+  background: transparent;
+  cursor: pointer;
+}
+.paper-view-switch [aria-pressed=true] { color: #371d38; background: #fffaf1; box-shadow: 0 2px 5px #513b5020; }
+.paper-view-switch button:focus-visible { outline: 2px solid #704882; outline-offset: 2px; }
+.paper-inbox-footer { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; }
+.calendar-dots .live-dot { background: #497363; }
+.calendar-event-chip.live-chip { color: #274e43; background: #e1efe5; border-color: #b9cfbd; }
+.paper-calendar-status { color: #6d506a; font-size: .9rem; }
+.calendar-actions button:disabled { opacity: .66; cursor: wait; }
+[data-paper-week] .calendar-toolbar { background: #fffaf0; }
+[data-paper-week] .paper-view-switch { margin: 0; }
+[data-paper-week] .calendar-ai-feedback[hidden] { display: none; }
+[data-paper-week] .calendar-day-col.is-today { background: linear-gradient(#f7ecf8, #fffcf5 6rem); }
+[data-paper-week] .calendar-day-col { box-shadow: 0 3px 9px #4e34440d; }
+.cal-form input, .cal-form select, .cal-form textarea { min-width: 0; }
+.cal-feed-box { flex-wrap: wrap; }
+.cal-feed-box input { min-width: 7rem; }
+@media (max-width: 44rem) {
+  .dashboard-heading:has(.calendar-actions) { align-items: flex-start; flex-direction: column; gap: .7rem; }
+  .calendar-actions { gap: .35rem; }
+  .calendar-actions :is(.secondary,.primary,.sync-inbox-button) { min-height: 2.5rem; padding: .45rem .65rem; }
+}
+.calendar-legend .live-dot { background: #497363; }
+[data-paper-week] .cal-item.deadline-surface { isolation: isolate; position: relative; overflow: hidden; }
+[data-paper-week] .cal-item.deadline-surface > :not(canvas) { position: relative; z-index: 1; }
