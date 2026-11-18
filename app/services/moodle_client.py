@@ -180,7 +180,7 @@ class MoodleClient:
                 clean_cookie = clean_cookie.replace("MoodleSession=", "").strip(" ;\"'")
 
         # Mock check
-        if clean_cookie.startswith("mock_") or self.settings.MOODLE_MOCK_MODE:
+        if self.settings.MOODLE_MOCK_MODE:
             mock_user = MOCK_USER.copy()
             return {
                 "token": clean_cookie,
@@ -425,7 +425,7 @@ class MoodleClient:
         """Authenticate using Moodle Web Service Security Key."""
         base_url = (target_moodle_url or self.base_url).rstrip("/")
 
-        if token.startswith("mock_") or self.settings.MOODLE_MOCK_MODE:
+        if self.settings.MOODLE_MOCK_MODE:
             mock_user = MOCK_USER.copy()
             return {
                 "token": token,
@@ -474,7 +474,7 @@ class MoodleClient:
         """
         base_url = (target_moodle_url or self.base_url).rstrip("/")
 
-        if self.settings.MOODLE_MOCK_MODE or username in ("demo", "student", "teacher"):
+        if self.settings.MOODLE_MOCK_MODE:
             mock_user = MOCK_USER.copy()
             mock_user["username"] = username
             mock_user["fullname"] = f"{username.capitalize()} (Demo Student)"
@@ -594,7 +594,7 @@ class MoodleClient:
         params: Optional[Dict[str, Any]] = None,
         base_url: Optional[str] = None,
     ) -> Any:
-        if token.startswith("mock_") or self.settings.MOODLE_MOCK_MODE:
+        if self.settings.MOODLE_MOCK_MODE:
             return self._handle_mock_call(wsfunction, params or {})
 
         target_url = (base_url or self.base_url).rstrip("/")
@@ -648,7 +648,7 @@ class MoodleClient:
         args: Optional[Dict[str, Any]] = None,
         base_url: Optional[str] = None,
     ) -> Any:
-        if cookie.startswith("mock_") or self.settings.MOODLE_MOCK_MODE:
+        if self.settings.MOODLE_MOCK_MODE:
             return self._handle_mock_call(methodname, args or {})
 
         target_url = (base_url or self.base_url).rstrip("/")
@@ -866,7 +866,7 @@ class MoodleClient:
                 logger.debug(f"REST core_enrol_get_users_courses failed: {e}")
 
         # 3. Sandbox / Mock Mode
-        if token.startswith("mock_") or self.settings.MOODLE_MOCK_MODE or user_id == 42:
+        if self.settings.MOODLE_MOCK_MODE:
             return MOCK_COURSES
 
         return []
@@ -1188,7 +1188,7 @@ class MoodleClient:
         base_url: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Retrieve course contents / modules with resilient AJAX, REST, and HTML scraping fallback."""
-        if token and (token.startswith("mock_") or self.settings.MOODLE_MOCK_MODE):
+        if token and self.settings.MOODLE_MOCK_MODE:
             return self._handle_mock_call("core_course_get_contents", {"courseid": course_id})
 
         target_base = (base_url or self.base_url).rstrip("/")
@@ -1290,7 +1290,7 @@ class MoodleClient:
                 logger.warning(f"HTML scraping fallback failed for course {course_id}: {e}")
 
         # 4. Sandbox / Mock Mode
-        if token.startswith("mock_") or self.settings.MOODLE_MOCK_MODE:
+        if self.settings.MOODLE_MOCK_MODE:
             mock = self._handle_mock_call("core_course_get_contents", {"courseid": course_id})
             if mock:
                 return self._enrich_course_sections(mock, target_base, restrictions)
@@ -1908,7 +1908,7 @@ class MoodleClient:
         target_ids = {int(cid) for cid in (course_ids or []) if cid is not None}
 
         if auth_type == "cookie":
-            if token.startswith("mock_") or self.settings.MOODLE_MOCK_MODE:
+            if self.settings.MOODLE_MOCK_MODE:
                 mock_data = self._handle_mock_call("mod_assign_get_assignments", {"courseids": list(target_ids)})
                 if target_ids:
                     mock_data["courses"] = [c for c in mock_data.get("courses", []) if int(c.get("id", 0)) in target_ids]
@@ -2023,7 +2023,7 @@ class MoodleClient:
         from app.services.academic_cache import get_academic_cache
 
         if auth_type == "cookie":
-            if token.startswith("mock_") or self.settings.MOODLE_MOCK_MODE:
+            if self.settings.MOODLE_MOCK_MODE:
                 return self._handle_mock_call("gradereport_user_get_grade_items", {"courseid": course_id, "userid": user_id})
 
             acache = get_academic_cache()

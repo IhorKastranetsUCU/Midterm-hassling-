@@ -1,3 +1,4 @@
+from app.config import get_settings
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
@@ -25,7 +26,8 @@ def test_unauthenticated_access_denied():
     assert response.status_code == 401
 
 
-def test_auth_with_cookie():
+def test_auth_with_cookie(monkeypatch):
+    monkeypatch.setattr(get_settings(), "MOODLE_MOCK_MODE", True)
     # Test browser cookie sign-in
     res = client.post(
         "/api/auth/login",
@@ -41,7 +43,8 @@ def test_auth_with_cookie():
     assert len(courses_res.json()) > 0
 
 
-def test_auth_with_token():
+def test_auth_with_token(monkeypatch):
+    monkeypatch.setattr(get_settings(), "MOODLE_MOCK_MODE", True)
     # Test direct token sign in
     res = client.post(
         "/api/auth/login",
@@ -52,7 +55,8 @@ def test_auth_with_token():
     assert "moodle_session" in res.cookies
 
 
-def test_auth_and_full_flow():
+def test_auth_and_full_flow(monkeypatch):
+    monkeypatch.setattr(get_settings(), "MOODLE_MOCK_MODE", True)
     # 1. Login with demo account
     login_res = client.post(
         "/api/auth/login",

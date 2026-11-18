@@ -44,6 +44,7 @@
   };
   window.Hustle = {
     account,
+    get exampleCourses() { return account ? [] : window.HustleCourses || []; },
     get state() { return state; },
     update(patch) { state = { ...state, ...patch }; try { sessionStorage.setItem(key, JSON.stringify(state)); } catch {} return state; },
     escape(value) { return String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); },

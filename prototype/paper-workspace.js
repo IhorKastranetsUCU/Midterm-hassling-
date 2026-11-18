@@ -54,7 +54,7 @@
     const previousTool = lastTool;
     lastTool = isTool ? hash : '';
     if (previousTool && previousTool !== hash && !isTool) {
-      UI.api('/api/workspace/courses').then(rows => {
+      UI.api('/api/workspace/courses?moodle_only=true').then(rows => {
         updateCourses(rows); H.dashboardRefresh?.();
       }).catch(err => UI.toast(err.message));
     }
@@ -70,7 +70,7 @@
       else a.removeAttribute('aria-current');
     });
     if (main.querySelector('iframe')?.dataset.route === hash) return true;
-    const nestedRoute = hash === 'import' ? 'new-course' : hash.replace(/^(course\/\d+)\/submissions$/, '$1/assignments');
+    const nestedRoute = hash === 'import' ? 'connect' : hash.replace(/^(course\/\d+)\/submissions$/, '$1/assignments');
     const src = '/hustle/tools.html#' + nestedRoute;
     const goal = hash === 'settings' ? '<label class="paper-goal">Ціль навчання на день <select data-paper-goal>' + [25,45,60].map(n => '<option value="' + n + '"' + (n === H.state.minutes ? ' selected' : '') + '>' + n + ' хв</option>').join('') + '</select></label>' : '';
     main.innerHTML = '<h1 class="paper-hidden-heading" tabindex="-1">' + esc(title) + '</h1>' + goal + '<iframe class="paper-course-tools" title="' + esc(title) + '" data-route="' + esc(hash) + '" src="' + esc(src) + '" allow="microphone"></iframe>';
@@ -84,8 +84,8 @@
   document.addEventListener('change', e => {
     if (e.target.matches('[data-paper-goal]')) H.update({minutes:Number(e.target.value)});
   });
-  const add = '<a class="secondary" href="#import">Додати предмет +</a>';
-  H.workspace = { get courses() {return courses;}, tasks, notice, tools, courseActions, updateCourses, add };
+  const add = '<a class="secondary" href="#connect">Додати з Moodle +</a>';
+  H.workspace = { get deadlineError() {return deadlineError;}, get courses() {return courses;}, tasks, notice, tools, courseActions, updateCourses, add };
   if (location.hash === '#dashboard') history.replaceState(null,'','#plan');
   window.addEventListener('hashchange', () => {
     if (location.hash === '#dashboard') { history.replaceState(null,'','#plan'); }
@@ -103,7 +103,7 @@
       }
       if (Date.now() - verifiedAt > 60000) {
         const previous = courses;
-        updateCourses(await UI.api('/api/workspace/courses'));
+        updateCourses(await UI.api('/api/workspace/courses?moodle_only=true'));
         if (courses === previous) loadDeadlines();
         else H.dashboardRefresh?.();
       }

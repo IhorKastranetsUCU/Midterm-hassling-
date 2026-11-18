@@ -194,10 +194,11 @@ async def sync_from_extension(
 @router.get("/api/workspace/courses", response_model=List[WorkspaceCourseSummary])
 async def list_workspace_courses(
     owner: WorkspaceOwner = Depends(get_workspace_owner),
+    moodle_only: bool = False,
 ) -> List[WorkspaceCourseSummary]:
     """List courses synced or uploaded by the current isolated user only."""
     store = get_workspace_store()
-    return store.list_courses(owner_id=owner.owner_id)
+    return store.list_courses(owner_id=owner.owner_id, moodle_only=moodle_only)
 
 
 @router.post("/api/workspace/courses/preview-structure", response_model=CourseStructurePreview)
@@ -259,7 +260,7 @@ async def preview_course_structure(
             pass
 
     # 2. If in demo/mock mode or no sections returned
-    if not sections and not custom_text and (get_settings().MOODLE_MOCK_MODE or req.authority == "mock"):
+    if not sections and not custom_text and get_settings().MOODLE_MOCK_MODE:
         from app.services.mock_data import MOCK_COURSES, MOCK_COURSE_CONTENTS
         for mc in MOCK_COURSES:
             if mc.get("id") == req.course_id:
@@ -329,7 +330,7 @@ async def confirm_course_structure(
             except Exception:
                 pass
 
-    if not sections and (get_settings().MOODLE_MOCK_MODE or req.authority == "mock"):
+    if not sections and get_settings().MOODLE_MOCK_MODE:
         from app.services.mock_data import MOCK_COURSE_CONTENTS
         sections = MOCK_COURSE_CONTENTS.get(req.course_id)
 
@@ -969,6 +970,8 @@ async def sync_course_from_moodle_backend(
                 tools = CourseToolsConfig()
 
         authority_slug = (req_body.authority or "").strip() or resolve_authority_slug(moodle_url)
+        if session.get("is_mock"):
+            authority_slug = "mock"
         sync_payload = ExtensionSyncPayload(
             course_id=course_id,
             course_name=course_title,

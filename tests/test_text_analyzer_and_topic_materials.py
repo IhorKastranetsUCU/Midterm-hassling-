@@ -180,7 +180,9 @@ def test_course_update_matcher_generates_topic_material_items():
         assert len(item.key_items) >= 2, f"Expected key items for {item.name}, got: {item.key_items}"
 
 
-def test_workspace_bundle_returns_materials_with_key_items(isolated_store):
+def test_workspace_bundle_returns_materials_with_key_items(isolated_store, monkeypatch):
+    from app.config import get_settings
+    monkeypatch.setattr(get_settings(), "MOODLE_MOCK_MODE", True)
     client = TestClient(app)
 
     # 1. Confirm course with mock data (course_id=101)

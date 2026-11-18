@@ -141,14 +141,16 @@ async def test_gemini_mix_generator_mocked():
             assert sec.mermaid_diagram == "graph TD; A-->B;"
 
 
-def test_course_check_updates_api_and_debounce(isolated_store):
+def test_course_check_updates_api_and_debounce(isolated_store, monkeypatch):
+    from app.config import get_settings
+    monkeypatch.setattr(get_settings(), "MOODLE_MOCK_MODE", True)
     client = TestClient(app)
 
     # 1. Create a course structure first
     confirm_payload = {
-        "course_id": 999,
+        "course_id": 101,
         "title": "Data Structures & Algorithms",
-        "shortname": "DSA-999",
+        "shortname": "DSA-101",
         "authority": "mock",
         "target_score": 85,
         "gemini_api_key": "user-custom-key-xyz",
@@ -170,14 +172,14 @@ def test_course_check_updates_api_and_debounce(isolated_store):
     assert res.status_code == 200, res.text
 
     # 2. Forced check-updates call with ?force=true -> bypasses initial debounce from course creation
-    res_force = client.post("/api/workspace/courses/999/check-updates?force=true")
+    res_force = client.post("/api/workspace/courses/101/check-updates?force=true")
     assert res_force.status_code == 200
     data_force = res_force.json()
     assert data_force["checked"] is True
     assert data_force.get("debounced") is not True
 
     # 3. Normal check-updates call right after (within 60s) -> should be debounced!
-    res_check = client.post("/api/workspace/courses/999/check-updates")
+    res_check = client.post("/api/workspace/courses/101/check-updates")
     assert res_check.status_code == 200
     data_check = res_check.json()
     assert data_check["debounced"] is True

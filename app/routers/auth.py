@@ -137,6 +137,7 @@ async def login(login_req: LoginRequest, response: Response, request: Request):
         "site_url": user_info.get("site_url"),
         "role": user_info.get("role", "student"),
         "moodle_token": moodle_token,
+        "is_mock": bool(auth_result.get("is_mock")),
         "auth_type": auth_result.get("auth_type", "token"),
         "sesskey": auth_result.get("sesskey"),
     }
@@ -573,6 +574,7 @@ async def extension_pair_moodle_cookie(
         "site_url": moodle_site,
         "role": user_info.get("role", "student"),
         "moodle_token": auth_result["token"],
+        "is_mock": bool(auth_result.get("is_mock")),
         "auth_type": "cookie",
         "sesskey": auth_result.get("sesskey"),
     }

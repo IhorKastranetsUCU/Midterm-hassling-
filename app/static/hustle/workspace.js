@@ -28,6 +28,7 @@
   });
   matchMedia('(max-width:52rem)').addEventListener('change', () => menuState(false)); menuState(false);
   const heading = (title, action='') => `<div class="page-heading"><h1>${esc(title)}</h1><div class="page-actions">${action}</div></div>`;
+  const courseListUrl = location.pathname.endsWith('/tools.html') ? '/api/workspace/courses?moodle_only=true' : '/api/workspace/courses';
   const addButtons = '<button class="secondary" data-add>Додати файли</button><button class="primary" data-connect>Додати з Moodle +</button>';
   const errorMarkup = message => `<div role="alert" class="live-error">${esc(message)} <button class="text-button" data-retry>Спробувати знову</button></div>`;
   function showDialog(title,content) { body.innerHTML = `<h2 id="dialog-title">${esc(title)}</h2>${content}<p id="dialog-error" class="field-error" role="alert" hidden></p>`; if(!dialog.open)dialog.showModal(); }
@@ -75,12 +76,12 @@
       HustleDashboard.setAccount(account);
       HustlePlan.setAccount(account);
       if(!route.courseId&&['calendar','deadlines','settings'].includes(route.view)){
-        courses=await UI.api('/api/workspace/courses');if(turn!==generation)return;
+        courses=await UI.api(courseListUrl);if(turn!==generation)return;
         HustleSpace.setCourses(courses);
       }
       let title;
       if(route.courseId) {
-        const [bundle,available]=await Promise.all([UI.api(`/api/workspace/courses/${route.courseId}`),UI.api('/api/workspace/courses').catch(()=>courses)]); if(turn!==generation)return;
+        const [bundle,available]=await Promise.all([UI.api(`/api/workspace/courses/${route.courseId}`),UI.api(courseListUrl).catch(()=>courses)]); if(turn!==generation)return;
         courses=available;
         currentBundle=bundle; title=bundle.course.title;
         const back=route.from || 'courses', backLabel=nav.find(([key])=>key===back)?.[1] || 'Курси';
@@ -89,9 +90,9 @@
         HustleCourse.mount(bundle,route.section,account);
       } else if (['new-course','connect'].includes(route.view) && location.pathname.endsWith('/tools.html')) {
         title = 'Додати предмет';
-        main.innerHTML = heading(title) + '<section class="settings-card"><div class="page-actions">' + addButtons + '</div></section>';
+        main.innerHTML = heading(title) + '<section class="settings-card"><button class="primary" data-connect>Обрати курси Moodle →</button></section>';
       } else if(route.view==='dashboard') {
-        courses=await UI.api('/api/workspace/courses'); if(turn!==generation)return;
+        courses=await UI.api(courseListUrl); if(turn!==generation)return;
         title='Мій план';
         main.innerHTML=HustlePlan.render(courses,addButtons);
       } else if(route.view==='calendar') {
@@ -109,7 +110,7 @@
         const content=await HustleLearning.library(route.view,()=>turn===generation); if(turn!==generation)return;
         main.innerHTML=heading(title)+content;
       } else {
-        courses=await UI.api('/api/workspace/courses'); if(turn!==generation)return;
+        courses=await UI.api(courseListUrl); if(turn!==generation)return;
         title='Мої курси';
         main.innerHTML=courses.length&&window.HustleSpace?HustleSpace.home(courses,courseQuery,addButtons):heading(title,addButtons)+(courses.length?`<div class="collection-toolbar"><label class="search-field">${icon('search')}<input type="search" data-course-search value="${esc(courseQuery)}" placeholder="Знайти курс" aria-label="Пошук курсів"></label><span class="muted">${UI.countLabel(courses.length,'курс','курси','курсів')}</span></div><div class="course-grid">${courses.map((course,i)=>`<article class="course-card" data-course-searchable="${esc(course.title.toLocaleLowerCase('uk'))}" ${course.title.toLocaleLowerCase('uk').includes(courseQuery)?'':'hidden'}><div class="course-card-top"><span class="course-avatar ${['butter','lilac','blush'][i%3]}">${icon('courses')}</span>${course.updates_pending?'<span class="status-pill">Є оновлення</span>':''}</div><h2><a href="#course/${course.course_id}">${esc(course.title)}</a></h2><div class="course-meta"><span>${UI.countLabel(course.topic_count,'тема','теми','тем')}</span><span>${course.source_type==='manual_upload'?'Власні матеріали':'Moodle'}</span></div><div class="course-shortcuts"><a href="#course/${course.course_id}/materials">Матеріали ${icon('arrow')}</a><a href="#course/${course.course_id}/practice">Практика ${icon('arrow')}</a></div></article>`).join('')}</div><p data-courses-empty hidden>Курсів за цим запитом немає.</p>`:`<section class="connected-empty"><span class="course-avatar butter">${icon('courses')}</span><h2>Додай перший курс</h2><p>Обери курси з Moodle або завантаж власні матеріали.</p></section>`);
       }
@@ -142,7 +143,7 @@
     const operation=++connectVersion;
     showDialog('Додати з Moodle','<p role="status">Завантажуємо курси…</p>');
     try {
-      const [list,added]=await Promise.all([UI.api('/api/courses'),UI.api('/api/workspace/courses')]);
+      const [list,added]=await Promise.all([UI.api('/api/courses'),UI.api(courseListUrl)]);
       if(operation!==connectVersion||!dialog.open)return;
       selection={list,added:new Set(added.map(c=>c.course_id)),selected:new Set(),done:new Set(),failures:new Map()};
       showDialog('Додати з Moodle',`<label class="search-field">${icon('search')}<input type="search" data-moodle-search aria-label="Пошук курсів Moodle" placeholder="Знайти курс у Moodle"></label><label class="select-all"><input type="checkbox" data-select-visible> Обрати всі видимі</label><div class="moodle-options">${list.map(c=>`<label class="moodle-option" data-moodle-row data-search="${esc((c.fullname+' '+c.shortname).toLocaleLowerCase('uk'))}"><input type="checkbox" value="${c.id}" data-moodle-choice ${selection.added.has(c.id)?'disabled':''}><span><strong>${esc(c.fullname)}</strong><small>${esc(c.shortname)}</small></span>${selection.added.has(c.id)?'<span class="status-pill">Додано</span>':''}</label>`).join('')}</div><p data-moodle-empty hidden>Нічого не знайдено.</p><div class="dialog-footer"><a class="text-button" href="connect.html">Перепідключити Moodle</a><button class="primary" data-import-moodle disabled>Обери курси</button></div>`);
