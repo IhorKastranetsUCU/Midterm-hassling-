@@ -73,13 +73,18 @@
       if (submit.disabled) return;
       if (paperTopics[course.value]) return startPaper(course.value);
       const chosen = topics.find(t => t.key === topic.value);
+      if (chosen) H.workspace && window.HustleDashboard?.trackCourseActivity(course.value);
       if (chosen) window.HustleOralDefense.open({courseId:course.value, topicIndex:chosen.index, nodeId:chosen.node, topicTitle:chosen.title});
     };
     loadCourses();
   }
   document.addEventListener('click', event => {
     const trigger = event.target.closest('[data-paper-oral]');
-    if (trigger) startPaper(trigger.dataset.paperOral);
+    if (trigger) {
+      if (H.workspace?.courses.some(c => c.id === trigger.dataset.paperOral)) {
+        selectedCourse = trigger.dataset.paperOral; selectedTopic = ''; location.hash = 'oral';
+      } else startPaper(trigger.dataset.paperOral);
+    }
   });
   H.paperOral = {shell, mount, button};
 })();

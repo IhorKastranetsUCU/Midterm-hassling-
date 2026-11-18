@@ -1,0 +1,10 @@
+body.workspace { display:block; background:transparent; min-height:0; }
+body.workspace > .sidebar, body.workspace .workspace-topbar, body.workspace > .skip-link { display:none; }
+body.workspace .workspace-body { margin:0; min-width:0; }
+body.workspace #workspace-main { padding:0.3rem 0.25rem 2rem; margin:0; width:100%; max-width:none; min-height:0; }
+
+body.workspace .workspace-topbar:has(#workspace-update:not([hidden]), #workspace-importing:not([hidden])) {
+  display:flex; justify-content:flex-end; position:static; min-height:0; padding:.35rem;
+}
+body.workspace .workspace-topbar > :not(.update-notice) { display:none; }
+.course-tabs a[href*="/materials"] { display:none; }

@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 from contextlib import asynccontextmanager
@@ -13,6 +14,7 @@ from app.core.exceptions import MoodleException, UnauthorizedError
 from app.core.authorities import get_authority, list_authorities
 from app.routers import auth, courses, assignments, grades, system, events, authorities, workspace, calendar
 from app.services.build_queue import get_build_queue
+from app.services.workspace_store import get_workspace_store
 from app.routers import learning
 from app.services.calendar_service import CalendarServiceError
 from app.services.learning_provider import LearningProviderError
@@ -102,25 +104,57 @@ os.makedirs(static_dir, exist_ok=True)
 os.makedirs(templates_dir, exist_ok=True)
 
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
+@app.get("/hustle/app.html", include_in_schema=False)
+async def open_workspace(request: Request):
+    # Browsers carry the original fragment through this redirect, including Moodle deep links.
+    target = "/prototype/app.html"
+    if request.url.query:
+        target += "?" + request.url.query
+    return RedirectResponse(target, status_code=307, headers={"Cache-Control": "no-store"})
+
+
+@app.get("/hustle/tools.html", response_class=HTMLResponse, include_in_schema=False)
+async def course_tools():
+    source = (Path(static_dir) / "hustle" / "app.html").read_text(encoding="utf-8")
+    return HTMLResponse(source.replace("<head>", '<head><link rel="stylesheet" href="/prototype/course-tools.css">'
+                                       '<script defer src="/prototype/course-tools.js"></script>'),
+                        headers={"Cache-Control": "no-cache"})
+
+
 app.mount("/hustle", StaticFiles(directory=os.path.join(static_dir, "hustle"), html=True), name="hustle")
 prototype_dir = Path(current_dir).parent / "prototype"
 
 
 @app.get("/prototype/app.html", response_class=HTMLResponse)
-async def paper_workspace():
+async def paper_workspace(request: Request, response: Response):
     page = (prototype_dir / "app.html").read_text(encoding="utf-8")
+    # Issue the same owner cookie as the API before any parallel calendar or course requests.
+    response.headers["Cache-Control"] = "private, no-store"
+    account = await auth.get_auth_status(request, response)
+    courses = get_workspace_store().list_courses(owner_id=account.owner_id)
+    bootstrap = {
+        "owner": account.owner_id, "name": account.fullname or account.moodle_username,
+        "paired": account.moodle_paired, "moodle": account.moodle_url,
+        "courses": [{"course_id": c.course_id, "title": c.title, "topic_count": c.topic_count,
+                     "source_type": c.source_type} for c in courses],
+    }
+    payload = json.dumps(bootstrap, ensure_ascii=True).replace("<", "\\u003c")
+    page = page.replace("<head>", '<head><script type="application/json" id="workspace-account">'
+                        + payload + '</script>')
     calendar_assets = (
         '<link rel="stylesheet" href="/hustle/calendar.css">'
         '<link rel="stylesheet" href="calendar-connected.css">'
         '<script defer src="/hustle/ui.js"></script>'
         '<script defer src="/hustle/calendar.js"></script>'
+        '<script defer src="/hustle/student-home.js"></script>'
+        '<script defer src="/hustle/dashboard-today.js"></script>'
+        '<script defer src="paper-workspace.js"></script>'
         '<script defer src="calendar-connected.js"></script>'
         '<link rel="stylesheet" href="/hustle/oral-defense.css">'
         '<script defer src="/hustle/oral-defense.js"></script>'
         '<script defer src="oral-practice.js"></script>'
     )
-    return HTMLResponse(page.replace("<!-- connected-calendar -->", calendar_assets),
-                        headers={"Cache-Control": "no-cache"})
+    return page.replace("<!-- connected-calendar -->", calendar_assets)
 
 
 app.mount("/prototype", StaticFiles(directory=prototype_dir, html=True), name="prototype")
@@ -130,7 +164,7 @@ templates = Jinja2Templates(directory=templates_dir)
 @app.get("/", response_class=HTMLResponse)
 async def serve_dashboard(request: Request):
     if get_settings().HUSTLE_PAPER_HOME:
-        return RedirectResponse("/prototype/", status_code=307)
+        return RedirectResponse("/hustle/", status_code=307)
     default_auth = get_authority("ucu")
     settings = get_settings()
     return templates.TemplateResponse(

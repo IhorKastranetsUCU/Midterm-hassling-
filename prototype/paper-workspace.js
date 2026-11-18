@@ -1,0 +1,94 @@
+/* Connected data and specialist tools for the paper workspace. */
+(() => {
+  const H = window.Hustle, {account, escape: esc, icon} = H;
+  const core = window.HustleStudy;
+  document.querySelector('.sidebar .wordmark').href = '#plan';
+  let lastTool = '';
+  let courses, assignments = [], request, deadlineError = '';
+  function mapCourses(rows) {
+    return rows.map(c => ({
+      id: String(c.course_id), name: c.title, short: c.title,
+      color: ['butter', 'lilac', 'blush'][Math.abs(Number(c.course_id)) % 3],
+      initials: [...c.title.trim()][0] || 'К', connected: true,
+      topic: UI.countLabel(c.topic_count, 'тема', 'теми', 'тем'), materials: [],
+      source: c.source_type,
+    }));
+  }
+  courses = mapCourses(account.courses);
+  function updateCourses(rows) {
+    const next = mapCourses(rows);
+    if (JSON.stringify(next) === JSON.stringify(courses)) return;
+    courses = next;
+    H.refreshCourseNav?.();
+    loadDeadlines();
+  }
+  async function loadDeadlines() {
+    if (!account.paired || !courses.length) return;
+    const ticket = {};
+    request = ticket;
+    try {
+      const items = await HustleToday.fetchAssignments(courses.map(c => ({course_id:c.id})));
+      if (ticket !== request) return;
+      assignments = items;
+      deadlineError = '';
+    } catch (err) { if (ticket !== request) return; deadlineError = err.message; }
+    if (!document.querySelector('dialog[open]')) H.dashboardRefresh?.();
+  }
+  function tasks(course, completed) {
+    return assignments.filter(a => String(a.course_id) === course.id && Number(a.duedate) > 0)
+      .map(a => {
+        const due = Number(a.duedate) * 1000, day = core.dateKey(due);
+        const status = HustleStudentHome.classify(a);
+        const id = course.id + ':assignment:' + Number(a.id);
+        const moodle = UI.safeLink(account.moodle);
+        const href = moodle && Number(a.cmid) > 0 ? new URL('/mod/assign/view.php?id=' + Number(a.cmid), moodle).href : '#course/' + course.id + '/submissions';
+        return {id, course, title:a.name, label:'Завдання Moodle', due, dueDay:day, scheduled:day,
+          href, done:status === 'done' || !!completed[id], submitted:status === 'done', status};
+      }).filter(t => t.status !== 'check' || t.done);
+  }
+  const notice = () => deadlineError ? '<p class="field-error" role="alert">Не вдалося завантажити дедлайни Moodle. <button class="text-button" data-deadline-retry>Повторити</button></p>' : '';
+  document.addEventListener('click', e => { if (e.target.closest('[data-deadline-retry]')) loadDeadlines(); });
+  function tools(hash) {
+    const course = /^course\/(\d+)\/([^?]+)/.exec(hash);
+    const isTool = (course && course[2] !== 'overview') || ['settings','deadlines','connect','import'].includes(hash);
+    const previousTool = lastTool;
+    lastTool = isTool ? hash : '';
+    if (previousTool && previousTool !== hash && !isTool) {
+      UI.api('/api/workspace/courses').then(rows => {
+        updateCourses(rows); H.dashboardRefresh?.();
+      }).catch(err => UI.toast(err.message));
+    }
+    if (course && course[2] === 'overview') return false;
+    if (!course && !['settings','deadlines','connect','import'].includes(hash)) return false;
+    const title = course ? courses.find(c => c.id === course[1])?.name || 'Предмет'
+      : ({settings:'Налаштування',deadlines:'Дедлайни',connect:'Підключення Moodle',import:'Додати предмет'})[hash];
+    const main = document.querySelector('#workspace-main');
+    document.title = title + ' — Hustle';
+    document.querySelector('#view-name').textContent = title;
+    document.querySelectorAll('[data-nav],.sidebar-course').forEach(a => {
+      if (a.hash === '#' + (course ? 'course/' + course[1] : hash)) a.setAttribute('aria-current','page');
+      else a.removeAttribute('aria-current');
+    });
+    if (main.querySelector('iframe')?.dataset.route === hash) return true;
+    const nestedRoute = hash === 'import' ? 'new-course' : hash.replace(/^(course\/\d+)\/submissions$/, '$1/assignments');
+    const src = '/hustle/tools.html#' + nestedRoute;
+    const goal = hash === 'settings' ? '<label class="paper-goal">Ціль навчання на день <select data-paper-goal>' + [25,45,60].map(n => '<option value="' + n + '"' + (n === H.state.minutes ? ' selected' : '') + '>' + n + ' хв</option>').join('') + '</select></label>' : '';
+    main.innerHTML = '<h1 class="paper-hidden-heading" tabindex="-1">' + esc(title) + '</h1>' + goal + '<iframe class="paper-course-tools" title="' + esc(title) + '" data-route="' + esc(hash) + '" src="' + esc(src) + '" allow="microphone"></iframe>';
+    return true;
+  }
+  function courseActions(c) {
+    return '<nav class="paper-course-actions" aria-label="Навчання за предметом">' +
+      [['topics','Теми'],['practice','Практика'],['assignments','Дедлайни'],['manage','Параметри']].map(([section,title]) =>
+        '<a class="secondary" href="#course/' + c.id + '/' + section + '">' + title + '</a>').join('') + '</nav>';
+  }
+  document.addEventListener('change', e => {
+    if (e.target.matches('[data-paper-goal]')) H.update({minutes:Number(e.target.value)});
+  });
+  const add = '<a class="secondary" href="#import">Додати предмет +</a>';
+  H.workspace = { get courses() {return courses;}, tasks, notice, tools, courseActions, updateCourses, add };
+  if (location.hash === '#dashboard') history.replaceState(null,'','#plan');
+  window.addEventListener('hashchange', () => {
+    if (location.hash === '#dashboard') { history.replaceState(null,'','#plan'); }
+  });
+  document.addEventListener('DOMContentLoaded', loadDeadlines);
+})();

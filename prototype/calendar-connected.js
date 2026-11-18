@@ -1,7 +1,7 @@
 /* The paper planner and the weekly workspace share a cookie, calendar API and event editor. */
 (() => {
   const H = window.Hustle, core = window.HustleStudy;
-  const standalone = !H.state.registered || !H.state.ready || !H.state.courses.length;
+  const standalone = !H.workspace && (!H.state.registered || !H.state.ready || !H.state.courses.length);
   if (standalone && !['#calendar', '#oral'].includes(location.hash)) return;
   const {escape: esc, icon} = H;
   const editor = window.HustleCalendar;
@@ -24,7 +24,7 @@
     if (sessionRequest) return sessionRequest;
     if (bootstrap && !revalidate) return bootstrap;
     bootstrap = UI.api('/api/workspace/session').then(() => UI.api('/api/workspace/courses'))
-      .then(result => { courses = result; }).catch(err => { bootstrap = null; throw err; });
+      .then(result => { courses = result; H.workspace?.updateCourses(result); }).catch(err => { bootstrap = null; throw err; });
     sessionRequest = bootstrap.finally(() => { sessionRequest = null; });
     return sessionRequest;
   }
@@ -52,7 +52,7 @@
       if (previousHash !== hash) session(true).then(refresh).catch(err => UI.toast(err.message));
       return;
     }
-    if (!['plan', 'calendar'].includes(hash) || course) return;
+    if (!['plan', 'calendar'].includes(hash) && !course?.connected) return;
     if (week && hash === 'calendar') {
       const host = main.querySelector('[data-paper-week]');
       if (!host || weekHost === host) return;
@@ -98,7 +98,7 @@
     return loading;
   }
   function paint() {
-    if (!context || !['calendar','plan'].includes(location.hash.slice(1) || 'plan') || (context.hash === 'calendar' && week)) return;
+    if (!context || (!['calendar','plan'].includes(location.hash.slice(1) || 'plan') && !context.course?.connected) || (context.hash === 'calendar' && week)) return;
     const agenda = main.querySelector('.selected-agenda, .mini-agenda');
     if (!agenda) return;
     main.querySelectorAll('[data-live-mark], .paper-calendar-status').forEach(el => el.remove());
@@ -117,6 +117,7 @@
     const full = context.hash === 'calendar';
     const byDay = new Map(), visibleDays = days();
     for (const ev of calendar.events) {
+      if (context.course && String(ev.course_id) !== context.course.id) continue;
       const first = dayOf(ev.start_at);
       // Calendar intervals are half-open, including all-day and overnight entries.
       const lastInstant = new Date(Date.parse(ev.end_at) - 1);

@@ -7,7 +7,7 @@ www.hustle.pp.ua {
 hustle.pp.ua {
 	encode gzip
 
-	@backend path /hustle /hustle/* /api/* /healthz /favicon.ico
+	@backend path /hustle /hustle/* /prototype /prototype/* /api/* /healthz /favicon.ico
 	handle @backend {
 		reverse_proxy 127.0.0.1:8000 {
 			flush_interval -1

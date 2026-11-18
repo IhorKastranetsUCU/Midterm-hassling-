@@ -1,13 +1,24 @@
 (() => {
   const H = window.Hustle, C = window.HustleStudy, esc = H.escape, icon = H.icon;
-  if (!H.liveCalendar?.standalone && (!H.state.registered || !H.state.ready || !H.state.courses.length)) return;
+  if (!H.workspace && !H.liveCalendar?.standalone && (!H.state.registered || !H.state.ready || !H.state.courses.length)) return;
   const fire = window.HustleDeadlineVisuals;
-  const storageKey = 'hustle-study-dashboard-v1';
+  const originalKey = 'hustle-study-dashboard-v1';
+  const storageKey = H.account ? originalKey + ':' + H.account.owner : originalKey;
+  if (H.account && H.state.registered && H.state.ready) {
+    try {
+      const legacy = localStorage.getItem(originalKey);
+      const owner = localStorage.getItem(originalKey + ':owner');
+      if (legacy && (!owner || owner === H.account.owner) && !localStorage.getItem(storageKey)) {
+        localStorage.setItem(storageKey, legacy);
+        localStorage.setItem(originalKey + ':owner', H.account.owner);
+      }
+    } catch {}
+  }
   const main = document.querySelector('#workspace-main');
   const today = () => C.dateKey();
   let saved;
   try { saved = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { saved = {}; }
-  const newTimer = (mode = 'focus', course = H.state.courses[0]) => ({ mode, course, duration: mode === 'focus' ? 1500 : mode === 'short' ? 300 : 900, remaining: mode === 'focus' ? 1500 : mode === 'short' ? 300 : 900, running: false, endsAt: 0, creditedAt: 0, id: '' });
+  const newTimer = (mode = 'focus', course = H.state.courses[0] || H.workspace?.courses[0]?.id || '') => ({ mode, course, duration: mode === 'focus' ? 1500 : mode === 'short' ? 300 : 900, remaining: mode === 'focus' ? 1500 : mode === 'short' ? 300 : 900, running: false, endsAt: 0, creditedAt: 0, id: '' });
   let state = { anchor: today(), records: [], completed: {}, sessions: [], awards: {}, timer: newTimer(), ...saved };
   if (!Array.isArray(state.records) || !Array.isArray(state.sessions) || !state.timer || !Number.isFinite(state.timer.remaining)) state = { ...state, records: [], sessions: [], timer: newTimer() };
   // Carry earlier prototype completion forward without changing its saved values.
@@ -15,15 +26,17 @@
   H.calendar?.init(state.anchor);
   let reward = null, lastPracticeCourse;
   let selectedDate = today(), month = today().slice(0, 7) + '-01', activePractice = null, lastActivity = Date.now(), toastTimeout;
-  const selected = () => window.HustleCourses.filter(c => H.state.courses.includes(c.id));
+  const demoCourses = () => window.HustleCourses.filter(c => H.state.registered && H.state.ready && H.state.courses.includes(c.id));
+  const selected = () => [...(H.workspace?.courses || []), ...demoCourses()];
   const courseById = id => selected().find(c => c.id === id);
-  if (!courseById(state.timer.course)) state.timer = newTimer();
+  if (!courseById(state.timer.course) && !state.timer.running && state.timer.remaining === state.timer.duration) state.timer = newTimer();
   const definitions = [ { kind: 'cards', title: 'Повторити означення', label: 'Картки', minutes: 5 }, { kind: 'example', title: 'Розібрати приклад', label: 'Практика', minutes: 10 }, { kind: 'quiz', title: 'Перевірити себе', label: 'Мініквіз', minutes: 10 } ];
   const schedules = { algebra: [1, 16], probability: [2, 12], english: [2, 18] };
   function save() { if (H.liveCalendar?.standalone) return; try { localStorage.setItem(storageKey, JSON.stringify(state)); } catch { announce('Не вдалося зберегти дані в браузері.'); } }
   function announce(message) { const el = document.querySelector('.toast'); clearTimeout(toastTimeout); el.textContent = message; el.hidden = false; toastTimeout = setTimeout(() => el.hidden = true, 4500); }
   function tasks(courseId) {
     return selected().filter(c => !courseId || c.id === courseId).flatMap(course => {
+      if (course.connected) return H.workspace.tasks(course, state.completed);
       const [offset, hour] = schedules[course.id] || [3, 16], dueDay = C.addDays(state.anchor, offset), due = C.deadline(dueDay, hour);
       return definitions.map((task, i) => ({ ...task, id: `${course.id}:${task.kind}`, course, due, dueDay, scheduled: C.addDays(dueDay, i - 2), done: !!state.completed[`${course.id}:${task.kind}`] }));
     });
@@ -52,13 +65,15 @@
     </span>`;
   }
   function avatar(c) { return `<span class="course-avatar ${c.color}">${esc(c.initials)}</span>`; }
-  function start(task, label = 'Почати заняття', klass = 'primary') { return `<button class="${klass}" data-start="${task.kind}" data-course="${task.course.id}" data-focus-id="dash-${task.id}">${label}${icon('arrow')}</button>`; }
+  function start(task, label = 'Почати заняття', klass = 'primary') {
+    if (task.href) return `<a class="${klass}" href="${esc(task.href)}" ${task.href.startsWith('#') ? '' : 'target="_blank" rel="noopener noreferrer"'}>${label}${icon('arrow')}</a>`;
+    return `<button class="${klass}" data-start="${task.kind}" data-course="${task.course.id}" data-focus-id="dash-${task.id}">${label}${icon('arrow')}</button>`; }
   function heading(title, action = '') { return `<div class="page-heading dashboard-heading"><div><h1 tabindex="-1">${esc(title)}</h1><p>${dateText(today(), { weekday: 'long', day: 'numeric', month: 'long' })}</p></div>${action}</div>`; }
   function taskRow(t, showFire = true) { return `<article class="dash-task deadline-surface ${t.done ? 'is-done' : ''} ${hot(t) ? 'is-urgent' : ''}"><button class="task-check" data-dash-complete="${t.id}" aria-pressed="${t.done}" aria-label="${t.done ? 'Позначити невиконаним' : 'Позначити виконаним'}: ${esc(t.title)}, ${esc(t.course.short)}">${t.done ? icon('check') : ''}</button><div class="dash-task-copy"><h3>${t.title}</h3><p><a href="#course/${t.course.id}">${esc(t.course.short)}</a><span>· ${esc(t.course.deadline)}</span><span>· ${t.minutes} хв</span></p></div>${badge(t)}${start(t, t.done ? 'Повторити' : 'Відкрити', 'task-open')}${showFire ? fire.edge(t.due, t.done) : ''}</article>`; }
   function practiceRow(task, showCourse) {
-    const meta = [showCourse && task.course.short, task.label, task.minutes + ' хв'].filter(Boolean).map(esc).join(' · ');
+    const meta = [showCourse && task.course.short, task.label, task.minutes && task.minutes + ' хв'].filter(Boolean).map(esc).join(' · ');
     return `<article class="practice-line ${task.done ? 'is-done' : ''}">
-      <button class="task-check" data-dash-complete="${task.id}" aria-pressed="${task.done}" aria-label="${task.done ? 'Позначити невиконаним' : 'Позначити виконаним'}: ${esc(task.title)}, ${esc(task.course.short)}">${task.done ? icon('check') : ''}</button>
+      <button class="task-check" ${task.submitted ? 'disabled' : ''} data-dash-complete="${task.id}" aria-pressed="${task.done}" aria-label="${task.done ? 'Позначити невиконаним' : 'Позначити виконаним'}: ${esc(task.title)}, ${esc(task.course.short)}">${task.done ? icon('check') : ''}</button>
       <div><h3>${esc(task.title)}</h3><p>${meta}</p></div>
       ${start(task, task.done ? 'Повторити' : 'Відкрити', 'task-open')}
     </article>`;
@@ -82,6 +97,10 @@
     return `<section class="learning-strip" aria-label="Навчальна статистика"><div class="daily-focus-stat"><span class="tiny-goal-ring" style="--goal:${Math.min(100, seconds / (H.state.minutes * 60) * 100)}%" aria-hidden="true">${icon('clock')}</span><div><strong data-stat-today>${C.secondsLabel(seconds)}</strong><span>сьогодні / ${H.state.minutes} хв</span></div></div><div class="strip-stat"><strong data-stat-week>${C.secondsLabel(C.sum(state.records, { course: id, from: C.addDays(today(), -6), to: today() }))}</strong><span>за 7 днів</span></div><div class="strip-stat plan-stat"><strong>${p.done}<em> / ${p.total}</em></strong><span>завдань виконано</span><div class="small-progress" role="progressbar" aria-label="Прогрес плану" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p.percent}"><i style="width:${p.percent}%"></i></div></div><div class="streak-stat"><div><strong>${streak}</strong><span>днів поспіль</span></div><div class="streak-trail" aria-label="Навчальні дні за тиждень">${week.map(day => `<span class="${days.has(day) ? 'studied' : ''} ${day === today() ? 'trail-today' : ''}" title="${dateText(day)}${days.has(day) ? ': навчався' : ''}">${days.has(day) ? '✓' : '·'}</span>`).join('')}</div></div><div class="xp-stat" title="10 XP за нове завершене завдання · 25 XP за Pomodoro"><span class="xp-star" aria-hidden="true">✦</span><div><strong>${xp} XP</strong><span>Рівень ${Math.floor(xp / 100) + 1}</span></div></div></section>`;
   }
   function focusCard(course, next) {
+    if (!next && !tasks(course?.id).length) {
+      const c = course || selected()[0];
+      return `<section class="next-session focus-note"><div class="focus-body"><div class="next-session-copy"><h2>${c ? 'Найближчих дедлайнів немає' : 'Додай перший предмет'}</h2></div><div class="next-session-action">${c ? '<a class="secondary" href="#practice">До практики →</a>' : H.workspace?.add || ''}</div><div class="desk-sticker" aria-hidden="true"><img src="study-donkey.webp" alt=""><span class="paper-tape"></span></div></div></section>`;
+    }
     if (!next) return `<section class="next-session plan-finished"><span class="finish-stamp" aria-hidden="true">✦</span><div><h2>План виконано</h2><p>${progress(course?.id).done} завдань — готово</p></div><a class="secondary" href="#practice">До практики ${icon('arrow')}</a></section>`;
     const note = next.course.materials.findIndex(item => item.type === 'Конспект');
     const reading = course && note >= 0
@@ -91,13 +110,13 @@
       <div class="focus-body">
         <div class="next-session-copy">
           <a class="focus-course" href="#course/${next.course.id}">${avatar(next.course)} ${esc(next.course.name)}</a>
-          <h2>${esc(next.course.topic)}</h2><p>${esc(next.title)} <span>· ${next.minutes} хв</span></p>
+          <h2>${esc(next.course.connected ? next.title : next.course.topic)}</h2><p>${esc(next.course.connected ? next.label : next.title)} ${next.minutes ? `<span>· ${next.minutes} хв</span>` : ''}</p>
           </div>
         <div class="next-session-action">${start(next)}${reading}</div>
         <div class="desk-sticker" aria-hidden="true"><img src="study-donkey.webp" alt=""><span class="paper-tape"></span></div>
       </div>
       <div class="focus-deadline deadline-surface">
-        <span class="focus-deadline-name">${icon('calendar')}<span>Дедлайн<strong>${esc(next.course.deadline)}</strong></span></span>
+        <span class="focus-deadline-name">${icon('calendar')}<span>Дедлайн<strong>${esc(next.course.deadline || next.title)}</strong></span></span>
         ${badge(next)}${fire.edge(next.due, next.done)}
       </div>
     </section>`;
@@ -121,37 +140,38 @@
     const now = Date.now();
     const ordered = selected().map(course => {
       const p = progress(course.id);
-      return { course, p, due: tasks(course.id)[0].due, done: p.done === p.total };
+      const nearest = tasks(course.id).sort((a,b) => deadlineOrder(a,b,now))[0];
+      return { course, p, nearest, due: nearest?.due ?? Infinity, done: p.total > 0 && p.done === p.total };
     }).sort((a, b) => deadlineOrder(a, b, now));
-    const cards = ordered.map(({ course, p, due, done }) => {
+    const cards = ordered.map(({ course, p, nearest, due, done }) => {
       const seconds = C.sum(state.records, { course: course.id });
       return `<a class="subject-card deadline-surface subject-${course.color}" href="#course/${course.id}">
         <span class="paper-tape" aria-hidden="true"></span>
         <div class="subject-card-top">${avatar(course)}${icon('arrow')}</div>
         <h3>${esc(course.name)}</h3><p>${esc(course.topic)}</p>
-        <div class="subject-progress"><span>${p.done} / ${p.total} вправ</span><span class="subject-minutes">${icon('clock')} ${C.secondsLabel(seconds)}</span></div>
+        <div class="subject-progress"><span>${p.done} / ${course.connected ? UI.countLabel(p.total,'завдання','завдання','завдань') : p.total + ' вправ'}</span><span class="subject-minutes">${icon('clock')} ${C.secondsLabel(seconds)}</span></div>
         <div class="small-progress" role="progressbar" aria-label="Прогрес плану" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p.percent}"><i style="width:${p.percent}%"></i></div>
-        <div class="subject-deadline deadline-surface">${done ? '' : `<strong>${esc(course.deadline)}</strong>`}${badge({ due, done })}${fire.edge(due, done, showFire)}</div>
+        ${nearest ? `<div class="subject-deadline deadline-surface">${done ? '' : `<strong>${esc(course.deadline || nearest.title)}</strong>`}${badge({ due, done })}${fire.edge(due, done, showFire)}</div>` : ''}
       </a>`;
     }).join('');
     const title = showHeading ? `<div class="panel-title"><h2>Мої предмети</h2><a href="#courses">Усі предмети ${icon('arrow')}</a></div>` : '';
     return `<div class="subjects-section">${title}<div class="subject-grid">${cards}</div></div>`;
   }
-  function timerCard() { return `<section class="dash-panel pomodoro-card" data-timer-state="${state.timer.running ? 'running' : state.timer.remaining < state.timer.duration ? 'paused' : 'ready'}" aria-label="Pomodoro"><span class="paper-tape" aria-hidden="true"></span><div class="panel-title"><h2>${icon('clock')} Pomodoro</h2><span data-cycle-count>${state.sessions.filter(s => s.day === today()).length} сьогодні</span></div><div class="timer-modes" role="group" aria-label="Режим таймера">${[['focus', 'Фокус'], ['short', '5 хв'], ['long', '15 хв']].map(([mode, label]) => `<button data-timer-mode="${mode}" aria-pressed="${state.timer.mode === mode}">${label}</button>`).join('')}</div><div class="timer-ring" data-timer-ring><div><strong data-timer-display role="timer" aria-label="Залишилось часу">25:00</strong><span data-timer-description>${state.timer.running ? 'Таймер працює' : state.timer.remaining < state.timer.duration ? 'На паузі' : state.timer.mode === 'focus' ? 'Фокус' : 'Перерва'}</span></div></div><label class="timer-course-label" for="timer-course">Предмет</label><select id="timer-course" data-timer-course ${state.timer.running || state.timer.remaining !== state.timer.duration ? 'disabled' : ''}>${selected().map(c => `<option value="${c.id}" ${state.timer.course === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select><div class="timer-actions"><button class="primary" data-timer-toggle>${state.timer.running ? 'Пауза' : state.timer.remaining < state.timer.duration ? 'Продовжити' : 'Старт'}<span aria-hidden="true">${state.timer.running ? 'Ⅱ' : '▷'}</span></button><button class="icon-button" data-timer-reset aria-label="Скинути таймер">↻</button></div><p class="timer-feedback" role="status" data-timer-feedback>${state.timer.mode === 'focus' ? '' : 'Перерва не додається до часу навчання'}</p></section>`; }
+  function timerCard() { return `<section class="dash-panel pomodoro-card" data-timer-state="${state.timer.running ? 'running' : state.timer.remaining < state.timer.duration ? 'paused' : 'ready'}" aria-label="Pomodoro"><span class="paper-tape" aria-hidden="true"></span><div class="panel-title"><h2>${icon('clock')} Pomodoro</h2><span data-cycle-count>${state.sessions.filter(s => s.day === today()).length} сьогодні</span></div><div class="timer-modes" role="group" aria-label="Режим таймера">${[['focus', 'Фокус'], ['short', '5 хв'], ['long', '15 хв']].map(([mode, label]) => `<button data-timer-mode="${mode}" aria-pressed="${state.timer.mode === mode}">${label}</button>`).join('')}</div><div class="timer-ring" data-timer-ring><div><strong data-timer-display role="timer" aria-label="Залишилось часу">25:00</strong><span data-timer-description>${state.timer.running ? 'Таймер працює' : state.timer.remaining < state.timer.duration ? 'На паузі' : state.timer.mode === 'focus' ? 'Фокус' : 'Перерва'}</span></div></div><label class="timer-course-label" for="timer-course">Предмет</label><select id="timer-course" data-timer-course ${state.timer.running || state.timer.remaining !== state.timer.duration ? 'disabled' : ''}>${!selected().length ? '<option value="">Самостійне навчання</option>' : ''}${selected().map(c => `<option value="${c.id}" ${state.timer.course === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select><div class="timer-actions"><button class="primary" data-timer-toggle>${state.timer.running ? 'Пауза' : state.timer.remaining < state.timer.duration ? 'Продовжити' : 'Старт'}<span aria-hidden="true">${state.timer.running ? 'Ⅱ' : '▷'}</span></button><button class="icon-button" data-timer-reset aria-label="Скинути таймер">↻</button></div><p class="timer-feedback" role="status" data-timer-feedback>${state.timer.mode === 'focus' ? '' : 'Перерва не додається до часу навчання'}</p></section>`; }
   function calendarGrid(compact = false, course) {
-    const days = C.monthDays(month), events = tasks(course?.id);
+    const days = C.monthDays(month), events = tasks(course?.id).filter(t => !t.course.connected);
     const monthLabel = dateText(month, { month: 'long', year: 'numeric' });
     const monthControls = `<div class="calendar-month-controls">
       <button class="icon-button" data-month-step="-1" aria-label="Попередній місяць">‹</button>
       <strong>${monthLabel[0].toLocaleUpperCase('uk') + monthLabel.slice(1)}</strong>
       <button class="icon-button" data-month-step="1" aria-label="Наступний місяць">›</button></div>`;
     return `<section class="dash-panel calendar-panel ${compact ? 'compact-calendar' : ''}">${compact ? `<div class="panel-title"><h2>Календар</h2><a href="#calendar" aria-label="Відкрити календар">${icon('arrow')}</a></div>${monthControls}` : `<div class="month-heading">${monthControls}<button class="calendar-today" data-calendar-today>Сьогодні</button></div>`}<div class="calendar-weekdays" aria-hidden="true">${['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map(d => `<span>${d}</span>`).join('')}</div><div class="calendar-grid" role="group" aria-label="Дні місяця">${days.map(day => {
-      const due = H.calendar ? H.calendar.events(course?.id).filter(e => e.day === day) : selected().filter(c => (!course || c.id === course.id) && tasks(c.id)[0].dueDay === day), planned = events.filter(t => t.scheduled === day), urgent = due.some(e => { const c = courseById(e.course || e.id); return c && hot(tasks(c.id)[0]) && !allDone(c); });
+      const due = H.calendar ? H.calendar.events(course?.id).filter(e => e.day === day) : demoCourses().filter(c => (!course || c.id === course.id) && tasks(c.id)[0].dueDay === day), planned = events.filter(t => t.scheduled === day), urgent = due.some(e => { const c = courseById(e.course || e.id); return c && hot(tasks(c.id)[0]) && !allDone(c); });
       return `<div class="calendar-cell" data-drop-day="${day}"><button data-calendar-date="${day}" aria-pressed="${selectedDate === day}" ${day === today() ? 'aria-current="date"' : ''} class="calendar-day ${day.slice(0, 7) !== month.slice(0, 7) ? 'other-month' : ''} ${urgent ? 'has-urgent' : ''}" aria-label="${dateText(day, { weekday: 'long', day: 'numeric', month: 'long' })}${due.length ? ', дедлайнів: ' + due.length : ''}${planned.length ? ', завдань: ' + planned.length : ''}"><span>${Number(day.slice(-2))}</span><div class="calendar-dots" aria-hidden="true">${due.map(() => '<i class="deadline-dot"></i>').join('')}${planned.length ? '<i></i>' : ''}</div></button>${!compact && H.calendar ? H.calendar.chips(day, course?.id) : ''}</div>`;
     }).join('')}</div>${compact ? `<div class="mini-agenda"><strong>${dateText(selectedDate)}</strong>${agendaItems(selectedDate, course, true)}</div>` : '<div class="calendar-legend"><span><i></i> Заняття</span><span><i class="deadline-dot"></i> Дедлайн</span></div>'}</section>`;
   }
   function agendaItems(day, course, compact = false) {
-    const list = tasks(course?.id).filter(t => t.scheduled === day), deadlines = selected().filter(c => (!course || c.id === course.id) && tasks(c.id)[0].dueDay === day);
+    const list = tasks(course?.id).filter(t => !t.course.connected && t.scheduled === day), deadlines = demoCourses().filter(c => (!course || c.id === course.id) && tasks(c.id)[0].dueDay === day);
     if (H.calendar) { const imported = H.calendar.agenda(day, course?.id, planDone, !compact); return imported + (list.length ? (compact ? list.map(t => `<button class="mini-agenda-task" data-start="${t.kind}" data-course="${t.course.id}" data-focus-id="agenda-${t.id}"><i></i><span>${esc(t.course.short)} · ${t.label}</span>${t.done ? icon('check') : icon('arrow')}</button>`).join('') : list.map(t => practiceRow(t, !course)).join('')) : imported ? '' : '<p class="agenda-empty">На цей день нічого не заплановано</p>'); }
     if (!list.length && !deadlines.length) return `<p class="agenda-empty">На цей день нічого не заплановано</p>`;
     return deadlines.map(c => `<a class="agenda-deadline" href="#course/${c.id}"><span class="agenda-icon">${!allDone(c) && hot(tasks(c.id)[0]) ? flame() : icon('calendar')}</span><div><strong>${esc(c.deadline)}</strong><span>${esc(c.short)} · ${dueLabel(tasks(c.id)[0].due).split(' · ')[1]}</span></div>${icon('arrow')}</a>`).join('') + (compact ? list.map(t => `<button class="mini-agenda-task" data-start="${t.kind}" data-course="${t.course.id}" data-focus-id="agenda-${t.id}"><i class="${t.done ? 'done-dot' : ''}"></i><span>${esc(t.course.short)} · ${t.label}</span>${t.done ? icon('check') : icon('arrow')}</button>`).join('') : list.map(t => practiceRow(t, !course)).join(''));
@@ -163,12 +183,12 @@
     const list = tasks(course?.id).sort((a, b) => deadlineOrder(a, b, now));
     const active = list.filter(task => !task.done);
     const next = active[0];
-    const upcoming = active.filter((task, index) => task.course.id !== next?.course.id &&
-      active.findIndex(other => other.course.id === task.course.id) === index);
+    const upcoming = active.filter((task, index) => task !== next && (task.course.connected || task.course.id !== next?.course.id &&
+      active.findIndex(other => other.course.id === task.course.id) === index));
     const queue = upcoming.length ? `<section class="dash-panel deadline-queue">
       <div class="panel-title"><h2>Інші дедлайни</h2><a href="#calendar">Календар ${icon('arrow')}</a></div>
       ${upcoming.map(task => `<a class="deadline-line deadline-surface" href="#course/${task.course.id}">
-        ${avatar(task.course)}<span class="queue-title"><strong>${esc(task.course.deadline)}</strong><small>${esc(task.course.name)}</small></span>
+        ${avatar(task.course)}<span class="queue-title"><strong>${esc(task.course.deadline || task.title)}</strong><small>${esc(task.course.name)}</small></span>
         ${badge(task)}${icon('arrow')}${fire.edge(task.due, task.done)}</a>`).join('')}
     </section>` : '';
     const plan = tasks(course?.id).sort((a, b) => a.scheduled.localeCompare(b.scheduled) || a.due - b.due);
@@ -179,9 +199,18 @@
       <div class="dash-task-list">${visibleRows.map(t => practiceRow(t, !course)).join('') || '<p class="agenda-empty">На сьогодні занять не заплановано.</p>'}</div>
       ${others.length ? `<details class="remaining-tasks"><summary>Інші заняття <span>${others.length}</span></summary>${others.map(t => practiceRow(t, true)).join('')}</details>` : ''}
     </section>`;
-    return `${course ? '<a class="back-to-courses" href="#courses">← Усі предмети</a>' : ''}${heading(course ? course.name : 'Мій огляд', course ? (H.paperOral?.button(course) || '') : (H.liveCalendar?.inboxButton() || H.calendar.button()))}<div class="dashboard-layout desk-layout">${focusCard(course, next)}${metrics(course)}<div class="dashboard-main">${queue}${checklist}${course ? `<template><section class="dash-panel course-material-panel"><div class="panel-title"><h2>Матеріали предмета</h2></div>${course.materials.map((m, i) => `<button class="course-material-link" data-material="${i}" data-course="${course.id}" data-focus-id="dash-material-${course.id}-${i}">${icon('files')}<span><strong>${esc(m.title)}</strong><small>${esc(m.type)}</small></span>${icon('arrow')}</button>`).join('')}</section></template>` : ''}${weeklyChart(course)}</div><aside class="dashboard-aside">${timerCard()}${calendarGrid(true, course)}</aside></div>`;
+    return `${course ? '<a class="back-to-courses" href="#courses">← Усі предмети</a>' : ''}${H.workspace?.notice() || ''}${heading(course ? course.name : 'Мій огляд', course ? (H.paperOral?.button(course) || '') : (H.liveCalendar?.inboxButton() || H.calendar.button()))}<div class="dashboard-layout desk-layout">${focusCard(course, next)}${metrics(course)}<div class="dashboard-main">${course?.connected ? H.workspace.courseActions(course) : ''}${queue}${checklist}${course ? `<template><section class="dash-panel course-material-panel"><div class="panel-title"><h2>Матеріали предмета</h2></div>${course.materials.map((m, i) => `<button class="course-material-link" data-material="${i}" data-course="${course.id}" data-focus-id="dash-material-${course.id}-${i}">${icon('files')}<span><strong>${esc(m.title)}</strong><small>${esc(m.type)}</small></span>${icon('arrow')}</button>`).join('')}</section></template>` : ''}${weeklyChart(course)}</div><aside class="dashboard-aside">${timerCard()}${calendarGrid(true, course)}</aside></div>`;
   }
-  function coursesView() { return heading('Мої предмети', '<a class="secondary" href="connect.html?edit=1">Обрати предмети +</a>') + metrics() + (H.liveCalendar?.coursesView() || '') + courseCards(false, true); }
+  function deadlinesView(course) {
+    const list = tasks(course?.id).sort((a,b) => deadlineOrder(a,b,Date.now()));
+    const records = course ? `<a class="secondary" href="#course/${course.id}/submissions">Статус у Moodle →</a>` : '';
+    const rows = list.map(t => `<article class="deadline-line deadline-surface">
+      ${avatar(t.course)}<span class="queue-title"><strong>${esc(t.title)}</strong><small>${esc(t.course.name)}</small></span>
+      ${badge(t)}${start(t, 'Відкрити', 'task-open')}${fire.edge(t.due,t.done)}</article>`).join('');
+    return heading('Дедлайни', records) + (H.workspace.notice() || '') +
+      '<section class="dash-panel deadline-queue">' + (rows || '<p class="agenda-empty">Найближчих дедлайнів немає.</p>') + '</section>';
+  }
+  function coursesView() { return heading('Мої предмети', H.workspace?.add || '<a class="secondary" href="connect.html?edit=1">Обрати предмети +</a>') + metrics() + (H.workspace ? H.workspace.notice() : H.liveCalendar?.coursesView() || '') + courseCards(false, true); }
   function calendarView() {
     if (H.liveCalendar?.week) return H.liveCalendar.weekView();
 
@@ -192,6 +221,16 @@
   function closeMobileMenu() { document.body.classList.remove('menu-open'); document.querySelector('.sidebar-shade').hidden = true; document.querySelector('#menu-toggle').setAttribute('aria-expanded', 'false'); document.querySelector('#sidebar').inert = matchMedia('(max-width: 52rem)').matches; }
   function render() {
     const hash = location.hash.slice(1) || 'plan', course = hash.startsWith('course/') ? courseById(hash.split('/')[1]) : null;
+    if (H.workspace && (hash === 'deadlines' || course?.connected && hash === 'course/' + course.id + '/assignments')) {
+      document.title = 'Дедлайни — Hustle';
+      document.querySelector('#view-name').textContent = 'Дедлайни';
+      document.querySelectorAll('[data-nav],.sidebar-course').forEach(a => {
+        if (course && a.hash === '#course/' + course.id) a.setAttribute('aria-current','page');
+        else a.removeAttribute('aria-current');
+      });
+      main.innerHTML = deadlinesView(course); fire.mount(main); return true;
+    }
+    if (H.workspace?.tools(hash)) { fire.mount(); return true; }
     if (hash === 'oral' && H.paperOral) {
       main.innerHTML = heading('Усний захист') + H.paperOral.shell();
       H.paperOral.mount(main.querySelector('[data-oral-picker]'));
@@ -205,7 +244,7 @@
     if (hash.startsWith('course/') && !course) { fire.mount(); main.innerHTML = heading('Предмет не знайдено', '<a class="secondary" href="#courses">До предметів</a>'); return true; }
     if (course && !state.timer.running && state.timer.remaining === state.timer.duration && state.timer.course !== course.id) { state.timer.course = course.id; save(); }
     const title = course?.short || ({ plan: 'Мій огляд', courses: 'Мої предмети', calendar: 'Календар', focus: 'Pomodoro' })[hash];
-    document.querySelectorAll('[data-nav],.sidebar-course').forEach(a => { if (course ? a.hash === '#' + hash : a.dataset.nav === hash) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    document.querySelectorAll('[data-nav],.sidebar-course').forEach(a => { if (course ? a.hash === '#course/' + course.id : a.dataset.nav === hash) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     document.querySelector('#view-name').textContent = title; document.title = `${title} — Hustle`;
     main.innerHTML = hash === 'calendar' ? calendarView() : hash === 'courses' ? coursesView() : hash === 'focus' ? heading('Pomodoro') + `<div class="dedicated-focus">${timerCard()}${weeklyChart()}</div>` : dashboardView(course);
     H.liveCalendar?.mount(hash, month, selectedDate, course);
@@ -273,6 +312,10 @@
   H.dashboardRefresh = () => { if (!document.querySelector('#study-dialog').open) render(); };
   window.HustleDashboard = {
     render,
+    trackCourseActivity(courseId) {
+      lastActivity = Date.now();
+      if (activePractice?.course !== courseId) beginPractice(courseId);
+    },
     rewardSummary() { return reward ? `<div class="earned-xp"><span aria-hidden="true">✦</span> +${reward.points} XP<i></i><i></i><i></i><i></i></div>` : ''; },
     completePractice(practice) { flushPractice(); award('task:' + practice.course.id + ':' + practice.kind, 10, practice.course.id); state.completed[`${practice.course.id}:${practice.kind}`] = true; activePractice = null; save(); },
   };
@@ -320,7 +363,7 @@
   window.addEventListener('focus', () => { if (activePractice) activePractice.since = Date.now(); lastActivity = Date.now(); tickTimer(); paintTimer(); });
   window.addEventListener('pagehide', () => { flushPractice(); tickTimer(); save(); });
   document.querySelector('#study-dialog').addEventListener('close', () => { flushPractice(); activePractice = null; });
-  window.addEventListener('hashchange', () => { flushPractice(); closeMobileMenu(); });
+  window.addEventListener('hashchange', () => { flushPractice(); activePractice = null; closeMobileMenu(); });
   document.addEventListener('DOMContentLoaded', () => {
     const nav = document.querySelector('#workspace-nav');
     nav.querySelector('[data-nav="plan"] span').textContent = 'Мій огляд';
@@ -330,8 +373,12 @@
     document.querySelector('.topbar-account').insertAdjacentHTML('beforebegin', `<a href="#focus" class="persistent-timer" id="persistent-timer"></a>`);
     const label = document.createElement('p'); label.className = 'sidebar-course-label'; label.textContent = 'Предмети';
     nav.insertBefore(label, settings);
-    if (H.liveCalendar) settings.insertAdjacentHTML('beforebegin', `<a href="/hustle/app.html#courses">${icon('link')}<span>Курси Moodle</span></a>`);
-    selected().forEach(c => settings.insertAdjacentHTML('beforebegin', `<a class="sidebar-course" href="#course/${c.id}"><i class="course-dot ${c.color}"></i><span>${esc(c.short)}</span></a>`));
+    if (H.liveCalendar && !H.workspace) settings.insertAdjacentHTML('beforebegin', `<a href="/hustle/app.html#courses">${icon('link')}<span>Курси Moodle</span></a>`);
+    H.refreshCourseNav = () => {
+      nav.querySelectorAll('.sidebar-course').forEach(el => el.remove());
+      selected().forEach(c => settings.insertAdjacentHTML('beforebegin', `<a class="sidebar-course" href="#course/${c.id}"><i class="course-dot ${c.color}"></i><span>${esc(c.short)}</span></a>`));
+    };
+    H.refreshCourseNav();
     if (H.liveCalendar?.standalone) {
       nav.innerHTML = `<a href="/hustle/app.html#dashboard">${icon('plan')}<span>Мій огляд</span></a><a href="/hustle/app.html#courses">${icon('courses')}<span>Курси Moodle</span></a><a href="#calendar" data-nav="calendar">${icon('calendar')}<span>Календар</span></a><a href="#oral" data-nav="oral">${icon('practice')}<span>Усний захист</span></a><a href="/hustle/app.html#settings">${icon('settings')}<span>Налаштування</span></a>`;
       document.querySelectorAll('.topbar-account,.sidebar-profile').forEach(a => a.href = '/hustle/app.html#settings');

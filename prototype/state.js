@@ -1,5 +1,27 @@
 (() => {
-  const key = 'hustle-product-prototype-v1';
+  const accountNode = document.getElementById('workspace-account');
+  const account = accountNode ? JSON.parse(accountNode.textContent) : null;
+  const legacyKey = 'hustle-product-prototype-v1';
+  let key = legacyKey;
+  if (!account) {
+    try {
+      const active = sessionStorage.getItem(legacyKey + ':active-owner');
+      if (active) key += ':' + active;
+    } catch {}
+  }
+  // Keep an existing paper profile with its original browser workspace.
+  if (account) {
+    key += ':' + account.owner;
+    try {
+      sessionStorage.setItem(legacyKey + ':active-owner', account.owner);
+      const old = sessionStorage.getItem(legacyKey);
+      const owner = sessionStorage.getItem(legacyKey + ':owner');
+      if (old && (!owner || owner === account.owner) && !sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, old);
+        sessionStorage.setItem(legacyKey + ':owner', account.owner);
+      }
+    } catch {}
+  }
   const defaults = { registered: false, name: '', school: '', courses: [], minutes: 25, ready: false, completed: {}, bookmarks: [] };
   let state;
   try { state = { ...defaults, ...JSON.parse(sessionStorage.getItem(key) || '{}') }; } catch { state = { ...defaults }; }
@@ -21,6 +43,7 @@
     calendar: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 2v6M17 2v6M3 11h18"/>',
   };
   window.Hustle = {
+    account,
     get state() { return state; },
     update(patch) { state = { ...state, ...patch }; try { sessionStorage.setItem(key, JSON.stringify(state)); } catch {} return state; },
     escape(value) { return String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); },
