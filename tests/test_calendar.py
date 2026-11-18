@@ -226,7 +226,8 @@ def test_ai_nl_planner_snaps_conflicting_gemini_proposal_to_safe_slot(cal_env, m
     tomorrow = (datetime.now(kyiv) + timedelta(days=1)).date()
 
     # Gemini proposes 02:00 (during sleep!), deterministic scheduler must snap it to a safe non-sleep slot >= 08:00.
-    async def fake_generate(self, prompt, **kwargs):
+    async def fake_generate(self, prompt, system_instruction=None, json_mode=False, temperature=0.2, timeout=30.0, extra_parts=None):
+        assert json_mode is True
         assert "Основи національного спротиву" in prompt
         return json.dumps({
             "assistant_message": "Заплановано 1 годину на Основи національного спротиву.",

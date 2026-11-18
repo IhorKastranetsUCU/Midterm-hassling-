@@ -384,7 +384,7 @@ Rules:
             ai_prompt,
             system_instruction="You are a concise academic calendar planner. Output strict JSON only.",
             temperature=0.2,
-            response_mime_type="application/json",
+            json_mode=True,
             timeout=45.0,
         )
         if not raw:
