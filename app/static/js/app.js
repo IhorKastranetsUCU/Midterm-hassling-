@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.addEventListener('focus', () => {
+  if (!currentUser) {
+    initApp();
+  }
   loadWorkspaceCourses();
 });
 
@@ -328,33 +331,68 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
 
 function onLoginSuccess(user) {
   currentUser = user;
+  const displayName = user.fullname || user.email || user.username || 'Student';
+  const initialLetter = (displayName.trim()[0] || 'U').toUpperCase();
 
   // Header update
   document.getElementById('nav-user-pill').classList.remove('hidden');
   document.getElementById('nav-login-btn').classList.add('hidden');
-  document.getElementById('nav-user-name').innerText = user.fullname || user.username;
+  document.getElementById('nav-user-name').innerText = displayName;
+  const navAvatar = document.getElementById('nav-user-avatar');
+  if (navAvatar) {
+    navAvatar.innerHTML = '';
+    if (user.userpictureurl) {
+      const img = document.createElement('img');
+      img.src = user.userpictureurl;
+      img.alt = displayName;
+      img.className = 'w-full h-full object-cover rounded-full';
+      img.onerror = () => {
+        navAvatar.innerText = initialLetter;
+      };
+      navAvatar.appendChild(img);
+    } else {
+      navAvatar.innerText = initialLetter;
+    }
+  }
 
   // Views switch
   document.getElementById('guest-view').classList.add('hidden');
   document.getElementById('auth-dashboard').classList.remove('hidden');
 
   // Dashboard header
-  document.getElementById('dash-user-fullname').innerText = user.fullname || user.username;
-  document.getElementById('dash-user-id').innerText = user.user_id;
+  document.getElementById('dash-user-fullname').innerText = displayName;
+  const roleBadge = document.getElementById('dash-badge-role');
+  if (roleBadge) {
+    roleBadge.innerText = (user.role || 'STUDENT').toUpperCase();
+  }
   const siteLabel = user.site_name || user.site_url || 'Moodle LMS';
-  document.getElementById('dash-site-name').innerText = siteLabel;
-  document.getElementById('dash-user-site').innerText = `${siteLabel} • User ID: ${user.user_id}`;
+  const identityPrefix = user.email ? `${user.email} • ` : (user.username && user.username !== 'ucu.student' ? `@${user.username} • ` : '');
+  const siteEl = document.getElementById('dash-user-site');
+  if (siteEl) {
+    siteEl.innerHTML = '';
+    const textPart = document.createTextNode(`${identityPrefix}${siteLabel} • User ID: `);
+    const idSpan = document.createElement('span');
+    idSpan.id = 'dash-user-id';
+    idSpan.className = 'font-mono text-slate-300';
+    idSpan.innerText = user.user_id;
+    siteEl.appendChild(textPart);
+    siteEl.appendChild(idSpan);
+  }
 
   const avatarImg = document.getElementById('dash-user-avatar');
   const avatarLetter = document.getElementById('dash-avatar-letter');
-  if (user.userpictureurl && !user.userpictureurl.includes('f2.png')) {
+  avatarLetter.innerText = initialLetter;
+  if (user.userpictureurl) {
+    avatarImg.onerror = () => {
+      avatarImg.classList.add('hidden');
+      avatarLetter.classList.remove('hidden');
+    };
     avatarImg.src = user.userpictureurl;
     avatarImg.classList.remove('hidden');
     avatarLetter.classList.add('hidden');
   } else {
     avatarImg.classList.add('hidden');
     avatarLetter.classList.remove('hidden');
-    avatarLetter.innerText = (user.fullname || user.username || 'U')[0].toUpperCase();
   }
 
   // Load Initial Academic Data

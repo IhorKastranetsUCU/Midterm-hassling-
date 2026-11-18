@@ -5,6 +5,12 @@ from app.main import app
 client = TestClient(app)
 
 
+def test_healthz_liveness():
+    response = client.get("/healthz")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
 def test_system_health():
     response = client.get("/api/system/health")
     assert response.status_code == 200

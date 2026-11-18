@@ -11,6 +11,7 @@ from typing import Any
 class AcademicCache:
     def __init__(self, max_entries: int = 512, clock=time.monotonic):
         self._entries: OrderedDict[tuple[str, str, str, str], tuple[float, Any]] = OrderedDict()
+        self._grade_ajax_disabled_hosts: dict[str, float] = {}
         self._limit = max(1, max_entries)
         self._clock = clock
         self._lock = RLock()
@@ -66,6 +67,28 @@ class AcademicCache:
         with self._lock:
             for key in [key for key in self._entries if key[:2] == identity]:
                 self._entries.pop(key, None)
+
+    def is_grade_ajax_disabled(self, site_url) -> bool:
+        host = str(site_url or "").strip().rstrip("/").lower()
+        with self._lock:
+            exp = self._grade_ajax_disabled_hosts.get(host)
+            if not exp:
+                return False
+            if exp <= self._clock():
+                self._grade_ajax_disabled_hosts.pop(host, None)
+                return False
+            return True
+
+    def mark_grade_ajax_disabled(self, site_url, ttl_seconds: float = 1800.0) -> None:
+        host = str(site_url or "").strip().rstrip("/").lower()
+        if host:
+            with self._lock:
+                self._grade_ajax_disabled_hosts[host] = self._clock() + max(1.0, float(ttl_seconds))
+
+    def clear_all(self) -> None:
+        with self._lock:
+            self._entries.clear()
+            self._grade_ajax_disabled_hosts.clear()
 
 
 _cache = AcademicCache()

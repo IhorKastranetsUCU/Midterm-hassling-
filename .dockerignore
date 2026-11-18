@@ -3,6 +3,9 @@
 .env
 .env.*
 !.env.example
+data/
+*.db
+*.sqlite*
 .venv
 venv/
 __pycache__/

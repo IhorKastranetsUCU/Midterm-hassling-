@@ -7,6 +7,7 @@ from app.main import app
 from app.services import build_queue as bq_module
 from app.services import temp_storage as ts_module
 from app.services import workspace_store as ws_module
+from app.services.academic_cache import get_academic_cache
 from app.services.build_queue import DebouncedBuildQueue
 from app.services.workspace_store import WorkspaceStore
 
@@ -18,6 +19,7 @@ def isolated_store(tmp_path, monkeypatch):
     monkeypatch.setattr(get_settings(), "TEMP_STORAGE_DIR", str(staging_dir))
     monkeypatch.setattr(get_settings(), "AUTH_DEV_GOOGLE_ENABLED", True)
     monkeypatch.setattr(ts_module, "_temp_storage_instance", None)
+    get_academic_cache().clear_all()
     store = WorkspaceStore(db_path=str(db_file))
     fresh_queue = DebouncedBuildQueue()
     monkeypatch.setattr(ws_module, "_store_instance", store)
@@ -25,6 +27,7 @@ def isolated_store(tmp_path, monkeypatch):
     monkeypatch.setattr("app.routers.auth.get_workspace_store", lambda: store)
     monkeypatch.setattr(bq_module, "_build_queue", fresh_queue)
     yield store
+    get_academic_cache().clear_all()
     fresh_queue.cancel_all()
     monkeypatch.setattr(ts_module, "_temp_storage_instance", None)
 
@@ -1676,5 +1679,351 @@ def test_moodle_html_scraping_and_resource_import_end_to_end(isolated_store, mon
     assert len(stg["items"]) == 3
     assert all(item["status"] == "purged" for item in stg["items"])
     assert all(not get_temp_storage().exists(item["storage_key"]) for item in stg["items"])
+
+
+def test_moodle4_cookie_profile_extraction_and_avatar_proxy(isolated_store, monkeypatch):
+    """Moodle 4 Boost resolves real fullname/email/avatar (never placeholder) across /api/auth/me, /status, and /avatar."""
+    import httpx
+
+    fake_png = b"\x89PNG\r\n\x1a\nfakeavatarbytes"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path == "/my/":
+            html = (
+                '<html><script>M.cfg={"sesskey":"m4sesskey","userId":26086};</script>'
+                '<div data-userid="26086"><span class="userinitials size-35">IP</span></div>'
+                '<footer id="page-footer"><a href="mailto:helpdesk@ucu.edu.ua">helpdesk@ucu.edu.ua</a></footer>'
+                '</html>'
+            )
+            return httpx.Response(200, headers={"Content-Type": "text/html"}, content=html.encode("utf-8"))
+        if path == "/user/profile.php" and request.url.params.get("id") == "26086":
+            # Profile has avatar only (simulating hidden email/heading) so /user/edit.php supplies email & name
+            prof = (
+                '<html><body>'
+                '<img src="/pluginfile.php/888/user/icon/boost/f1?rev=5" class="userpicture">'
+                '</body></html>'
+            )
+            return httpx.Response(200, headers={"Content-Type": "text/html"}, content=prof.encode("utf-8"))
+        if path == "/user/edit.php" and request.url.params.get("id") == "26086":
+            edit_html = (
+                '<html><form>'
+                '<input type="text" name="firstname" value="Ivan">'
+                '<input type="text" name="lastname" value="Petrenko">'
+                '<input type="text" name="email" value="i.petrenko@ucu.edu.ua">'
+                '</form></body></html>'
+            )
+            return httpx.Response(200, headers={"Content-Type": "text/html"}, content=edit_html.encode("utf-8"))
+        if path == "/pluginfile.php/888/user/icon/boost/f1":
+            assert "MoodleSession=cookie_26086" in request.headers.get("cookie", "")
+            return httpx.Response(200, headers={"Content-Type": "image/png"}, content=fake_png)
+        return httpx.Response(404)
+
+    mock_transport = httpx.MockTransport(handler)
+    orig_async_client = httpx.AsyncClient
+
+    class PatchedAsyncClient(orig_async_client):
+        def __init__(self, *args, **kwargs):
+            kwargs["transport"] = mock_transport
+            super().__init__(*args, **kwargs)
+
+    monkeypatch.setattr(httpx, "AsyncClient", PatchedAsyncClient)
+
+    client = TestClient(app)
+    pair_res = client.post(
+        "/api/auth/extension-pair",
+        json={"moodle_url": "https://learn.ucu.edu.ua", "cookie": "cookie_26086"},
+    )
+    assert pair_res.status_code == 200, pair_res.text
+    pdata = pair_res.json()
+    assert pdata["fullname"] == "Ivan Petrenko"
+    assert pdata["email"] == "i.petrenko@ucu.edu.ua"
+    assert pdata["moodle_username"] == "i.petrenko"
+    assert pdata["userpictureurl"].startswith("/api/auth/avatar?v=")
+
+    me_res = client.get("/api/auth/me")
+    assert me_res.status_code == 200
+    me = me_res.json()
+    assert me["fullname"] == "Ivan Petrenko"
+    assert me["email"] == "i.petrenko@ucu.edu.ua"
+    assert me["userpictureurl"].startswith("/api/auth/avatar?v=")
+
+    st_res = client.get("/api/auth/status")
+    assert st_res.status_code == 200
+    st = st_res.json()
+    assert st["fullname"] == "Ivan Petrenko"
+    assert st["email"] == "i.petrenko@ucu.edu.ua"
+    assert st["picture_url"] == me["userpictureurl"]
+
+    av_res = client.get(me["userpictureurl"])
+    assert av_res.status_code == 200
+    assert av_res.headers["content-type"].startswith("image/png")
+    assert av_res.content == fake_png
+
+
+def test_assignments_course_filter_and_grades_html_fallback(isolated_store, monkeypatch):
+    """Cookie auth filters assignments strictly by course_id and scrapes HTML grade report when AJAX fails."""
+    import httpx
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path == "/my/":
+            html = (
+                '<html><script>M.cfg={"sesskey":"sGrades123","userId":26086};</script>'
+                '<span class="usertext">Ivan Petrenko</span>'
+                '<a href="https://learn.ucu.edu.ua/user/profile.php?id=26086">Profile</a></html>'
+            )
+            return httpx.Response(200, headers={"Content-Type": "text/html"}, content=html.encode("utf-8"))
+
+        if path == "/lib/ajax/service.php":
+            info = request.url.params.get("info", "")
+            if info == "core_course_get_enrolled_courses_by_timeline_classification":
+                return httpx.Response(
+                    200,
+                    json=[{
+                        "error": False,
+                        "data": {
+                            "courses": [
+                                {"id": 1657, "shortname": "STAT", "fullname": "Probability & Statistics"},
+                                {"id": 999, "shortname": "OTHER", "fullname": "Other Course"},
+                            ]
+                        },
+                    }],
+                )
+            if info == "core_calendar_get_action_events_by_course":
+                return httpx.Response(200, json=[{"error": True, "exception": {"message": "Not enabled"}}])
+            if info == "core_calendar_get_action_events_by_timesort":
+                import json as _json
+                body_payload = _json.loads(request.content.decode("utf-8") or "[{}]")
+                assert int(body_payload[0]["args"].get("limitnum", 50)) <= 50
+                return httpx.Response(
+                    200,
+                    json=[{
+                        "error": False,
+                        "data": {
+                            "events": [
+                                {
+                                    "id": 1,
+                                    "instance": 10,
+                                    "name": "Stats Homework 1",
+                                    "timesort": 1893456000,
+                                    "description": "Solve Q1-Q4",
+                                    "course": {"id": 1657, "fullname": "Probability & Statistics"},
+                                },
+                                {
+                                    "id": 2,
+                                    "instance": 20,
+                                    "name": "Other Course Essay",
+                                    "timesort": 1893459000,
+                                    "description": "Should be filtered out",
+                                    "course": {"id": 999, "fullname": "Other Course"},
+                                },
+                            ]
+                        },
+                    }],
+                )
+            if info == "gradereport_user_get_grade_items":
+                return httpx.Response(200, json=[{"error": True, "exception": {"message": "AJAX disabled"}}])
+
+        if path == "/grade/report/user/index.php" and request.url.params.get("id") == "1657":
+            grade_html = """
+            <html><body>
+              <table class="generaltable user-grade">
+                <thead><tr><th>Grade item</th><th>Grade</th><th>Range</th><th>Percentage</th><th>Feedback</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <th class="column-itemname"><span>Тест</span><a>Тест до тем: "Досвід ҐУЛАҐу: релігійне життя і заслання"</a></th>
+                    <td class="column-grade">5,00<div class="action-menu">Дії<div class="dropdown-menu">Аналіз балів</div></div></td>
+                    <td class="column-range">0–5</td>
+                    <td class="column-percentage">100.00 %</td>
+                    <td class="column-feedback">Well structured proof.</td>
+                  </tr>
+                  <tr class="cat baggb">
+                    <th class="column-itemname"><span>Об'єднання</span><span>Модуль 1</span></th>
+                    <td class="column-grade">18.50</td>
+                    <td class="column-range">0–20</td>
+                    <td class="column-percentage">92.50 %</td>
+                    <td class="column-feedback"></td>
+                  </tr>
+                  <tr class="coursetotal baggt">
+                    <th class="column-itemname"><span>Об'єднання</span><span>Загальне за курс</span></th>
+                    <td class="column-grade">18.50<span class="action-menu">Дії<span>Аналіз балів</span></span></td>
+                    <td class="column-range">0–100</td>
+                    <td class="column-percentage">92.50 %</td>
+                    <td class="column-feedback"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </body></html>
+            """
+            return httpx.Response(200, headers={"Content-Type": "text/html"}, content=grade_html.encode("utf-8"))
+
+        return httpx.Response(404)
+
+    mock_transport = httpx.MockTransport(handler)
+    orig_async_client = httpx.AsyncClient
+
+    class PatchedAsyncClient(orig_async_client):
+        def __init__(self, *args, **kwargs):
+            kwargs["transport"] = mock_transport
+            super().__init__(*args, **kwargs)
+
+    monkeypatch.setattr(httpx, "AsyncClient", PatchedAsyncClient)
+
+    client = TestClient(app)
+    pair_res = client.post(
+        "/api/auth/extension-pair",
+        json={"moodle_url": "https://learn.ucu.edu.ua", "cookie": "cookie_grades_1"},
+    )
+    assert pair_res.status_code == 200, pair_res.text
+
+    assign_res = client.get("/api/assignments?course_id=1657")
+    assert assign_res.status_code == 200, assign_res.text
+    adata = assign_res.json()
+    assert adata["total"] == 1
+    assert adata["assignments"][0]["course_id"] == 1657
+    assert adata["assignments"][0]["name"] == "Stats Homework 1"
+
+    # Global deadlines without course_id returns deadlines from all enrolled courses (and uses limitnum <= 50)
+    all_assign_res = client.get("/api/assignments")
+    assert all_assign_res.status_code == 200, all_assign_res.text
+    all_data = all_assign_res.json()
+    assert all_data["total"] == 2
+    assert {a["course_id"] for a in all_data["assignments"]} == {1657, 999}
+
+    grades_res = client.get("/api/grades?course_id=1657")
+    assert grades_res.status_code == 200, grades_res.text
+    gdata = grades_res.json()
+    assert len(gdata["courses"]) == 1
+    assert gdata["courses"][0]["course_id"] == 1657
+    items = gdata["courses"][0]["grade_items"]
+    assert len(items) == 3
+    assert items[0]["itemname"] == 'Тест Тест до тем: "Досвід ҐУЛАҐу: релігійне життя і заслання"'
+    assert items[0]["gradeformatted"] == "5,00"
+    assert "Аналіз" not in items[0]["gradeformatted"]
+    assert items[0]["grademax"] == 5.0
+    assert items[0]["feedback"] == "Well structured proof."
+    assert items[1]["itemtype"] == "category"
+    assert items[1]["itemname"] == "Об'єднання · Модуль 1"
+    assert items[2]["itemtype"] == "course"
+    assert items[2]["itemname"] == "Об'єднання · Загальне за курс"
+    assert items[2]["gradeformatted"] == "18.50"
+
+
+def test_ttl_cache_parallel_grades_and_instant_course_open(isolated_store, monkeypatch):
+    """Verify TTL cache deduplication, HTML-first grade-host learning, single preview/confirm Moodle fetch, and instant SQLite course open."""
+    import httpx
+
+    counts = {
+        "courses_ajax": 0,
+        "grades_ajax": 0,
+        "grades_html": 0,
+        "contents_scrape": 0,
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path == "/my/":
+            html = (
+                '<html><script>M.cfg={"sesskey":"fastSess1","userId":26086};</script>'
+                '<span class="usertext">Ivan Petrenko</span></html>'
+            )
+            return httpx.Response(200, headers={"Content-Type": "text/html"}, content=html.encode("utf-8"))
+
+        if path == "/lib/ajax/service.php":
+            info = request.url.params.get("info", "")
+            if info == "core_course_get_enrolled_courses_by_timeline_classification":
+                counts["courses_ajax"] += 1
+                return httpx.Response(
+                    200,
+                    json=[{
+                        "error": False,
+                        "data": {
+                            "courses": [
+                                {"id": 201, "shortname": "C201", "fullname": "Course 201"},
+                                {"id": 202, "shortname": "C202", "fullname": "Course 202"},
+                                {"id": 203, "shortname": "C203", "fullname": "Course 203"},
+                            ]
+                        },
+                    }],
+                )
+            if info == "gradereport_user_get_grade_items":
+                counts["grades_ajax"] += 1
+                return httpx.Response(200, json=[{"error": True, "exception": {"message": "AJAX disabled"}}])
+            if info == "core_courseformat_get_state" or info == "core_course_get_contents":
+                return httpx.Response(200, json=[{"error": True, "exception": {"message": "AJAX disabled"}}])
+
+        if path == "/grade/report/user/index.php":
+            counts["grades_html"] += 1
+            cid = request.url.params.get("id", "201")
+            return httpx.Response(
+                200,
+                headers={"Content-Type": "text/html"},
+                content=f'<table class="user-grade"><tbody><tr class="coursetotal"><th>Загальне за курс</th><td class="column-grade">95.{cid[-1]}</td></tr></tbody></table>'.encode("utf-8"),
+            )
+
+        if path == "/course/view.php" and request.url.params.get("id") == "201":
+            counts["contents_scrape"] += 1
+            course_html = """
+            <html><body><ul>
+              <li id="section-1" class="section">
+                <h3 class="sectionname">Week 1: Caching Basics</h3>
+                <a href="https://learn.ucu.edu.ua/mod/resource/view.php?id=501">Slides 1</a>
+              </li>
+            </ul></body></html>
+            """
+            return httpx.Response(200, headers={"Content-Type": "text/html"}, content=course_html.encode("utf-8"))
+
+        return httpx.Response(404)
+
+    mock_transport = httpx.MockTransport(handler)
+    orig_async_client = httpx.AsyncClient
+
+    class PatchedAsyncClient(orig_async_client):
+        def __init__(self, *args, **kwargs):
+            kwargs["transport"] = mock_transport
+            super().__init__(*args, **kwargs)
+
+    monkeypatch.setattr(httpx, "AsyncClient", PatchedAsyncClient)
+
+    client = TestClient(app)
+    assert client.post("/api/auth/extension-pair", json={"moodle_url": "https://learn.ucu.edu.ua", "cookie": "c_fast"}).status_code == 200
+
+    # 1. /api/courses hits Moodle once, 2nd call hits cache, ?refresh=true hits Moodle again
+    assert client.get("/api/courses").status_code == 200
+    assert client.get("/api/courses").status_code == 200
+    assert counts["courses_ajax"] == 1
+    assert client.get("/api/courses?refresh=true").status_code == 200
+    assert counts["courses_ajax"] == 2
+
+    # 2. /api/grades across 3 courses probes AJAX only ONCE total, switches to HTML-first, and caches per-course
+    g1 = client.get("/api/grades")
+    assert g1.status_code == 200
+    assert len(g1.json()["courses"]) == 3
+    assert counts["grades_ajax"] == 1
+    assert counts["grades_html"] == 3
+    g2 = client.get("/api/grades")
+    assert g2.status_code == 200
+    assert counts["grades_html"] == 3  # zero extra hits on cached read
+
+    # 3. preview-structure -> confirm-structure reuses cached sections (only 1 Moodle course scrape)
+    prev = client.post("/api/workspace/courses/preview-structure", json={"course_id": 201, "title": "Course 201"})
+    assert prev.status_code == 200, prev.text
+    assert counts["contents_scrape"] == 1
+    conf = client.post("/api/workspace/courses/confirm-structure", json={
+        "course_id": 201,
+        "title": "Course 201",
+        "topics": prev.json()["topics"],
+    })
+    assert conf.status_code == 200, conf.text
+    assert counts["contents_scrape"] == 1  # confirm reused preview's cached sections!
+
+    # 4. Opening course returns immediately from SQLite without blocking on synchronous Moodle update checks
+    before_scrape = counts["contents_scrape"]
+    open_res = client.get("/api/workspace/courses/201")
+    assert open_res.status_code == 200
+    assert open_res.json()["course"]["course_id"] == 201
+    # Note: background check may start async after response, never blocking if check_and_apply_course_updates is slow
+    assert counts["contents_scrape"] >= before_scrape
 
 

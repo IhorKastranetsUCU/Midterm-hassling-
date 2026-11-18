@@ -1,8 +1,10 @@
+import asyncio
 import html as html_lib
 import html.parser
 import json
 import logging
 import re
+import time
 from urllib.parse import unquote, urlencode, urljoin, urlparse
 from typing import Dict, Any, Optional, List, Union
 import httpx
@@ -240,23 +242,162 @@ class MoodleClient:
 
         # Extract user ID
         user_id = 0
-        uid_match = re.search(r'/user/profile\.php\?id=(\d+)', html) or re.search(r'"userId":\s*(\d+)', html) or re.search(r'"userid":\s*(\d+)', html)
+        uid_match = (
+            re.search(r'/user/profile\.php\?id=(\d+)', html)
+            or re.search(r'"userId":\s*(\d+)', html)
+            or re.search(r'"userid":\s*(\d+)', html)
+            or re.search(r'data-userid="(\d+)"', html)
+        )
         if uid_match:
             user_id = int(uid_match.group(1))
 
-        # Extract full name
-        fullname = "UCU Student"
-        name_match = re.search(r'<span class="usertext[^"]*">([^<]+)</span>', html)
-        if not name_match:
-            name_match = re.search(r'class="userbutton"[^>]*>.*?<span>([^<]+)</span>', html, re.DOTALL)
-        if name_match:
-            fullname = name_match.group(1).strip()
+        def _is_system_email(addr: Optional[str]) -> bool:
+            if not addr or "@" not in addr:
+                return True
+            local = addr.split("@", 1)[0].strip().lower()
+            return local in {
+                "helpdesk", "support", "noreply", "no-reply", "donotreply",
+                "admin", "administrator", "moodle", "webmaster", "info",
+                "postmaster", "feedback", "mailer-daemon", "root", "office",
+            } or local.startswith(("helpdesk", "noreply", "no-reply", "support"))
 
-        # Extract avatar
-        avatar_url = None
-        avatar_match = re.search(r'<img[^>]+class="[^"]*userpicture[^"]*"[^>]+src="([^"]+)"', html)
-        if avatar_match:
-            avatar_url = avatar_match.group(1)
+        def _extract_profile_fields(page_html: str, is_profile_page: bool = False) -> tuple[Optional[str], Optional[str], Optional[str]]:
+            found_name: Optional[str] = None
+            found_avatar: Optional[str] = None
+            found_email: Optional[str] = None
+
+            for pat in (
+                r'<span[^>]*class="[^"]*\busertext\b[^"]*"[^>]*>(.*?)</span>',
+                r'class="[^"]*\buserbutton\b[^"]*"[^>]*>.*?<span[^>]*>(.*?)</span>',
+                r'<h[12][^>]*class="[^"]*\bh2\b[^"]*"[^>]*>(?:Вітаємо(?:\s+з\s+поверненням)?|Welcome(?:\s+back)?|Привіт|Hello)[,\s]+([^!<]+)!?</h[12]>',
+                r'<div[^>]*class="[^"]*page-header-headings[^"]*"[^>]*>\s*<h1[^>]*>(.*?)</h1>',
+            ):
+                m = re.search(pat, page_html, flags=re.DOTALL | re.IGNORECASE)
+                if m:
+                    candidate = self._clean_html_text(m.group(1))
+                    if candidate and candidate.lower() not in ("home", "dashboard", "особистий кабінет", "інформаційна панель"):
+                        found_name = candidate
+                        break
+
+            for img_tag in re.findall(r'<img\b[^>]+>', page_html, flags=re.IGNORECASE):
+                cls_m = re.search(r'class=["\']([^"\']*)["\']', img_tag, flags=re.IGNORECASE)
+                if not cls_m or "userpicture" not in cls_m.group(1).lower():
+                    continue
+                src_m = re.search(r'src=["\']([^"\']+)["\']', img_tag, flags=re.IGNORECASE)
+                if src_m:
+                    cand_src = urljoin(f"{base_url}/", html_lib.unescape(src_m.group(1).strip()))
+                    if not found_avatar or ("pluginfile.php" in cand_src and "pluginfile.php" not in found_avatar) or ("/u/f1" in cand_src and "/u/f2" in found_avatar):
+                        found_avatar = cand_src
+                if not found_name:
+                    for attr in ("title", "alt"):
+                        attr_m = re.search(rf'{attr}=["\']([^"\']+)["\']', img_tag, flags=re.IGNORECASE)
+                        if attr_m:
+                            cand_alt = html_lib.unescape(attr_m.group(1)).strip()
+                            cand_alt = re.sub(r'^(?:Picture of|Image of|Avatar of|Зображення(?:\s+користувача)?|Фото)\s+', '', cand_alt, flags=re.IGNORECASE).strip()
+                            if cand_alt and len(cand_alt) > 1 and "user menu" not in cand_alt.lower():
+                                found_name = cand_alt
+                                break
+
+            body_no_footer = re.split(r'<footer\b|id=["\']page-footer["\']', page_html, maxsplit=1, flags=re.IGNORECASE)[0]
+            main_m = re.search(r'(?:class=["\'][^"\']*\buserprofile\b[^"\']*["\']|id=["\']region-main["\']|<main\b)(.*)', body_no_footer, flags=re.DOTALL | re.IGNORECASE)
+            email_scope = main_m.group(1) if main_m else (body_no_footer if is_profile_page else "")
+            if email_scope:
+                for mail_cand in re.findall(r'href=["\']mailto:([^"\'>?\s]+)', email_scope, flags=re.IGNORECASE):
+                    decoded_mail = html_lib.unescape(mail_cand).strip()
+                    if not _is_system_email(decoded_mail):
+                        found_email = decoded_mail
+                        break
+                if not found_email and is_profile_page:
+                    dd_m = re.search(
+                        r'<dt[^>]*>[^<]*(?:Email|Електронна\s+пошта|Пошта)[^<]*</dt>\s*<dd[^>]*>(.*?)</dd>',
+                        email_scope,
+                        flags=re.DOTALL | re.IGNORECASE,
+                    )
+                    if dd_m:
+                        dd_txt = self._clean_html_text(dd_m.group(1))
+                        em_m = re.search(r'[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}', dd_txt)
+                        if em_m and not _is_system_email(em_m.group(0)):
+                            found_email = em_m.group(0)
+
+            return found_name, found_avatar, found_email
+
+        def _extract_edit_profile_fields(edit_html: str) -> tuple[Optional[str], Optional[str]]:
+            def _input_val(field_name: str) -> Optional[str]:
+                for inp in re.findall(r'<input\b[^>]+>', edit_html, flags=re.IGNORECASE):
+                    if re.search(rf'\bname=["\']{field_name}["\']', inp, flags=re.IGNORECASE):
+                        vm = re.search(r'\bvalue=["\']([^"\']+)["\']', inp, flags=re.IGNORECASE)
+                        if vm:
+                            return html_lib.unescape(vm.group(1)).strip()
+                return None
+
+            fn = _input_val("firstname")
+            ln = _input_val("lastname")
+            em = _input_val("email")
+            if em and _is_system_email(em):
+                em = None
+            full = " ".join(part for part in (fn, ln) if part).strip() or None
+            return full, em
+
+        parsed_name, avatar_url, email = _extract_profile_fields(html, is_profile_page=False)
+
+        if user_id > 0 and (not parsed_name or not avatar_url or "/theme/image.php" in (avatar_url or "") or not email):
+            try:
+                async with httpx.AsyncClient(timeout=min(self.settings.MOODLE_REQUEST_TIMEOUT, 8.0), follow_redirects=False) as prof_client:
+                    prof_res = await prof_client.get(f"{base_url}/user/profile.php?id={user_id}", headers=headers)
+                    if prof_res.status_code == 200 and not self._looks_like_login_html(prof_res.text):
+                        p_name, p_avatar, p_email = _extract_profile_fields(prof_res.text, is_profile_page=True)
+                        if not p_name:
+                            h1_m = re.search(r'<h1[^>]*>(.*?)</h1>', prof_res.text, flags=re.DOTALL | re.IGNORECASE)
+                            if h1_m:
+                                cand_h1 = self._clean_html_text(h1_m.group(1))
+                                if cand_h1 and len(cand_h1) > 1:
+                                    p_name = cand_h1
+                        if p_name and not parsed_name:
+                            parsed_name = p_name
+                        if p_avatar and (not avatar_url or "/theme/image.php" in avatar_url):
+                            avatar_url = p_avatar
+                        if p_email and not email:
+                            email = p_email
+
+                    if not email or not parsed_name:
+                        for edit_path in (f"/user/edit.php?id={user_id}", f"/user/editadvanced.php?id={user_id}"):
+                            edit_res = await prof_client.get(f"{base_url}{edit_path}", headers=headers)
+                            if edit_res.status_code == 200 and not self._looks_like_login_html(edit_res.text):
+                                e_name, e_email = _extract_edit_profile_fields(edit_res.text)
+                                if e_name and not parsed_name:
+                                    parsed_name = e_name
+                                if e_email and not email:
+                                    email = e_email
+                                if email and parsed_name:
+                                    break
+            except Exception:
+                pass
+
+        if parsed_name:
+            fullname = parsed_name
+        elif email and "@" in email:
+            local = email.split("@", 1)[0].strip()
+            pretty = " ".join(part.capitalize() for part in re.split(r"[._-]+", local) if part)
+            fullname = pretty or email
+        elif email:
+            fullname = email
+        elif user_id > 0:
+            fullname = f"User #{user_id}"
+        else:
+            fullname = "Moodle User"
+
+        site_name = "UCU Moodle (learn.ucu.edu.ua)" if "ucu.edu.ua" in base_url else urlparse(base_url).netloc
+        sn_m = re.search(r'<span[^>]*class="[^"]*\bsite-name\b[^"]*"[^>]*>(.*?)</span>', html, flags=re.DOTALL | re.IGNORECASE)
+        if sn_m:
+            clean_sn = self._clean_html_text(sn_m.group(1))
+            if clean_sn:
+                site_name = clean_sn
+
+        derived_username = (
+            email.split("@")[0].strip()
+            if email and "@" in email
+            else re.sub(r"\s+", ".", fullname.lower().strip())
+        )
 
         return {
             "token": clean_cookie,
@@ -264,10 +405,11 @@ class MoodleClient:
             "sesskey": sesskey,
             "user": {
                 "user_id": user_id,
-                "username": fullname.lower().replace(" ", "."),
+                "username": derived_username or f"user_{user_id}",
                 "fullname": fullname,
+                "email": email,
                 "userpictureurl": avatar_url,
-                "site_name": "UCU Moodle (learn.ucu.edu.ua)",
+                "site_name": site_name,
                 "site_url": base_url,
                 "role": "student",
             },
@@ -1588,6 +1730,154 @@ class MoodleClient:
         except httpx.RequestError as exc:
             raise MoodleConnectionError(f"Failed to download Moodle resource: {exc}")
 
+    def _parse_user_grades_html(self, html_str: str) -> List[Dict[str, Any]]:
+        """Extract grade items from Moodle /grade/report/user/index.php HTML table."""
+        parser = _FastDOMParser()
+        try:
+            parser.feed(html_str or "")
+        except Exception:
+            return []
+
+        tables = [
+            t for t in parser.root.find_all("table")
+            if "user-grade" in t.classes or "user-grade" in (t.id or "").lower() or "generaltable" in t.classes
+        ]
+        if not tables:
+            return []
+
+        excluded_classes = {
+            "accesshide", "sr-only", "visually-hidden", "visuallyhidden",
+            "action-menu", "action-menu-trigger", "dropdown", "dropdown-menu",
+            "menubar", "grade-actions", "context-header-settings-menu",
+        }
+
+        def _cell_text(node: _FastDOMNode) -> str:
+            if node.classes.intersection(excluded_classes) or node.tag in ("button", "script", "style"):
+                return ""
+            if node.attrs.get("role", "").lower() in ("menu", "menuitem"):
+                return ""
+            chunks: List[str] = []
+            for p in node.text_parts:
+                if p.strip():
+                    chunks.append(p.strip())
+            for c in node.children:
+                child_txt = _cell_text(c)
+                if child_txt:
+                    chunks.append(child_txt)
+            joined = " ".join(" ".join(chunks).split()).strip()
+            return re.sub(r"([а-яіїєґa-z0-9'’])([А-ЯІЇЄҐA-Z])", r"\1 \2", joined)
+
+        items: List[Dict[str, Any]] = []
+        seen_names = set()
+        for table in tables:
+            rows = []
+            tbodies = table.find_all("tbody")
+            if tbodies:
+                for tb in tbodies:
+                    rows.extend(tb.find_all("tr"))
+            else:
+                rows = table.find_all("tr")
+
+            for tr in rows:
+                row_classes = " ".join(tr.classes).lower()
+                if "spacer" in row_classes:
+                    continue
+
+                cells = [c for c in tr.children if c.tag in ("th", "td")]
+                if len(cells) < 2:
+                    continue
+
+                item_name = ""
+                grade_str = ""
+                range_str = ""
+                pct_str = ""
+                feedback_str = ""
+
+                for cell in cells:
+                    c_cls = " ".join(cell.classes).lower()
+                    txt = _cell_text(cell)
+                    if "column-itemname" in c_cls or (cell.tag == "th" and not item_name):
+                        item_name = txt
+                    elif "column-grade" in c_cls:
+                        grade_str = txt
+                    elif "column-range" in c_cls:
+                        range_str = txt
+                    elif "column-percentage" in c_cls:
+                        pct_str = txt
+                    elif "column-feedback" in c_cls:
+                        feedback_str = txt
+
+                if not item_name and cells[0].tag == "th":
+                    item_name = _cell_text(cells[0])
+                if not item_name or item_name.lower() in ("grade item", "елемент оцінювання"):
+                    continue
+
+                if grade_str:
+                    grade_str = re.sub(
+                        r"\s*(?:Дії|Аналіз\s+балів|Actions|Grade\s+analysis|Редагувати|Приховати|Показати)\b.*$",
+                        "",
+                        grade_str,
+                        flags=re.IGNORECASE,
+                    ).strip()
+
+                low_name = item_name.lower()
+                is_course_total = (
+                    "coursetotal" in row_classes
+                    or "baggt" in row_classes
+                    or any(k in low_name for k in ("course total", "підсумок курсу", "загальне за курс", "загальна оцінка"))
+                )
+                is_category_row = (
+                    not is_course_total
+                    and (
+                        "baggb" in row_classes
+                        or "category" in row_classes
+                        or low_name.startswith(("об'єднання", "категорія", "category total"))
+                    )
+                )
+
+                if not is_course_total and not grade_str and not pct_str and not range_str:
+                    continue
+
+                grademin = None
+                grademax = None
+                if range_str:
+                    nums = re.findall(r"-?\d+(?:[.,]\d+)?", range_str)
+                    if len(nums) >= 2:
+                        try:
+                            grademin = float(nums[0].replace(",", "."))
+                            grademax = float(nums[1].replace(",", "."))
+                        except ValueError:
+                            pass
+
+                if is_course_total:
+                    display_name = "Об'єднання · Загальне за курс" if "загальне за курс" in low_name else "Підсумок курсу"
+                    row_type = "course"
+                elif is_category_row:
+                    cleaned_cat = re.sub(r"^(?:Об'єднання|Категорія)\s+", "", item_name, flags=re.IGNORECASE).strip()
+                    display_name = f"Об'єднання · {cleaned_cat}" if cleaned_cat else item_name
+                    row_type = "category"
+                else:
+                    display_name = item_name
+                    row_type = "mod"
+
+                dedup_key = f"{display_name}|{grade_str}|{row_type}"
+                if dedup_key in seen_names:
+                    continue
+                seen_names.add(dedup_key)
+
+                items.append({
+                    "id": len(items) + 1,
+                    "itemname": display_name,
+                    "itemtype": row_type,
+                    "gradeformatted": grade_str or "—",
+                    "grademin": grademin,
+                    "grademax": grademax,
+                    "percentageformatted": pct_str or None,
+                    "feedback": feedback_str or None,
+                })
+
+        return items
+
     async def get_assignments(
         self,
         token: str,
@@ -1595,43 +1885,112 @@ class MoodleClient:
         auth_type: str = "token",
         sesskey: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Retrieve assignments & due dates."""
-        if auth_type == "cookie" and sesskey:
-            # Query calendar action events for assignments
-            try:
-                res = await self.call_ajax_ws(
-                    "core_calendar_get_action_events_by_timesort",
-                    cookie=token,
-                    sesskey=sesskey,
-                    args={"timesortfrom": 0, "limitnum": 50},
-                )
-                events = res.get("events", []) if isinstance(res, dict) else []
-                # Transform calendar action events into courses assignments structure
-                courses_dict: Dict[int, Dict[str, Any]] = {}
-                for ev in events:
-                    c_info = ev.get("course", {})
-                    c_id = c_info.get("id", 0)
-                    c_name = c_info.get("fullname", "Course")
-                    if c_id not in courses_dict:
-                        courses_dict[c_id] = {"id": c_id, "fullname": c_name, "assignments": []}
+        """Retrieve assignments & due dates, strictly filtered to course_ids when provided."""
+        target_ids = {int(cid) for cid in (course_ids or []) if cid is not None}
 
-                    courses_dict[c_id]["assignments"].append({
-                        "id": ev.get("id"),
-                        "cmid": ev.get("instance"),
-                        "name": ev.get("name"),
-                        "duedate": ev.get("timesort"),
-                        "intro": ev.get("description"),
-                        "nosubmissions": 0,
-                        "submissions_open": True,
-                    })
+        if auth_type == "cookie":
+            if token.startswith("mock_") or self.settings.MOODLE_MOCK_MODE:
+                mock_data = self._handle_mock_call("mod_assign_get_assignments", {"courseids": list(target_ids)})
+                if target_ids:
+                    mock_data["courses"] = [c for c in mock_data.get("courses", []) if int(c.get("id", 0)) in target_ids]
+                return mock_data
+
+            courses_dict: Dict[int, Dict[str, Any]] = {}
+            events: List[Dict[str, Any]] = []
+
+            if sesskey:
+                if len(target_ids) == 1:
+                    only_cid = next(iter(target_ids))
+                    try:
+                        res_course = await self.call_ajax_ws(
+                            "core_calendar_get_action_events_by_course",
+                            cookie=token,
+                            sesskey=sesskey,
+                            args={"courseid": only_cid, "timesortfrom": 0, "limitnum": 50},
+                        )
+                        if isinstance(res_course, dict) and isinstance(res_course.get("events"), list):
+                            events = res_course["events"]
+                    except Exception as exc:
+                        logger.debug(f"AJAX core_calendar_get_action_events_by_course failed for {only_cid}: {exc}")
+
+                if not events:
+                    recent_from = max(0, int(time.time()) - 30 * 86400)
+
+                    async def _fetch_timesort(ts_from: int) -> List[Dict[str, Any]]:
+                        try:
+                            res = await self.call_ajax_ws(
+                                "core_calendar_get_action_events_by_timesort",
+                                cookie=token,
+                                sesskey=sesskey,
+                                args={"timesortfrom": ts_from, "limitnum": 50},
+                            )
+                            return res.get("events", []) if isinstance(res, dict) else []
+                        except Exception as exc:
+                            logger.warning(f"Error fetching assignments via AJAX (timesortfrom={ts_from}): {exc}")
+                            return []
+
+                    async def _fetch_by_course(cid: int, sem: asyncio.Semaphore) -> List[Dict[str, Any]]:
+                        async with sem:
+                            try:
+                                rc = await self.call_ajax_ws(
+                                    "core_calendar_get_action_events_by_course",
+                                    cookie=token,
+                                    sesskey=sesskey,
+                                    args={"courseid": cid, "timesortfrom": 0, "limitnum": 50},
+                                )
+                                return rc.get("events", []) if isinstance(rc, dict) else []
+                            except Exception:
+                                return []
+
+                    tasks = [_fetch_timesort(recent_from), _fetch_timesort(0)]
+                    if target_ids and len(target_ids) > 1:
+                        sem = asyncio.Semaphore(5)
+                        for cid in sorted(target_ids)[:15]:
+                            tasks.append(_fetch_by_course(cid, sem))
+
+                    batches = await asyncio.gather(*tasks, return_exceptions=True)
+                    seen_ev_keys = set()
+                    for batch in batches:
+                        if not isinstance(batch, list):
+                            continue
+                        for ev in batch:
+                            c_id_ev = int((ev.get("course") or {}).get("id", 0) or 0)
+                            ev_key = (c_id_ev, ev.get("id") or ev.get("instance") or ev.get("name"))
+                            if ev_key in seen_ev_keys:
+                                continue
+                            seen_ev_keys.add(ev_key)
+                            events.append(ev)
+
+            for ev in events:
+                c_info = ev.get("course", {})
+                c_id = int(c_info.get("id", 0) or 0)
+                if target_ids and c_id not in target_ids:
+                    continue
+                c_name = c_info.get("fullname", "Course")
+                if c_id not in courses_dict:
+                    courses_dict[c_id] = {"id": c_id, "fullname": c_name, "assignments": []}
+
+                courses_dict[c_id]["assignments"].append({
+                    "id": ev.get("id"),
+                    "cmid": ev.get("instance"),
+                    "name": ev.get("name"),
+                    "duedate": ev.get("timesort"),
+                    "intro": ev.get("description"),
+                    "nosubmissions": 0,
+                    "submissions_open": True,
+                })
+
+            if courses_dict or not sesskey:
                 return {"courses": list(courses_dict.values())}
-            except Exception as e:
-                logger.warning(f"Error fetching assignments via AJAX: {e}")
+            return {"courses": []}
 
         params = {}
         if course_ids:
             params["courseids"] = course_ids
-        return await self.call_ws("mod_assign_get_assignments", token, params=params)
+        data = await self.call_ws("mod_assign_get_assignments", token, params=params)
+        if target_ids and isinstance(data, dict):
+            data["courses"] = [c for c in data.get("courses", []) if int(c.get("id", 0)) in target_ids]
+        return data
 
     async def get_user_grades(
         self,
@@ -1641,19 +2000,56 @@ class MoodleClient:
         auth_type: str = "token",
         sesskey: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Retrieve user grades."""
-        if auth_type == "cookie" and sesskey:
+        """Retrieve user grades via AJAX, HTML /grade/report/user/index.php fallback (cookie), or REST WS (token)."""
+        from app.services.academic_cache import get_academic_cache
+
+        if auth_type == "cookie":
+            if token.startswith("mock_") or self.settings.MOODLE_MOCK_MODE:
+                return self._handle_mock_call("gradereport_user_get_grade_items", {"courseid": course_id, "userid": user_id})
+
+            acache = get_academic_cache()
+            if sesskey and not acache.is_grade_ajax_disabled(self.base_url):
+                try:
+                    res = await self.call_ajax_ws(
+                        "gradereport_user_get_grade_items",
+                        cookie=token,
+                        sesskey=sesskey,
+                        args={"courseid": course_id, "userid": user_id},
+                    )
+                    if isinstance(res, dict) and res.get("usergrades"):
+                        return res
+                except MoodleAPIError:
+                    acache.mark_grade_ajax_disabled(self.base_url)
+                except Exception:
+                    pass
+
+            current_url = f"{self.base_url}/grade/report/user/index.php?id={course_id}"
+            headers = {
+                "Cookie": f"MoodleSession={token}",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            }
             try:
-                res = await self.call_ajax_ws(
-                    "gradereport_user_get_grade_items",
-                    cookie=token,
-                    sesskey=sesskey,
-                    args={"courseid": course_id, "userid": user_id},
-                )
-                if isinstance(res, dict) and "usergrades" in res:
-                    return res
-            except Exception:
-                pass
+                async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=False) as client:
+                    res_html = None
+                    for _ in range(5):
+                        if not self._is_same_moodle_origin(current_url):
+                            break
+                        res_html = await client.get(current_url, headers=headers)
+                        if res_html.status_code in (301, 302, 303, 307, 308):
+                            loc = res_html.headers.get("location", "")
+                            if not loc or self._is_login_redirect(loc):
+                                res_html = None
+                                break
+                            current_url = urljoin(current_url, loc)
+                            continue
+                        break
+                    if res_html is not None and res_html.status_code == 200 and not self._looks_like_login_html(res_html.text):
+                        parsed_items = self._parse_user_grades_html(res_html.text)
+                        return {"usergrades": [{"courseid": course_id, "userid": user_id, "gradeitems": parsed_items}]}
+            except Exception as exc:
+                logger.warning(f"HTML grade report fallback failed for course {course_id}: {exc}")
+
+            return {"usergrades": [{"courseid": course_id, "userid": user_id, "gradeitems": []}]}
 
         return await self.call_ws(
             "gradereport_user_get_grade_items",

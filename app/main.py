@@ -132,6 +132,12 @@ async def favicon():
     return Response(status_code=204)
 
 
+@app.get("/healthz", include_in_schema=False)
+async def liveness_healthcheck():
+    """Lightweight local liveness probe with no external Moodle calls."""
+    return {"status": "ok"}
+
+
 # Authority-specific routes: /{authority} and /{authority}/courses
 @app.get("/{authority_slug}", response_class=HTMLResponse)
 async def serve_authority_dashboard(request: Request, authority_slug: str):
