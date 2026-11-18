@@ -118,6 +118,21 @@ def _extract_key_points(text: str, title: str, limit: int = 6) -> Tuple[List[str
     return key_points, len(bullets)
 
 
+def clean_source_for_ai(text: str) -> str:
+    """Strip Moodle module-type prefixes so AI models focus on domain titles and content."""
+    cleaned_lines = []
+    for raw in (text or "").splitlines():
+        line = re.sub(
+            r"^\s*\[(?:LABEL|FOLDER|LESSON|ASSIGN|RESOURCE|SUBSECTION|BOOK|PAGE|URL|FORUM|QUESTIONNAIRE|Self-Test)\]\s*",
+            "",
+            raw,
+            flags=re.IGNORECASE,
+        ).strip()
+        if line:
+            cleaned_lines.append(line)
+    return "\n".join(cleaned_lines)
+
+
 def split_text_into_semantic_chunks(
     title: str,
     content_text: str,
@@ -206,11 +221,18 @@ class BaseMixGenerator(ABC):
         include_visual_cards: bool = True,
         chunk_id: Optional[str] = None,
         source_hash: Optional[str] = None,
+        course_title: str = "",
+        topic_title: str = "",
     ) -> InteractiveBookSection:
         """Build a single InteractiveBookSection atomically."""
 
     @abstractmethod
-    async def generate_mermaid_diagram(self, title: str, key_points: List[str]) -> str:
+    async def generate_mermaid_diagram(
+        self,
+        title: str,
+        key_points: List[str],
+        course_title: str = "",
+    ) -> str:
         """Build a Mermaid diagram string independently of prose/quizzes."""
 
     @abstractmethod
@@ -223,6 +245,8 @@ class BaseMixGenerator(ABC):
         title: str,
         key_points: List[str],
         total_points: Optional[int] = None,
+        course_title: str = "",
+        content_text: str = "",
     ) -> List[PracticeQuestion]:
         """Build practice questions independently."""
 
@@ -231,6 +255,7 @@ class BaseMixGenerator(ABC):
         self,
         title: str,
         key_takeaways: List[str],
+        course_title: str = "",
     ) -> List[Flashcard]:
         """Build flashcards solely from already-extracted key_takeaways (zero raw-file recompute)."""
 
@@ -286,7 +311,12 @@ class StructuredPlaceholderMixGenerator(BaseMixGenerator):
 
     prompt_version: str = "v1"
 
-    async def generate_mermaid_diagram(self, title: str, key_points: List[str]) -> str:
+    async def generate_mermaid_diagram(
+        self,
+        title: str,
+        key_points: List[str],
+        course_title: str = "",
+    ) -> str:
         root_lbl = _safe_mermaid_label(title, 36)
         node_lines = [f'  T["{root_lbl}"]']
         for i, pt in enumerate((key_points or [title])[:4], start=1):
@@ -309,9 +339,11 @@ class StructuredPlaceholderMixGenerator(BaseMixGenerator):
         include_visual_cards: bool = True,
         chunk_id: Optional[str] = None,
         source_hash: Optional[str] = None,
+        course_title: str = "",
+        topic_title: str = "",
     ) -> InteractiveBookSection:
         key_points, _ = _extract_key_points(content_text, title, limit=6)
-        mermaid_code = await self.generate_mermaid_diagram(title, key_points) if include_mermaid else None
+        mermaid_code = await self.generate_mermaid_diagram(title, key_points, course_title=course_title) if include_mermaid else None
         card_caption, card_prompt = (
             await self.generate_visual_card(title) if include_visual_cards else (None, None)
         )
@@ -338,6 +370,8 @@ class StructuredPlaceholderMixGenerator(BaseMixGenerator):
         title: str,
         key_points: List[str],
         total_points: Optional[int] = None,
+        course_title: str = "",
+        content_text: str = "",
     ) -> List[PracticeQuestion]:
         pts = key_points or [f"Core concepts covered in {title}"]
         primary_concept = pts[0]
@@ -377,6 +411,7 @@ class StructuredPlaceholderMixGenerator(BaseMixGenerator):
         self,
         title: str,
         key_takeaways: List[str],
+        course_title: str = "",
     ) -> List[Flashcard]:
         pts = key_takeaways or [f"Core concepts covered in {title}"]
         return [
@@ -573,26 +608,31 @@ class GeminiMixGenerator(StructuredPlaceholderMixGenerator):
     Falls back gracefully to deterministic templates if API quota is reached or network is offline.
     """
 
-    prompt_version: str = "gemini-v2"
+    prompt_version: str = "gemini-v3"
 
     def __init__(self, api_key: Optional[str] = None):
         super().__init__()
         self.gemini = GeminiService(api_key=api_key)
         if self.gemini.strict:
-            self.prompt_version = "gemini-live-" + self.gemini.model
+            self.prompt_version = "gemini-live-v2-" + self.gemini.model
 
     def require_generated_content(self):
         if self.gemini.strict:
             from app.services.learning_provider import LearningProviderError
             raise LearningProviderError("Gemini повернув неповний результат. Спробуй підготувати тему ще раз.")
 
-    async def generate_mermaid_diagram(self, title: str, key_points: List[str]) -> str:
+    async def generate_mermaid_diagram(
+        self,
+        title: str,
+        key_points: List[str],
+        course_title: str = "",
+    ) -> str:
         if self.gemini.is_available:
-            diagram = await self.gemini.generate_mermaid_diagram(title, key_points)
+            diagram = await self.gemini.generate_mermaid_diagram(title, key_points, course_title=course_title)
             if diagram:
                 return diagram
         self.require_generated_content()
-        return await super().generate_mermaid_diagram(title, key_points)
+        return await super().generate_mermaid_diagram(title, key_points, course_title=course_title)
 
     async def generate_book_section(
         self,
@@ -604,9 +644,12 @@ class GeminiMixGenerator(StructuredPlaceholderMixGenerator):
         include_visual_cards: bool = True,
         chunk_id: Optional[str] = None,
         source_hash: Optional[str] = None,
+        course_title: str = "",
+        topic_title: str = "",
     ) -> InteractiveBookSection:
-        key_points, _ = _extract_key_points(content_text, title, limit=6)
-        mermaid_code = await self.generate_mermaid_diagram(title, key_points) if include_mermaid else None
+        cleaned_source = clean_source_for_ai(content_text) or content_text
+        key_points, _ = _extract_key_points(cleaned_source, title, limit=6)
+        mermaid_code = await self.generate_mermaid_diagram(title, key_points, course_title=course_title) if include_mermaid else None
         card_caption, card_prompt = (
             await self.generate_visual_card(title) if include_visual_cards else (None, None)
         )
@@ -615,7 +658,13 @@ class GeminiMixGenerator(StructuredPlaceholderMixGenerator):
         key_takeaways = key_points[:4]
 
         if self.gemini.is_available:
-            ai_data = await self.gemini.generate_book_section_content(title, content_text, key_points)
+            ai_data = await self.gemini.generate_book_section_content(
+                title,
+                cleaned_source,
+                key_points,
+                course_title=course_title,
+                topic_title=topic_title,
+            )
             if ai_data and ai_data.get("explanation_markdown"):
                 explanation = ai_data["explanation_markdown"]
                 if ai_data.get("key_takeaways"):
@@ -646,9 +695,19 @@ class GeminiMixGenerator(StructuredPlaceholderMixGenerator):
         title: str,
         key_points: List[str],
         total_points: Optional[int] = None,
+        course_title: str = "",
+        content_text: str = "",
     ) -> List[PracticeQuestion]:
         if self.gemini.is_available:
-            ai_quizzes = await self.gemini.generate_practice_quizzes(title, key_points, num_questions=3)
+            cleaned_points = [clean_source_for_ai(p) or p for p in key_points]
+            cleaned_source = clean_source_for_ai(content_text)
+            ai_quizzes = await self.gemini.generate_practice_quizzes(
+                title,
+                cleaned_points,
+                num_questions=3,
+                course_title=course_title,
+                content_text=cleaned_source,
+            )
             if ai_quizzes:
                 results = []
                 for q in ai_quizzes:
@@ -667,15 +726,21 @@ class GeminiMixGenerator(StructuredPlaceholderMixGenerator):
                 if results:
                     return results
         self.require_generated_content()
-        return await super().generate_practice_quizzes(title, key_points, total_points)
+        return await super().generate_practice_quizzes(
+            title, key_points, total_points, course_title=course_title, content_text=content_text
+        )
 
     async def generate_flashcards(
         self,
         title: str,
         key_takeaways: List[str],
+        course_title: str = "",
     ) -> List[Flashcard]:
         if self.gemini.is_available:
-            ai_cards = await self.gemini.generate_flashcards(title, key_takeaways, num_cards=4)
+            cleaned_takeaways = [clean_source_for_ai(tk) or tk for tk in key_takeaways]
+            ai_cards = await self.gemini.generate_flashcards(
+                title, cleaned_takeaways, num_cards=4, course_title=course_title
+            )
             if ai_cards:
                 cards = []
                 for c in ai_cards:
@@ -686,17 +751,13 @@ class GeminiMixGenerator(StructuredPlaceholderMixGenerator):
                 if cards:
                     return cards
         self.require_generated_content()
-        return await super().generate_flashcards(title, key_takeaways)
+        return await super().generate_flashcards(title, key_takeaways, course_title=course_title)
 
 
 def get_mix_generator(api_key: Optional[str] = None) -> BaseMixGenerator:
-    """Factory hook returning GeminiMixGenerator when an API key is available, else fallback."""
-    settings = get_settings()
-    from app.services.learning_provider import current_provider
-    provider = current_provider.get()
-    effective_key = (api_key or (provider.api_key if provider else None) or settings.GEMINI_API_KEY or "").strip()
-    if effective_key:
-        return GeminiMixGenerator(api_key=effective_key)
+    """Factory hook returning GeminiMixGenerator when an API key or Vertex AI is available, else fallback."""
+    if GeminiService(api_key=api_key).is_available:
+        return GeminiMixGenerator(api_key=api_key)
     return StructuredPlaceholderMixGenerator()
 
 
@@ -722,13 +783,10 @@ async def generate_course_structure_from_syllabus(
     syllabus_found = False
 
     # 0. Live Gemini AI Curriculum Architect
-    settings = get_settings()
-    from app.services.learning_provider import current_provider, LearningProviderError
-    provider = current_provider.get()
-    effective_gemini_key = (gemini_api_key or (provider.api_key if provider else None) or settings.GEMINI_API_KEY or "").strip()
-    if effective_gemini_key:
+    from app.services.learning_provider import LearningProviderError
+    gemini = GeminiService(api_key=gemini_api_key)
+    if gemini.is_available:
         try:
-            gemini = GeminiService(api_key=effective_gemini_key)
             ai_topics = await gemini.structure_syllabus_to_topics(
                 course_title=title,
                 sections=sections,
@@ -869,6 +927,7 @@ async def generate_course_structure_from_syllabus(
     total_hours = sum(t.estimated_hours for t in topics)
     weekly_rec = max(2, int(round(total_hours / max(len(topics), 1) * 1.5)))
 
+    effective_ai_syllabus = GeminiService(api_key=gemini_api_key).is_available and syllabus_found
     return CourseStructurePreview(
         course_id=course_id,
         title=title,
@@ -877,7 +936,7 @@ async def generate_course_structure_from_syllabus(
         target_score=target_score,
         syllabus_source=(
             "Gemini 2.0 Flash AI Syllabus Architecture"
-            if effective_gemini_key and syllabus_found
+            if effective_ai_syllabus
             else ("Moodle Syllabus & Course Sections" if sections else ("Uploaded Syllabus Text" if custom_syllabus_text else "AI Adaptive Blueprint"))
         ),
         syllabus_found=syllabus_found,

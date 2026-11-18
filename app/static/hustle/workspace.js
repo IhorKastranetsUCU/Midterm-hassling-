@@ -5,10 +5,10 @@
   const body = document.querySelector('#dialog-body');
   const close = document.querySelector('[data-close-dialog]');
   document.querySelector('.skip-link').onclick=event=>{event.preventDefault();main.focus();};
-  const nav = [['dashboard','Дашборд','dashboard'],['courses','Мої курси','courses'],['deadlines','Дедлайни','calendar'],['settings','Налаштування','settings']];
-  let account, courses = [], currentBundle, generation = 0, busy = false, selection, importState, courseQuery='';
+  const nav = [['dashboard','Дашборд','dashboard'],['courses','Мої курси','courses'],['calendar','Календар','calendar'],['deadlines','Дедлайни','clock'],['settings','Налаштування','settings']];
+  let account, courses = [], currentBundle, generation = 0, busy = false, selection, importState, courseQuery='', batchJob = null;
   let stream, refreshAvailable = false, connectVersion=0;
-  dialog.addEventListener('close',()=>{connectVersion++;});
+  dialog.addEventListener('close',()=>{connectVersion++;renderImportPill();});
   const scrolls = new Map(); let lastHash = '';
   document.querySelector('#workspace-nav').innerHTML = nav.map(([id,label,svg]) => `<a href="#${id}" data-nav="${id}">${icon(svg)}<span>${label}</span></a>`).join('');
   close.innerHTML = icon('close'); close.onclick = () => { if (!busy) dialog.close(); };
@@ -74,7 +74,7 @@
       HustleBrand.applyProfile({...account, fullname: name});
       HustleDashboard.setAccount(account);
       HustlePlan.setAccount(account);
-      if(!route.courseId&&['deadlines','settings'].includes(route.view)){
+      if(!route.courseId&&['calendar','deadlines','settings'].includes(route.view)){
         courses=await UI.api('/api/workspace/courses');if(turn!==generation)return;
         HustleSpace.setCourses(courses);
       }
@@ -91,9 +91,12 @@
         courses=await UI.api('/api/workspace/courses'); if(turn!==generation)return;
         title='Мій план';
         main.innerHTML=HustlePlan.render(courses,addButtons);
+      } else if(route.view==='calendar') {
+        title='Календар';
+        main.innerHTML=window.HustleCalendar ? HustleCalendar.shell(courses) : heading(title);
       } else if(route.view==='settings') {
         title='Налаштування';
-        main.innerHTML=heading(title)+`<div data-learning-settings></div><div class="settings-grid"><section class="settings-card"><h2>${esc(name)}</h2><p>${esc(account.email || (account.moodle_paired ? (account.moodle_username ? `@${account.moodle_username}` : `Moodle ID ${account.moodle_user_id}`) : 'Гостьовий простір'))}</p>${!account.google_linked?'<a class="secondary" href="signin.html">Увійти через Google</a>':''}<button class="logout-button" data-logout>${icon('logout')} Вийти</button></section><section class="settings-card"><h2>Moodle</h2><p>${esc(account.moodle_url || 'Не підключено')}</p><div class="page-actions"><button class="primary" data-connect>${account.moodle_paired?'Додати курси':'Підключити LMS'} →</button>${account.moodle_paired?'<a class="text-button" href="connect.html">Перепідключити</a>':''}</div></section></div><section class="topic-card settings-events"><h2>Останні оновлення</h2><div data-events role="status">Завантажуємо…</div></section>`;
+        main.innerHTML=heading(title)+`<div data-learning-settings></div><div class="settings-grid"><section class="settings-card"><h2>${esc(name)}</h2><p>${esc(account.email || (account.moodle_paired ? (account.moodle_username ? `@${account.moodle_username}` : `Moodle ID ${account.moodle_user_id}`) : 'Гостьовий простір'))}</p>${!account.google_linked?'<a class="secondary" href="signin.html">Увійти через Google</a>':''}<button class="logout-button" data-logout>${icon('logout')} Вийти</button></section><section class="settings-card"><h2>Moodle</h2><p>${esc(account.moodle_url || 'Не підключено')}</p><div class="page-actions"><button class="primary" data-connect>${account.moodle_paired?'Додати курси':'Підключити LMS'} →</button>${account.moodle_paired?'<a class="text-button" href="connect.html">Перепідключити</a>':''}</div></section><section class="settings-card" data-calendar-settings-summary><h2>Календар і сон</h2><p class="muted">Завантажуємо…</p></section></div><section class="topic-card settings-events"><h2>Останні оновлення</h2><div data-events role="status">Завантажуємо…</div></section>`;
         HustleCourse.events(main.querySelector('[data-events]'));
       } else if(route.view==='deadlines') {
         title='Дедлайни'; main.innerHTML=heading(title)+'<div id="academic-content"></div>';
@@ -114,6 +117,7 @@
       HustleDashboard.loadActivity(main.querySelector('[data-dashboard-activity]'),courses);
       HustlePlan.mount(main,account,courses);
       window.HustleLearningHub?.mount(main,account,currentBundle);
+      window.HustleCalendar?.mount(main,account,courses);
       window.HustleFrame?.mount(main,account,courses,currentBundle);
       if(navigate) {main.focus({preventScroll:true});window.scrollTo(0,scrolls.get(location.hash)||0);}
       if(route.view==='connect')await showConnect();
@@ -130,6 +134,7 @@
   }
   async function showConnect() {
     if(!account?.moodle_paired){location.assign('connect.html');return;}
+    if(batchJob?.running){drawBatchModal();return;}
     const operation=++connectVersion;
     showDialog('Додати з Moodle','<p role="status">Завантажуємо курси…</p>');
     try {
@@ -140,35 +145,66 @@
       selectionRows();
     } catch(err){if(operation!==connectVersion||!dialog.open)return;showDialog('Курси Moodle',errorMarkup(err.message)+'<a class="secondary" href="connect.html">Увійти в Moodle повторно →</a>');}
   }
+  function renderImportPill() {
+    const pill=document.querySelector('#workspace-importing');
+    if(!pill)return;
+    if(!batchJob || (dialog.open && body.querySelector('[data-batch-view]'))) {pill.hidden=true;return;}
+    const total=batchJob.chosen.length, done=batchJob.done.size, errs=batchJob.failures.size;
+    if(!batchJob.running && !errs) {pill.hidden=true;return;}
+    pill.textContent=batchJob.running?`Додаємо курси · ${done}/${total}`:`Не додано курсів: ${errs} ↻`;
+    pill.hidden=false;
+  }
+  function drawBatchModal() {
+    if(!batchJob)return;
+    const {chosen,done,failures,statuses,running}=batchJob;
+    showDialog('Додавання курсів',`<div data-batch-view><div class="batch-progress" role="status" aria-live="polite">${running?`${done.size} із ${chosen.length} додано`:`Додано ${done.size} із ${chosen.length}`}</div><div class="batch-list">${chosen.map(c=>{const isErr=failures.has(c.id);return `<div class="batch-row" data-batch="${c.id}"><strong>${esc(c.fullname)}</strong><span class="${isErr?'field-error':''}">${esc(statuses.get(c.id)||'Очікує')}</span></div>`;}).join('')}</div><div class="dialog-footer" data-batch-footer>${running?'<button class="secondary" data-import-background>Продовжити у фоні</button>':`${failures.size?'<button class="secondary" data-import-moodle>Повторити невдалі</button>':''}<button class="primary" data-import-done>До моїх курсів →</button>`}</div></div>`);
+    renderImportPill();
+  }
   async function importMoodle() {
-    if(busy || !selection?.selected.size)return;
-    setBusy(true);
+    if(batchJob?.running) {drawBatchModal();return;}
+    if(!selection?.selected.size)return;
     const chosen=selection.list.filter(c=>selection.selected.has(c.id));
-    showDialog('Додавання курсів',`<div class="batch-progress" role="status" aria-live="polite"></div><div class="batch-list">${chosen.map(c=>`<div class="batch-row" data-batch="${c.id}"><strong>${esc(c.fullname)}</strong><span>Очікує</span></div>`).join('')}</div><div class="dialog-footer" data-batch-footer></div>`);
+    batchJob={chosen,done:selection.done,failures:selection.failures,statuses:new Map(chosen.map(c=>[c.id,selection.done.has(c.id)?'Додано':'Очікує'])),running:true};
+    drawBatchModal();
     for(const course of chosen) {
-      const row=body.querySelector(`[data-batch="${course.id}"] span`);
-      if(selection.done.has(course.id)){row.textContent='Додано';continue;}
-      body.querySelector('.batch-progress').textContent=`${selection.done.size} із ${chosen.length} додано`;
-      row.textContent='Отримуємо матеріали…';
+      if(batchJob.done.has(course.id))continue;
+      batchJob.statuses.set(course.id,'Отримуємо матеріали…');
+      if(dialog.open && body.querySelector('[data-batch-view]')) {
+        body.querySelector('.batch-progress').textContent=`${batchJob.done.size} із ${chosen.length} додано`;
+        const row=body.querySelector(`[data-batch="${course.id}"] span`);if(row)row.textContent='Отримуємо матеріали…';
+      }
+      renderImportPill();
       try {
         await UI.post(`/api/workspace/courses/${course.id}/sync-moodle`,{course_title:course.fullname,shortname:course.shortname});
-        row.textContent='Групуємо за темами…';
-        try {
-          const preview=await UI.post('/api/workspace/courses/preview-structure',{course_id:course.id,title:course.fullname,authority:course.authority || 'ucu'});
-          if(preview.topics?.length)await UI.post('/api/workspace/courses/confirm-structure',preview);
-          row.textContent='Додано';
-        } catch {row.textContent='Додано · структуру можна уточнити в курсі';}
-        selection.done.add(course.id);selection.failures.delete(course.id);
-      } catch(err) {selection.failures.set(course.id,err.message);row.textContent=err.message;row.classList.add('field-error');}
+        batchJob.done.add(course.id);batchJob.failures.delete(course.id);
+        batchJob.statuses.set(course.id,'Додано');
+        if(dialog.open && body.querySelector('[data-batch-view]')) {
+          const row=body.querySelector(`[data-batch="${course.id}"] span`);
+          if(row){row.textContent='Додано';row.classList.remove('field-error');}
+        }
+        if(UI.route().view==='courses')render();
+      } catch(err) {
+        batchJob.failures.set(course.id,err.message);
+        batchJob.statuses.set(course.id,err.message);
+        if(dialog.open && body.querySelector('[data-batch-view]')) {
+          const row=body.querySelector(`[data-batch="${course.id}"] span`);
+          if(row){row.textContent=err.message;row.classList.add('field-error');}
+        }
+      }
+      renderImportPill();
     }
-    setBusy(false);
-    body.querySelector('.batch-progress').textContent=`Додано ${selection.done.size} із ${chosen.length}`;
-    body.querySelector('[data-batch-footer]').innerHTML=`${selection.failures.size?'<button class="secondary" data-import-moodle>Повторити невдалі</button>':''}<button class="primary" data-import-done>До моїх курсів →</button>`;
+    batchJob.running=false;
+    if(dialog.open && body.querySelector('[data-batch-view]')) drawBatchModal();
+    else {
+      renderImportPill();
+      if(batchJob.failures.size) UI.toast(`Додано ${batchJob.done.size} із ${chosen.length}. Є помилки.`);
+      else UI.toast(`Додано курсів: ${batchJob.done.size}`);
+    }
   }
   function showImport() {
     const bundle=currentBundle;
-    importState={bundle,courseId:bundle?.course.course_id,completed:new Set(),textDone:false};
-    showDialog(bundle?'Додати до курсу':'Новий курс',`<form class="import-form" id="import-form">${bundle?`<p class="muted">${esc(bundle.course.title)}</p>`:'<label>Назва курсу<input name="title" required maxlength="180"></label>'}<label class="file-drop">${icon('files')}<span>Обрати файли</span><input type="file" name="files" multiple accept=".pdf,.txt,.md,.docx,.pptx,.html,.csv,.json"></label><label>Або текст<textarea name="content" placeholder="Встав матеріал лекції"></textarea></label><label>Назва матеріалу<input name="topic" placeholder="Наприклад, лекція 4"></label>${!bundle?'<fieldset class="import-tools"><legend>Практика</legend><label><input type="checkbox" name="cards" checked> Картки</label><label><input type="checkbox" name="quiz" checked> Самоперевірка</label></fieldset>':''}<div data-upload-results role="status"></div><button class="primary" type="submit">${bundle?'Додати матеріали':'Створити курс'} →</button></form>`);
+    importState={bundle,courseId:bundle?.course.course_id,completed:new Set(),textDone:false,youtubeDone:false};
+    showDialog(bundle?'Додати до курсу':'Новий курс',`<form class="import-form" id="import-form">${bundle?`<p class="muted">${esc(bundle.course.title)}</p>`:'<label>Назва курсу<input name="title" required maxlength="180"></label>'}<label class="file-drop">${icon('files')}<span>Обрати файли</span><input type="file" name="files" multiple accept=".pdf,.txt,.md,.docx,.pptx,.html,.csv,.json"></label><label>Або посилання на YouTube<input type="url" name="youtube_url" placeholder="https://www.youtube.com/watch?v=..."></label><label>Або текст<textarea name="content" placeholder="Встав матеріал лекції"></textarea></label><label>Назва матеріалу<input name="topic" placeholder="Наприклад, лекція 4"></label>${!bundle?'<fieldset class="import-tools"><legend>Практика</legend><label><input type="checkbox" name="cards" checked> Картки</label><label><input type="checkbox" name="quiz" checked> Самоперевірка</label></fieldset>':''}<div data-upload-results role="status"></div><button class="primary" type="submit">${bundle?'Додати матеріали':'Створити курс'} →</button></form>`);
   }
   main.addEventListener('input',event=>{if(!event.target.matches('[data-course-search]'))return;const term=event.target.value.trim().toLocaleLowerCase('uk');courseQuery=term;const rows=[...main.querySelectorAll('[data-course-searchable]')];rows.forEach(row=>row.hidden=!row.dataset.courseSearchable.includes(term));main.querySelector('[data-courses-empty]').hidden=rows.some(row=>!row.hidden);});
   main.addEventListener('click',async event=>{
@@ -185,14 +221,15 @@
   });
   body.addEventListener('click',async event=>{
     if(event.target.closest('[data-import-moodle]'))await importMoodle();
+    if(event.target.closest('[data-import-background]'))dialog.close();
     if(event.target.closest('[data-import-done]')) {dialog.close();if(location.hash==='#courses')render();else location.hash='courses';}
     if(event.target.closest('[data-retry]'))showConnect();
   });
   body.addEventListener('submit',async event=>{
     if(event.target.id!=='import-form')return;event.preventDefault();if(busy)return;
     const form=event.target, state=importState, button=form.querySelector('[type=submit]'), error=body.querySelector('#dialog-error');
-    const title=state.bundle?.course.title || form.elements.title.value.trim(), files=[...form.elements.files.files], content=form.elements.content.value.trim();
-    if(!files.length&&!content){fail(new Error('Обери файли або встав текст.'));return;}
+    const title=state.bundle?.course.title || form.elements.title.value.trim(), files=[...form.elements.files.files], youtube=form.elements.youtube_url?.value.trim()||'', content=form.elements.content.value.trim();
+    if(!files.length&&!content&&!youtube){fail(new Error('Обери файли, встав посилання на YouTube або текст.'));return;}
     const tools=state.bundle?.tools_config || {flashcards:form.elements.cards.checked,practice_quizzes:form.elements.quiz.checked};
     setBusy(true);button.disabled=true;error.hidden=true;let errors=[];
     const fields=[...form.querySelectorAll('input,textarea')];fields.forEach(el=>el.disabled=true);
@@ -203,11 +240,12 @@
       const data=new FormData();data.append('file',files[i]);data.append('course_title',title);data.append('tools_json',JSON.stringify(tools));if(state.courseId)data.append('course_id',state.courseId);if(state.bundle)data.append('authority',state.bundle.course.authority);
       try {const result=await UI.api('/api/workspace/courses/upload',{method:'POST',body:data});state.courseId=result.course_id;state.completed.add(fileKey);} catch(err){errors.push(`${files[i].name}: ${err.message}`);}
     }
-    if(content&&!state.textDone)try {const result=await UI.post('/api/workspace/courses/create-text',{title,topic_title:form.elements.topic.value.trim()||title,content_text:content,course_id:state.courseId,authority:state.bundle?.course.authority||'custom',tools_config:tools});state.courseId=result.course_id;state.textDone=true;}catch(err){errors.push(err.message);}
+    if((content||youtube)&&!state.textDone)try {if(youtube)form.querySelector('[data-upload-results]').textContent='Опрацьовуємо YouTube-відео…';const result=await UI.post('/api/workspace/courses/create-text',{title,topic_title:form.elements.topic.value.trim()||(youtube?title:'')||title,content_text:content,youtube_url:youtube||null,course_id:state.courseId,authority:state.bundle?.course.authority||'custom',tools_config:tools});state.courseId=result.course_id;state.textDone=true;}catch(err){errors.push(err.message);}
     setBusy(false);button.disabled=false;fields.forEach(el=>el.disabled=false);
     if(errors.length){form.querySelector('[data-upload-results]').textContent=`Додано: ${state.completed.size+(state.textDone?1:0)}`;button.textContent='Повторити невдалі';fail(new Error(errors.join('\n')));return;}
     dialog.close();const target=UI.courseLink(state.courseId,'materials');if(location.hash===target)render();else location.hash=target;
   });
+  document.querySelector('#workspace-importing').onclick=()=>drawBatchModal();
   document.querySelector('#workspace-update').onclick=()=>{refreshAvailable=false;refreshNotice();render();};
   window.addEventListener('hashchange',()=>{scrolls.set(lastHash,window.scrollY);lastHash=location.hash;menuState(false);render({navigate:true});});
   window.addEventListener('hustle:refresh',()=>render());

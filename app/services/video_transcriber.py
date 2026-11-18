@@ -48,6 +48,33 @@ class VideoTranscriberService:
         return None
 
     @classmethod
+    def normalize_youtube_url(cls, url: str) -> Optional[str]:
+        """Return canonical https://www.youtube.com/watch?v=<id> or None if invalid."""
+        vid = cls.extract_youtube_video_id((url or "").strip())
+        return f"https://www.youtube.com/watch?v={vid}" if vid else None
+
+    @classmethod
+    def extract_youtube_urls_from_text(cls, text: str, limit: int = 5) -> List[str]:
+        """Extract unique canonical YouTube URLs from raw text, Markdown, or HTML attributes."""
+        if not text:
+            return []
+        candidates = re.findall(
+            r"https?://(?:www\.|m\.)?(?:youtube\.com/(?:watch\?[^\s\"'<>)]+|embed/[^\s\"'<>/?)]+|shorts/[^\s\"'<>/?)]+|v/[^\s\"'<>/?)]+)|youtu\.be/[^\s\"'<>/?)]+)",
+            text,
+            flags=re.IGNORECASE,
+        )
+        urls: List[str] = []
+        seen = set()
+        for raw in candidates:
+            norm = cls.normalize_youtube_url(raw.rstrip(".,;:)"))
+            if norm and norm not in seen:
+                seen.add(norm)
+                urls.append(norm)
+                if len(urls) >= limit:
+                    break
+        return urls
+
+    @classmethod
     def get_youtube_transcript(
         cls,
         url: str,

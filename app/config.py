@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     # Gemini AI Settings
     GEMINI_API_KEY: Optional[str] = None
     GEMINI_MODEL: str = "gemini-2.0-flash"
+    VERTEX_AI_PROJECT: Optional[str] = None
+    VERTEX_AI_LOCATION: str = "global"
 
     # Google OAuth (Website Account Login -> pairs MoodleSession without passwords)
     GOOGLE_CLIENT_ID: str = ""

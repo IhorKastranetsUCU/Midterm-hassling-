@@ -30,12 +30,13 @@ async api(path, options = {}) {
  return data;
 },
 markdown(value) {
- if(window.HustleRich) return HustleRich.markdown(String(value || ''));
+ const source = window.HustleMath ? HustleMath.protectMarkdown(String(value || '')) : String(value || '');
+ if(window.HustleRich) return HustleRich.markdown(source);
 
  const inline = text => this.escape(text).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/`([^`]+)`/g, '<code>$1</code>');
  const out = []; let list = false, paragraph = [], code = null;
  const flush = () => { if(paragraph.length) {out.push(`<p>${paragraph.join('<br>')}</p>`);paragraph=[];} if(list) {out.push('</ul>');list=false;} };
- for(const line of String(value || '').split('\n')) {
+ for(const line of source.split('\n')) {
   if(line.startsWith('```')) { flush(); if(code!==null) {out.push(`<pre><code>${this.escape(code.join('\n'))}</code></pre>`);code=null;} else code=[]; continue; }
   if(code!==null) {code.push(line);continue;}
   if(!line.trim()) {flush();continue;}
@@ -48,6 +49,7 @@ markdown(value) {
  flush(); if(code!==null)out.push(`<pre><code>${this.escape(code.join('\n'))}</code></pre>`);
  return out.join('');
 },
+inlineMath(value) { return window.HustleMath ? HustleMath.inlineHtml(value) : this.escape(value); },
 route() {
  const [path,query='']=location.hash.slice(1).split('?');const parts=path.split('/');const params=new URLSearchParams(query);
  return {view:parts[0]||'dashboard',courseId:parts[0]==='course'&&/^\d+$/.test(parts[1]||'')?parts[1]:null,section:parts[2]||'overview',topic:parts[3],from:['materials','practice'].includes(params.get('from'))?params.get('from'):null};
@@ -58,6 +60,6 @@ plain(value) {const doc=new DOMParser().parseFromString(String(value||''),'text/
 countLabel(value,one,few,many) {const rule=new Intl.PluralRules('uk-UA').select(Number(value));return `${value} ${{one,few,many,other:many}[rule]}`;},
 date(value,withTime=false) {if(!value)return '';const d=new Date(typeof value==='number'?value*1000:value);return Number.isNaN(d.getTime())?'':new Intl.DateTimeFormat('uk-UA',{day:'numeric',month:'short',...(withTime?{hour:'2-digit',minute:'2-digit'}:{})}).format(d);},
 toast(message) {const el=document.querySelector('.toast');if(!el)return;clearTimeout(this.toastTimer);el.textContent=message;el.hidden=false;this.toastTimer=setTimeout(()=>el.hidden=true,5000);},
-async enhance(root) {if(window.HustleRich)await HustleRich.enhance(root);},
+async enhance(root) {await Promise.all([window.HustleRich?.enhance(root), window.HustleMath?.enhance(root)]);},
 post(path, data) { return this.api(path, {method:'POST', headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); }
 }; })();

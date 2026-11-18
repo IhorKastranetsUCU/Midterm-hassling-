@@ -138,6 +138,17 @@
 .material-group[open] > summary > i { transform:rotate(180deg); }
 .material-group[open] > summary { border-bottom:1px solid #e8ded7; }
 .material-group-list { border:0; border-radius:0; box-shadow:none; }
+.practice-group-body { padding:1rem 1.2rem; display:grid; gap:.9rem; background:#fffdf7; }
+.practice-group-body .practice-modes { margin-top:0; grid-template-columns:repeat(auto-fit,minmax(13rem,1fr)); }
+.practice-group-body .reader-resources { box-shadow:none; }
+.practice-group-actions { display:flex; justify-content:flex-start; }
+.practice-group-actions .text-button { margin:0; padding-inline:.25rem; min-height:2.2rem; }
+.practice-summary-tag { font-size:.7rem; font-weight:700; color:#725176; background:#efe4ef; padding:.2rem .55rem; border-radius:999px; white-space:nowrap; }
+@media(max-width:38rem) { .practice-group-body { padding:.85rem; } .practice-group-body .practice-modes { grid-template-columns:1fr; } .material-group > summary { flex-wrap:wrap; } }
+.math-tex { font-family:"Cambria Math","STIX Two Math","Latin Modern Math","Noto Sans Math",serif; font-size:1.05em; }
+.math-display { display:block; text-align:center; margin:.85rem 0; overflow-x:auto; max-width:100%; }
+.math-tex math { font-size:1em; line-height:1.4; }
+.quiz-option .math-tex { font-size:1.02em; }
 .materials-heading { justify-content:flex-end; }
 .materials-heading > .muted { display:none; }
 .course-study-layout .section-heading { margin-top:0; }

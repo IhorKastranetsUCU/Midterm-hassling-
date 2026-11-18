@@ -52,7 +52,13 @@
     const examReady=choices.some(item=>item.quizzes.length||item.book_sections.length);
     const examInner=`<span class="learning-tool-icon">${icon('plan')}</span><strong>До іспиту</strong><span>Підготовка з тем курсу</span>${icon('arrow')}`;
     const exam=examReady?`<a class="learning-tool" href="${UI.courseLink(id,'exam')}">${examInner}</a>`:`<button class="learning-tool" data-prepare-learning="exam" ${disabled}>${examInner}</button>`;
-    host.innerHTML=heading+topicPicker+`<div class="learning-tools">${tile('reading','Конспект','files',node.book_sections.length,['розділ','розділи','розділів'])}${tile('cards','Картки','courses',node.flashcards.length,['картка','картки','карток'])}${tile('quiz','Самоперевірка','practice',node.quizzes.length,['питання','питання','питань'])}${exam}</div><div class="learning-hub-footer"><p role="status" data-learning-progress>${state.busy?'Готуємо конспект, картки й запитання…':''}</p>${provider.configured&&!node.quizzes.length&&!node.flashcards.length?`<button class="text-button" data-prepare-learning="all" ${state.busy?'disabled':''}>Підготувати тему ${icon('arrow')}</button>`:''}</div><p class="field-error" role="alert" data-learning-error>${esc(state.error||'')}</p>`;
+    const hasGenerated=Boolean(node.book_sections.length||node.flashcards.length||node.quizzes.length);
+    const canPrepare=provider.configured&&(!node.quizzes.length||!node.flashcards.length||!node.book_sections.length);
+    const footerActions=[
+      hasGenerated?`<button class="text-button danger-text" data-clear-learning="topic" ${state.busy?'disabled':''}>Очистити згенероване</button>`:'',
+      canPrepare?`<button class="text-button" data-prepare-learning="all" ${state.busy?'disabled':''}>Підготувати тему ${icon('arrow')}</button>`:''
+    ].filter(Boolean).join('');
+    host.innerHTML=heading+topicPicker+`<div class="learning-tools">${tile('reading','Конспект','files',node.book_sections.length,['розділ','розділи','розділів'])}${tile('cards','Картки','courses',node.flashcards.length,['картка','картки','карток'])}${tile('quiz','Самоперевірка','practice',node.quizzes.length,['питання','питання','питань'])}${exam}</div><div class="learning-hub-footer"><p role="status" data-learning-progress>${state.busy?esc(state.busyLabel||'Готуємо конспект, картки й запитання…'):''}</p>${footerActions?`<div class="learning-hub-actions">${footerActions}</div>`:''}</div><p class="field-error" role="alert" data-learning-error>${esc(state.error||'')}</p>`;
   }
   async function load(state) {
     try{state.provider=await UI.api('/api/workspace/learning/settings');draw(state);}
@@ -79,23 +85,36 @@
   async function prepare(state,destination) {
     if(state.busy||!state.node||!state.provider?.configured)return;
     const node=state.node,bundle=state.bundle;
-    state.busy=true;state.error='';draw(state);
+    state.busy=true;state.busyLabel='Готуємо конспект, картки й запитання…';state.error='';draw(state);
     try{
       await UI.post(`/api/workspace/courses/${bundle.course.course_id}/topics/${node.topic_index}/prepare-learning`,{});
       const fresh=await UI.api(`/api/workspace/courses/${bundle.course.course_id}`);
       if(!live(state))return;
       Object.assign(bundle,fresh);
-      state.busy=false;draw(state);
+      state.busy=false;state.busyLabel='';draw(state);
       if(['cards','quiz'].includes(destination))HustleLearning.openTopicPractice(bundle,destination,node.mix_id);
       else if(destination==='exam')location.hash=UI.courseLink(bundle.course.course_id,'exam');
       else if(destination==='reading')location.hash=bundle.course_map?HustleCurriculum.link(bundle,node):UI.courseLink(bundle.course.course_id,'reading',node.topic_index);
       else UI.toast('Тема готова до навчання');
-    }catch(error){if(live(state)){state.error=error.message;state.busy=false;draw(state);}}
+    }catch(error){if(live(state)){state.error=error.message;state.busy=false;state.busyLabel='';draw(state);}}
+  }
+  async function clearTopic(state) {
+    if(state.busy||!state.node)return;
+    const node=state.node,bundle=state.bundle;
+    state.busy=true;state.busyLabel='Очищуємо згенеровані матеріали…';state.error='';draw(state);
+    try{
+      await UI.api(`/api/workspace/courses/${bundle.course.course_id}/topics/${node.topic_index}/generated`,{method:'DELETE'});
+      const fresh=await UI.api(`/api/workspace/courses/${bundle.course.course_id}`);
+      if(!live(state))return;
+      Object.assign(bundle,fresh);
+      state.busy=false;state.busyLabel='';draw(state);
+      UI.toast('Згенеровані матеріали теми очищено');
+    }catch(error){if(live(state)){state.error=error.message;state.busy=false;state.busyLabel='';draw(state);}}
   }
   function mount(main,account,bundle) {
     current=null;
     if(!main.querySelector('[data-learning-settings],[data-learning-hub],[data-learning-connection]'))return;
-    const state={main,account,bundle,provider:null,busy:false,error:''};current=state;
+    const state={main,account,bundle,provider:null,busy:false,busyLabel:'',error:''};current=state;
     load(state);
   }
   document.addEventListener('submit',event=>{
@@ -110,6 +129,7 @@
   document.addEventListener('click',event=>{
     if(!current)return;
     if(event.target.closest('[data-learning-retry]'))load(current);
+    const clearBtn=event.target.closest('[data-clear-learning]');if(clearBtn&&!clearBtn.disabled){clearTopic(current);return;}
     const button=event.target.closest('[data-prepare-learning]');if(button&&!button.disabled)prepare(current,button.dataset.prepareLearning);
   });
   const originalRender=HustleLearning.renderBundle;

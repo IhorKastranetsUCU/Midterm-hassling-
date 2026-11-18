@@ -2027,3 +2027,57 @@ def test_ttl_cache_parallel_grades_and_instant_course_open(isolated_store, monke
     assert counts["contents_scrape"] >= before_scrape
 
 
+def test_grades_blocked_by_cloudflare_raises_502_and_is_not_cached(isolated_store, monkeypatch):
+    """HTTP 403 / Cloudflare challenge on grade HTML returns 502 instead of caching empty grades."""
+    import httpx
+
+    state = {"blocked": True, "hits": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path == "/my/":
+            return httpx.Response(
+                200,
+                headers={"Content-Type": "text/html"},
+                content=b'<html><script>M.cfg={"sesskey":"sCF1","userId":26086};</script><span class="usertext">Ivan Petrenko</span></html>',
+            )
+        if path == "/lib/ajax/service.php":
+            info = request.url.params.get("info", "")
+            if info == "core_course_get_enrolled_courses_by_timeline_classification":
+                return httpx.Response(200, json=[{"error": False, "data": {"courses": [{"id": 9400, "shortname": "C9400", "fullname": "Course 9400"}]}}])
+            return httpx.Response(200, json=[{"error": True, "exception": {"message": "AJAX disabled"}}])
+        if path == "/grade/report/user/index.php":
+            state["hits"] += 1
+            if state["blocked"]:
+                return httpx.Response(403, headers={"cf-mitigated": "challenge", "Content-Type": "text/html"}, content=b"Challenge")
+            return httpx.Response(
+                200,
+                headers={"Content-Type": "text/html"},
+                content=b'<table class="user-grade"><tbody><tr class="coursetotal"><th>Course Total</th><td class="column-grade">88.00</td></tr></tbody></table>',
+            )
+        return httpx.Response(404)
+
+    mock_transport = httpx.MockTransport(handler)
+    orig_async_client = httpx.AsyncClient
+
+    class PatchedAsyncClient(orig_async_client):
+        def __init__(self, *args, **kwargs):
+            kwargs["transport"] = mock_transport
+            super().__init__(*args, **kwargs)
+
+    monkeypatch.setattr(httpx, "AsyncClient", PatchedAsyncClient)
+
+    client = TestClient(app)
+    assert client.post("/api/auth/extension-pair", json={"moodle_url": "https://learn.ucu.edu.ua", "cookie": "c_cf"}).status_code == 200
+
+    blocked_res = client.get("/api/grades?course_id=9400")
+    assert blocked_res.status_code == 502
+    assert "403" in blocked_res.json()["detail"]
+
+    state["blocked"] = False
+    ok_res = client.get("/api/grades?course_id=9400")
+    assert ok_res.status_code == 200
+    assert state["hits"] == 2
+    assert ok_res.json()["courses"][0]["grade_items"][0]["gradeformatted"] == "88.00"
+
+

@@ -8,7 +8,7 @@
   function showDialog(title,content) {body.innerHTML=`<h2 id="dialog-title">${esc(title)}</h2>${content}<p role="alert" class="field-error" data-course-error></p>`;if(!dialog.open)dialog.showModal();}
   function controls(value) {return tools.map(([key,label])=>`<label class="tool-choice"><input type="checkbox" name="${key}" ${value[key]?'checked':''}><span>${label}</span></label>`).join('');}
   function manage(value) {
-    return `<div class="manage-grid"><section class="topic-card"><h2>Інструменти курсу</h2><form id="course-tools"><div class="tool-grid">${controls(value.tools_config)}</div><button class="primary" type="submit">Зберегти</button><p role="status" data-tools-status></p></form></section><section class="topic-card"><h2>Матеріали й структура</h2><div class="manage-actions"><button class="secondary" data-structure>Впорядкувати за темами ${icon('arrow')}</button>${value.course.source_type!=='manual_upload'?'<button class="secondary" data-sync-course>Оновити з Moodle ↻</button><button class="text-button" data-check-updates>Перевірити зміни</button>':''}<button class="secondary" data-regenerate>Оновити конспекти ↻</button></div><p role="status" data-course-action-status></p><div data-jobs></div></section></div>${value.blocked_quizzes.length?`<details class="source-tree"><summary>Недоступні для опрацювання · ${value.blocked_quizzes.length}</summary><ul>${value.blocked_quizzes.map(q=>`<li>${esc(q.name)}</li>`).join('')}</ul></details>`:''}`;
+    return `<div class="manage-grid"><section class="topic-card"><h2>Інструменти курсу</h2><form id="course-tools"><div class="tool-grid">${controls(value.tools_config)}</div><button class="primary" type="submit">Зберегти</button><p role="status" data-tools-status></p></form></section><section class="topic-card"><h2>Матеріали й структура</h2><div class="manage-actions"><button class="secondary" data-structure>Впорядкувати за темами ${icon('arrow')}</button>${value.course.source_type!=='manual_upload'?'<button class="secondary" data-sync-course>Оновити з Moodle ↻</button><button class="text-button" data-check-updates>Перевірити зміни</button>':''}<button class="secondary" data-regenerate>Оновити конспекти ↻</button><button class="text-button" data-clear-course-generated>Очистити згенероване</button></div><p role="status" data-course-action-status></p><div data-jobs></div></section></div>${value.blocked_quizzes.length?`<details class="source-tree"><summary>Недоступні для опрацювання · ${value.blocked_quizzes.length}</summary><ul>${value.blocked_quizzes.map(q=>`<li>${esc(q.name)}</li>`).join('')}</ul></details>`:''}`;
   }
   async function jobs(target,epoch) {
     try {const result=await UI.api(`/api/workspace/courses/${bundle.course.course_id}/jobs`);if(epoch!==version||!target.isConnected)return;
@@ -77,8 +77,8 @@
   });
   main.addEventListener('click',async event=>{
     if(event.target.closest('[data-structure]'))structure();
-    const action=event.target.closest('[data-sync-course],[data-check-updates],[data-regenerate],[data-ack-topic]');if(!action)return;
-    const status=main.querySelector('[data-course-action-status]')||action.parentElement.querySelector('[role=status]');action.disabled=true;if(status)status.textContent='Оновлюємо…';
+    const action=event.target.closest('[data-sync-course],[data-check-updates],[data-regenerate],[data-ack-topic],[data-clear-course-generated]');if(!action)return;
+    const status=main.querySelector('[data-course-action-status]')||action.parentElement.querySelector('[role=status]');action.disabled=true;if(status)status.textContent=action.hasAttribute('data-clear-course-generated')?'Очищуємо згенероване…':'Оновлюємо…';
     try {
       const id=bundle.course.course_id;let response;
       if(action.hasAttribute('data-sync-course'))response=await UI.post(`/api/workspace/courses/${id}/sync-moodle`,{course_title:bundle.course.title,tools_config:bundle.tools_config});
@@ -86,6 +86,10 @@
       else if(action.hasAttribute('data-ack-topic')) {
         if(bundle.course.source_type!=='manual_upload')await UI.post(`/api/workspace/courses/${id}/sync-moodle`,{course_title:bundle.course.title,tools_config:bundle.tools_config});
         response=await UI.post(`/api/workspace/mixes/${encodeURIComponent(action.dataset.ackTopic)}/ack-update`,{});
+      }
+      else if(action.hasAttribute('data-clear-course-generated')) {
+        await UI.api(`/api/workspace/courses/${id}/generated`,{method:'DELETE'});
+        response={message:'Згенеровані матеріали курсу очищено'};
       }
       else response=await UI.post(`/api/workspace/courses/${id}/generate`,{});
       UI.toast(response.message||'Матеріали оновлено');emit();

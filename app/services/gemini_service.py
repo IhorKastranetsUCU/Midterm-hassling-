@@ -1,6 +1,8 @@
 import json
 import logging
+import os
 import re
+import time
 from typing import Any, Dict, List, Optional, Tuple
 import httpx
 
@@ -9,10 +11,12 @@ from app.services.learning_provider import current_provider, LearningProviderErr
 
 logger = logging.getLogger("gemini_service")
 
+_VERTEX_TOKEN_CACHE: Dict[str, Any] = {"token": None, "expires_at": 0.0}
+
 
 class GeminiService:
     """
-    Client for Google Gemini API (gemini-2.0-flash).
+    Client for Google Gemini API (AI Studio API key or Google Cloud Vertex AI).
     Provides structured syllabus parsing, educational textbook synthesis,
     practice quiz generation, flashcards, and Mermaid concept maps.
     """
@@ -22,13 +26,55 @@ class GeminiService:
     def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
         settings = get_settings()
         provider = current_provider.get()
-        self.api_key = (api_key or (provider.api_key if provider else None) or settings.GEMINI_API_KEY or "").strip()
+        explicit_key = (api_key or "").strip()
+        personal_key = provider.api_key.strip() if provider and provider.source == "personal" and provider.api_key else ""
+        if explicit_key:
+            self.api_key = explicit_key
+            self.vertex_project = ""
+        elif personal_key:
+            self.api_key = personal_key
+            self.vertex_project = ""
+        elif (settings.VERTEX_AI_PROJECT or "").strip():
+            self.api_key = ""
+            self.vertex_project = settings.VERTEX_AI_PROJECT.strip()
+        else:
+            self.api_key = ((provider.api_key if provider else None) or settings.GEMINI_API_KEY or "").strip()
+            self.vertex_project = ""
+        self.vertex_location = (settings.VERTEX_AI_LOCATION or "global").strip() or "global"
         self.model = model or (provider.model if provider else None) or settings.GEMINI_MODEL or "gemini-2.0-flash"
         self.strict = bool(provider and provider.strict)
 
     @property
     def is_available(self) -> bool:
-        return bool(self.api_key)
+        return bool(self.api_key or self.vertex_project)
+
+    async def _get_vertex_token(self, force_refresh: bool = False) -> Optional[str]:
+        env_token = (os.getenv("VERTEX_AI_ACCESS_TOKEN") or "").strip()
+        if env_token:
+            return env_token
+        now = time.monotonic()
+        if not force_refresh and _VERTEX_TOKEN_CACHE["token"] and _VERTEX_TOKEN_CACHE["expires_at"] > now:
+            return _VERTEX_TOKEN_CACHE["token"]
+        try:
+            async with httpx.AsyncClient(timeout=3.0) as client:
+                res = await client.get(
+                    "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
+                    headers={"Metadata-Flavor": "Google"},
+                )
+            if res.status_code != 200:
+                logger.warning("Vertex metadata token request returned HTTP %s", res.status_code)
+                return None
+            payload = res.json()
+            tok = (payload.get("access_token") or "").strip()
+            if not tok:
+                return None
+            ttl = max(60, int(payload.get("expires_in", 3600)) - 60)
+            _VERTEX_TOKEN_CACHE["token"] = tok
+            _VERTEX_TOKEN_CACHE["expires_at"] = now + ttl
+            return tok
+        except Exception as exc:
+            logger.warning("Vertex metadata token error (%s)", type(exc).__name__)
+            return None
 
     async def generate_content(
         self,
@@ -37,17 +83,19 @@ class GeminiService:
         json_mode: bool = False,
         temperature: float = 0.2,
         timeout: float = 30.0,
+        extra_parts: Optional[List[Dict[str, Any]]] = None,
     ) -> Optional[str]:
-        """Send prompt to Gemini 2.0 Flash API and return raw response text."""
+        """Send prompt to Gemini API (Vertex AI or AI Studio) and return raw response text."""
         if not self.is_available:
             return None
 
-        url = f"{self.BASE_URL}/{self.model}:generateContent"
-
+        parts: List[Dict[str, Any]] = list(extra_parts or [])
+        parts.append({"text": prompt})
         payload: Dict[str, Any] = {
             "contents": [
                 {
-                    "parts": [{"text": prompt}]
+                    "role": "user",
+                    "parts": parts,
                 }
             ],
             "generationConfig": {
@@ -63,16 +111,57 @@ class GeminiService:
         if json_mode:
             payload["generationConfig"]["responseMimeType"] = "application/json"
 
-        headers = {"Content-Type": "application/json", "x-goog-api-key": self.api_key}
-
         try:
-            async with httpx.AsyncClient(timeout=timeout) as client:
-                resp = await client.post(url, json=payload, headers=headers)
+            if self.vertex_project:
+                host = (
+                    "aiplatform.googleapis.com"
+                    if self.vertex_location == "global"
+                    else f"{self.vertex_location}-aiplatform.googleapis.com"
+                )
+                url = (
+                    f"https://{host}/v1/projects/{self.vertex_project}/locations/"
+                    f"{self.vertex_location}/publishers/google/models/{self.model}:generateContent"
+                )
+                resp = None
+                for attempt in range(2):
+                    tok = await self._get_vertex_token(force_refresh=(attempt == 1))
+                    if not tok:
+                        if self.strict:
+                            raise LearningProviderError("Не вдалося отримати токен Vertex AI на сервері.")
+                        return None
+                    headers = {
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {tok}",
+                        "X-Goog-User-Project": self.vertex_project,
+                    }
+                    async with httpx.AsyncClient(timeout=timeout) as client:
+                        resp = await client.post(url, json=payload, headers=headers)
+                    if resp.status_code == 401 and attempt == 0:
+                        _VERTEX_TOKEN_CACHE["token"] = None
+                        continue
+                    break
+            else:
+                url = f"{self.BASE_URL}/{self.model}:generateContent"
+                headers = {"Content-Type": "application/json", "x-goog-api-key": self.api_key}
+                async with httpx.AsyncClient(timeout=timeout) as client:
+                    resp = await client.post(url, json=payload, headers=headers)
 
-            if resp.status_code != 200:
+            if resp is None or resp.status_code != 200:
+                code = resp.status_code if resp is not None else 502
+                safe_detail = ""
+                if resp is not None:
+                    try:
+                        err_obj = (resp.json() or {}).get("error") or {}
+                        safe_detail = str(err_obj.get("message") or err_obj.get("status") or "").strip()
+                    except Exception:
+                        safe_detail = ""
+                    if self.api_key and self.api_key in safe_detail:
+                        safe_detail = safe_detail.replace(self.api_key, "[redacted]")
+                    safe_detail = safe_detail[:160]
+                provider_kind = "vertex" if self.vertex_project else "studio"
+                logger.warning("Gemini API (%s) returned HTTP %s%s", provider_kind, code, f": {safe_detail}" if safe_detail else "")
                 if self.strict:
-                    raise provider_http_error(resp.status_code)
-                logger.warning("Gemini API returned HTTP %s", resp.status_code)
+                    raise provider_http_error(code, source=provider_kind, detail=safe_detail if code == 400 else "")
                 return None
 
             data = resp.json()
@@ -81,15 +170,27 @@ class GeminiService:
                 parts = candidates[0].get("content", {}).get("parts", [])
                 if parts:
                     return "\n".join(part.get("text", "") for part in parts if not part.get("thought"))
+                finish_reason = candidates[0].get("finishReason")
+                if finish_reason:
+                    logger.warning("Gemini returned empty parts with finishReason=%s", finish_reason)
+                    if self.strict:
+                        raise LearningProviderError(f"Gemini не зміг згенерувати матеріал ({finish_reason}).", 422)
+            elif data.get("promptFeedback", {}).get("blockReason"):
+                block_reason = data["promptFeedback"]["blockReason"]
+                logger.warning("Gemini blocked prompt with blockReason=%s", block_reason)
+                if self.strict:
+                    raise LearningProviderError(f"Gemini заблокував запит ({block_reason}).", 422)
             if self.strict:
                 raise LearningProviderError("Gemini не повернув навчальний матеріал. Спробуй ще раз.")
             return None
         except LearningProviderError:
             raise
         except Exception as exc:
-            if self.strict:
-                raise LearningProviderError("Не вдалося отримати матеріали від Gemini. Спробуй ще раз.") from None
             logger.warning("Error calling Gemini API (%s)", type(exc).__name__)
+            if self.strict:
+                if isinstance(exc, httpx.TimeoutException):
+                    raise LearningProviderError("Gemini занадто довго обробляє запит. Спробуй ще раз.") from None
+                raise LearningProviderError("Не вдалося отримати матеріали від Gemini. Спробуй ще раз.") from None
             return None
 
     async def structure_syllabus_to_topics(
@@ -184,18 +285,33 @@ Course Data:
         title: str,
         content_text: str,
         keywords: Optional[List[str]] = None,
+        course_title: str = "",
+        topic_title: str = "",
     ) -> Optional[Dict[str, Any]]:
         """Synthesize interactive textbook markdown and takeaways with Gemini."""
         if not self.is_available:
             return None
 
         kw_str = ", ".join(keywords or [])
+        context_lines = []
+        if course_title:
+            context_lines.append(f'Course: "{course_title}"')
+        if topic_title and topic_title.strip() != title.strip():
+            context_lines.append(f'Topic: "{topic_title}"')
+        context_block = ("\n".join(context_lines) + "\n") if context_lines else ""
         prompt = f"""
-You are an expert professor explaining the university topic: "{title}".
+You are an expert university professor explaining this course material:
+{context_block}Section title: "{title}"
 Ingested source material:
 {content_text[:6000]}
 
 Keywords: {kw_str}
+
+Grounding rules:
+- Stay strictly within the academic domain of the Course and Topic above.
+- Never drift into unrelated disciplines (e.g. generic study methods like SQ3R or unrelated ML topics) unless explicitly present in the source text.
+- Never treat Moodle activity names (Reading, Seminar, Quiz, Bonus activities) as course concepts to meta-explain.
+- If the ingested source text is sparse or only a title/outline, explain the actual domain theory, definitions, and intuition corresponding to the Course + Topic + Section title.
 
 Please generate an engaging, in-depth interactive study section in Markdown (Ukrainian language) covering:
 1. Core theoretical foundations with clear intuition and examples
@@ -211,7 +327,7 @@ Return ONLY a JSON object:
 """
         res = await self.generate_content(
             prompt,
-            system_instruction="You write high-quality academic textbook materials in Ukrainian. Return JSON only.",
+            system_instruction="You write high-quality academic textbook materials in Ukrainian strictly grounded in the course subject. Return JSON only.",
             json_mode=True,
             temperature=0.3,
         )
@@ -229,18 +345,26 @@ Return ONLY a JSON object:
         title: str,
         key_points: List[str],
         num_questions: int = 3,
+        course_title: str = "",
+        content_text: str = "",
     ) -> Optional[List[Dict[str, Any]]]:
         """Generate high-yield conceptual practice questions with Gemini."""
         if not self.is_available:
             return None
 
         points_str = "\n".join(f"- {p}" for p in key_points)
+        course_line = f'Course: "{course_title}"\n' if course_title else ""
+        source_block = f'\nSource material excerpt:\n{content_text[:3500]}\n' if content_text else ""
         prompt = f"""
-Generate {num_questions} multiple-choice conceptual practice questions for university students on topic: "{title}".
+Generate {num_questions} multiple-choice conceptual practice questions for university students on:
+{course_line}Topic: "{title}"
 Key points covered:
-{points_str}
+{points_str}{source_block}
 
 Requirements:
+- Stay strictly inside the academic subject of {course_title or title} and test actual domain knowledge, formulas, theorems, or problem-solving for "{title}".
+- NEVER ask trivia or meta-questions about Moodle logistics or course components (such as what Reading folders, Seminars, Quizzes, Self-tests, or Extra/bonus activities are for).
+- NEVER drift into unrelated subjects outside the course.
 - Each question must test understanding, not trivia.
 - Exactly 4 options per question.
 - Distinct, realistic distractors.
@@ -260,7 +384,7 @@ Return ONLY a JSON array:
 """
         res = await self.generate_content(
             prompt,
-            system_instruction="You are an exam designer creating conceptual practice quizzes in Ukrainian. Return JSON only.",
+            system_instruction="You are an exam designer creating conceptual subject-matter quizzes in Ukrainian. Never write questions about Moodle navigation or unrelated subjects. Return JSON only.",
             json_mode=True,
             temperature=0.3,
         )
@@ -281,18 +405,24 @@ Return ONLY a JSON array:
         title: str,
         key_points: List[str],
         num_cards: int = 4,
+        course_title: str = "",
     ) -> Optional[List[Dict[str, str]]]:
         """Generate spaced-repetition flashcards with Gemini."""
         if not self.is_available:
             return None
 
         points_str = "\n".join(f"- {p}" for p in key_points)
+        course_line = f'Course: "{course_title}"\n' if course_title else ""
         prompt = f"""
-Generate {num_cards} spaced-repetition flashcards for topic: "{title}".
+Generate {num_cards} spaced-repetition flashcards for:
+{course_line}Topic: "{title}"
 Key concepts:
 {points_str}
 
-Each card should have:
+Requirements:
+- Every card must belong strictly to the academic subject of {course_title or title} — topic "{title}" (core definitions, formulas, theorems, or domain principles).
+- Ignore any generic study-advice phrases or unrelated subjects.
+- Never create cards about Moodle structure (seminars, bonus tasks, reading folders).
 - "front": short prompt, term, or question
 - "back": clear, memorable definition, formula, or principle
 - "tag": short topic tag (e.g. "{title[:20]}")
@@ -309,7 +439,7 @@ Return ONLY a JSON array:
 """
         res = await self.generate_content(
             prompt,
-            system_instruction="Return JSON array of flashcards only.",
+            system_instruction="You create subject-matter flashcards in Ukrainian strictly grounded in the given course and topic. Return JSON array of flashcards only.",
             json_mode=True,
             temperature=0.3,
         )
@@ -329,14 +459,16 @@ Return ONLY a JSON array:
         self,
         title: str,
         key_points: List[str],
+        course_title: str = "",
     ) -> Optional[str]:
         """Generate valid Mermaid flowchart TD code with Gemini."""
         if not self.is_available:
             return None
 
         points_str = "\n".join(f"- {p}" for p in key_points[:6])
+        course_line = f' in course "{course_title}"' if course_title else ""
         prompt = f"""
-Generate clean, valid Mermaid.js flowchart diagram code (flowchart TD) illustrating the relationships between key concepts in topic "{title}".
+Generate clean, valid Mermaid.js flowchart diagram code (flowchart TD) illustrating the relationships between key domain concepts in topic "{title}"{course_line}.
 Concepts:
 {points_str}
 
@@ -360,3 +492,48 @@ Rules:
         if clean.startswith("flowchart") or clean.startswith("graph"):
             return clean
         return None
+
+    async def summarize_youtube_video(
+        self,
+        youtube_url: str,
+        title: str = "",
+        course_title: str = "",
+        raise_on_error: bool = False,
+    ) -> Optional[str]:
+        """Extract structured lecture notes from a YouTube URL natively via Gemini fileData."""
+        if not self.is_available:
+            return None
+        from app.services.video_transcriber import VideoTranscriberService
+        norm = VideoTranscriberService.normalize_youtube_url(youtube_url)
+        if not norm:
+            return None
+
+        ctx = []
+        if course_title:
+            ctx.append(f'Course: "{course_title}"')
+        if title:
+            ctx.append(f'Material/Topic: "{title}"')
+        ctx_line = ("\n".join(ctx) + "\n") if ctx else ""
+        prompt = (
+            f"{ctx_line}"
+            "Watch and listen to this educational video and write structured study notes in Ukrainian "
+            "covering all key definitions, formulas (using LaTeX $...$ / $$...$$ when appropriate), "
+            "theorems, examples, and step-by-step explanations taught in the video. "
+            "Include only content actually presented in the video."
+        )
+        try:
+            return await self.generate_content(
+                prompt,
+                system_instruction="You extract accurate academic lecture notes from educational videos in Ukrainian.",
+                temperature=0.2,
+                timeout=120.0,
+                extra_parts=[{"fileData": {"fileUri": norm, "mimeType": "video/mp4"}}],
+            )
+        except LearningProviderError as exc:
+            if raise_on_error:
+                raise
+            logger.warning("Gemini YouTube video extraction failed for %s (%s)", norm, getattr(exc, "message", exc))
+            return None
+        except Exception as exc:
+            logger.warning("Unexpected YouTube Gemini extraction error (%s)", type(exc).__name__)
+            return None

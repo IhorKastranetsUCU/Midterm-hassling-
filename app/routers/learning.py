@@ -48,6 +48,14 @@ async def connect_learning(req: KeyRequest, request: Request, response: Response
     return settings.status(owner.owner_id)
 
 
+def _archive_mix_version(conn, owner_id: str, mix) -> None:
+    conn.execute("""CREATE TABLE IF NOT EXISTS learning_topic_versions (
+        owner_id TEXT NOT NULL, mix_id TEXT NOT NULL, saved_at TEXT NOT NULL,
+        mix_json TEXT NOT NULL, PRIMARY KEY(owner_id, mix_id, saved_at))""")
+    conn.execute("INSERT INTO learning_topic_versions VALUES (?, ?, ?, ?)",
+                 (owner_id, mix.mix_id, datetime.now(timezone.utc).isoformat(), mix.model_dump_json()))
+
+
 async def prepare_topic(store, owner_id, course_id, topic_index, provider):
     bundle = store.get_course_bundle(course_id, owner_id)
     if not bundle:
@@ -68,17 +76,25 @@ async def prepare_topic(store, owner_id, course_id, topic_index, provider):
                   for chunk in split_text_into_semantic_chunks(snapshot.title, snapshot.content_text)]
     tools = previous.tools_enabled.model_copy(update={"interactive_book": True, "flashcards": True, "practice_quizzes": True})
     with learning_provider_scope(provider):
+        chunks, enriched_text = await store.enrich_chunks_with_youtube(
+            chunks,
+            snapshot_text=snapshot.content_text,
+            course_title=bundle["course"].title,
+            topic_title=snapshot.title,
+        )
+        prepared_snapshot = (
+            snapshot.model_copy(update={"content_text": enriched_text})
+            if enriched_text and enriched_text != snapshot.content_text
+            else snapshot
+        )
         mix, _, _ = await store._build_topic_mix_cached(
-            snapshot=snapshot, tools=tools, topic_index=topic_index, chunks=chunks,
+            snapshot=prepared_snapshot, tools=tools, topic_index=topic_index, chunks=chunks,
             existing_notes=previous.user_notes, version=previous.version + 1,
-            stable_mix_id=previous.mix_id, materials=previous.materials)
+            stable_mix_id=previous.mix_id, materials=previous.materials,
+            course_title=bundle["course"].title)
     # Preserve the previous generated version before replacing its current view.
     with store._connect() as conn:
-        conn.execute("""CREATE TABLE IF NOT EXISTS learning_topic_versions (
-            owner_id TEXT NOT NULL, mix_id TEXT NOT NULL, saved_at TEXT NOT NULL,
-            mix_json TEXT NOT NULL, PRIMARY KEY(owner_id, mix_id, saved_at))""")
-        conn.execute("INSERT INTO learning_topic_versions VALUES (?, ?, ?, ?)",
-                     (owner_id, previous.mix_id, datetime.now(timezone.utc).isoformat(), previous.model_dump_json()))
+        _archive_mix_version(conn, owner_id, previous)
     # Do not accept an obsolete generation if the source changed during the API call.
     current = store.get_course_bundle(course_id, owner_id)
     latest = next((item for item in current["topic_mixes"] if item.mix_id == previous.mix_id), None) if current else None
@@ -106,3 +122,66 @@ async def prepare_learning(course_id: int, topic_index: int, request: Request, o
     task = schedule_background_task(prepare_topic(store, owner.owner_id, course_id, topic_index, provider),
                                     dedup_key=("prepare-learning", owner.owner_id, course_id, topic_index))
     return await asyncio.shield(task)
+
+
+@router.delete("/courses/{course_id}/topics/{topic_index}/generated")
+async def clear_topic_generated(course_id: int, topic_index: int, request: Request, owner: WorkspaceOwner = Depends(get_workspace_owner)):
+    """Clear generated book sections, quizzes, and flashcards for one topic while keeping notes and sources."""
+    same_origin(request)
+    store = get_workspace_store()
+    bundle = store.get_course_bundle(course_id, owner.owner_id)
+    if not bundle:
+        raise HTTPException(404, "Курс не знайдено.")
+    previous = next((mix for mix in bundle["topic_mixes"] if mix.topic_index == topic_index), None)
+    if not previous:
+        raise HTTPException(404, "Тему не знайдено.")
+    with store._connect() as conn:
+        _archive_mix_version(conn, owner.owner_id, previous)
+    cleared = previous.model_copy(
+        update={
+            "book_sections": [],
+            "quizzes": [],
+            "flashcards": [],
+            "dirty_chunk_ids": [],
+            "version": previous.version + 1,
+            "updated_at": datetime.now(timezone.utc),
+        }
+    )
+    store._save_topic_mix(cleared, owner.owner_id)
+    store._set_exam_mix_stale(owner.owner_id, course_id, True)
+    fresh = store.get_course_bundle(course_id, owner.owner_id)
+    return {"success": True, "mix_id": cleared.mix_id, "course_map": build_course_map(fresh)}
+
+
+@router.delete("/courses/{course_id}/generated")
+async def clear_course_generated(course_id: int, request: Request, owner: WorkspaceOwner = Depends(get_workspace_owner)):
+    """Clear generated AI study content across all topics in a course while preserving notes, sources, and history."""
+    same_origin(request)
+    store = get_workspace_store()
+    bundle = store.get_course_bundle(course_id, owner.owner_id)
+    if not bundle:
+        raise HTTPException(404, "Курс не знайдено.")
+    now = datetime.now(timezone.utc)
+    cleared_count = 0
+    with store._connect() as conn:
+        for previous in bundle["topic_mixes"]:
+            if previous.book_sections or previous.quizzes or previous.flashcards:
+                _archive_mix_version(conn, owner.owner_id, previous)
+                cleared_count += 1
+        conn.execute("DELETE FROM exam_mixes WHERE owner_id = ? AND course_id = ?", (owner.owner_id, course_id))
+    for previous in bundle["topic_mixes"]:
+        if previous.book_sections or previous.quizzes or previous.flashcards:
+            cleared = previous.model_copy(
+                update={
+                    "book_sections": [],
+                    "quizzes": [],
+                    "flashcards": [],
+                    "dirty_chunk_ids": [],
+                    "version": previous.version + 1,
+                    "updated_at": now,
+                }
+            )
+            store._save_topic_mix(cleared, owner.owner_id)
+    store._set_exam_mix_stale(owner.owner_id, course_id, False)
+    fresh = store.get_course_bundle(course_id, owner.owner_id)
+    return {"success": True, "cleared_topics": cleared_count, "course_map": build_course_map(fresh)}

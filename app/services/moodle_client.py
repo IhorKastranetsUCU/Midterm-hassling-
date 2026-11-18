@@ -1614,6 +1614,17 @@ class MoodleClient:
                 if "/mod/quiz/" in current_url.lower():
                     raise ValueError("Exam Shield: redirect targeted restricted quiz module.")
                 if not self._is_same_moodle_origin(current_url):
+                    from app.services.video_transcriber import VideoTranscriberService
+                    yt_url = VideoTranscriberService.normalize_youtube_url(current_url)
+                    if yt_url:
+                        return {
+                            "filename": f"youtube_{VideoTranscriberService.extract_youtube_video_id(yt_url)}.txt",
+                            "content_type": "text/plain",
+                            "raw_bytes": f"YouTube URL: {yt_url}".encode("utf-8"),
+                            "text_excerpt": f"YouTube URL: {yt_url}",
+                            "resolved_url": yt_url,
+                            "youtube_urls": [yt_url],
+                        }
                     return None
 
                 async with client.stream("GET", current_url, headers=headers) as res:
@@ -1705,10 +1716,17 @@ class MoodleClient:
                     filename = f"{stem or f'module_{clean_mod}'}{mime_ext}"
 
             text_excerpt: Optional[str] = None
+            youtube_urls: List[str] = []
             if content_type.startswith("text/html"):
+                from app.services.video_transcriber import VideoTranscriberService
                 html_str = raw_bytes.decode("utf-8", errors="ignore")
                 main_m = re.search(r'<div[^>]+role="main"[^>]*>(.*?)</section>', html_str, flags=re.DOTALL | re.IGNORECASE)
-                text_excerpt = self._clean_html_text(main_m.group(1) if main_m else html_str)
+                scope_html = main_m.group(1) if main_m else html_str
+                youtube_urls = VideoTranscriberService.extract_youtube_urls_from_text(scope_html)
+                text_excerpt = self._clean_html_text(scope_html)
+                if youtube_urls:
+                    yt_lines = "\n".join(f"YouTube URL: {u}" for u in youtube_urls)
+                    text_excerpt = f"{text_excerpt}\n\n{yt_lines}".strip() if text_excerpt else yt_lines
 
             return {
                 "filename": filename,
@@ -1716,6 +1734,7 @@ class MoodleClient:
                 "raw_bytes": raw_bytes,
                 "text_excerpt": text_excerpt,
                 "resolved_url": resolved_url,
+                "youtube_urls": youtube_urls,
             }
 
         try:
@@ -2026,7 +2045,8 @@ class MoodleClient:
             current_url = f"{self.base_url}/grade/report/user/index.php?id={course_id}"
             headers = {
                 "Cookie": f"MoodleSession={token}",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             }
             try:
                 async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=False) as client:
@@ -2038,18 +2058,48 @@ class MoodleClient:
                         if res_html.status_code in (301, 302, 303, 307, 308):
                             loc = res_html.headers.get("location", "")
                             if not loc or self._is_login_redirect(loc):
-                                res_html = None
-                                break
+                                raise MoodleAuthError(
+                                    "Сесія Moodle завершилася. Перепідключи LMS.",
+                                    error_code="invalid_cookie",
+                                )
                             current_url = urljoin(current_url, loc)
                             continue
                         break
-                    if res_html is not None and res_html.status_code == 200 and not self._looks_like_login_html(res_html.text):
-                        parsed_items = self._parse_user_grades_html(res_html.text)
-                        return {"usergrades": [{"courseid": course_id, "userid": user_id, "gradeitems": parsed_items}]}
+            except (MoodleAuthError, MoodleConnectionError):
+                raise
             except Exception as exc:
                 logger.warning(f"HTML grade report fallback failed for course {course_id}: {exc}")
+                raise MoodleConnectionError(f"Не вдалося завантажити сторінку оцінок Moodle: {exc}")
 
-            return {"usergrades": [{"courseid": course_id, "userid": user_id, "gradeitems": []}]}
+            if res_html is None:
+                raise MoodleConnectionError("Moodle перенаправив запит оцінок на зовнішню адресу.")
+
+            cf_mitigated = res_html.headers.get("cf-mitigated")
+            if res_html.status_code == 403 or cf_mitigated:
+                logger.warning(
+                    f"Grades HTML blocked for course {course_id}: status={res_html.status_code} cf_mitigated={cf_mitigated}"
+                )
+                raise MoodleConnectionError(
+                    "Moodle або Cloudflare заблокував запит оцінок із сервера (HTTP 403)."
+                )
+            if res_html.status_code >= 400:
+                logger.warning(f"Grades HTML HTTP error for course {course_id}: status={res_html.status_code}")
+                raise MoodleConnectionError(
+                    f"Moodle повернув HTTP {res_html.status_code} при завантаженні оцінок."
+                )
+            if self._looks_like_login_html(res_html.text):
+                logger.warning(f"Grades HTML returned login page for course {course_id}")
+                raise MoodleAuthError(
+                    "Сесія Moodle завершилася. Перепідключи LMS.",
+                    error_code="invalid_cookie",
+                )
+
+            parsed_items = self._parse_user_grades_html(res_html.text)
+            if not parsed_items:
+                logger.warning(
+                    f"Grades HTML parsed 0 items for course {course_id}: status={res_html.status_code} len={len(res_html.text)}"
+                )
+            return {"usergrades": [{"courseid": course_id, "userid": user_id, "gradeitems": parsed_items}]}
 
         return await self.call_ws(
             "gradereport_user_get_grade_items",

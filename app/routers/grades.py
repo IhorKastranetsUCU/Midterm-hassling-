@@ -1,7 +1,7 @@
 import asyncio
 from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from app.core.exceptions import MoodleException
+from app.core.exceptions import MoodleAuthError, MoodleException
 from app.core.security import get_current_user_session
 from app.models.grade import GradeOverviewResponse, CourseGrades, GradeItem
 from app.services.academic_cache import get_academic_cache
@@ -94,6 +94,20 @@ async def get_my_grades(
                 cg = CourseGrades(course_id=cid, course_fullname=cname, grade_items=items)
                 cache.set(site_url, user_id, "grades", cg, key=str(cid), ttl_seconds=300.0)
                 return cg
+            except MoodleAuthError as exc:
+                if course_id is not None:
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail=exc.message,
+                    )
+                return CourseGrades(course_id=cid, course_fullname=cname, grade_items=[])
+            except MoodleException as exc:
+                if course_id is not None:
+                    raise HTTPException(
+                        status_code=status.HTTP_502_BAD_GATEWAY,
+                        detail=exc.message,
+                    )
+                return CourseGrades(course_id=cid, course_fullname=cname, grade_items=[])
             except Exception:
                 return CourseGrades(course_id=cid, course_fullname=cname, grade_items=[])
 

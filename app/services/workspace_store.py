@@ -53,7 +53,7 @@ def _utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-from app.services.learning_provider import with_learning_provider
+from app.services.learning_provider import current_provider, with_learning_provider
 
 
 class WorkspaceStore:
@@ -514,6 +514,16 @@ class WorkspaceStore:
             known_server_hashes=server_hashes,
         )
 
+    _NON_STUDY_MODNAMES = frozenset({"quiz", "label", "subsection", "forum", "questionnaire"})
+
+    @staticmethod
+    def _scoped_cache_hash(raw_hash: str, course_title: str = "", topic_title: str = "") -> str:
+        clean_course = (course_title or "").strip()
+        clean_topic = (topic_title or "").strip()
+        if not clean_course and not clean_topic:
+            return raw_hash
+        return compute_content_hash(f"{clean_course}|{clean_topic}|{raw_hash}")
+
     async def _build_book_sections_cached(
         self,
         chunks: List[Dict[str, Any]],
@@ -523,6 +533,8 @@ class WorkspaceStore:
         source_id: str,
         old_sections_by_chunk: Optional[Dict[str, InteractiveBookSection]] = None,
         api_key: Optional[str] = None,
+        course_title: str = "",
+        topic_title: str = "",
     ) -> Tuple[List[InteractiveBookSection], int, int]:
         """
         Build InteractiveBookSections independently per chunk with shared content-addressed caching.
@@ -534,13 +546,22 @@ class WorkspaceStore:
         cache_hits = 0
         recomputed = 0
         existing_map = old_sections_by_chunk or {}
+        has_study_chunks = any(
+            (ch.get("modname") or "").lower() not in self._NON_STUDY_MODNAMES
+            for ch in chunks
+            if ch.get("safety_status", "safe_material") != "restricted_exam"
+        )
 
         for ch in chunks:
             safety = ch.get("safety_status", "safe_material")
             if safety == "restricted_exam":
                 continue
+            modname = (ch.get("modname") or "").lower()
+            if has_study_chunks and modname in self._NON_STUDY_MODNAMES:
+                continue
             chunk_id = ch["chunk_id"]
             chunk_hash = ch["module_hash"]
+            scoped_hash = self._scoped_cache_hash(chunk_hash, course_title=course_title, topic_title=topic_title)
             heading = ch["heading"]
             body = ch["content_text"]
 
@@ -550,7 +571,7 @@ class WorkspaceStore:
                 explanation_md = old_sec.explanation_markdown
                 key_takeaways = list(old_sec.key_takeaways)
             else:
-                cached_core = self._get_cached_artifact(chunk_hash, "book_section_core", pv)
+                cached_core = self._get_cached_artifact(scoped_hash, "book_section_core", pv)
                 if cached_core:
                     core = json.loads(cached_core)
                     base_heading = core["heading"]
@@ -567,13 +588,15 @@ class WorkspaceStore:
                         include_visual_cards=False,
                         chunk_id=chunk_id,
                         source_hash=chunk_hash,
+                        course_title=course_title,
+                        topic_title=topic_title,
                     )
                     base_heading = built.heading
                     explanation_md = built.explanation_markdown
                     key_takeaways = list(built.key_takeaways)
                     recomputed += 1
                     self._put_cached_artifact(
-                        chunk_hash,
+                        scoped_hash,
                         "book_section_core",
                         pv,
                         json.dumps(
@@ -591,17 +614,17 @@ class WorkspaceStore:
                 if old_sec and old_sec.source_hash == chunk_hash and old_sec.mermaid_diagram:
                     mermaid_diagram = old_sec.mermaid_diagram
                 else:
-                    cached_mmd = self._get_cached_artifact(chunk_hash, "mermaid_diagram", pv)
+                    cached_mmd = self._get_cached_artifact(scoped_hash, "mermaid_diagram", pv)
                     if cached_mmd:
                         mermaid_diagram = json.loads(cached_mmd)["mermaid_diagram"]
                         cache_hits += 1
                     else:
                         mermaid_diagram = await generator.generate_mermaid_diagram(
-                            base_heading, key_takeaways
+                            base_heading, key_takeaways, course_title=course_title
                         )
                         recomputed += 1
                         self._put_cached_artifact(
-                            chunk_hash,
+                            scoped_hash,
                             "mermaid_diagram",
                             pv,
                             json.dumps({"mermaid_diagram": mermaid_diagram}),
@@ -620,7 +643,7 @@ class WorkspaceStore:
                     card_caption = old_sec.visual_card_caption
                     card_prompt = old_sec.visual_card_prompt
                 else:
-                    cached_card = self._get_cached_artifact(chunk_hash, "visual_card", pv)
+                    cached_card = self._get_cached_artifact(scoped_hash, "visual_card", pv)
                     if cached_card:
                         card_obj = json.loads(cached_card)
                         card_caption = card_obj["visual_card_caption"]
@@ -630,7 +653,7 @@ class WorkspaceStore:
                         card_caption, card_prompt = await generator.generate_visual_card(base_heading)
                         recomputed += 1
                         self._put_cached_artifact(
-                            chunk_hash,
+                            scoped_hash,
                             "visual_card",
                             pv,
                             json.dumps(
@@ -664,21 +687,27 @@ class WorkspaceStore:
         content_text: str,
         safety_status: str,
         api_key: Optional[str] = None,
+        course_title: str = "",
     ) -> Tuple[List[PracticeQuestion], int, int]:
         if safety_status == "restricted_exam":
             return [], 0, 0
         generator = get_mix_generator(api_key=api_key)
         pv = generator.prompt_version
-        cached = self._get_cached_artifact(source_hash, "topic_quizzes", pv)
+        scoped_hash = self._scoped_cache_hash(source_hash, course_title=course_title, topic_title=title)
+        cached = self._get_cached_artifact(scoped_hash, "topic_quizzes", pv)
         if cached:
             items = [PracticeQuestion.model_validate(q) for q in json.loads(cached)]
             return items, 1, 0
         key_points, total_bullets = _extract_key_points(content_text, title, limit=5)
         items = await generator.generate_practice_quizzes(
-            title, key_points, total_points=total_bullets
+            title,
+            key_points,
+            total_points=total_bullets,
+            course_title=course_title,
+            content_text=content_text,
         )
         self._put_cached_artifact(
-            source_hash,
+            scoped_hash,
             "topic_quizzes",
             pv,
             json.dumps([q.model_dump() for q in items]),
@@ -693,24 +722,143 @@ class WorkspaceStore:
         key_takeaways: List[str],
         safety_status: str,
         api_key: Optional[str] = None,
+        course_title: str = "",
     ) -> Tuple[List[Flashcard], int, int]:
         if safety_status == "restricted_exam":
             return [], 0, 0
         generator = get_mix_generator(api_key=api_key)
         pv = generator.prompt_version
-        cached = self._get_cached_artifact(source_hash, "topic_flashcards", pv)
+        scoped_hash = self._scoped_cache_hash(source_hash, course_title=course_title, topic_title=title)
+        cached = self._get_cached_artifact(scoped_hash, "topic_flashcards", pv)
         if cached:
             cards = [Flashcard.model_validate(c) for c in json.loads(cached)]
             return cards, 1, 0
-        cards = await generator.generate_flashcards(title, key_takeaways)
+        cards = await generator.generate_flashcards(title, key_takeaways, course_title=course_title)
         self._put_cached_artifact(
-            source_hash,
+            scoped_hash,
             "topic_flashcards",
             pv,
             json.dumps([c.model_dump() for c in cards]),
             safety_status=safety_status,
         )
         return cards, 0, 1
+
+    async def resolve_youtube_digest(
+        self,
+        youtube_url: str,
+        title: str = "",
+        course_title: str = "",
+        raise_on_error: bool = False,
+    ) -> Optional[Dict[str, Any]]:
+        """Resolve a YouTube video's captions (0 tokens) or cached Gemini video notes."""
+        import asyncio
+        from app.services.video_transcriber import VideoTranscriberService
+        from app.services.gemini_service import GeminiService
+
+        norm = VideoTranscriberService.normalize_youtube_url(youtube_url)
+        vid = VideoTranscriberService.extract_youtube_video_id(norm or "")
+        if not norm or not vid:
+            return None
+
+        cache_hash = compute_content_hash(f"yt:{vid}")
+        cached = self._get_cached_artifact(cache_hash, "youtube_digest", "yt-v1")
+        if cached:
+            try:
+                obj = json.loads(cached)
+                if obj.get("text"):
+                    return obj
+            except Exception:
+                pass
+
+        yt = await asyncio.to_thread(VideoTranscriberService.get_youtube_transcript, norm)
+        if yt and yt.get("full_text"):
+            result = {
+                "url": norm,
+                "video_id": vid,
+                "source": "youtube_captions",
+                "language": yt.get("language"),
+                "text": yt["full_text"][:18000],
+                "token_cost": 0,
+            }
+            self._put_cached_artifact(cache_hash, "youtube_digest", "yt-v1", json.dumps(result), safety_status="safe_material")
+            return result
+
+        gemini = GeminiService()
+        if gemini.is_available:
+            notes = await gemini.summarize_youtube_video(
+                norm, title=title, course_title=course_title, raise_on_error=raise_on_error
+            )
+            if notes and notes.strip():
+                result = {
+                    "url": norm,
+                    "video_id": vid,
+                    "source": "gemini_video",
+                    "language": "uk",
+                    "text": notes.strip()[:18000],
+                    "token_cost": 1,
+                }
+                self._put_cached_artifact(cache_hash, "youtube_digest", "yt-v1", json.dumps(result), safety_status="safe_material")
+                return result
+        return None
+
+    async def enrich_chunks_with_youtube(
+        self,
+        chunks: List[Dict[str, Any]],
+        snapshot_text: str = "",
+        course_title: str = "",
+        topic_title: str = "",
+        max_videos: int = 3,
+    ) -> Tuple[List[Dict[str, Any]], str]:
+        """Populate YouTube transcripts/digests into video chunks and topic snapshot text."""
+        from app.services.video_transcriber import VideoTranscriberService
+
+        enriched: List[Dict[str, Any]] = []
+        resolved_by_url: Dict[str, Optional[Dict[str, Any]]] = {}
+        seen_urls = 0
+
+        for ch in chunks:
+            copy_ch = dict(ch)
+            body = copy_ch.get("content_text") or ""
+            if (
+                copy_ch.get("safety_status", "safe_material") != "restricted_exam"
+                and "[YouTube Transcript]" not in body
+                and "[YouTube Video Notes]" not in body
+            ):
+                urls = VideoTranscriberService.extract_youtube_urls_from_text(body)
+                additions = []
+                for yt_url in urls:
+                    if yt_url not in resolved_by_url:
+                        if seen_urls >= max_videos:
+                            continue
+                        seen_urls += 1
+                        resolved_by_url[yt_url] = await self.resolve_youtube_digest(
+                            yt_url,
+                            title=copy_ch.get("heading") or topic_title,
+                            course_title=course_title,
+                        )
+                    digest = resolved_by_url.get(yt_url)
+                    if digest and digest.get("text"):
+                        tag = "[YouTube Transcript]" if digest["source"] == "youtube_captions" else "[YouTube Video Notes]"
+                        additions.append(f"{tag} ({yt_url})\n{digest['text']}")
+                if additions:
+                    copy_ch["content_text"] = (body + "\n\n" + "\n\n".join(additions)).strip()
+            enriched.append(copy_ch)
+
+        extra_snap_blocks = []
+        for yt_url in VideoTranscriberService.extract_youtube_urls_from_text(snapshot_text):
+            if yt_url in resolved_by_url or seen_urls >= max_videos:
+                continue
+            seen_urls += 1
+            digest = await self.resolve_youtube_digest(yt_url, title=topic_title, course_title=course_title)
+            resolved_by_url[yt_url] = digest
+            if digest and digest.get("text"):
+                tag = "[YouTube Transcript]" if digest["source"] == "youtube_captions" else "[YouTube Video Notes]"
+                extra_snap_blocks.append(f"{tag} ({yt_url})\n{digest['text']}")
+
+        merged_text = "\n\n".join(c.get("content_text") or "" for c in enriched if c.get("content_text"))
+        if extra_snap_blocks:
+            merged_text = (merged_text + "\n\n" + "\n\n".join(extra_snap_blocks)).strip()
+        return enriched, merged_text or snapshot_text
 
     async def _build_topic_mix_cached(
         self,
@@ -724,6 +872,7 @@ class WorkspaceStore:
         old_sections_by_chunk: Optional[Dict[str, InteractiveBookSection]] = None,
         api_key: Optional[str] = None,
         materials: Optional[List[TopicMaterialItem]] = None,
+        course_title: str = "",
     ) -> Tuple[TopicMix, int, int]:
         """Build a TopicMix using shared per-artifact caching and optional chunk reuse."""
         if snapshot.safety_status == "restricted_exam":
@@ -743,6 +892,8 @@ class WorkspaceStore:
                 source_id=snapshot.source_id,
                 old_sections_by_chunk=old_sections_by_chunk,
                 api_key=api_key,
+                course_title=course_title,
+                topic_title=snapshot.title,
             )
             total_hits += h
             total_recomputed += r
@@ -755,13 +906,14 @@ class WorkspaceStore:
                 content_text=snapshot.content_text,
                 safety_status=snapshot.safety_status,
                 api_key=api_key,
+                course_title=course_title,
             )
             total_hits += h
             total_recomputed += r
 
         flashcards: List[Flashcard] = []
         if tools.flashcards:
-            takeaways = [tk for sec in book_sections for tk in sec.key_takeaways]
+            takeaways = [tk for sec in book_sections for tk in sec.key_takeaways][:10]
             if not takeaways:
                 takeaways, _ = _extract_key_points(snapshot.content_text, snapshot.title, limit=4)
             flashcards, h, r = await self._build_flashcards_cached(
@@ -770,6 +922,7 @@ class WorkspaceStore:
                 key_takeaways=takeaways,
                 safety_status=snapshot.safety_status,
                 api_key=api_key,
+                course_title=course_title,
             )
             total_hits += h
             total_recomputed += r
@@ -970,7 +1123,7 @@ class WorkspaceStore:
 
     @with_learning_provider
     async def sync_extension_payload(
-        self, payload: ExtensionSyncPayload, owner_id: str
+        self, payload: ExtensionSyncPayload, owner_id: str, skip_live_ai: bool = False
     ) -> Dict[str, Any]:
         """
         Ingest sanitized course structure & module-level diffs for an isolated user.
@@ -1058,12 +1211,36 @@ class WorkspaceStore:
                 )
                 updated_topics += 1
             else:
-                new_mix, hits, recomp = await self._build_topic_mix_cached(
-                    snapshot=snapshot,
-                    tools=tools,
-                    topic_index=sec.section_index,
-                    chunks=topic_chunks,
-                )
+                provider = current_provider.get()
+                if skip_live_ai and provider and provider.strict:
+                    # Course sync should ingest Moodle materials reliably without invoking paid/slow AI per section.
+                    src_hash = snapshot.source_hash or compute_content_hash(snapshot.content_text)
+                    now_utc = datetime.now(timezone.utc)
+                    new_mix = TopicMix(
+                        mix_id=f"mix-{snapshot.course_id}-{sec.section_index}-{src_hash[:8]}",
+                        course_id=snapshot.course_id,
+                        authority=snapshot.authority,
+                        topic_index=sec.section_index,
+                        title=snapshot.title,
+                        source_hash=src_hash,
+                        version=1,
+                        visibility=snapshot.visibility,
+                        tools_enabled=tools,
+                        book_sections=[],
+                        quizzes=[],
+                        flashcards=[],
+                        created_at=now_utc,
+                        updated_at=now_utc,
+                    )
+                    hits, recomp = 0, 0
+                else:
+                    new_mix, hits, recomp = await self._build_topic_mix_cached(
+                        snapshot=snapshot,
+                        tools=tools,
+                        topic_index=sec.section_index,
+                        chunks=topic_chunks,
+                        course_title=payload.course_name,
+                    )
                 # Attach real section materials with key items
                 sec_raw_modules = [m.model_dump() if hasattr(m, "model_dump") else m for m in sec.modules]
                 sec_mat_items = []
@@ -1137,6 +1314,8 @@ class WorkspaceStore:
         course_id: Optional[int] = None,
         shortname: Optional[str] = None,
         debounce_seconds: Optional[float] = None,
+        source_url: Optional[str] = None,
+        modname: str = "resource",
     ) -> Dict[str, Any]:
         """
         Create/append a standalone course workspace from uploaded materials or pasted text.
@@ -1148,7 +1327,14 @@ class WorkspaceStore:
         course_title = existing["course"].title if existing else title
         course_short = existing["course"].shortname if existing else (shortname or "CUSTOM")
         clean_auth = existing["course"].authority if existing else (authority or "custom")
-        topic_title = filename if filename != "pasted-notes.md" else title
+        topic_title = title if filename in ("pasted-notes.md", "youtube-video.url") else filename
+
+        if source_url and "[YouTube" not in content_text:
+            digest = await self.resolve_youtube_digest(source_url, title=topic_title, course_title=course_title)
+            if digest and digest.get("text"):
+                tag = "[YouTube Transcript]" if digest["source"] == "youtube_captions" else "[YouTube Video Notes]"
+                base_note = content_text.strip()
+                content_text = f"{base_note}\n\n{tag} ({digest['url']})\n{digest['text']}".strip()
 
         snapshot = RawTopicSnapshot(
             source_id=f"upload-{now_id}-{topic_index}-{filename}",
@@ -1167,7 +1353,7 @@ class WorkspaceStore:
             {
                 "chunk_id": c["chunk_id"],
                 "module_id": 0,
-                "modname": "upload",
+                "modname": modname if source_url else "upload",
                 "heading": c["heading"],
                 "content_text": c["content_text"],
                 "module_hash": c["content_hash"],
@@ -1182,22 +1368,24 @@ class WorkspaceStore:
             chunks=chunk_records,
         )
 
+        mod_label = topic_title if source_url else filename
+        module_entry = {
+            "id": topic_index * 100,
+            "name": mod_label,
+            "modname": modname or "resource",
+            "safety_status": "safe_material",
+            "description": content_text[:280],
+        }
+        if source_url:
+            module_entry["url"] = source_url
         sections = list(existing["sections"]) if existing else []
         sections.append(
             {
                 "id": topic_index,
                 "source_type": "manual_upload",
                 "name": snapshot.title,
-                "summary": f"Uploaded file: {filename} ({len(chunk_records)} chunk(s))",
-                "modules": [
-                    {
-                        "id": topic_index * 100,
-                        "name": filename,
-                        "modname": "resource",
-                        "safety_status": "safe_material",
-                        "description": content_text[:280],
-                    }
-                ],
+                "summary": f"YouTube: {source_url}" if source_url else f"Uploaded file: {filename} ({len(chunk_records)} chunk(s))",
+                "modules": [module_entry],
             }
         )
 
@@ -1215,11 +1403,26 @@ class WorkspaceStore:
             exam_mix_stale=tools.exam_mix,
         )
 
+        mat_items: List[TopicMaterialItem] = []
+        if source_url:
+            mat_items.append(
+                TopicMaterialItem(
+                    id=topic_index * 100,
+                    name=mod_label,
+                    material_type="video",
+                    modname=modname or "url",
+                    url=source_url,
+                    description=content_text[:500],
+                    has_transcript=True,
+                )
+            )
         topic_mix, cache_hits, recomputed = await self._build_topic_mix_cached(
             snapshot=snapshot,
             tools=tools,
             topic_index=topic_index,
             chunks=chunk_records,
+            course_title=course_title,
+            materials=mat_items,
         )
         self._save_topic_mix(topic_mix, owner_id=owner_id)
 
@@ -1367,6 +1570,7 @@ class WorkspaceStore:
                 chunks=chunk_records,
                 api_key=gemini_api_key,
                 materials=topic_mat_items,
+                course_title=title,
             )
             topic_mix.materials = topic_mat_items
             topic_mix.keywords = list(getattr(t, "keywords", None) or t.key_concepts or [t_title])
@@ -1585,6 +1789,7 @@ class WorkspaceStore:
                     stable_mix_id=existing_mix.mix_id if existing_mix else None,
                     api_key=course_api_key,
                     materials=topic_mat_items,
+                    course_title=bundle["course"].title,
                 )
                 rebuilt_mix.has_upstream_update = True
                 rebuilt_mix.materials = topic_mat_items
@@ -1890,6 +2095,7 @@ class WorkspaceStore:
                 and old_mix.source_hash == snap.source_hash
             ):
                 changed = False
+                course_title = bundle["course"].title
                 # 1. Book sections (+ independent mermaid/visual cards)
                 if not tools.interactive_book:
                     book_sections = []
@@ -1902,6 +2108,8 @@ class WorkspaceStore:
                         include_visual_cards=tools.visual_cards,
                         source_type=snap.source_type,
                         source_id=snap.source_id,
+                        course_title=course_title,
+                        topic_title=snap.title,
                     )
                     total_cache_hits += hits
                     recomputed_names.add("book_sections")
@@ -1911,7 +2119,11 @@ class WorkspaceStore:
                     book_sections = []
                     for sec in old_mix.book_sections:
                         sec_copy = sec.model_copy(deep=True)
-                        sec_hash = sec_copy.source_hash or snap.source_hash
+                        sec_hash = self._scoped_cache_hash(
+                            sec_copy.source_hash or snap.source_hash,
+                            course_title=course_title,
+                            topic_title=snap.title,
+                        )
                         if not tools.mermaid_diagrams:
                             if sec_copy.mermaid_diagram is not None:
                                 sec_copy.mermaid_diagram = None
@@ -1923,7 +2135,7 @@ class WorkspaceStore:
                                 total_cache_hits += 1
                             else:
                                 sec_copy.mermaid_diagram = await generator.generate_mermaid_diagram(
-                                    sec_copy.heading, sec_copy.key_takeaways
+                                    sec_copy.heading, sec_copy.key_takeaways, course_title=course_title
                                 )
                                 self._put_cached_artifact(
                                     sec_hash,
@@ -1986,6 +2198,7 @@ class WorkspaceStore:
                         source_hash=snap.source_hash or "",
                         content_text=snap.content_text,
                         safety_status=snap.safety_status,
+                        course_title=course_title,
                     )
                     total_cache_hits += hits
                     recomputed_names.add("practice_quizzes")
@@ -2000,7 +2213,7 @@ class WorkspaceStore:
                     flashcards = list(old_mix.flashcards)
                     reused_names.add("flashcards")
                 else:
-                    takeaways = [tk for sec in book_sections for tk in sec.key_takeaways]
+                    takeaways = [tk for sec in book_sections for tk in sec.key_takeaways][:10]
                     if not takeaways:
                         takeaways, _ = _extract_key_points(snap.content_text, snap.title, limit=4)
                     flashcards, hits, _ = await self._build_flashcards_cached(
@@ -2008,6 +2221,7 @@ class WorkspaceStore:
                         source_hash=snap.source_hash or "",
                         key_takeaways=takeaways,
                         safety_status=snap.safety_status,
+                        course_title=course_title,
                     )
                     total_cache_hits += hits
                     recomputed_names.add("flashcards")
@@ -2047,6 +2261,7 @@ class WorkspaceStore:
                     version=(old_mix.version + 1) if old_mix else 1,
                     stable_mix_id=old_mix.mix_id if old_mix else None,
                     old_sections_by_chunk=old_sec_map,
+                    course_title=bundle["course"].title,
                 )
                 total_cache_hits += hits
                 if recomp > 0:
@@ -2244,7 +2459,7 @@ class WorkspaceStore:
             course_id = mix_row["course_id"]
             topic_index = mix_row["topic_index"]
             course_row = conn.execute(
-                "SELECT tools_config_json FROM workspace_courses WHERE owner_id = ? AND course_id = ?",
+                "SELECT tools_config_json, title FROM workspace_courses WHERE owner_id = ? AND course_id = ?",
                 (owner_id, course_id),
             ).fetchone()
             snap_row = conn.execute(
@@ -2299,6 +2514,7 @@ class WorkspaceStore:
             version=int(mix_row["version"]) + 1,
             stable_mix_id=old_mix.mix_id,
             old_sections_by_chunk=old_sections_by_chunk,
+            course_title=course_row["title"] if course_row else "",
         )
         self._save_topic_mix(new_mix, owner_id=owner_id)
         if tools.exam_mix:

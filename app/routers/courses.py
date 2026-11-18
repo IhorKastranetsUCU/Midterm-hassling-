@@ -6,7 +6,7 @@ import zipfile
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Query, status, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status, Response
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
@@ -393,28 +393,57 @@ class VideoTranscriptionRequest(BaseModel):
 
 
 @router.post("/transcribe-video")
-async def transcribe_video(req: VideoTranscriptionRequest):
+async def transcribe_video(req: VideoTranscriptionRequest, request: Request):
     """
-    Zero-token video transcription.
-    Directly extracts subtitles & transcripts from YouTube or subtitle files without consuming LLM tokens.
+    Zero-token video transcription first; falls back to cached Gemini video analysis when blocked or uncaptioned.
     """
     from app.services.video_transcriber import VideoTranscriberService
+    from app.core.security import get_workspace_owner
+    from app.services.learning_provider import LearningSettingsStore, learning_provider_scope
+    from app.services.workspace_store import get_workspace_store
+
     try:
         res = await asyncio.wait_for(asyncio.to_thread(VideoTranscriberService.get_youtube_transcript, req.url), timeout=30)
     except asyncio.TimeoutError:
         raise HTTPException(status_code=504, detail="Відеосервіс не відповів. Спробуй ще раз.")
-    if not res:
+    if res:
         return {
-            "success": False,
-            "message": "Субтитри або транскрипт не знайдено для цього відео (або відео недоступне).",
+            "success": True,
+            "video_id": res.get("video_id"),
+            "language": res.get("language"),
+            "full_text": res.get("full_text"),
+            "segments": res.get("segments", []),
             "token_cost": 0,
         }
+
+    store = get_workspace_store()
+    try:
+        owner = await get_workspace_owner(request, Response())
+        owner_id = owner.owner_id
+    except Exception:
+        owner_id = "__server__"
+    try:
+        provider = LearningSettingsStore(store.db_path).get(owner_id)
+    except Exception:
+        provider = None
+
+    if provider:
+        with learning_provider_scope(provider):
+            digest = await store.resolve_youtube_digest(req.url)
+        if digest and digest.get("text"):
+            return {
+                "success": True,
+                "video_id": digest.get("video_id"),
+                "language": digest.get("language") or "uk",
+                "full_text": digest["text"],
+                "segments": [],
+                "source": digest.get("source"),
+                "token_cost": digest.get("token_cost", 1),
+            }
+
     return {
-        "success": True,
-        "video_id": res.get("video_id"),
-        "language": res.get("language"),
-        "full_text": res.get("full_text"),
-        "segments": res.get("segments", []),
+        "success": False,
+        "message": "Субтитри або транскрипт не знайдено для цього відео (або відео недоступне).",
         "token_cost": 0,
     }
 

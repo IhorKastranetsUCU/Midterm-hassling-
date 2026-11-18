@@ -71,6 +71,8 @@ class LearningSettingsStore:
             except (InvalidToken, KeyError, ValueError):
                 raise LearningProviderError("Не вдалося прочитати ключ. Підключи Gemini повторно.") from None
         settings = get_settings()
+        if (settings.VERTEX_AI_PROJECT or "").strip():
+            return LearningProvider("", settings.GEMINI_MODEL or "gemini-3-flash-preview", "vertex", strict=True)
         if settings.GEMINI_API_KEY:
             return LearningProvider(settings.GEMINI_API_KEY, settings.GEMINI_MODEL, "server")
         return None
@@ -89,8 +91,15 @@ class LearningSettingsStore:
                 "source": provider.source if provider else None}
 
 
-def provider_http_error(status):
-    if status in {400, 401, 403}:
+def provider_http_error(status, source: str = "personal", detail: str = ""):
+    if status == 400:
+        msg = "Gemini відхилив запит для цього матеріалу (некоректний формат або обмеження контенту)."
+        if detail:
+            msg = f"{msg} ({detail})"
+        return LearningProviderError(msg, 400)
+    if status in {401, 403}:
+        if source == "vertex":
+            return LearningProviderError("Помилка доступу до Vertex AI на сервері. Перевір дозволи або квоту проєкту.", 502)
         return LearningProviderError("Gemini відхилив ключ. Перевір ключ і доступ до API.", 400)
     if status == 429:
         return LearningProviderError("Ліміт Gemini вичерпано. Перевір квоту або спробуй пізніше.", 429)

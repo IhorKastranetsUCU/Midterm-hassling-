@@ -68,7 +68,8 @@ class ManualCourseTextRequest(BaseModel):
     shortname: Optional[str] = "COURSE"
     authority: str = "custom"
     topic_title: Optional[str] = None
-    content_text: str
+    content_text: str = ""
+    youtube_url: Optional[str] = None
     tools_config: Optional[CourseToolsConfig] = None
     course_id: Optional[int] = None
 
@@ -159,7 +160,7 @@ async def sync_from_extension(
     Runs the fail-closed exam safety policy filter before persisting or indexing anything.
     """
     store = get_workspace_store()
-    result = await store.sync_extension_payload(payload, owner_id=owner.owner_id)
+    result = await store.sync_extension_payload(payload, owner_id=owner.owner_id, skip_live_ai=True)
 
     event_type = "topic.update_available" if result["updated_topics"] > 0 else "workspace.synced"
     await event_bus.publish(
@@ -457,10 +458,23 @@ async def create_or_append_text_course(
     req: ManualCourseTextRequest,
     owner: WorkspaceOwner = Depends(get_workspace_owner),
 ) -> Dict[str, Any]:
-    """Create a standalone course workspace (or add a topic) from pasted notes/text + tool checkboxes."""
-    if not req.content_text.strip():
+    """Create a standalone course workspace (or add a topic) from pasted notes/text or YouTube URL + tool checkboxes."""
+    from app.services.video_transcriber import VideoTranscriberService
+
+    norm_yt: Optional[str] = None
+    if req.youtube_url and req.youtube_url.strip():
+        norm_yt = VideoTranscriberService.normalize_youtube_url(req.youtube_url.strip())
+        if not norm_yt:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Встав коректне посилання на YouTube (youtube.com або youtu.be).",
+            )
+
+    clean_text = req.content_text.strip()
+    if not clean_text and not norm_yt:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Study material text cannot be empty.")
 
+    content_body = clean_text or f"YouTube URL: {norm_yt}"
     store = get_workspace_store()
     existing = store.get_course_bundle(req.course_id, owner.owner_id) if req.course_id else None
     tools = req.tools_config or (CourseToolsConfig.model_validate(existing["tools_config"]) if existing else CourseToolsConfig())
@@ -468,11 +482,13 @@ async def create_or_append_text_course(
         owner_id=owner.owner_id,
         title=req.topic_title or req.title,
         authority=req.authority,
-        content_text=req.content_text.strip(),
-        filename="pasted-notes.md",
+        content_text=content_body,
+        filename="youtube-video.url" if norm_yt and not clean_text else "pasted-notes.md",
         tools=tools,
         course_id=req.course_id,
         shortname=req.shortname,
+        source_url=norm_yt,
+        modname="url" if norm_yt else "resource",
     )
 
     await event_bus.publish(
@@ -806,7 +822,7 @@ async def sync_course_from_moodle_backend(
                         if m_entry["safety"] == "restricted_exam" or m_entry["mod_type"] == "quiz":
                             continue
                         cand_url = m_entry["candidate_url"]
-                        if not cand_url or m_entry["mod_type"] not in ("resource", "page", "book", "folder", "url", "file"):
+                        if not cand_url or m_entry["mod_type"] not in ("resource", "page", "book", "folder", "lesson", "url", "file"):
                             continue
 
                         man_row = existing_manifest.get(m_entry["mod_id"])
@@ -910,6 +926,15 @@ async def sync_course_from_moodle_backend(
                     if parsed_text:
                         extracted_excerpt = f"{mod_desc}\n\n{parsed_text}".strip() if mod_desc else parsed_text
 
+                if not reused:
+                    from app.services.video_transcriber import VideoTranscriberService
+                    direct_yt = (
+                        VideoTranscriberService.normalize_youtube_url(m_entry["candidate_url"])
+                        or VideoTranscriberService.normalize_youtube_url(mod_url)
+                    )
+                    if direct_yt and direct_yt not in (extracted_excerpt or ""):
+                        extracted_excerpt = f"{extracted_excerpt}\n\nYouTube URL: {direct_yt}".strip() if extracted_excerpt else f"YouTube URL: {direct_yt}"
+
                 mod_hash = mod_hash_override or compute_content_hash(
                     f"{mod_id}|{mod_type}|{mod_name}|{extracted_excerpt}|{'|'.join(file_hashes)}"
                 )
@@ -953,7 +978,7 @@ async def sync_course_from_moodle_backend(
             tools_config=tools,
             sections=sections_payload,
         )
-        sync_res = await store.sync_extension_payload(sync_payload, owner_id=owner.owner_id)
+        sync_res = await store.sync_extension_payload(sync_payload, owner_id=owner.owner_id, skip_live_ai=True)
         if manifest_updates:
             await asyncio.to_thread(store.upsert_file_manifest_batch, owner.owner_id, course_id, manifest_updates)
         if staged_ids:

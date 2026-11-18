@@ -422,6 +422,16 @@ async def google_oauth_callback(
     ):
         raise HTTPException(status_code=400, detail="Invalid Google OAuth state.")
 
+    is_calendar_connect = decoded_state.get("purpose") == "calendar_connect"
+    calendar_owner_id = str(decoded_state.get("owner_id") or "").strip() if is_calendar_connect else ""
+    if is_calendar_connect:
+        try:
+            current_owner = resolve_workspace_owner(request, response=None, auto_issue=False)
+        except HTTPException:
+            current_owner = None
+        if not calendar_owner_id or (current_owner and current_owner.owner_id != calendar_owner_id):
+            raise HTTPException(status_code=403, detail="Calendar OAuth owner mismatch.")
+
     async with httpx.AsyncClient(timeout=15.0) as client:
         tok_res = await client.post(
             "https://oauth2.googleapis.com/token",
@@ -435,7 +445,8 @@ async def google_oauth_callback(
         )
         if tok_res.status_code != 200:
             raise HTTPException(status_code=401, detail="Google token exchange failed.")
-        access_token = tok_res.json().get("access_token")
+        tok_json = tok_res.json()
+        access_token = tok_json.get("access_token")
         if not access_token:
             raise HTTPException(status_code=401, detail="Google did not return an access_token.")
 
@@ -443,9 +454,29 @@ async def google_oauth_callback(
             "https://openidconnect.googleapis.com/v1/userinfo",
             headers={"Authorization": f"Bearer {access_token}"},
         )
-        if info_res.status_code != 200:
-            raise HTTPException(status_code=401, detail="Failed to fetch Google profile.")
-        profile = info_res.json()
+        profile = info_res.json() if info_res.status_code == 200 else {}
+
+    if is_calendar_connect:
+        from app.services.calendar_service import get_calendar_store
+        cal_store = get_calendar_store()
+        cal_store.save_google_connection(
+            calendar_owner_id,
+            access_token=access_token,
+            refresh_token=tok_json.get("refresh_token"),
+            expires_in=int(tok_json.get("expires_in") or 3600),
+            email=str(profile.get("email") or "").strip(),
+            calendar_id="primary",
+        )
+        try:
+            await cal_store.sync_google_source(calendar_owner_id)
+        except Exception:
+            pass
+        redir = RedirectResponse(url="/hustle/app.html#calendar", status_code=status.HTTP_302_FOUND)
+        redir.delete_cookie("google_oauth_state", path="/")
+        return redir
+
+    if info_res.status_code != 200:
+        raise HTTPException(status_code=401, detail="Failed to fetch Google profile.")
 
     google_sub = str(profile.get("sub") or "").strip()
     email = str(profile.get("email") or "").strip()

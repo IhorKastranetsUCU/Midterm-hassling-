@@ -10,9 +10,10 @@ from app.config import get_settings
 from app.routers import hustle_extension
 from app.core.exceptions import MoodleException, UnauthorizedError
 from app.core.authorities import get_authority, list_authorities
-from app.routers import auth, courses, assignments, grades, system, events, authorities, workspace
+from app.routers import auth, courses, assignments, grades, system, events, authorities, workspace, calendar
 from app.services.build_queue import get_build_queue
 from app.routers import learning
+from app.services.calendar_service import CalendarServiceError
 from app.services.learning_provider import LearningProviderError
 
 
@@ -71,6 +72,14 @@ async def learning_provider_error(request: Request, exc: LearningProviderError):
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.message}, headers={"Cache-Control": "no-store"})
 
 
+@app.exception_handler(CalendarServiceError)
+async def calendar_service_error(request: Request, exc: CalendarServiceError):
+    payload: dict = {"detail": exc.message}
+    if hasattr(exc, "conflicts") and exc.conflicts:
+        payload["conflicts"] = exc.conflicts
+    return JSONResponse(status_code=exc.status_code, content=payload, headers={"Cache-Control": "no-store"})
+
+
 app.include_router(learning.router)
 app.include_router(hustle_extension.router)
 app.include_router(auth.router)
@@ -81,6 +90,7 @@ app.include_router(system.router)
 app.include_router(events.router)
 app.include_router(authorities.router)
 app.include_router(workspace.router)
+app.include_router(calendar.router)
 
 # Mount Static & Templates
 current_dir = os.path.dirname(os.path.abspath(__file__))
