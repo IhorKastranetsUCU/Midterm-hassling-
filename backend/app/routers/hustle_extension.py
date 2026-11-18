@@ -10,7 +10,7 @@ from fastapi.responses import Response
 from app.config import get_settings
 
 router = APIRouter(prefix="/api/hustle", tags=["Hustle extension"])
-EXTENSION_DIR = Path(__file__).resolve().parents[2] / "extension"
+EXTENSION_DIR = Path(__file__).resolve().parents[3] / "frontend" / "extension"
 PUBLIC_FILES = (
     "background.js", "extractor.js", "content.js", "popup.js", "popup.html",
     "hustle-bridge.js", "hustle-bridge-worker.js", "hustle-popup.css",
