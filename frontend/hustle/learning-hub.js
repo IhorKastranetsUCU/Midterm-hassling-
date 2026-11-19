@@ -163,8 +163,7 @@
       const prepared=topics(bundle).some(node=>node.quizzes.length||node.book_sections.length);
       display={...bundle,exam_mix:prepared?{...bundle.exam_mix,mock_exam_questions:bundle.exam_mix.mock_exam_questions.filter(q=>!placeholder.test(q.question+' '+q.explanation))}:null};
     }
-    const markup=originalRender(display,section);
-    return ['practice','exam'].includes(section)?`<div data-learning-connection></div>`+markup:markup;
+    return originalRender(display,section);
   };
   window.HustleLearningHub={mount,topics,keyPanel};
 })();

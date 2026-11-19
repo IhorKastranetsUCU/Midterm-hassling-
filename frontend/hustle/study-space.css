@@ -92,9 +92,9 @@
 .topic-study-actions > div { display:flex; gap:.5rem; flex-wrap:wrap; }
 .topic-study-actions .text-button { padding-inline:0; font-size:.75rem; }
 .topic-study-actions .secondary { min-height:2.4rem; font-size:.72rem; }
-.study-mode-tabs { display:flex; gap:1.3rem; margin-bottom:1.4rem; padding-bottom:.7rem; border-bottom:1px solid #ded1d2; }
-.study-mode-tabs a { text-decoration:none; font-size:.83rem; color:#8b7483; padding:.3rem 0; }
-.study-mode-tabs a[aria-current] { color:var(--plum); font-weight:800; }
+.study-mode-tabs { display:flex; flex-wrap:wrap; column-gap:clamp(.65rem,2vw,1.3rem); margin-bottom:1.25rem; border-bottom:1px solid #ded1d2; }
+.study-mode-tabs a { display:flex; align-items:center; min-height:2.6rem; border-bottom:2px solid transparent; text-decoration:none; font-size:.8rem; font-weight:750; color:#725d70; }
+.study-mode-tabs a[aria-current] { border-color:var(--plum); color:var(--plum); }
 .practice-course { background:#fffdf7; border-color:#e0d3d5; box-shadow:0 4px 18px -15px #442a3840; }
 .agenda-toolbar { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1.6rem; }
 .agenda-periods { display:flex; gap:.25rem; padding:.25rem; border-radius:.65rem; background:#e8e0d7; }

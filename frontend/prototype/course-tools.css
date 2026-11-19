@@ -14,7 +14,23 @@ body.workspace .workspace-topbar > :not(.update-notice) { display:none; }
 .shared-course-header .course-cover .course-options,
 .shared-course-header #workspace-main .course-tabs { display:none; }
 .shared-course-header #workspace-main[data-view="course"] .course-cover {
-  background:none; border:0; box-shadow:none; padding:0; min-height:0; margin:0 0 .9rem;
+  background:none; border:0; border-radius:0; box-shadow:none;
+  padding:0; min-height:0; margin:0 0 .9rem; overflow:visible;
 }
+.shared-course-header.paper-materials-action #workspace-main[data-view="course"] .course-cover { display:none; }
+.shared-course-header .course-cover .page-actions > [data-add] {
+  border-color:#c7afce;
+  border-radius:.65rem;
+  color:#4a3054;
+  background:linear-gradient(155deg,#f8eff8,#ecddf0);
+  box-shadow:0 2px 0 #dcc8df;
+}
+.shared-course-header .course-cover .page-actions > [data-add]:hover { background:#ebdcee; }
+.shared-course-header .course-cover .page-actions > [data-add]:focus-visible { outline-offset:2px; }
 .shared-course-header .course-cover::before,
 .shared-course-header .course-cover::after { display:none; }
+
+/* The parent workspace supplies the settings heading and tabs. */
+body.workspace #workspace-main[data-view="settings"] > .page-heading { display:none; }
+
+.shared-course-header .reader-breadcrumbs[hidden] { display: none; }

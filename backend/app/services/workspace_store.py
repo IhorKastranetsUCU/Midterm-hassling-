@@ -190,6 +190,28 @@ class WorkspaceStore:
             CREATE INDEX IF NOT EXISTS idx_quiz_telemetry_course
                 ON quiz_telemetry (owner_id, course_id);
 
+            CREATE TABLE IF NOT EXISTS workspace_flashcards (
+                owner_id TEXT NOT NULL,
+                course_id INTEGER NOT NULL,
+                topic_index INTEGER NOT NULL,
+                card_id TEXT NOT NULL,
+                front TEXT NOT NULL,
+                back TEXT NOT NULL,
+                source_citation TEXT,
+                next_review_at TEXT,
+                PRIMARY KEY (owner_id, course_id, topic_index, card_id)
+            );
+
+            CREATE TABLE IF NOT EXISTS workspace_quiz_questions (
+                owner_id TEXT NOT NULL,
+                course_id INTEGER NOT NULL,
+                topic_index INTEGER NOT NULL,
+                question_key TEXT NOT NULL,
+                question_json TEXT NOT NULL,
+                source_citation TEXT,
+                PRIMARY KEY (owner_id, course_id, topic_index, question_key)
+            );
+
             CREATE TABLE IF NOT EXISTS platform_users (
                 owner_id TEXT PRIMARY KEY,
                 google_sub TEXT UNIQUE,

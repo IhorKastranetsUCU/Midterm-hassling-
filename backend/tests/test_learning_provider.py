@@ -11,12 +11,15 @@ from app.main import app
 from app.services import workspace_store as ws
 from app.services import build_queue as bq
 from app.services.build_queue import DebouncedBuildQueue
+from app.models.mix import Flashcard, PracticeQuestion, RawTopicSnapshot
+from app.services.flashcard_prompt import FLASHCARD_INSTRUCTIONS
 from app.services.gemini_service import GeminiService
 from app.services.learning_provider import (
     LearningSettingsStore, LearningProvider, LearningProviderError,
     current_provider, learning_provider_scope, validate_gemini_key,
 )
 from app.services.mix_generator import get_mix_generator
+from app.services.topic_quizzes import QUIZ_INSTRUCTIONS
 from app.services.workspace_store import WorkspaceStore
 
 
@@ -47,6 +50,166 @@ def seed(client):
 
 def install_key(store, bundle, key="valid-test-key-never-print"):
     LearningSettingsStore(store.db_path).save(bundle["course"]["owner_id"], key, "gemini-3.8-flash")
+
+
+def test_more_flashcards_are_grounded_and_preserve_the_topic_review(context, monkeypatch):
+    client, store = context
+    bundle = seed(client)
+    course_id = bundle["course"]["course_id"]
+    owner = bundle["course"]["owner_id"]
+    mix = store.get_course_bundle(course_id, owner)["topic_mixes"][0]
+    topic_index = mix.topic_index
+    front = "Що таке медіана?"
+    mix.flashcards = [
+        Flashcard(front=front, back="Центральне значення впорядкованої вибірки."),
+        Flashcard(front="Key Concept #1", back="Текст-заглушка"),
+    ]
+    mix.user_notes = "Мої нотатки"
+    store._save_topic_mix(mix, owner)
+    base = f"/api/workspace/courses/{course_id}"
+    session_url = f"{base}/flashcards?topic_index={topic_index}"
+    expand_url = f"{base}/topics/{topic_index}/flashcards"
+
+    initial = client.get(session_url).json()
+    assert [card["front"] for card in initial["queue"]] == [front]
+    old_id = initial["queue"][0]["card_id"]
+    wrong_topic = client.post(f"{base}/topics/{topic_index + 100}/flashcards/review",
+                              json={"card_id": old_id, "rating": "easy"})
+    assert wrong_topic.status_code == 404
+    rated = client.post(f"{expand_url}/review", json={"card_id": old_id, "rating": "easy"})
+    assert rated.status_code == 200
+    assert rated.json()["topics"][0]["due_count"] == 0
+    old_schedule = client.get(session_url + "&practice_all=true").json()["queue"][0]["next_review_at"]
+
+    assert client.post(expand_url).status_code == 424
+    install_key(store, bundle)
+    question = {
+        "front": "Що зміниться в обчисленні медіани, якщо додати четверте спостереження?",
+        "back": "Візьми середнє двох центральних елементів упорядкованої вибірки.",
+        "kind": "edge_case", "source_id": "1", "evidence": "для парної — середнє двох центральних",
+    }
+
+    async def generate(self, prompt, **kwargs):
+        assert kwargs["system_instruction"] == FLASHCARD_INSTRUCTIONS
+        payload = json.loads(prompt)
+        assert payload["course"] == bundle["course"]["title"]
+        assert payload["topic"] == mix.title and payload["maximum_cards"] == 12
+        assert payload["existing_fronts"] == [front] and "Мої нотатки" not in prompt
+        return json.dumps([
+            question,
+            {**question, "front": front.replace("?", ".")},
+            {**question, "front": "Помилка без джерела", "evidence": "вигадана цитата"},
+            {**question, "front": "Інше джерело", "source_id": "999"},
+        ])
+
+    monkeypatch.setattr(GeminiService, "generate_content", generate)
+    response = client.post(expand_url)
+    assert response.status_code == 200 and response.json()["added"] == 1
+    session = client.get(session_url).json()
+    assert [card["front"] for card in session["queue"]] == [question["front"]]
+    assert session["queue"][0]["source_citation"]
+    assert session["topics"][0]["cards_count"] == 2
+    all_cards = client.get(session_url + "&practice_all=true").json()["queue"]
+    assert next(card for card in all_cards if card["card_id"] == old_id)["next_review_at"] == old_schedule
+    assert store.get_course_bundle(course_id, owner)["topic_mixes"][0].user_notes == "Мої нотатки"
+    other = TestClient(app)
+    assert other.get(session_url).status_code == 404
+    assert other.post(expand_url).status_code == 404
+
+
+def test_manual_practice_is_available_without_gemini_and_scoped_to_the_section(context):
+    client, store = context
+    bundle = seed(client)
+    course_id, owner = bundle["course"]["course_id"], bundle["course"]["owner_id"]
+    mix = store.get_course_bundle(course_id, owner)["topic_mixes"][0]
+    second_index = mix.topic_index + 1
+    snapshot = RawTopicSnapshot(
+        source_id="second-topic", course_id=course_id, title="Дисперсія", content_text="",
+    )
+    store._save_snapshot(snapshot, second_index, owner)
+    store._save_topic_mix(mix.model_copy(update={
+        "mix_id": "second-topic", "topic_index": second_index, "title": snapshot.title,
+        "source_hash": snapshot.source_hash, "quizzes": [], "flashcards": [],
+    }), owner)
+
+    base = f"/api/workspace/courses/{course_id}"
+    first = f"{base}/topics/{mix.topic_index}"
+    second = f"{base}/topics/{second_index}"
+    quiz = {
+        "question": "Який елемент визначає медіану непарної вибірки?",
+        "options": ["Найменший", "Центральний", "Найбільший"], "correct_index": 1,
+    }
+    assert client.get(f"{base}/quizzes?topic_index={mix.topic_index}").json()["questions"] == []
+    assert client.post(f"{first}/quizzes").status_code == 424
+    assert client.post(f"{second}/quizzes").status_code == 422
+    assert client.post(f"{first}/quizzes/manual", json={**quiz, "options": ["A", "a"]}).status_code == 422
+    assert client.post(f"{first}/quizzes/manual", json=quiz).json() == {"added": 1}
+    assert client.post(f"{first}/quizzes/manual", json=quiz).status_code == 409
+    questions = client.get(f"{base}/quizzes?topic_index={mix.topic_index}").json()["questions"]
+    assert [q["question"] for q in questions] == [quiz["question"]]
+    assert client.get(f"{base}/quizzes?topic_index={second_index}").json()["questions"] == []
+
+    card = {"front": "Що означає дисперсія?", "back": "Міра розсіювання значень."}
+    assert client.post(f"{second}/flashcards/manual", json=card).json() == {"added": 1}
+    assert client.post(f"{second}/flashcards/manual", json=card).status_code == 409
+    cards = client.get(f"{base}/flashcards?topic_index={second_index}").json()["queue"]
+    assert [(item["front"], item["back"]) for item in cards] == [(card["front"], card["back"])]
+    assert client.get(f"{base}/flashcards?topic_index={mix.topic_index}").json()["queue"] == []
+    assert client.post(f"{base}/topics/998/flashcards/manual", json=card).status_code == 404
+    with TestClient(app) as other:
+        assert other.get(f"{base}/quizzes").status_code == 404
+        assert other.post(f"{first}/quizzes/manual", json=quiz).status_code == 404
+
+
+def test_quiz_generation_checks_sources_and_appends_to_existing_questions(context, monkeypatch):
+    client, store = context
+    bundle = seed(client)
+    course_id, owner = bundle["course"]["course_id"], bundle["course"]["owner_id"]
+    mix = store.get_course_bundle(course_id, owner)["topic_mixes"][0]
+    original = PracticeQuestion(
+        question="Що таке медіана?", options=["Центральне значення", "Сума"],
+        correct_index=0, explanation="Спочатку впорядковуємо вибірку.",
+    )
+    placeholder = original.model_copy(update={"question": "How many core study items were indexed?"})
+    mix.quizzes = [original, placeholder]
+    mix.user_notes = "Приватні нотатки студента"
+    store._save_topic_mix(mix, owner)
+    install_key(store, bundle)
+    question = {
+        "question": "Яка медіана у вибірці 1, 3, 5, 9?",
+        "options": ["3", "4", "5"], "correct_index": 1,
+        "explanation": "Для парної кількості спостережень обчислюємо середнє 3 і 5.",
+        "kind": "edge_case", "source_id": "1", "evidence": "для парної — середнє двох центральних",
+    }
+
+    async def generate(self, prompt, **kwargs):
+        assert kwargs["system_instruction"] == QUIZ_INSTRUCTIONS
+        assert "Приватні нотатки студента" not in prompt
+        payload = json.loads(prompt)
+        assert payload["course"] == bundle["course"]["title"]
+        assert payload["topic"] == mix.title and payload["maximum_questions"] == 8
+        assert payload["existing_questions"][0] == original.question
+        assert question["evidence"] in payload["sources"][0]["text"]
+        return json.dumps([
+            {**question, "question": original.question, "explanation": original.explanation},
+            {**question, "question": "Який ряд підходить?", "evidence": "вигадана цитата"},
+            {**question, "question": "Що перевірити спочатку?", "correct_index": 3},
+            {**question, "question": "Як перевірити правило?", "options": ["А", "Б", "А"]},
+            question,
+        ])
+
+    monkeypatch.setattr(GeminiService, "generate_content", generate)
+    base = f"/api/workspace/courses/{course_id}"
+    generate_url = f"{base}/topics/{mix.topic_index}/quizzes"
+    response = client.post(generate_url)
+    assert response.status_code == 200 and response.json() == {"added": 1}
+    assert client.post(generate_url).status_code == 422
+    result = client.get(f"{base}/quizzes?topic_index={mix.topic_index}").json()
+    assert result["topics"][0]["question_count"] == 2
+    assert [q["question"] for q in result["questions"]] == [original.question, question["question"]]
+    assert result["questions"][1]["source_citation"]
+    saved = store.get_course_bundle(course_id, owner)["topic_mixes"][0]
+    assert saved.quizzes == [original, placeholder] and saved.user_notes == mix.user_notes
 
 
 def test_settings_are_encrypted_private_and_failed_replacement_keeps_working_key(context, monkeypatch):

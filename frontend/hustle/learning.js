@@ -6,6 +6,8 @@
   const drafts = new Map();
   let activeBundle, practice, viewVersion = 0;
   const tabs = [['overview','Карта курсу'],['materials','Матеріали'],['practice','Практика'],['assignments','Дедлайни']];
+  const studyModes = [['practice','За темами'],['cards','Картки'],['quizzes','Самоперевірка'],['exam','До іспиту']];
+  const studySections = studyModes.map(([key]) => key);
   let materialRecords = []; const materialFilters = new Map();
   const filterKey=()=>UI.route().courseId||'library';
   const empty = text => `<div class="connected-empty"><p>${esc(text)}</p></div>`;
@@ -32,7 +34,11 @@
     rows.forEach(row=>row.hidden=!row.dataset.materialSearch.includes(term)||!!type&&row.dataset.materialType!==type||!!course&&row.dataset.materialCourse!==course);
     main.querySelectorAll('[data-material-group],[data-material-course-group]').forEach(group=>group.hidden=![...group.querySelectorAll('[data-material-search]')].some(row=>!row.hidden));
     if(term||type||course)main.querySelectorAll('details[data-material-group]:not([hidden])').forEach(group=>group.open=true);
-    const empty=main.querySelector('[data-search-empty]');if(empty)empty.hidden=rows.some(row=>!row.hidden);
+    const empty=main.querySelector('[data-search-empty]');
+    if(empty){
+      empty.hidden=rows.some(row=>!row.hidden);
+      empty.querySelector('.mascot-sticker').hidden=!term;
+    }
   }
   function showMaterial(index) {
     const material=materialRecords[index];if(!material)return;
@@ -83,9 +89,9 @@
   }
   function renderBundle(bundle, section='overview') {
     activeBundle=bundle;materialRecords=[];
-    const tab=[...tabs.map(([key])=>key),'reading','exam','grades','manage'].includes(section)?section:'overview';
+    const tab=[...tabs.map(([key])=>key),...studySections,'reading','grades','manage'].includes(section)?section:'overview';
     const visibleTabs=bundle.course.source_type==='manual_upload'?tabs.filter(([key])=>key!=='assignments'):tabs;
-    const active=tab==='reading'?'overview':tab==='exam'?'practice':tab==='grades'?'assignments':tab;
+    const active=tab==='reading'?'overview':studySections.includes(tab)?'practice':tab==='grades'?'assignments':tab;
     let content;
     if(tab==='overview')content=HustleSpace.overview(bundle);
     else if(tab==='reading')content=reading(bundle);
@@ -98,11 +104,17 @@
         content=practiceCards(window.HustleCurriculum?HustleCurriculum.practiceTopics(bundle):bundle.topic_mixes)||empty('Практики для цього курсу поки немає.');
       }
     }
-    else if(tab==='materials')content=materialToolbar()+`<div class="materials-heading"><span class="muted">За темами курсу</span><button class="text-button" data-structure>Уточнити структуру ${icon('settings')}</button></div>`+materialCards(groupsFor(bundle),bundle.course)+(bundle.course.source_type!=='manual_upload'?`<details class="source-tree" data-source-files><summary>Файли з Moodle</summary><div data-file-list></div></details>`:'')+`<p data-search-empty ${materialRecords.length?'hidden':''}>Матеріалів не знайдено.</p>`;
+    else if(tab==='materials')content=materialToolbar()+`<div class="materials-heading"><span class="muted">За темами курсу</span><button class="text-button" data-structure>Уточнити структуру ${icon('settings')}</button></div>`+materialCards(groupsFor(bundle),bundle.course)+(bundle.course.source_type!=='manual_upload'?`<details class="source-tree" data-source-files><summary>Файли з Moodle</summary><div data-file-list></div></details>`:'')+`<p class="mascot-empty" data-search-empty ${materialRecords.length?'hidden':''}><span class="mascot-sticker mascot-sticker--search" aria-hidden="true" hidden><img src="/prototype/assets/mascot/search.webp" alt="" width="384" height="384" loading="lazy"></span>Матеріалів не знайдено.</p>`;
+    else if(tab==='cards'||tab==='quizzes')content=HustleTopicCards.view(bundle,tab);
     else if(tab==='exam')content=examView(bundle);
     else if(tab==='manage')content=HustleCourse.manage(bundle);
     else content=HustleCourse.activity(bundle);
-    if(['practice','exam'].includes(tab))content=`<nav class="study-mode-tabs" aria-label="Режим практики"><a href="${UI.courseLink(bundle.course.course_id,'practice')}" ${tab==='practice'?'aria-current="page"':''}>За темами</a><a href="${UI.courseLink(bundle.course.course_id,'exam')}" ${tab==='exam'?'aria-current="page"':''}>До іспиту</a></nav>`+content;
+    if(studySections.includes(tab)) {
+      const connection = ['practice','exam'].includes(tab) ? '<div data-learning-connection></div>' : '';
+      content = `<nav class="study-mode-tabs" aria-label="Режим практики">${studyModes.map(([key, label]) =>
+        `<a href="${UI.courseLink(bundle.course.course_id, key)}" ${tab===key?'aria-current="page"':''}>${label}</a>`
+      ).join('')}</nav>` + connection + content;
+    }
     return `<nav class="course-tabs" aria-label="Розділи курсу">${visibleTabs.map(([key,label])=>`<a href="${UI.courseLink(bundle.course.course_id,key)}" ${key===active?'aria-current="page"':''}>${label}</a>`).join('')}</nav><div class="course-content">${content}</div>`;
   }
   async function library(kind, current) {
@@ -112,13 +124,13 @@
       loaded.push(...batch.map((result,i)=>({course:courses[start+i],result})));if(!current())return '';
     }
     materialRecords=[];
-    if(kind==='materials')return materialToolbar(courses)+loaded.map(({course,result})=>result.status==='rejected'?`<div role="alert" class="live-error">${esc(course.title)}: ${esc(result.reason.message)} <a href="#course/${course.course_id}/materials?from=materials">Повторити</a></div>`:`<section class="library-material-course" data-material-course-group><h2 class="library-course-title"><a href="#course/${course.course_id}/materials?from=materials">${esc(course.title)} ${icon('arrow')}</a></h2>${materialCards(groupsFor(result.value),course)}</section>`).join('')+`<p data-search-empty ${materialRecords.length?'hidden':''}>Матеріалів поки немає. Додай курс, щоб почати.</p>`;
+    if(kind==='materials')return materialToolbar(courses)+loaded.map(({course,result})=>result.status==='rejected'?`<div role="alert" class="live-error">${esc(course.title)}: ${esc(result.reason.message)} <a href="#course/${course.course_id}/materials?from=materials">Повторити</a></div>`:`<section class="library-material-course" data-material-course-group><h2 class="library-course-title"><a href="#course/${course.course_id}/materials?from=materials">${esc(course.title)} ${icon('arrow')}</a></h2>${materialCards(groupsFor(result.value),course)}</section>`).join('')+`<p class="mascot-empty" data-search-empty ${materialRecords.length?'hidden':''}><span class="mascot-sticker mascot-sticker--search" aria-hidden="true" hidden><img src="/prototype/assets/mascot/search.webp" alt="" width="384" height="384" loading="lazy"></span>Матеріалів поки немає. Додай курс, щоб почати.</p>`;
     return `<div class="practice-list">${loaded.map(({course,result})=>result.status==='rejected'?`<section class="topic-card"><h2>${esc(course.title)}</h2><p role="alert">${esc(result.reason.message)}</p><a class="secondary" href="#course/${course.course_id}/practice?from=practice">Спробувати знову</a></section>`:`<section class="practice-course"><div class="practice-course-heading"><span class="course-avatar lilac">${icon('practice')}</span><h2>${esc(course.title)}</h2></div><p class="muted">${UI.countLabel(result.value.topic_mixes.reduce((sum,t)=>sum+t.flashcards.length,0),'картка','картки','карток')} · ${UI.countLabel(result.value.topic_mixes.reduce((sum,t)=>sum+t.quizzes.length,0),'питання','питання','питань')}</p><a class="primary" href="#course/${course.course_id}/practice?from=practice">До практики →</a></section>`).join('')||empty('Додай курс, щоб почати практику.')}</div>`;
   }
-  function showPractice(type, mixId) {
+  function showPractice(type, mixId, selectedItems) {
     const topic = activeBundle.topic_mixes.find(t=>t.mix_id===mixId);
     const verified = window.HustleCurriculum?HustleCurriculum.practiceTopics(activeBundle).find(t=>t.mix_id===mixId):topic;
-    const items = type==='exam'?activeBundle.exam_mix?.mock_exam_questions:type==='cards'?verified?.flashcards:verified?.quizzes;
+    const items = selectedItems ?? (type==='exam'?activeBundle.exam_mix?.mock_exam_questions:type==='cards'?verified?.flashcards:verified?.quizzes);
     if(!items?.length) return;
     practice = {type,items,topic,index:0,score:0,selected:null,checked:false,revealed:false,saving:false,error:'',epoch:++viewVersion};
     drawPractice(); focusPractice(); dialog.showModal(); focusPractice();
@@ -131,11 +143,14 @@
   function drawPractice() {
     const p=practice;
     if(p.index>=p.items.length) {
-      body.innerHTML=`<div class="practice-summary"><span class="summary-icon">${icon('check')}</span><h2 id="dialog-title">${p.type==='cards'?'Картки повторено':`${p.score} із ${p.items.length} правильних`}</h2><button class="primary" data-study-close>${UI.route().view==='dashboard'?'До плану':'До курсу'} →</button></div>`;
+      const returnLabel = UI.route().section === 'quizzes' ? 'До теми' : UI.route().view === 'dashboard' ? 'До плану' : 'До курсу';
+      body.innerHTML=`<div class="practice-summary"><span class="mascot-sticker mascot-sticker--complete" aria-hidden="true"><img src="/prototype/assets/mascot/complete.webp" alt="" width="384" height="384"></span><h2 id="dialog-title">${p.type==='cards'?'Картки повторено':`${p.score} із ${p.items.length} правильних`}</h2><button class="primary" data-study-close>${returnLabel} →</button></div>`;
       return;
     }
     const item=p.items[p.index],math=value=>UI.inlineMath?UI.inlineMath(value):esc(value);
-    body.innerHTML=`<div class="study-position"><span>${p.index+1} / ${p.items.length}</span><div><i style="width:${(p.index+1)/p.items.length*100}%"></i></div></div><h2 id="dialog-title">${math(p.type==='cards'?item.front:item.question)}</h2>${p.type==='cards'?`<div class="flashcard">${p.revealed?`<p>${math(item.back)}</p>`:'<button class="secondary" data-reveal>Показати відповідь</button>'}</div>${p.revealed?'<button class="primary wide" data-next>Далі →</button>':''}`:`<div class="quiz-options">${item.options.map((option,i)=>`<button class="quiz-option ${p.checked && i===item.correct_index?'correct':p.checked && i===p.selected?'incorrect':''}" data-option="${i}" aria-pressed="${i===p.selected}" ${p.checked||p.saving?'disabled':''}><span>${i+1}</span>${math(option)}</button>`).join('')}</div>${p.checked?`<div class="answer-block">${math(item.explanation)}</div><button class="primary wide" data-next>${p.index===p.items.length-1?'Результат':'Далі →'}</button>`:`<button class="primary wide" data-check ${p.selected===null||p.saving?'disabled':''}>${p.saving?'Зберігаємо…':'Перевірити'}</button>`}`}<p role="alert" class="field-error">${esc(p.error)}</p>`;
+    const explanation = item.explanation || item.options?.[item.correct_index];
+    const citation = item.source_citation ? `<div class="topic-card-source">Джерело · ${esc(item.source_citation)}</div>` : '';
+    body.innerHTML=`<div class="study-position"><span>${p.index+1} / ${p.items.length}</span><div><i style="width:${(p.index+1)/p.items.length*100}%"></i></div></div><h2 id="dialog-title">${math(p.type==='cards'?item.front:item.question)}</h2>${p.type==='cards'?`<div class="flashcard">${p.revealed?`<p>${math(item.back)}</p>`:'<button class="secondary" data-reveal>Показати відповідь</button>'}</div>${p.revealed?'<button class="primary wide" data-next>Далі →</button>':''}`:`<div class="quiz-options">${item.options.map((option,i)=>`<button class="quiz-option ${p.checked && i===item.correct_index?'correct':p.checked && i===p.selected?'incorrect':''}" data-option="${i}" aria-pressed="${i===p.selected}" ${p.checked||p.saving?'disabled':''}><span>${i+1}</span>${math(option)}</button>`).join('')}</div>${p.checked?`<div class="answer-block">${math(explanation)}${citation}</div><button class="primary wide" data-next>${p.index===p.items.length-1?'Результат':'Далі →'}</button>`:`<button class="primary wide" data-check ${p.selected===null||p.saving?'disabled':''}>${p.saving?'Зберігаємо…':'Перевірити'}</button>`}`}<p role="alert" class="field-error">${esc(p.error)}</p>`;
     UI.enhance?.(body);
   }
   main.addEventListener('input',event=>{
@@ -199,15 +214,21 @@
   window.addEventListener('beforeunload',event=>{if(drafts.size) {event.preventDefault();event.returnValue='';}});
   function afterRender() {
     window.HustleCurriculum?.afterRender();
+    window.HustleShareCourseTrail?.();
+    window.HustleTopicCards?.mount(main, activeBundle);
     const toolbar=main.querySelector('.collection-toolbar:has([data-search-materials])');
     const structure=main.querySelector('.materials-heading');
     if(toolbar&&structure)toolbar.append(structure);
     filterMaterials();
+    if (window.frameElement?.hasAttribute('data-focus-study-tab')) {
+      main.querySelector('.study-mode-tabs [aria-current="page"]')?.focus({preventScroll:true});
+      window.frameElement.removeAttribute('data-focus-study-tab');
+    }
   }
-  function openTopicPractice(bundle,type,mixId) {
+  function openTopicPractice(bundle,type,mixId,items) {
     if(!['cards','quiz'].includes(type)||!bundle.topic_mixes.some(t=>t.mix_id===mixId))return;
     activeBundle=bundle;
-    showPractice(type,mixId);
+    showPractice(type,mixId,items);
   }
   window.HustleLearning={renderBundle,library,afterRender,openTopicPractice,hasDrafts:()=>drafts.size>0};
 })();

@@ -46,8 +46,11 @@
   }
   const planDone = id => tasks(id).every(task => task.done);
   const allDone = course => planDone(course.id);
+  function deadlineTimeOrder(a, b, now) {
+    return Number(a.due <= now) - Number(b.due <= now) || a.due - b.due;
+  }
   function deadlineOrder(a, b, now) {
-    return Number(a.done) - Number(b.done) || Number(a.due <= now) - Number(b.due <= now) || a.due - b.due;
+    return Number(a.done) - Number(b.done) || deadlineTimeOrder(a, b, now);
   }
   const progress = id => { const list = tasks(id); return { done: list.filter(t => t.done).length, total: list.length, percent: Math.round(list.filter(t => t.done).length / Math.max(1, list.length) * 100) }; };
   const hot = t => ['urgent', 'overdue'].includes(C.urgency(t.due, t.done));
@@ -77,11 +80,41 @@
     {words: /(?:^|[^\p{L}])(?:лабораторн\p{L}*|lab)(?!\p{L})/iu, title: 'Лабораторна', icon: 'lab', tone: 'sage'},
     {words: /(?:^|[^\p{L}])(?:домашн\p{L}*|homework)(?!\p{L})/iu, title: 'Домашнє завдання', icon: 'plan', tone: 'neutral'},
   ];
-  function deadlineIdentity(task, showCourse) {
+  function deadlineIdentity(task, showCourse, showIcon = true) {
     const kind = deadlineKinds.find(item => item.words.test(task.title)) || {title:'Завдання', icon:'plan', tone:'neutral'};
     const details = [kind.title, showCourse && task.course.name].filter(Boolean).map(esc).join(' · ');
-    return `<span class="deadline-kind" data-kind-tone="${kind.tone}" aria-hidden="true">${icon(kind.icon)}</span>
+    return `${showIcon ? `<span class="deadline-kind" data-kind-tone="${kind.tone}" aria-hidden="true">${icon(kind.icon)}</span>` : ''}
       <span class="queue-title"><strong>${esc(task.title)}</strong><small>${details}</small></span>`;
+  }
+  function deadlineRow(task, showCourse) {
+    const completed = task.submitted ? 'Виконано в Moodle' : task.done ? 'Зняти позначку виконання' : 'Позначити виконаним';
+    const date = task.done
+      ? `<time class="due-badge deadline-completed-date" datetime="${new Date(task.due).toISOString()}">${dueLabel(task.due, false)}</time>`
+      : badge(task);
+    return `<article class="deadline-line deadline-surface${task.done ? ' is-done' : ''}" data-course-tone="${esc(task.course.color)}">
+      <button type="button" class="task-check deadline-complete" data-dash-complete="${esc(task.id)}" aria-pressed="${task.done}" aria-label="${task.submitted ? 'Виконано в Moodle' : 'Виконання'}: ${esc(task.title)}" title="${completed}"${task.submitted ? ' disabled' : ''}>${task.done ? icon('check') : ''}</button>
+      <a class="deadline-task-link" href="${esc(task.href)}"${task.href.startsWith('#') ? '' : ' target="_blank" rel="noopener noreferrer"'}>
+        ${deadlineIdentity(task, showCourse, false)}${date}${icon('arrow')}</a>
+      ${H.liveCalendar?.deadlineButton(task) || ''}${fire.edge(task.due, task.done)}</article>`;
+  }
+  function deadlineList(list, showCourse, pendingLimit = Infinity) {
+    const pending = list.filter(task => !task.done);
+    const completed = list.filter(task => task.done);
+    const extra = pending.slice(pendingLimit, pendingLimit + 2);
+    const preview = main.querySelector('.deadline-more');
+    const showMore = preview?.dataset.scope === location.hash && preview.open;
+    const existing = main.querySelector('.deadline-completed');
+    const isOpen = existing?.dataset.scope === location.hash && existing.open;
+    return `${pending.slice(0, pendingLimit).map(task => deadlineRow(task, showCourse)).join('') ||
+      `<p class="agenda-empty">${completed.length ? 'Немає невиконаних дедлайнів' : 'Найближчих дедлайнів немає.'}</p>`}
+      ${extra.length ? `<details class="deadline-more" data-scope="${esc(location.hash)}"${showMore ? ' open' : ''}>
+        <summary><span class="deadline-more-show">Показати ще ${extra.length}</span><span class="deadline-more-hide">Згорнути</span></summary>
+        ${extra.map(task => deadlineRow(task, showCourse)).join('')}
+      </details>` : ''}
+      ${completed.length ? `<details class="deadline-completed" data-scope="${esc(location.hash)}"${isOpen ? ' open' : ''}>
+        <summary>Виконані <span>${completed.length}</span></summary>
+        ${completed.map(task => deadlineRow(task, showCourse)).join('')}
+      </details>` : ''}`;
   }
   function start(task, label = 'Почати заняття', klass = 'primary') {
     if (task.href) return `<a class="${klass}" href="${esc(task.href)}" ${task.href.startsWith('#') ? '' : 'target="_blank" rel="noopener noreferrer"'}>${label}${icon('arrow')}</a>`;
@@ -118,7 +151,7 @@
     if (!next && !tasks(course?.id).length) {
       const c = course || selected()[0];
       const needsMoodle = c?.connected && !H.account?.paired;
-      return `<section class="next-session focus-note"><div class="focus-body"><div class="next-session-copy"><h2>${needsMoodle ? 'Підключи Moodle для дедлайнів' : H.workspace?.deadlineError ? 'Дедлайни тимчасово недоступні' : c ? 'Найближчих дедлайнів немає' : 'Додай перший предмет'}</h2></div><div class="next-session-action">${needsMoodle ? '<a class="secondary" href="/hustle/connect.html">Підключити Moodle →</a>' : c ? '<a class="secondary" href="#practice">До практики →</a>' : H.workspace?.add || ''}</div><div class="desk-sticker" aria-hidden="true"><img src="study-donkey.webp" alt=""><span class="paper-tape"></span></div></div></section>`;
+      return `<section class="next-session focus-note"><div class="focus-body"><div class="next-session-copy"><h2>${needsMoodle ? 'Підключи Moodle для дедлайнів' : H.workspace?.deadlineError ? 'Дедлайни тимчасово недоступні' : c ? 'Найближчих дедлайнів немає' : 'Додай перший предмет'}</h2></div><div class="next-session-action">${needsMoodle ? '<a class="secondary" href="/hustle/connect.html">Підключити Moodle →</a>' : c ? '<a class="secondary" href="#practice">До практики →</a>' : H.workspace?.add || ''}</div><div class="desk-sticker mascot-sticker" aria-hidden="true"><img src="study-donkey.webp" alt=""><span class="paper-tape"></span></div></div></section>`;
     }
     if (!next) return `<section class="next-session plan-finished"><span class="finish-stamp" aria-hidden="true">✦</span><div><h2>План виконано</h2><p>${progress(course?.id).done} завдань — готово</p></div><a class="secondary" href="#practice">До практики ${icon('arrow')}</a></section>`;
     const note = next.course.materials.findIndex(item => item.type === 'Конспект');
@@ -132,7 +165,7 @@
           <h2>${esc(next.course.connected ? next.title : next.course.topic)}</h2><p>${esc(next.course.connected ? next.label : next.title)} ${next.minutes ? `<span>· ${next.minutes} хв</span>` : ''}</p>
           </div>
         <div class="next-session-action">${start(next)}${reading}</div>
-        <div class="desk-sticker" aria-hidden="true"><img src="study-donkey.webp" alt=""><span class="paper-tape"></span></div>
+        <div class="desk-sticker mascot-sticker" aria-hidden="true"><img src="study-donkey.webp" alt=""><span class="paper-tape"></span></div>
       </div>
       <div class="focus-deadline deadline-surface">
         <span class="focus-deadline-name">${icon('calendar')}<span>Дедлайн<strong>${esc(next.course.deadline || next.title)}</strong></span></span>
@@ -210,9 +243,29 @@
     timerPanel.style.setProperty('--timer-menu-top', Math.ceil(Math.max(bottom, topbarBottom) + 8) + 'px');
     timerPanel.style.setProperty('--timer-menu-right', Math.max(16, innerWidth - right) + 'px');
   }
+  const pomodoroRoute = 'settings/pomodoro';
+  function renderSettings(section, content) {
+    let panel = main.querySelector(':scope > [data-settings-panel]');
+    if (!panel) {
+      main.innerHTML = `<h1 class="visually-hidden" tabindex="-1">Налаштування</h1>
+        <nav class="settings-sections" aria-label="Розділи налаштувань">
+          <a class="secondary" href="#settings">Загальні</a>
+          <a class="secondary" href="#${pomodoroRoute}">Pomodoro</a>
+          ${H.workspace ? '<a class="secondary" href="#settings/courses">Предмети</a>' : ''}
+        </nav>
+        <div data-settings-panel></div>`;
+      panel = main.querySelector('[data-settings-panel]');
+    }
+    const activeHash = section === 'general' ? '#settings' : '#settings/' + section;
+    for (const tab of main.querySelectorAll('.settings-sections > a')) {
+      if (tab.hash === activeHash) tab.setAttribute('aria-current', 'page');
+      else tab.removeAttribute('aria-current');
+    }
+    panel.innerHTML = content;
+  }
   function refreshTimerControls(trigger, selector) {
     paintTimerPanel(timerPanel?.contains(trigger) ? selector : '');
-    if (location.hash === '#focus') refresh(main.contains(trigger) ? selector : '');
+    if (location.hash === '#' + pomodoroRoute) refresh(main.contains(trigger) ? selector : '');
     paintTimer();
   }
   function calendarGrid(compact = false, course) {
@@ -237,41 +290,84 @@
     if (!list.length && !deadlines.length) return `<p class="agenda-empty">На цей день нічого не заплановано</p>`;
     return deadlines.map(c => `<a class="agenda-deadline" href="#course/${c.id}"><span class="agenda-icon">${!allDone(c) && hot(tasks(c.id)[0]) ? flame() : icon('calendar')}</span><div><strong>${esc(c.deadline)}</strong><span>${esc(c.short)} · ${dueLabel(tasks(c.id)[0].due).split(' · ')[1]}</span></div>${icon('arrow')}</a>`).join('') + (compact ? list.map(t => `<button class="mini-agenda-task" data-start="${t.kind}" data-course="${t.course.id}" data-focus-id="agenda-${t.id}"><i class="${t.done ? 'done-dot' : ''}"></i><span>${esc(t.course.short)} · ${t.label}</span>${t.done ? icon('check') : icon('arrow')}</button>`).join('') : list.map(t => practiceRow(t, !course)).join(''));
   }
-  function dashboardView(course) {
-    // Keep the original library markup inert in the prototype.
+  function preparationChecklist(course, list) {
     const p = progress(course?.id);
-    const now = Date.now();
-    const list = tasks(course?.id).sort((a, b) => deadlineOrder(a, b, now));
-    const active = list.filter(task => !task.done);
-    const next = active[0];
-    const compactCourse = course?.connected;
-    const compactOverview = !!H.workspace;
-    const upcoming = compactOverview ? active : active.filter((task, index) => task !== next && (task.course.connected || task.course.id !== next?.course.id &&
-      active.findIndex(other => other.course.id === task.course.id) === index));
-    const queue = upcoming.length ? `<section class="dash-panel deadline-queue">
-      <div class="panel-title"><h2>${compactOverview ? 'Дедлайни' : 'Інші дедлайни'}</h2><a href="#calendar">Календар ${icon('arrow')}</a></div>
-      ${upcoming.map(task => `<article class="deadline-line deadline-surface"><a class="deadline-task-link" href="${esc(compactOverview && task.href ? task.href : '#course/' + task.course.id)}"${compactOverview && task.href && !task.href.startsWith('#') ? ' target="_blank" rel="noopener noreferrer"' : ''}>
-        ${task.course.connected ? deadlineIdentity(task, !compactCourse) : `${avatar(task.course)}<span class="queue-title"><strong>${esc(task.course.deadline || task.title)}</strong><small>${esc(task.course.name)}</small></span>`}
-        ${badge(task)}${icon('arrow')}</a>${H.liveCalendar?.deadlineButton(task) || ''}${fire.edge(task.due, task.done)}</article>`).join('')}
-    </section>` : '';
-    const plan = tasks(course?.id).sort((a, b) => a.scheduled.localeCompare(b.scheduled) || a.due - b.due);
+    const plan = [...list].sort((a, b) => a.scheduled.localeCompare(b.scheduled) || a.due - b.due);
     const visibleRows = course ? plan : plan.filter(task => task.scheduled === today());
     const others = plan.filter(task => !visibleRows.includes(task));
-    const checklist = `<section class="dash-panel task-panel">
+    return `<section class="dash-panel task-panel">
       <div class="panel-title"><h2>${course ? 'План підготовки' : 'Заняття на сьогодні'}</h2><span>${course ? p.done + ' / ' + p.total + ' виконано' : dateText(today(), { day: 'numeric', month: 'short' })}</span></div>
       <div class="dash-task-list">${visibleRows.map(t => practiceRow(t, !course)).join('') || '<p class="agenda-empty">На сьогодні занять не заплановано.</p>'}</div>
       ${others.length ? `<details class="remaining-tasks"><summary>Інші заняття <span>${others.length}</span></summary>${others.map(t => practiceRow(t, true)).join('')}</details>` : ''}
     </section>`;
-    const header = compactCourse ? H.workspace.courseHeader(course) : `${course ? '<a class="back-to-courses" href="#courses">← Усі предмети</a>' : ''}${heading(course ? course.name : 'Мій огляд', course ? (H.paperOral?.button(course) || '') : (H.liveCalendar?.inboxButton() || H.calendar.button()))}`;
-    const addCourse = compactOverview && !course && !selected().length ? H.workspace.add : '';
-    return `${header}${H.workspace?.notice() || ''}<div class="dashboard-layout desk-layout${compactOverview ? ' compact-desk-layout' : ''}">${compactOverview ? '' : focusCard(course, next)}${metrics(course)}<div class="dashboard-main">${addCourse ? `<div>${addCourse}</div>` : ''}${queue}${checklist}${course ? `<template><section class="dash-panel course-material-panel"><div class="panel-title"><h2>Матеріали предмета</h2></div>${course.materials.map((m, i) => `<button class="course-material-link" data-material="${i}" data-course="${course.id}" data-focus-id="dash-material-${course.id}-${i}">${icon('files')}<span><strong>${esc(m.title)}</strong><small>${esc(m.type)}</small></span>${icon('arrow')}</button>`).join('')}</section></template>` : ''}${weeklyChart(course)}</div><aside class="dashboard-aside">${calendarGrid(true, course)}</aside></div>`;
+  }
+  function studyShortcuts(course) {
+    const route = '#course/' + encodeURIComponent(course.id);
+    return `<nav class="study-shortcuts" aria-label="Практика предмета">
+      <a class="study-shortcut study-shortcut--cards" href="${route}/cards">
+        <span class="study-shortcut-icon" aria-hidden="true">${icon('courses')}</span>
+        <strong>Картки</strong><span class="study-shortcut-arrow" aria-hidden="true">${icon('arrow')}</span>
+      </a>
+      <a class="study-shortcut study-shortcut--quiz" href="${route}/quizzes">
+        <span class="study-shortcut-icon" aria-hidden="true">${icon('practice')}</span>
+        <strong>Самоперевірка</strong><span class="study-shortcut-arrow" aria-hidden="true">${icon('arrow')}</span>
+      </a>
+      <button type="button" class="study-shortcut study-shortcut--oral" data-paper-oral="${esc(course.id)}">
+        <span class="study-shortcut-icon" aria-hidden="true">${icon('speech')}</span>
+        <strong>Усний захист</strong><span class="study-shortcut-arrow" aria-hidden="true">${icon('arrow')}</span>
+      </button>
+    </nav>`;
+  }
+  function connectedOverview(course, list) {
+    const deadlineLink = course ? '#course/' + encodeURIComponent(course.id) + '/assignments' : '#deadlines';
+    const header = course ? H.workspace.courseHeader(course) :
+      heading('Мій огляд', H.liveCalendar?.inboxButton() || H.calendar.button());
+    const addCourse = !course && !selected().length ? H.workspace.add : '';
+    return `${header}${H.workspace.notice()}
+      <div class="dashboard-layout desk-layout compact-desk-layout study-overview-layout">
+        ${metrics(course)}
+        <div class="dashboard-main">
+          ${addCourse ? `<div>${addCourse}</div>` : ''}
+          ${course ? studyShortcuts(course) : ''}
+          <section class="dash-panel deadline-queue">
+            <div class="deadline-preview-heading">
+              <div class="panel-title"><h2>Найближчі дедлайни</h2><a href="${deadlineLink}">Усі дедлайни ${icon('arrow')}</a></div>
+              ${list.some(task => !task.done) ? '<span class="mascot-sticker mascot-sticker--deadline" aria-hidden="true"><img src="assets/mascot/deadline.webp" alt="" width="384" height="384" decoding="async"></span>' : ''}
+            </div>
+            ${deadlineList(list, !course, course ? 3 : Infinity)}
+          </section>
+          ${course ? window.HustleTopicCards?.overview(course.id) || '' : ''}
+        </div>
+        <aside class="dashboard-aside">
+          ${weeklyChart(course)}
+          ${calendarGrid(true, course)}
+        </aside>
+      </div>`;
+  }
+  function dashboardView(course) {
+    // Keep the original library markup inert in the prototype.
+    const now = Date.now();
+    const order = H.workspace ? deadlineTimeOrder : deadlineOrder;
+    const list = tasks(course?.id).sort((a, b) => order(a, b, now));
+    if (H.workspace) return connectedOverview(course, list);
+    const active = list.filter(task => !task.done);
+    const next = active[0];
+    const upcoming = active.filter((task, index) => task !== next && (task.course.connected || task.course.id !== next?.course.id &&
+      active.findIndex(other => other.course.id === task.course.id) === index));
+    const queue = upcoming.length ? `<section class="dash-panel deadline-queue">
+      <div class="panel-title"><h2>Інші дедлайни</h2><a href="#calendar">Календар ${icon('arrow')}</a></div>
+      ${upcoming.map(task => `<article class="deadline-line deadline-surface"><a class="deadline-task-link" href="#course/${esc(task.course.id)}">
+        ${task.course.connected ? deadlineIdentity(task, true) : `${avatar(task.course)}<span class="queue-title"><strong>${esc(task.course.deadline || task.title)}</strong><small>${esc(task.course.name)}</small></span>`}
+        ${badge(task)}${icon('arrow')}</a>${H.liveCalendar?.deadlineButton(task) || ''}${fire.edge(task.due, task.done)}</article>`).join('')}
+    </section>` : '';
+    const header = `${course ? '<a class="back-to-courses" href="#courses">← Усі предмети</a>' : ''}${heading(course ? course.name : 'Мій огляд', course ? (H.paperOral?.button(course) || '') : (H.liveCalendar?.inboxButton() || H.calendar.button()))}`;
+    return `${header}<div class="dashboard-layout desk-layout">${focusCard(course, next)}${metrics(course)}<div class="dashboard-main">${queue}${preparationChecklist(course, list)}${course ? `<template><section class="dash-panel course-material-panel"><div class="panel-title"><h2>Матеріали предмета</h2></div>${course.materials.map((m, i) => `<button class="course-material-link" data-material="${i}" data-course="${course.id}" data-focus-id="dash-material-${course.id}-${i}">${icon('files')}<span><strong>${esc(m.title)}</strong><small>${esc(m.type)}</small></span>${icon('arrow')}</button>`).join('')}</section></template>` : ''}${weeklyChart(course)}</div><aside class="dashboard-aside">${calendarGrid(true, course)}</aside></div>`;
   }
   function deadlinesView(course) {
-    const list = tasks(course?.id).sort((a,b) => deadlineOrder(a,b,Date.now()));
+    const now = Date.now();
+    const list = tasks(course?.id).sort((a, b) => deadlineTimeOrder(a, b, now));
     const records = course ? `<a class="secondary" href="#course/${course.id}/submissions">Статус у Moodle →</a>` : '';
-    const rows = list.map(t => `<article class="deadline-line deadline-surface">
-      ${deadlineIdentity(t, !course)}
-      ${badge(t)}${start(t, 'Відкрити', 'task-open')}${H.liveCalendar?.deadlineButton(t) || ''}${fire.edge(t.due,t.done)}</article>`).join('');
+    const rows = deadlineList(list, !course);
     const header = course ? H.workspace.courseHeader(course, 'assignments') + `<div class="paper-deadline-actions">${records}</div>` : heading('Дедлайни');
     return header + (H.workspace.notice() || '') +
       '<section class="dash-panel deadline-queue">' + (rows || '<p class="agenda-empty">Найближчих дедлайнів немає.</p>') + '</section>';
@@ -286,7 +382,9 @@
   }
   function closeMobileMenu() { document.body.classList.remove('menu-open'); document.querySelector('.sidebar-shade').hidden = true; document.querySelector('#menu-toggle').setAttribute('aria-expanded', 'false'); document.querySelector('#sidebar').inert = matchMedia('(max-width: 52rem)').matches; }
   function render() {
+    if (location.hash === '#focus') history.replaceState(null, '', '#' + pomodoroRoute);
     const hash = location.hash.slice(1) || 'plan', course = hash.startsWith('course/') ? courseById(hash.split('/')[1]) : null;
+    main.toggleAttribute('data-dashboard-overview', hash === 'plan');
     if (H.workspace && (hash === 'deadlines' || course?.connected && hash === 'course/' + course.id + '/assignments')) {
       document.title = 'Дедлайни — Hustle';
       if (!course) document.querySelector('#view-name').textContent = 'Дедлайни';
@@ -306,7 +404,10 @@
       document.querySelector('[data-nav="practice"],[data-nav="oral"]')?.setAttribute('aria-current','page');
       return true;
     }
-    if (!['plan', 'courses', 'calendar', 'focus'].includes(hash) && !hash.startsWith('course/')) return false;
+    const pomodoroSettings = hash === pomodoroRoute;
+    const courseSettings = H.workspace && hash === 'settings/courses';
+    const settingsPage = pomodoroSettings || courseSettings;
+    if (!settingsPage && !['plan', 'courses', 'calendar'].includes(hash) && !hash.startsWith('course/')) return false;
     if (hash.startsWith('course/') && !course) {
       document.querySelector('#view-name').textContent = 'Предмет не знайдено';
       fire.mount();
@@ -314,13 +415,18 @@
       return true;
     }
     if (course && timerPhase(state.timer) === 'ready' && state.timer.course !== course.id) { state.timer.course = course.id; save(); }
-    const title = course?.short || ({ plan: 'Мій огляд', courses: 'Мої предмети', calendar: 'Календар', focus: 'Pomodoro' })[hash];
-    document.querySelectorAll('[data-nav],.sidebar-course').forEach(a => { if (course ? a.hash === '#course/' + course.id : a.dataset.nav === hash) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-    if (!course?.connected) document.querySelector('#view-name').textContent = title;
+    const title = course?.short || ({ plan: 'Мій огляд', courses: 'Мої предмети', calendar: 'Календар', [pomodoroRoute]: 'Налаштування', 'settings/courses': 'Налаштування' })[hash];
+    document.querySelectorAll('[data-nav],.sidebar-course').forEach(a => { if (course ? a.hash === '#course/' + course.id : a.dataset.nav === (settingsPage ? 'settings' : hash)) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    if (!course?.connected) document.querySelector('#view-name').textContent = hash === 'plan' ? '' : title;
     document.title = `${title} — Hustle`;
     // The weekly planner manages its own refreshes and open days.
     const mountedWeek = hash === 'calendar' && H.liveCalendar?.week && main.querySelector('[data-paper-week]');
-    if (!mountedWeek) main.innerHTML = hash === 'calendar' ? calendarView() : hash === 'courses' ? coursesView() : hash === 'focus' ? heading('Pomodoro') + `<div class="dedicated-focus">${timerCard()}${weeklyChart()}</div>` : dashboardView(course);
+    if (pomodoroSettings) renderSettings('pomodoro', `<div class="dedicated-focus">${timerCard()}${weeklyChart()}</div>`);
+    else if (courseSettings) {
+      if (!main.querySelector('[data-course-appearance]')) renderSettings('courses', H.workspace.courseAppearanceSettings());
+    }
+    else if (!mountedWeek) main.innerHTML = hash === 'calendar' ? calendarView() : hash === 'courses' ? coursesView() : dashboardView(course);
+    window.HustleTopicCards?.mountOverview(main);
     H.liveCalendar?.mount(hash, month, selectedDate, course);
     fire.mount(main); paintTimer(); return true;
   }
@@ -399,6 +505,7 @@
   function beginPractice(course) { lastPracticeCourse = course; flushPractice(); activePractice = { course, since: Date.now(), id: crypto.randomUUID() }; lastActivity = Date.now(); }
   H.dashboardRefresh = () => { if (!document.querySelector('#study-dialog').open) render(); };
   window.HustleDashboard = {
+    renderSettings,
     render,
     trackCourseActivity(courseId) {
       lastActivity = Date.now();
@@ -413,9 +520,26 @@
     if (el.hasAttribute('data-start') || el.hasAttribute('data-material')) beginPractice(el.dataset.course);
     if (el.hasAttribute('data-restart') && lastPracticeCourse) beginPractice(lastPracticeCourse);
     if (el.hasAttribute('data-restart') && !lastPracticeCourse) { const course = document.querySelector('.study-context')?.textContent; const c = selected().find(c => course?.startsWith(c.short)); if (c) beginPractice(c.id); }
-    if (el.hasAttribute('data-dash-complete')) { event.preventDefault(); event.stopImmediatePropagation(); const id = el.dataset.dashComplete; state.completed[id] = !state.completed[id]; save();
-      const check = refresh(`[data-dash-complete="${id}"]`);
-      if (state.completed[id]) check?.closest('.practice-line')?.classList.add('just-completed'); }
+    if (el.hasAttribute('data-dash-complete') && !el.disabled) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const id = el.dataset.dashComplete;
+      const deadline = el.classList.contains('deadline-complete');
+      const sibling = deadline && el.closest('.deadline-line').nextElementSibling;
+      const next = sibling && sibling.matches('.deadline-line') ? sibling.querySelector('.deadline-complete') : null;
+      state.completed[id] = !state.completed[id];
+      save();
+      let selector = `[data-dash-complete="${CSS.escape(id)}"]`;
+      if (deadline && state.completed[id]) {
+        selector = next?.dataset.dashComplete
+          ? `[data-dash-complete="${CSS.escape(next.dataset.dashComplete)}"]`
+          : '.deadline-completed > summary';
+        announce('Дедлайн позначено виконаним.');
+      } else if (deadline) announce('Позначку виконання знято.');
+      const check = refresh(selector);
+      if (deadline) check?.scrollIntoView({block: 'nearest'});
+      else if (state.completed[id]) check?.closest('.practice-line')?.classList.add('just-completed');
+    }
     if (el.hasAttribute('data-calendar-date')) { selectDay(el.dataset.calendarDate); }
     if (el.hasAttribute('data-month-step')) { const d = new Date(month + 'T12:00:00Z'); d.setUTCMonth(d.getUTCMonth() + Number(el.dataset.monthStep)); month = d.toISOString().slice(0, 10); selectedDate = month; refresh(`[data-month-step="${el.dataset.monthStep}"]`); }
     if (el.hasAttribute('data-calendar-today')) { month = today().slice(0, 7) + '-01'; selectedDate = today(); refresh('[data-calendar-today]'); }
@@ -460,7 +584,7 @@
     nav.querySelector('[data-nav="plan"] span').textContent = 'Мій огляд';
     nav.querySelector('[data-nav="courses"] span').textContent = 'Мої предмети';
     const settings = nav.querySelector('[data-nav="settings"]');
-    settings.insertAdjacentHTML('beforebegin', `<a href="#calendar" data-nav="calendar">${icon('calendar')}<span>Календар</span></a><a href="#focus" data-nav="focus">${icon('clock')}<span>Pomodoro</span></a>`);
+    settings.insertAdjacentHTML('beforebegin', `<a href="#calendar" data-nav="calendar">${icon('calendar')}<span>Календар</span></a>`);
     document.querySelector('.topbar-account').insertAdjacentHTML('beforebegin', `<div class="timer-menu">
       <button type="button" class="persistent-timer" id="persistent-timer" aria-expanded="false" aria-controls="timer-menu-panel">${icon('clock')}<span>Pomodoro</span></button>
       <button type="button" class="icon-button timer-quick" data-timer-toggle hidden></button>
@@ -486,13 +610,22 @@
       closeTimerMenu(timerMenu.contains(document.activeElement));
     });
     window.addEventListener('resize', positionTimerMenu);
-    window.addEventListener('scroll', positionTimerMenu, {passive:true});
-    const label = document.createElement('p'); label.className = 'sidebar-course-label'; label.textContent = 'Предмети';
-    nav.insertBefore(label, settings);
-    if (H.liveCalendar && !H.workspace) settings.insertAdjacentHTML('beforebegin', `<a href="/hustle/app.html#courses">${icon('link')}<span>Курси Moodle</span></a>`);
+    const topbar = timerMenu.closest('.workspace-topbar');
+    const onWorkspaceScroll = () => {
+      topbar.classList.toggle('is-scrolled', window.scrollY > 1);
+      positionTimerMenu();
+    };
+    window.addEventListener('scroll', onWorkspaceScroll, {passive:true});
+    onWorkspaceScroll();
+    settings.insertAdjacentHTML('beforebegin', `<section class="sidebar-subjects" aria-labelledby="sidebar-subjects-title">
+      <p class="sidebar-course-label" id="sidebar-subjects-title">Предмети</p>
+      <div class="sidebar-subject-links"></div>
+    </section>`);
+    const subjects = nav.querySelector('.sidebar-subject-links');
+    if (H.liveCalendar && !H.workspace) subjects.insertAdjacentHTML('beforeend', `<a href="/hustle/app.html#courses">${icon('link')}<span>Курси Moodle</span></a>`);
     H.refreshCourseNav = () => {
-      nav.querySelectorAll('.sidebar-course').forEach(el => el.remove());
-      selected().forEach(c => settings.insertAdjacentHTML('beforebegin', `<a class="sidebar-course" href="#course/${c.id}"><i class="course-dot ${c.color}"></i><span>${esc(c.short)}</span></a>`));
+      subjects.querySelectorAll('.sidebar-course').forEach(el => el.remove());
+      selected().forEach(c => subjects.insertAdjacentHTML('beforeend', `<a class="sidebar-course" href="#course/${c.id}"><i class="course-dot subject-${c.color}"></i><span>${esc(c.short)}</span></a>`));
     };
     H.refreshCourseNav();
     if (H.liveCalendar?.standalone) {

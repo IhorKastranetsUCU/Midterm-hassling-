@@ -5,18 +5,59 @@
   document.querySelector('.sidebar .wordmark').href = '#plan';
   let lastTool = '';
   let courses, assignments = [], request, deadlineError = '';
-  function mapCourses(rows) {
-    return rows.map(c => {
-      const name = UI.courseName(c.title);
-      return {
-        id: String(c.course_id), name, short: name,
-        color: ['butter', 'lilac', 'blush'][Math.abs(Number(c.course_id)) % 3],
-        initials: [...name][0] || 'К', connected: true,
-        topic: UI.countLabel(c.topic_count, 'тема', 'теми', 'тем'), materials: [],
-        source: c.source_type,
-      };
-    });
+  const appearanceKey = 'hustle.course-appearance:' + account.owner;
+  const colorNames = {butter: 'Жовтий', lilac: 'Лавандовий', blush: 'Персиковий', sage: 'Шавлієвий', sky: 'Блакитний'};
+  const defaultColors = ['butter', 'lilac', 'blush'];
+  let preferences = {};
+  try {
+    const stored = JSON.parse(localStorage.getItem(appearanceKey));
+    if (stored && typeof stored === 'object' && !Array.isArray(stored)) preferences = stored;
+  } catch {}
+
+  function applyAppearance(course) {
+    const preference = preferences[course.id];
+    const name = typeof preference?.alias === 'string' && preference.alias.trim() || course.originalName;
+    const color = Object.hasOwn(colorNames, preference?.color) ? preference.color : course.defaultColor;
+    return {...course, name, short: name, color, initials: [...name][0] || 'К'};
   }
+
+  function mapCourses(rows) {
+    return rows.map(c => applyAppearance({
+      id: String(c.course_id), originalName: UI.courseName(c.title),
+      defaultColor: defaultColors[Math.abs(Number(c.course_id)) % defaultColors.length] || 'lilac',
+      connected: true, topic: UI.countLabel(c.topic_count, 'тема', 'теми', 'тем'), materials: [],
+      source: c.source_type,
+    }));
+  }
+
+  function courseAppearanceSettings() {
+    const heading = '<h2>Оформлення предметів</h2>';
+    if (!courses.length) return '<section class="dash-panel course-appearance">' + heading +
+      '<p>Тут зʼявляться підключені предмети.</p>' + add + '</section>';
+
+    return '<form class="dash-panel course-appearance" data-course-appearance>' + heading + courses.map(course => {
+      const {id, originalName, name, color, defaultColor} = course;
+      const preferredColor = preferences[id]?.color;
+      const options = Object.entries(colorNames).map(([value, label]) =>
+        `<option value="${value}"${preferredColor === value ? ' selected' : ''}>${label}</option>`).join('');
+      return `<div class="course-appearance-row" data-course-appearance-row="${esc(id)}" data-default-color="${defaultColor}">
+        <div class="course-appearance-original"><small>Назва в Moodle</small><strong id="course-original-${esc(id)}">${esc(originalName)}</strong></div>
+        <span class="course-appearance-arrow" aria-hidden="true">→</span>
+        <label class="course-appearance-field">Назва в Hustle
+          <input name="alias" autocomplete="off" aria-describedby="course-original-${esc(id)}" value="${esc(name)}">
+        </label>
+        <label class="course-appearance-field">Колір
+          <span class="course-appearance-color">
+            <i class="course-dot subject-${color}" data-course-color-swatch aria-hidden="true"></i>
+            <select name="color" aria-describedby="course-original-${esc(id)}">
+              <option value="">Стандартний</option>${options}
+            </select>
+          </span>
+        </label>
+      </div>`;
+    }).join('') + '<div class="course-appearance-actions"><button type="submit" class="primary">Зберегти зміни</button><span role="status"></span></div></form>';
+  }
+
   courses = mapCourses(account.courses);
   function updateCourses(rows) {
     const next = mapCourses(rows);
@@ -116,40 +157,127 @@
       picker.load();
       return true;
     }
-    if (main.querySelector('iframe')?.dataset.route === hash) return true;
+    const previousFrame = main.querySelector('iframe');
+    if (previousFrame?.dataset.route === hash) return true;
+    const restoreStudyFocus = previousFrame?.dataset.focusRoute === hash;
     const nestedRoute = hash.replace(/^(course\/\d+)\/submissions$/, '$1/assignments');
     const src = '/hustle/tools.html#' + nestedRoute;
     const goal = hash === 'settings' ? '<label class="paper-goal">Ціль навчання на день <select data-paper-goal>' + [25,45,60].map(n => '<option value="' + n + '"' + (n === H.state.minutes ? ' selected' : '') + '>' + n + ' хв</option>').join('') + '</select></label>' : '';
-    const header = currentCourse ? courseHeader(currentCourse, course[2]) : '<h1 class="paper-hidden-heading" tabindex="-1">' + esc(title) + '</h1>';
-    main.innerHTML = header + goal + '<iframe class="paper-course-tools" title="' + esc(title) + '" data-route="' + esc(hash) + '"' +
+    const header = currentCourse ? courseHeader(currentCourse, UI.route().section, true) : '<h1 class="paper-hidden-heading" tabindex="-1">' + esc(title) + '</h1>';
+    const frame = '<iframe class="paper-course-tools" title="' + esc(title) + '" data-route="' + esc(hash) + '"' +
+      (restoreStudyFocus ? ' data-focus-study-tab' : '') +
       (currentCourse ? ' data-shared-course-header' : '') + ' src="' + esc(src) + '" allow="microphone"></iframe>';
+    if (hash === 'settings') window.HustleDashboard.renderSettings('general', goal + frame);
+    else main.innerHTML = header + frame;
     return true;
   }
-  function courseHeader(course, section = 'overview') {
-    const titleSlot = document.querySelector('#view-name');
-    if (titleSlot.firstElementChild?.textContent !== course.name) {
-      const title = document.createElement('h1');
-      title.tabIndex = -1;
-      title.textContent = course.name;
-      titleSlot.replaceChildren(title);
+  const courseSections = {overview: 'Огляд', topics: 'Теми', practice: 'Практика', assignments: 'Дедлайни', manage: 'Параметри'};
+  const courseSubsections = {
+    reading: ['topics', 'Тема'], topic: ['topics', 'Тема'], materials: ['topics', 'Матеріали'],
+    cards: ['practice', 'Картки'], quizzes: ['practice', 'Самоперевірка'], exam: ['practice', 'До іспиту'],
+    submissions: ['assignments', 'Здачі'], grades: ['assignments', 'Оцінки'],
+  };
+  let renderedTrail = '';
+  function renderCourseTrail(course, section, topicTrail = []) {
+    const courseRoute = '#course/' + course.id;
+    const subsection = courseSubsections[section];
+    const parent = subsection?.[0] || section;
+    const items = [{label: 'Мої предмети', href: '#courses'}, {label: course.name, href: courseRoute}];
+    if (parent !== 'overview' && courseSections[parent]) {
+      items.push({label: courseSections[parent], href: courseRoute + '/' + parent});
     }
-    const sections = [['overview', 'Огляд'], ['topics', 'Теми'], ['practice', 'Практика'], ['assignments', 'Дедлайни'], ['manage', 'Параметри']];
-    const active = ({reading:'topics', materials:'topics', topic:'topics', exam:'practice', grades:'assignments', submissions:'assignments'})[section] || section;
-    const route = (id, key) => '#course/' + id + (key === 'overview' ? '' : '/' + key);
-    return `<div class="paper-course-header">
-      <div class="paper-course-context">
-        <nav aria-label="Шлях сторінки"><a class="secondary back-to-courses" href="#courses"><span aria-hidden="true">←</span> До всіх предметів</a></nav>
-        <div class="paper-course-header-actions">${H.paperOral?.button(course) || ''}</div>
-      </div>
+    if (topicTrail.length) items.push(...topicTrail);
+    else if (subsection) items.push({label: subsection[1]});
+
+    const slot = document.querySelector('#view-name');
+    const signature = JSON.stringify(items);
+    if (renderedTrail === signature && slot.querySelector('.course-parent')) return;
+    renderedTrail = signature;
+    slot.innerHTML = `<nav class="course-parent" aria-label="Шлях сторінки"><ol>${items.map(({label, href}, index) =>
+      `<li>${index === items.length - 1
+        ? `<h1 tabindex="-1" aria-current="page">${esc(label)}</h1>`
+        : `<a class="course-parent-link" href="${esc(href)}">${esc(label)}</a>`}</li>`).join('')}</ol></nav>`;
+  }
+
+  function setCourseTrail(route, crumbs) {
+    if (location.hash !== route) return false;
+    const match = /^#course\/(\d+)\/(reading|topic)(?:[/?]|$)/.exec(route);
+    const course = match && courses.find(item => item.id === match[1]);
+    if (!course || !crumbs.length) return false;
+    renderCourseTrail(course, match[2], crumbs);
+    return true;
+  }
+
+  function courseHeader(course, section = 'overview', embedded = false) {
+    const key = section.split('/')[0];
+    const active = courseSubsections[key]?.[0] || key;
+    renderCourseTrail(course, key);
+    const route = (id, sectionKey) => '#course/' + id + (sectionKey === 'overview' ? '' : '/' + sectionKey);
+    queueMicrotask(() => {
+      const navigation = document.querySelector('.paper-course-actions');
+      const selected = navigation?.querySelector('[aria-current="page"]');
+      if (!selected) return;
+      const frame = navigation.getBoundingClientRect();
+      const tab = selected.getBoundingClientRect();
+      if (tab.right > frame.right) navigation.scrollLeft += tab.right - frame.right + 4;
+    });
+    return `<div class="paper-course-header paper-course-context">
       <nav class="paper-course-actions" aria-label="Розділи предмета">
-        ${sections.map(([key, label]) => `<a class="secondary" href="${esc(route(course.id, key))}"${key === active ? ' aria-current="page"' : ''}>${label}</a>`).join('')}
-      </nav></div>`;
+        ${Object.entries(courseSections).map(([key, label]) => `<a class="paper-course-tab" href="${esc(route(course.id, key))}"${key === active ? ' aria-current="page"' : ''}>${label}</a>`).join('')}
+      </nav>
+      <div class="paper-course-header-actions">
+        ${key === 'overview' ? '' : H.paperOral?.button(course) || ''}
+        ${embedded ? '<button type="button" class="secondary paper-add-materials" data-paper-add-materials aria-haspopup="dialog" disabled>Додати матеріали +</button>' : ''}
+      </div>
+    </div>`;
   }
   document.addEventListener('change', e => {
     if (e.target.matches('[data-paper-goal]')) H.update({minutes:Number(e.target.value)});
+    const row = e.target.closest('[data-course-appearance-row]');
+    if (row && e.target.name === 'color') {
+      row.querySelector('[data-course-color-swatch]').className =
+        'course-dot subject-' + (e.target.value || row.dataset.defaultColor);
+    }
+  });
+  document.addEventListener('input', e => {
+    const form = e.target.closest('[data-course-appearance]');
+    if (form) form.querySelector('[role="status"]').textContent = '';
+  });
+  document.addEventListener('submit', e => {
+    const form = e.target;
+    if (!form.matches('[data-course-appearance]')) return;
+    e.preventDefault();
+    const next = {...preferences};
+    const rows = [...form.querySelectorAll('[data-course-appearance-row]')];
+    for (const row of rows) {
+      const id = row.dataset.courseAppearanceRow;
+      const course = courses.find(item => item.id === id);
+      if (!course) continue;
+      const alias = row.querySelector('[name="alias"]').value.trim();
+      const color = row.querySelector('[name="color"]').value;
+      next[id] = {
+        alias: alias === course.originalName ? '' : alias,
+        color: Object.hasOwn(colorNames, color) ? color : '',
+      };
+    }
+    const status = form.querySelector('[role="status"]');
+    try {
+      localStorage.setItem(appearanceKey, JSON.stringify(next));
+    } catch {
+      status.textContent = 'Не вдалося зберегти зміни в цьому браузері.';
+      return;
+    }
+    preferences = next;
+    courses = courses.map(applyAppearance);
+    for (const row of rows) {
+      const course = courses.find(item => item.id === row.dataset.courseAppearanceRow);
+      if (course) row.querySelector('[name="alias"]').value = course.name;
+    }
+    H.refreshCourseNav?.();
+    status.textContent = 'Зміни збережено.';
   });
   const add = '<a class="secondary" href="#connect">Додати з Moodle +</a>';
-  H.workspace = { get deadlineError() {return deadlineError;}, get courses() {return courses;}, tasks, notice, tools, courseHeader, updateCourses, add };
+  H.workspace = { get deadlineError() {return deadlineError;}, get courses() {return courses;}, tasks, notice, tools, courseHeader, updateCourses, courseAppearanceSettings, setCourseTrail, add };
   if (location.hash === '#dashboard') history.replaceState(null,'','#plan');
   window.addEventListener('hashchange', () => {
     updateImportLink();

@@ -5,7 +5,7 @@ import json
 
 from typing import List, Literal, Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
 from app.core.security import WorkspaceOwner, get_workspace_owner
 from app.models.mix import RawTopicSnapshot
@@ -14,6 +14,8 @@ from app.services.course_structure import build_course_map
 from app.services.learning_provider import LearningProviderError, LearningSettingsStore, learning_provider_scope, validate_gemini_key
 from app.services.mix_generator import split_text_into_semantic_chunks
 from app.services.oral_defense_service import MAX_AUDIO_BYTES, evaluate_oral_answer, generate_oral_question, last_oral_attempt
+from app.services.topic_flashcards import add_manual_flashcard, expand_topic_flashcards, flashcard_session, review_flashcard
+from app.services.topic_quizzes import QuizQuestionInput, add_manual_question, expand_topic_quiz, quiz_catalog
 from app.services.workspace_store import get_workspace_store
 
 router = APIRouter(prefix="/api/workspace", tags=["Learning"])
@@ -158,6 +160,117 @@ async def prepare_learning(course_id: int, topic_index: int, request: Request, o
     task = schedule_background_task(prepare_topic(store, owner.owner_id, course_id, topic_index, provider),
                                     dedup_key=("prepare-learning", owner.owner_id, course_id, topic_index))
     return await asyncio.shield(task)
+
+
+class FlashcardReviewRequest(BaseModel):
+    card_id: str = Field(pattern=r"^[a-f0-9]{64}$")
+    rating: Literal["again", "hard", "good", "easy"]
+
+
+class FlashcardInput(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    front: str = Field(min_length=5, max_length=400)
+    back: str = Field(min_length=1, max_length=900)
+
+
+@router.get("/courses/{course_id}/flashcards")
+async def get_course_flashcards(
+    course_id: int,
+    response: Response,
+    topic_index: Optional[int] = None,
+    practice_all: bool = False,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+):
+    private_response(response)
+    return flashcard_session(get_workspace_store(), owner.owner_id, course_id, topic_index, practice_all)
+
+
+@router.post("/courses/{course_id}/topics/{topic_index}/flashcards")
+async def add_topic_flashcards(
+    course_id: int,
+    topic_index: int,
+    request: Request,
+    response: Response,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+):
+    same_origin(request)
+    private_response(response)
+    task = schedule_background_task(
+        expand_topic_flashcards(get_workspace_store(), owner.owner_id, course_id, topic_index),
+        dedup_key=("topic-flashcards", owner.owner_id, course_id, topic_index),
+    )
+    return await asyncio.shield(task)
+
+
+@router.post("/courses/{course_id}/topics/{topic_index}/flashcards/review")
+async def rate_flashcard(
+    course_id: int,
+    topic_index: int,
+    req: FlashcardReviewRequest,
+    request: Request,
+    response: Response,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+):
+    same_origin(request)
+    private_response(response)
+    return review_flashcard(get_workspace_store(), owner.owner_id, course_id, topic_index, req.card_id, req.rating)
+
+
+@router.post("/courses/{course_id}/topics/{topic_index}/flashcards/manual")
+async def create_manual_flashcard(
+    course_id: int,
+    topic_index: int,
+    req: FlashcardInput,
+    request: Request,
+    response: Response,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+):
+    same_origin(request)
+    private_response(response)
+    return add_manual_flashcard(get_workspace_store(), owner.owner_id, course_id, topic_index, req.front, req.back)
+
+
+@router.get("/courses/{course_id}/quizzes")
+async def get_course_quizzes(
+    course_id: int,
+    response: Response,
+    topic_index: Optional[int] = None,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+):
+    private_response(response)
+    return quiz_catalog(get_workspace_store(), owner.owner_id, course_id, topic_index)
+
+
+@router.post("/courses/{course_id}/topics/{topic_index}/quizzes")
+async def generate_topic_quiz(
+    course_id: int,
+    topic_index: int,
+    request: Request,
+    response: Response,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+):
+    same_origin(request)
+    private_response(response)
+    task = schedule_background_task(
+        expand_topic_quiz(get_workspace_store(), owner.owner_id, course_id, topic_index),
+        dedup_key=("topic-quizzes", owner.owner_id, course_id, topic_index),
+    )
+    return await asyncio.shield(task)
+
+
+@router.post("/courses/{course_id}/topics/{topic_index}/quizzes/manual")
+async def create_manual_question(
+    course_id: int,
+    topic_index: int,
+    req: QuizQuestionInput,
+    request: Request,
+    response: Response,
+    owner: WorkspaceOwner = Depends(get_workspace_owner),
+):
+    same_origin(request)
+    private_response(response)
+    return add_manual_question(get_workspace_store(), owner.owner_id, course_id, topic_index, req)
 
 
 @router.delete("/courses/{course_id}/topics/{topic_index}/generated")

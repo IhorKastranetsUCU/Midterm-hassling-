@@ -82,7 +82,7 @@
     const mon = mondayKey(weekOffset);
     const days = weekDates(mon);
     const rangeLabel = `${fmtDayHead(days[0])} — ${fmtDayHead(days[6])}`;
-    const courseOptions = courses.map(c => `<option value="${c.course_id}">${esc(c.title)}</option>`).join('');
+    const courseOptions = courses.map(c => `<option value="${c.course_id}">${esc(UI.courseName(c.title))}</option>`).join('');
     return `<div class="calendar-page" data-calendar-root>
       <header class="calendar-header">
         <div>
@@ -118,18 +118,18 @@
           <button type="button" class="text-button" data-cal-auto-week>Розпланувати підготовку на тиждень →</button>
         </div>
         <form class="calendar-ai-form" data-cal-ai-form>
-          <input type="text" name="prompt" maxlength="400" placeholder="Наприклад: Приділи 1 годину курсу Основи національного спротиву завтра ввечері">
+          <input type="text" name="prompt" aria-label="Запит до планувальника" maxlength="400" placeholder="Наприклад: Приділи 1 годину курсу Основи національного спротиву завтра ввечері">
           <button type="submit" class="primary">Додати в календар →</button>
         </form>
         ${courses.length ? `<form class="calendar-quick-row" data-cal-quick-form>
-          <span>Швидке бронювання вільного вікна:</span>
+          <span>Швидке бронювання</span>
           <select name="duration" aria-label="Тривалість">
             <option value="30">30 хв</option>
             <option value="60" selected>1 година</option>
             <option value="90">1.5 години</option>
             <option value="120">2 години</option>
           </select>
-          <select name="course_id" aria-label="Курс">${courseOptions}</select>
+          <select name="course_id" aria-label="Курс"><button type="button"><selectedcontent></selectedcontent></button>${courseOptions}</select>
           <select name="part" aria-label="Час доби">
             <option value="">Найближче вільне</option>
             <option value="morning">Ранок</option>
@@ -153,17 +153,26 @@
     const days = weekDates(state.startYmd);
     state.root.querySelector('[data-cal-range]').textContent = `${fmtDayHead(days[0])} — ${fmtDayHead(days[6])}`;
     const todayYmd = dayKey(new Date());
-    const courseMap = new Map(courses.map(c => [String(c.course_id), c.title]));
+    const courseMap = new Map(courses.map(c => [String(c.course_id), UI.courseName(c.title)]));
 
     const expandedDays = new Set([...state.root.querySelectorAll('[data-week-overflow][open]')].map(el => el.dataset.weekOverflow));
     const previewLimit = 3;
     const gridHtml = `<div class="calendar-week-grid">${days.map(ymd => {
       const dayEvents = (data.events || []).filter(ev => dayKey(ev.start_at) <= ymd && dayKey(new Date(Date.parse(ev.end_at) - 1)) >= ymd);
       const dayDeadlines = (data.deadlines || []).filter(dl => (dl.review || 'pending') === 'pending' && !window.Hustle?.liveCalendar && dayKey(dl.due_at) === ymd);
-      const dayForbidden = (data.forbidden_blocks || []).filter(fb => dayKey(fb.start_at) === ymd || dayKey(fb.end_at) === ymd);
-
-      const forbiddenNote = dayForbidden.length
-        ? `<div class="calendar-day-forbidden" title="ШІ не планує навчання на цей час">${dayForbidden.slice(0, 2).map(fb => `${esc(fb.label)}: ${dayKey(fb.start_at) === ymd ? fmtTime(fb.start_at) : '00:00'}–${dayKey(fb.end_at) === ymd ? fmtTime(fb.end_at) : '24:00'}`).join('; ')}</div>`
+      const dayForbidden = new Map();
+      for (const block of data.forbidden_blocks || []) {
+        const startDay = dayKey(block.start_at);
+        const endDay = dayKey(block.end_at);
+        if (startDay > ymd || dayKey(new Date(Date.parse(block.end_at) - 1)) < ymd) continue;
+        const label = block.kind === 'sleep' ? 'Сон' : block.label;
+        const range = `${startDay === ymd ? fmtTime(block.start_at) : '00:00'}–${endDay === ymd ? fmtTime(block.end_at) : '24:00'}`;
+        if (!dayForbidden.has(label)) dayForbidden.set(label, []);
+        dayForbidden.get(label).push(range);
+      }
+      const forbiddenNote = dayForbidden.size
+        ? `<div class="calendar-day-forbidden" title="ШІ не планує навчання на цей час">${[...dayForbidden].map(([label, ranges]) =>
+          `<div><strong>${esc(label)}</strong>${ranges.sort().map(range => `<span class="calendar-forbidden-time">${esc(range)}</span>`).join('')}</div>`).join('')}</div>`
         : '';
 
       const items = [
@@ -184,12 +193,19 @@
         const label = ev.created_by === 'moodle' ? 'Дедлайн Moodle' : ev.source_type === 'ai_study' ? 'ШІ · Навчання' : ev.source_type === 'google' ? 'Google' : ev.source_type === 'ics' ? 'iCal' : 'Подія';
         const isEditable = ev.source_type === 'ai_study' || ev.source_type === 'manual';
         const courseHref = ev.course_id ? `${courseBase()}#course/${encodeURIComponent(ev.course_id)}/overview` : '';
+        const title = UI.courseName(ev.title);
         const cTitle = ev.course_id ? courseMap.get(String(ev.course_id)) : '';
+        const description = ev.description?.trim();
+        const meta = UI.courseName(description);
+        const isMoodleDeadline = ev.created_by === 'moodle';
+        const movedDeadline = ev.moodle_due_at && Date.parse(ev.moodle_due_at) !== Date.parse(ev.start_at);
+        const time = isMoodleDeadline ? `${movedDeadline ? '' : 'до '}${fmtTime(ev.start_at)}`
+          : ev.all_day ? 'Весь день' : `${fmtTime(ev.start_at)}–${fmtTime(ev.end_at)}`;
         return `<article class="cal-item ${ev.created_by === 'moodle' ? 'type-deadline deadline-surface' : ''} type-${esc(ev.source_type)} ${ev.status === 'done' ? 'is-done' : ''}" data-event-id="${esc(ev.event_id)}">
-          <div class="cal-item-top"><span>${ev.all_day ? 'Весь день' : `${esc(fmtTime(ev.start_at))}–${esc(fmtTime(ev.end_at))}`}</span><button type="button" class="cal-item-badge cal-detail-button" data-cal-event="${esc(ev.event_id)}" aria-label="Деталі події «${esc(ev.title)}»">${esc(label)}</button></div>
-          ${courseHref ? `<a class="cal-item-title" href="${courseHref}">${esc(ev.title)}</a>` : `<div class="cal-item-title">${esc(ev.title)}</div>`}
-          ${cTitle && !ev.title.includes(cTitle) ? `<div class="cal-item-desc">${esc(cTitle)}</div>` : ''}
-          ${ev.description && ev.description.trim() !== ev.title.trim() ? `<div class="cal-item-desc">${esc(ev.description)}</div>` : ''}
+          <div class="cal-item-top"><span>${esc(time)}</span><button type="button" class="cal-item-badge cal-detail-button" data-cal-event="${esc(ev.event_id)}" aria-label="Деталі події «${esc(title)}»">${esc(label)}</button></div>
+          ${courseHref ? `<a class="cal-item-title" href="${courseHref}">${esc(title)}</a>` : `<div class="cal-item-title">${esc(title)}</div>`}
+          ${cTitle && !title.includes(cTitle) ? `<div class="cal-item-desc">${esc(cTitle)}</div>` : ''}
+          ${meta && meta !== title && meta !== cTitle ? `<div class="cal-item-desc">${esc(isMoodleDeadline ? meta : description)}</div>` : ''}
           ${isEditable ? `<div class="cal-item-controls">
             <button type="button" class="cal-mini-btn" data-cal-event="${esc(ev.event_id)}">Редагувати</button>
             <button type="button" class="cal-mini-btn" data-ev-toggle="${esc(ev.event_id)}" data-status="${ev.status === 'done' ? 'planned' : 'done'}">${ev.status === 'done' ? '↩ Повернути' : '✓ Виконано'}</button>

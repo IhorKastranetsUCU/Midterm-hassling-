@@ -180,9 +180,19 @@ def build_course_map(bundle):
                     continue
                 blocks.append(block)
         node["book_sections"] = blocks
-        placeholder = lambda q: bool(re.search(r"Which key concept is explicitly introduced|How many core study items were indexed|AI Engineer will enrich", q.get("question", "") + q.get("explanation", "")))
-        node["quizzes"] = [q for q in (own_mix or {}).get("quizzes", []) if not placeholder(q)]
+        node["quizzes"] = [
+            q for q in (own_mix or {}).get("quizzes", [])
+            if is_study_question(q.get("question", ""), q.get("explanation", ""))
+        ]
         node["flashcards"] = [f for f in (own_mix or {}).get("flashcards", []) if not re.search(r"Key Concept #|Core concepts covered", f.get("front", "") + f.get("back", ""))]
         node["material_count"] = sum(m["modname"] not in {"label", "subsection"} for m in node["materials"])
         node["learnable"] = node["kind"] == "topic" and bool(node["material_count"] or blocks)
     return {"version": 1, "nodes": nodes, "roots": [n["id"] for n in nodes if n["parent_id"] is None]}
+
+
+def is_study_question(question: str, explanation: str) -> bool:
+    return bool(question.strip() and not re.search(
+        r"Which key concept is explicitly introduced|How many core study items were indexed|"
+        r"AI Engineer will enrich|Which mode builds the cross-topic prep sheet",
+        f"{question} {explanation}", re.IGNORECASE,
+    ))

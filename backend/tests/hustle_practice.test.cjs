@@ -62,10 +62,10 @@ test('merges AI flashcards and self-tests inside existing topics in hierarchy or
   const t2Pos=html.indexOf('Part I: Basic notions of probability / Topic 2: Axioms of probability');
   assert.ok(t1Pos>=0&&t2Pos>t1Pos);
 
-  // Topic 1 group contains BOTH generated practice buttons and Moodle quizzes/assignments.
+  // Topic 1 group links to the practice pages and its Moodle resources.
   const t1Group=html.slice(t1Pos,t2Pos);
-  assert.match(t1Group,/data-study="cards" data-mix="mix-t1"/);
-  assert.match(t1Group,/data-study="quiz" data-mix="mix-t1"/);
+  assert.match(t1Group,/href="#course\/9400\/cards\?topic=13"/);
+  assert.match(t1Group,/href="#course\/9400\/quizzes\?topic=13"/);
   assert.match(t1Group,/Quiz 1/);
   assert.match(t1Group,/Seminar 1/);
   assert.match(t1Group,/Картки · Самоперевірка/);
@@ -74,6 +74,7 @@ test('merges AI flashcards and self-tests inside existing topics in hierarchy or
   assert.equal(ctx.window.HustleCurriculum.practiceTopics(sampleBundle).map(t=>t.mix_id).join(','),'mix-t1');
   const t2Group=html.slice(t2Pos);
   assert.equal(t2Group.includes('data-study='),false);
+  assert.match(t2Group,/href="#course\/9400\/quizzes\?topic=10"/);
   assert.match(t2Group,/Quiz 2/);
 });
 

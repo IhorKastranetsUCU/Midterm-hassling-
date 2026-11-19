@@ -167,6 +167,20 @@ a { color: inherit; }
   aspect-ratio: 1.24;
 }
 
+.hero .hero-mascot {
+  --sticker-size: clamp(8.5rem, 15.8vw, 15.5rem);
+  --sticker-angle: 12deg;
+  --sticker-tape-left: -5%;
+  --sticker-tape-top: 78%;
+  --sticker-tape-width: 52%;
+  --sticker-tape-height: clamp(.8rem, 1.3vw, 1.3rem);
+  --sticker-tape-angle: -29deg;
+  --sticker-tape-color: #e5cba2;
+  position: absolute;
+  z-index: 2;
+  inset: auto clamp(2rem, 30%, 30rem) clamp(-2.5rem, -3vw, -1.15rem) auto;
+}
+
 .paper-stack::before {
   position: absolute;
   inset: 7% auto auto 15%;
@@ -440,6 +454,12 @@ a { color: inherit; }
     max-width: 27rem;
   }
 
+  .hero .hero-mascot {
+    --sticker-size: clamp(6.5rem, 28vw, 11rem);
+    inset-inline: 10% auto;
+    inset-block-end: -1.55rem;
+  }
+
   .steps { grid-template-columns: minmax(0, 1fr); }
 
   .step {
@@ -455,4 +475,11 @@ a { color: inherit; }
   .step h3 { margin: 0; }
   .step p { max-width: 40ch; }
 
+}
+
+@media (max-width: 22rem) {
+  .hero .hero-mascot {
+    --sticker-size: 5.8rem;
+    inset-block-end: -2.05rem;
+  }
 }
